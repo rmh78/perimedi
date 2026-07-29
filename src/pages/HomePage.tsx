@@ -8,7 +8,13 @@ import {
   useRemarks,
   useSchedules,
 } from '../hooks/useAppData'
-import { getDayCycleInfo, lastPeriodStart, nextPredictedPeriodStart } from '../lib/cycle'
+import {
+  cycleBoundaryMarkers,
+  cycleWindowForDate,
+  getDayCycleInfo,
+  lastPeriodStart,
+  nextPredictedPeriodStart,
+} from '../lib/cycle'
 import { expandPlannedDoses } from '../lib/schedule'
 import {
   formatLongDate,
@@ -16,14 +22,13 @@ import {
   toDateKey,
   todayKey,
 } from '../lib/dates'
-import { CycleBadge, cycleDayClass } from '../components/CycleBadge'
+import { cycleDayClass } from '../components/CycleBadge'
 import { CycleDiagram } from '../components/CycleDiagram'
+import { BloodDropIcon } from '../components/CycleMarks'
 import { CalendarLegend } from '../components/Legend'
 import { EditMedicationSheet } from '../components/EditMedicationSheet'
-import { EditScheduleSheet } from '../components/EditScheduleSheet'
 import { DayNoteSheet } from '../components/DayNoteSheet'
-import { endOpenPeriods, startPeriodToday } from '../db/actions'
-import type { Medication, Schedule } from '../types'
+import type { Medication } from '../types'
 import { WEEKDAY_SHORT } from '../types'
 
 export function HomePage() {
@@ -43,11 +48,6 @@ export function HomePage() {
     isNew: boolean
     medication: Medication | null
   }>({ open: false, isNew: false, medication: null })
-  const [schedSheet, setSchedSheet] = useState<{
-    open: boolean
-    medicationId: string | null
-    schedule: Schedule | null
-  }>({ open: false, medicationId: null, schedule: null })
   const [noteSheet, setNoteSheet] = useState<{ open: boolean; dateKey: string }>(
     { open: false, dateKey: today },
   )
@@ -56,24 +56,35 @@ export function HomePage() {
   const monthFrom = toDateKey(monthGrid[0])
   const monthTo = toDateKey(monthGrid[monthGrid.length - 1])
 
-  const cycleStartKey = lastPeriodStart(periods)
-  const cycleLen = Math.max(
+  const latestCycleStart = lastPeriodStart(periods)
+  const latestCycleLen = Math.max(
     settings.averagePeriodLength + 2,
     settings.averageCycleLength,
   )
-  const cycleEndKey = cycleStartKey
-    ? toDateKey(addDays(parseISO(cycleStartKey), cycleLen - 1))
+  const latestCycleEnd = latestCycleStart
+    ? toDateKey(addDays(parseISO(latestCycleStart), latestCycleLen - 1))
     : null
 
+  // Cycle window for the selected calendar day (may differ from latest cycle)
+  const selectedWindow = cycleWindowForDate(selected, periods, settings)
+  const selectedWindowEnd = toDateKey(
+    addDays(parseISO(selectedWindow.start), selectedWindow.length - 1),
+  )
+
+  // Include selected cycle window so calendar picks load the right med lanes.
   const rangeStart = [
     today,
+    selected,
     monthFrom,
-    ...(cycleStartKey ? [cycleStartKey] : []),
+    selectedWindow.start,
+    ...(latestCycleStart ? [latestCycleStart] : []),
   ].sort()[0]
   const rangeEnd = [
     today,
+    selected,
     monthTo,
-    ...(cycleEndKey ? [cycleEndKey] : []),
+    selectedWindowEnd,
+    ...(latestCycleEnd ? [latestCycleEnd] : []),
   ]
     .sort()
     .at(-1)!
@@ -110,6 +121,11 @@ export function HomePage() {
     return map
   }, [remarks])
 
+  const cycleMarks = useMemo(
+    () => cycleBoundaryMarkers(monthFrom, monthTo, periods, settings),
+    [monthFrom, monthTo, periods, settings],
+  )
+
   const taken = todayDoses.filter((d) => d.status === 'taken').length
   const total = todayDoses.length
   const progress = total ? Math.round((taken / total) * 100) : 0
@@ -144,7 +160,6 @@ export function HomePage() {
                 ? `Cycle day ${todayInfo.cycleDay}`
                 : 'Your day'}
             </h2>
-            <CycleBadge info={todayInfo} />
             {nextPeriod && (
               <p className="text-sm text-ink-soft">
                 Next period (est.):{' '}
@@ -175,29 +190,6 @@ export function HomePage() {
           </div>
         </div>
 
-        <div className="relative mt-5 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => startPeriodToday(today)}
-            className="btn-primary"
-          >
-            Start period
-          </button>
-          <button
-            type="button"
-            onClick={() => endOpenPeriods(today)}
-            className="btn-ghost"
-          >
-            End period
-          </button>
-          <button
-            type="button"
-            onClick={() => openAddSymptom(today)}
-            className="btn-soft"
-          >
-            + Symptom
-          </button>
-        </div>
       </section>
 
       {/* Cycle days, period, symptoms + meds */}
@@ -270,6 +262,9 @@ export function HomePage() {
               const info = getDayCycleInfo(key, periods, settings)
               const dayDoses = allDoses.filter((d) => d.date === key)
               const daySymptoms = symptomsByDate.get(key) ?? []
+              const cycleMark = cycleMarks.get(key)
+              const isCycleStart = Boolean(cycleMark?.isStart)
+              const isCycleEnd = Boolean(cycleMark?.isEnd)
               const inMonth = isSameMonth(day, monthAnchor)
               const isSelected = selected === key
               const isToday = key === today
@@ -281,6 +276,9 @@ export function HomePage() {
                   aria-current={isToday ? 'date' : undefined}
                   title={[
                     format(day, 'MMM d'),
+                    info.cycleDay != null ? `Cycle day ${info.cycleDay}` : null,
+                    isCycleStart ? 'Cycle start' : null,
+                    isCycleEnd ? 'Cycle end' : null,
                     info.isLoggedPeriod
                       ? 'Period'
                       : info.isPredictedPeriod
@@ -312,33 +310,72 @@ export function HomePage() {
                           : ''
                   }`}
                 >
+                  {/* Quiet cycle boundary: thin top edge + corner ticks */}
+                  {isCycleStart && (
+                    <>
+                      <span
+                        className="absolute inset-x-0 top-0 h-0.5 bg-slate-600/70"
+                        aria-hidden
+                      />
+                      <span
+                        className="absolute left-0 top-0 h-2.5 w-0.5 bg-slate-600/70"
+                        aria-hidden
+                      />
+                    </>
+                  )}
+                  {isCycleEnd && (
+                    <>
+                      <span
+                        className="absolute inset-x-0 bottom-0 h-0.5 bg-slate-500/60"
+                        aria-hidden
+                      />
+                      <span
+                        className="absolute bottom-0 right-0 h-2.5 w-0.5 bg-slate-500/60"
+                        aria-hidden
+                      />
+                    </>
+                  )}
+
                   <div className="flex items-start justify-between gap-0.5">
-                    <span
-                      className={`inline-flex h-6 min-w-6 items-center justify-center rounded-full text-xs font-bold sm:text-sm ${
-                        isToday
-                          ? 'bg-blush-600 px-1.5 text-white shadow-sm'
-                          : info.isLoggedPeriod
-                            ? 'text-rose-800'
-                            : 'text-ink'
-                      }`}
-                    >
-                      {format(day, 'd')}
-                    </span>
+                    <div className="flex flex-col items-start gap-0.5">
+                      <span
+                        className={`inline-flex h-6 min-w-6 items-center justify-center rounded-full text-xs font-bold sm:text-sm ${
+                          isToday
+                            ? 'bg-blush-600 px-1.5 text-white shadow-sm'
+                            : info.isLoggedPeriod
+                              ? 'text-rose-800'
+                              : 'text-ink'
+                        }`}
+                      >
+                        {format(day, 'd')}
+                      </span>
+                      {info.cycleDay != null && (
+                        <span
+                          className="rounded-full bg-slate-800/[0.06] px-1.5 py-px text-[9px] font-semibold tabular-nums text-slate-600"
+                          title={`Cycle day ${info.cycleDay}`}
+                        >
+                          D{info.cycleDay}
+                        </span>
+                      )}
+                    </div>
                     <div className="flex flex-col items-end gap-0.5">
                       {isToday && (
                         <span className="rounded-full bg-blush-600/10 px-1 py-px text-[8px] font-bold uppercase tracking-wide text-blush-700">
                           Today
                         </span>
                       )}
-                      {info.isLoggedPeriod && (
-                        <span className="rounded-full bg-rose-500/15 px-1 py-px text-[8px] font-bold uppercase tracking-wide text-rose-700">
-                          Period
-                        </span>
-                      )}
-                      {!info.isLoggedPeriod && info.isPredictedPeriod && (
-                        <span className="rounded-full bg-rose-200/40 px-1 py-px text-[8px] font-bold uppercase tracking-wide text-rose-600">
-                          Pred.
-                        </span>
+                      {(info.isLoggedPeriod || info.isPredictedPeriod) && (
+                        <BloodDropIcon
+                          predicted={
+                            !info.isLoggedPeriod && info.isPredictedPeriod
+                          }
+                          title={
+                            info.isLoggedPeriod
+                              ? 'Period'
+                              : 'Predicted period'
+                          }
+                          size="md"
+                        />
                       )}
                     </div>
                   </div>
@@ -382,36 +419,8 @@ export function HomePage() {
         onClose={() =>
           setMedSheet({ open: false, isNew: false, medication: null })
         }
-        onSaved={(med) => {
-          setMedSheet({ open: true, isNew: false, medication: med })
-        }}
-        onEditSchedule={(medicationId, schedule) => {
-          setMedSheet((s) => ({ ...s, open: false }))
-          setSchedSheet({
-            open: true,
-            medicationId,
-            schedule,
-          })
-        }}
-      />
-
-      <EditScheduleSheet
-        open={schedSheet.open}
-        medicationId={schedSheet.medicationId}
-        schedule={schedSheet.schedule}
-        defaultDoseLabel={
-          medications.find((m) => m.id === schedSheet.medicationId)?.doseLabel
-        }
-        onClose={() => {
-          setSchedSheet({ open: false, medicationId: null, schedule: null })
-          if (schedSheet.medicationId) {
-            openEditMed(schedSheet.medicationId)
-          }
-        }}
         onSaved={() => {
-          const medId = schedSheet.medicationId
-          setSchedSheet({ open: false, medicationId: null, schedule: null })
-          if (medId) openEditMed(medId)
+          setMedSheet({ open: false, isNew: false, medication: null })
         }}
       />
 

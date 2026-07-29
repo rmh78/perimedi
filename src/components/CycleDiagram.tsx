@@ -7,7 +7,7 @@ import type {
   PlannedDose,
   Remark,
 } from '../types'
-import { getDayCycleInfo, lastPeriodStart } from '../lib/cycle'
+import { cycleWindowForDate, getDayCycleInfo } from '../lib/cycle'
 import { toDateKey } from '../lib/dates'
 import {
   buildMedLanes,
@@ -17,6 +17,7 @@ import {
 import { MedFormIcon } from './MedFormIcon'
 import { setDoseStatus } from '../db/actions'
 import { PeriodSettingsSheet } from './PeriodSettingsSheet'
+import { BloodDropIcon, SymptomMarkIcon } from './CycleMarks'
 import { iconBgFromColor, takenFillFromColor } from '../lib/medColors'
 
 type Props = {
@@ -70,11 +71,14 @@ export function CycleDiagram({
 }: Props) {
   const [periodSettingsOpen, setPeriodSettingsOpen] = useState(false)
 
-  const cycleLen = Math.max(
-    settings.averagePeriodLength + 2,
-    settings.averageCycleLength,
+  // Anchor the chart to the cycle that contains the selected calendar day
+  // (not always the latest period — month picks can be in another cycle).
+  const cycleWindow = useMemo(
+    () => cycleWindowForDate(selectedDate, periods, settings),
+    [selectedDate, periods, settings],
   )
-  const cycleStart = lastPeriodStart(periods)
+  const cycleStart = cycleWindow.start
+  const cycleLen = cycleWindow.length
 
   const remarksByDate = useMemo(() => {
     const map = new Map<string, Remark[]>()
@@ -125,20 +129,17 @@ export function CycleDiagram({
   )
 
   const selectedCol =
-    columns.find((c) => c.dateKey === selectedDate) ??
-    columns.find((c) => c.isToday) ??
-    columns[0]
+    columns.find((c) => c.dateKey === selectedDate) ?? null
 
   const selectedDay = selectedCol?.cycleDay ?? 1
 
   const selectedDayDoses = useMemo(() => {
-    if (!selectedCol?.dateKey) return [] as PlannedDose[]
     return doses
-      .filter((d) => d.date === selectedCol.dateKey)
+      .filter((d) => d.date === selectedDate)
       .sort((a, b) => a.timeOfDay.localeCompare(b.timeOfDay))
-  }, [doses, selectedCol])
+  }, [doses, selectedDate])
 
-  const selectedSymptoms = selectedCol?.symptoms ?? []
+  const selectedSymptoms = selectedCol?.symptoms ?? remarksByDate.get(selectedDate) ?? []
 
   const labelColPct = 22
   const plotPct = 100 - labelColPct
@@ -183,33 +184,22 @@ export function CycleDiagram({
       </div>
 
       <div className="space-y-1 px-3 py-4 sm:px-5">
-        <div className="mb-1 flex flex-wrap items-center justify-between gap-2 px-1">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">
-              Medications & doses
-            </p>
-            <div className="flex flex-wrap gap-3 text-[10px] text-ink-muted">
-              <LegendDot className="bg-emerald-500" label="Taken" />
-              <LegendDot className="bg-slate-400" label="Not taken" />
-              <span className="inline-flex items-center gap-1">
-                <BloodDropIcon />
-                Period
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <SymptomMarkIcon />
-                Symptom
-              </span>
-            </div>
+        <div className="mb-1 flex flex-wrap items-center gap-x-4 gap-y-1 px-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">
+            Medications & doses
+          </p>
+          <div className="flex flex-wrap gap-3 text-[10px] text-ink-muted">
+            <LegendDot className="bg-emerald-500" label="Taken" />
+            <LegendDot className="bg-slate-400" label="Not taken" />
+            <span className="inline-flex items-center gap-1">
+              <BloodDropIcon />
+              Period
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <SymptomMarkIcon />
+              Symptom
+            </span>
           </div>
-          {onAddMedication && (
-            <button
-              type="button"
-              className="btn-primary !px-3 !py-1.5 text-xs"
-              onClick={onAddMedication}
-            >
-              + Med
-            </button>
-          )}
         </div>
 
         {!cycleStart && (
@@ -247,16 +237,30 @@ export function CycleDiagram({
 
           <div className="relative z-10 space-y-3">
             {lanes.length === 0 && (
-              <div className="flex items-center rounded-2xl bg-blush-50/50 px-3 py-4 ring-1 ring-blush-100">
-                <div
-                  style={{ width: `${labelColPct}%` }}
-                  className="shrink-0 pr-2 text-sm text-ink-soft"
-                >
-                  No medications yet
+              <div className="relative z-40 flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-blush-200 bg-white/70 px-6 py-10 text-center shadow-sm">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blush-50 ring-1 ring-blush-100">
+                  <span className="text-xl text-blush-500" aria-hidden>
+                    +
+                  </span>
                 </div>
-                <div className="min-w-0 flex-1 text-sm text-ink-muted">
-                  Use <strong className="text-blush-800">+ Med</strong> to add one
+                <div className="space-y-1">
+                  <p className="text-base font-semibold text-ink">
+                    No medications yet
+                  </p>
+                  <p className="max-w-xs text-sm text-ink-muted">
+                    Add a medication to plan doses along your cycle and mark them
+                    as taken.
+                  </p>
                 </div>
+                {onAddMedication && (
+                  <button
+                    type="button"
+                    className="btn-primary !px-5 !py-2 text-sm"
+                    onClick={onAddMedication}
+                  >
+                    + Add medication
+                  </button>
+                )}
               </div>
             )}
 
@@ -301,23 +305,13 @@ export function CycleDiagram({
                 style={{ width: `${labelColPct}%` }}
                 className="relative z-40 flex shrink-0 flex-col justify-center pr-2"
               >
-                <button
-                  type="button"
-                  onClick={() => setPeriodSettingsOpen(true)}
-                  title="Edit period and cycle length"
-                  className="group text-left transition"
-                >
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted group-hover:text-blush-700">
-                    Cycle days
-                  </p>
-                  <p className="mt-0.5 text-[10px] text-ink-muted">
-                    {settings.averageCycleLength}d ·{' '}
-                    {settings.averagePeriodLength}d period
-                  </p>
-                  <p className="mt-1 text-[10px] font-semibold text-blush-700 underline-offset-2 group-hover:underline">
-                    Edit settings
-                  </p>
-                </button>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+                  Cycle days
+                </p>
+                <p className="mt-0.5 text-[10px] text-ink-muted">
+                  {settings.averageCycleLength}d ·{' '}
+                  {settings.averagePeriodLength}d period
+                </p>
               </div>
               <div className="relative z-10 min-w-0 flex-1">
                 <CycleDayStrip
@@ -344,7 +338,7 @@ export function CycleDiagram({
 
         {selectedCol && (
           <div className="relative z-40 mt-4 rounded-2xl border border-blush-200/80 bg-gradient-to-br from-blush-50/90 to-white px-4 py-4 shadow-sm">
-            <div className="mb-1 flex flex-wrap items-start justify-between gap-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-ink">
                   Day {selectedCol.cycleDay}
@@ -392,16 +386,34 @@ export function CycleDiagram({
                     </span>
                   )}
                 </div>
-                {onAddSymptom && selectedCol.dateKey && (
-                  <button
-                    type="button"
-                    className="btn-soft !mt-2 !px-3 !py-1 text-xs"
-                    onClick={() => onAddSymptom(selectedCol.dateKey!)}
-                  >
-                    + Symptom
-                  </button>
-                )}
               </div>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {onAddMedication && (
+                <button
+                  type="button"
+                  className="btn-primary !px-3 !py-1.5 text-xs"
+                  onClick={onAddMedication}
+                >
+                  + Med
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn-ghost !px-3 !py-1.5 text-xs"
+                onClick={() => setPeriodSettingsOpen(true)}
+              >
+                Cycle settings
+              </button>
+              {onAddSymptom && selectedCol.dateKey && (
+                <button
+                  type="button"
+                  className="btn-soft !px-3 !py-1.5 text-xs"
+                  onClick={() => onAddSymptom(selectedCol.dateKey!)}
+                >
+                  + Symptom
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -523,81 +535,6 @@ function LegendDot({ className, label }: { className: string; label: string }) {
   )
 }
 
-/** Small blood-drop mark for period days on the cycle strip. */
-function BloodDropIcon({
-  predicted = false,
-  title,
-}: {
-  predicted?: boolean
-  title?: string
-}) {
-  return (
-    <svg
-      width="10"
-      height="12"
-      viewBox="0 0 12 14"
-      className={`shrink-0 ${predicted ? 'opacity-45' : 'opacity-95'}`}
-      aria-hidden={title ? undefined : true}
-      role={title ? 'img' : undefined}
-    >
-      {title ? <title>{title}</title> : null}
-      <path
-        d="M6 1C6 1 1.5 6.2 1.5 9.2a4.5 4.5 0 0 0 9 0C10.5 6.2 6 1 6 1Z"
-        fill={predicted ? '#f43f5e' : '#e11d48'}
-        stroke={predicted ? '#fb7185' : '#be123c'}
-        strokeWidth="0.6"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-/**
- * Symptom mark — same soft filled/stroke language as the blood drop.
- * Kind tints the fill slightly for glanceability.
- */
-function SymptomMarkIcon({
-  kind = 'cycle',
-  title,
-}: {
-  kind?: string
-  title?: string
-}) {
-  const fill =
-    kind === 'side_effect'
-      ? '#8b5cf6'
-      : kind === 'note'
-        ? '#a78bfa'
-        : '#7c3aed'
-  const stroke =
-    kind === 'side_effect'
-      ? '#6d28d9'
-      : kind === 'note'
-        ? '#7c3aed'
-        : '#5b21b6'
-
-  return (
-    <svg
-      width="10"
-      height="10"
-      viewBox="0 0 12 12"
-      className="shrink-0"
-      aria-hidden={title ? undefined : true}
-      role={title ? 'img' : undefined}
-    >
-      {title ? <title>{title}</title> : null}
-      {/* Soft spark / pulse — readable at ~10px, matches drop weight */}
-      <path
-        d="M6 1.2 6.95 4.4 10.4 4.7 7.85 6.95 8.7 10.4 6 8.55 3.3 10.4 4.15 6.95 1.6 4.7 5.05 4.4Z"
-        fill={fill}
-        stroke={stroke}
-        strokeWidth="0.55"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
 function MedLaneLabel({
   lane,
   dayDoses,
@@ -658,7 +595,7 @@ function MedLaneLabel({
             : 'cursor-default opacity-70'
         }`}
         style={{
-          boxShadow: `0 0 0 3px ${ring}`,
+          boxShadow: `0 0 0 4px ${ring}`,
           background: iconBgFromColor(color, 0.35),
         }}
       >

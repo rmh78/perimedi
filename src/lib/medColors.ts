@@ -9,20 +9,23 @@ export const MED_FORM_ICON_COLOR: Record<MedForm, string> = {
   OTHER: '#8a6b78',
 }
 
-/** Curated palette for medication color picker */
+/** Curated palette — light pinks / roses first, one-row picker */
 export const MED_COLOR_PALETTE = [
-  '#d43d6c', // blush rose
-  '#e85a84', // pink
-  '#c0265a', // deep rose
+  '#fce7ef', // blush powder
+  '#fbcfe0', // soft rose
+  '#f9a8c9', // light pink
+  '#f472b6', // pink
+  '#ec4899', // hot pink
+  '#e85a84', // brand blush
+  '#db2777', // rose
+  '#d43d6c', // deep blush
+  '#be185d', // raspberry
   '#9b6fc9', // lilac
   '#7c3aed', // violet
   '#5b8fd9', // blue
   '#0d9488', // teal
-  '#059669', // emerald
   '#c97b3a', // amber
-  '#ea580c', // orange
   '#64748b', // slate
-  '#8a6b78', // mauve
 ] as const
 
 export function resolveMedColor(

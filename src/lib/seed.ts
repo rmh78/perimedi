@@ -1,13 +1,20 @@
 import { addDays, subDays } from 'date-fns'
 import { db, DEFAULT_CYCLE_SETTINGS, ensureCycleSettings } from '../db/database'
-import type { Medication, Period, Remark, Schedule } from '../types'
+import type { DoseLog, Medication, Period, Remark, Schedule } from '../types'
 import { createId } from './id'
 import { toDateKey } from './dates'
+import { plannedForIso } from './schedule'
 
 /**
  * Demo dataset for a woman in perimenopause:
  * irregular cycles, HRT-style patterns, common supplements, typical symptoms.
  * Fictional — not medical advice.
+ *
+ * Cycle sketch (relative to “today”) — lengths ~26–29d (near-typical range):
+ *   Period A  · start today−64 · 6 bleed days · gap → next start 28d
+ *   Period B  · start today−36 · 5 bleed days · gap → next start 27d
+ *   Period C  · start today−9  · 5 bleed days · current cycle (today ≈ day 10)
+ * Avg settings 28d cycle / 5d period.
  */
 export async function loadSampleData(): Promise<void> {
   await db.transaction('rw', db.tables, async () => {
@@ -19,19 +26,52 @@ export async function loadSampleData(): Promise<void> {
       db.periods.clear(),
     ])
 
-    // Slightly longer / more variable cycles are common in perimenopause
+    // Near-typical cycle length with mild peri variation in the sample
     await db.cycleSettings.put({
       id: 'default',
-      averageCycleLength: 35,
-      averagePeriodLength: 6,
+      averageCycleLength: 28,
+      averagePeriodLength: 5,
     })
 
     const today = new Date()
     const now = new Date().toISOString()
-    // Progesterone “pack” started 12 days ago (mid-cycle style demo)
-    const progStart = toDateKey(subDays(today, 12))
-    // Estradiol continuous from earlier
+    const todayKey = toDateKey(today)
+
+    // --- Periods (non-overlapping; day 1 = first bleed day) ---
+    // Inclusive length: end = start + (days − 1)
+    // Gaps between starts: 28d then 27d (within 26–29 target)
+    const p1Start = subDays(today, 64) // cycle A
+    const p2Start = subDays(today, 36) // 28 days after p1
+    const p3Start = subDays(today, 9) // 27 days after p2
+
+    const periods: Period[] = [
+      {
+        id: createId(),
+        startDate: toDateKey(p1Start),
+        endDate: toDateKey(addDays(p1Start, 5)), // 6 days
+        flowNote: 'heavy',
+        notes: 'Heavier than usual; clots day 2–3',
+      },
+      {
+        id: createId(),
+        startDate: toDateKey(p2Start),
+        endDate: toDateKey(addDays(p2Start, 4)), // 5 days
+        flowNote: 'medium',
+        notes: 'Cycle ~28 days from previous start',
+      },
+      {
+        id: createId(),
+        startDate: toDateKey(p3Start),
+        endDate: toDateKey(addDays(p3Start, 4)), // 5 days; ended 4 days ago
+        flowNote: 'light',
+        notes: 'Slightly shorter cycle (~27d); lighter bleed',
+      },
+    ]
+
+    // Continuous E2 from ~2 months ago; cyclic P “pack” started mid previous cycle
     const e2Start = toDateKey(subDays(today, 60))
+    // Anchor progesterone ~day 15 of cycle B (after p2 bleed) — classic luteal-style timing demo
+    const progStart = toDateKey(addDays(p2Start, 14))
 
     const meds: Medication[] = [
       {
@@ -48,7 +88,7 @@ export async function loadSampleData(): Promise<void> {
         name: 'Micronized progesterone',
         form: 'PILL',
         doseLabel: '100 mg',
-        instructions: 'At bedtime; 14 days on, then pause (demo cyclic plan)',
+        instructions: 'At bedtime; 14 days on, then pause (cyclic demo plan)',
         color: '#d43d6c',
         createdAt: now,
       },
@@ -102,7 +142,7 @@ export async function loadSampleData(): Promise<void> {
     ] = meds
 
     const schedules: Schedule[] = [
-      // Continuous estrogen
+      // Continuous estrogen (common with cyclic progesterone)
       {
         id: createId(),
         medicationId: estradiol.id,
@@ -113,7 +153,7 @@ export async function loadSampleData(): Promise<void> {
         startDate: e2Start,
         cycleRule: 'none',
       },
-      // Cyclic progesterone: 14 days on / 14 days off (common peri pattern demo)
+      // Cyclic progesterone: 14 on / 14 off from mid-cycle anchor
       {
         id: createId(),
         medicationId: progesterone.id,
@@ -132,7 +172,6 @@ export async function loadSampleData(): Promise<void> {
           offDays: 14,
         },
       },
-      // Magnesium nightly
       {
         id: createId(),
         medicationId: magnesium.id,
@@ -140,9 +179,9 @@ export async function loadSampleData(): Promise<void> {
         timeOfDay: '21:30',
         times: ['21:30'],
         active: true,
+        startDate: e2Start,
         cycleRule: 'none',
       },
-      // Vitamin D morning
       {
         id: createId(),
         medicationId: vitaminD.id,
@@ -150,9 +189,10 @@ export async function loadSampleData(): Promise<void> {
         timeOfDay: '08:00',
         times: ['08:00'],
         active: true,
+        startDate: e2Start,
         cycleRule: 'none',
       },
-      // Iron only around period
+      // Iron only on period days (logged + predicted)
       {
         id: createId(),
         medicationId: iron.id,
@@ -160,9 +200,10 @@ export async function loadSampleData(): Promise<void> {
         timeOfDay: '12:00',
         times: ['12:00'],
         active: true,
+        startDate: toDateKey(p1Start),
         cycleRule: 'period_only',
       },
-      // Vaginal moisturizer Mon / Wed / Fri
+      // Vaginal moisturizer Mon / Wed / Fri evenings
       {
         id: createId(),
         medicationId: vaginal.id,
@@ -170,80 +211,97 @@ export async function loadSampleData(): Promise<void> {
         timeOfDay: '22:00',
         times: ['22:00'],
         active: true,
+        startDate: e2Start,
         cycleRule: 'none',
       },
     ]
 
     await db.schedules.bulkAdd(schedules)
-
-    // Irregular peri cycles: longer gaps, variable flow length
-    const p1Start = subDays(today, 78)
-    const p2Start = subDays(today, 41)
-    const p3Start = subDays(today, 8)
-
-    const periods: Period[] = [
-      {
-        id: createId(),
-        startDate: toDateKey(p1Start),
-        endDate: toDateKey(addDays(p1Start, 7)),
-        flowNote: 'heavy',
-        notes: 'Heavier than usual; clots day 2–3',
-      },
-      {
-        id: createId(),
-        startDate: toDateKey(p2Start),
-        endDate: toDateKey(addDays(p2Start, 5)),
-        flowNote: 'medium',
-        notes: 'Cycle stretched ~37 days',
-      },
-      {
-        id: createId(),
-        startDate: toDateKey(p3Start),
-        endDate: toDateKey(addDays(p3Start, 4)),
-        flowNote: 'light',
-        notes: 'Shorter, lighter bleed',
-      },
-    ]
     await db.periods.bulkAdd(periods)
 
-    const remarks: Remark[] = [
-      {
-        id: createId(),
-        occurredOn: toDateKey(subDays(today, 2)),
-        kind: 'cycle',
-        body: 'Night sweats twice; woke at 3 a.m.',
-        createdAt: now,
-      },
-      {
-        id: createId(),
-        occurredOn: toDateKey(subDays(today, 1)),
-        kind: 'cycle',
-        body: 'Hot flush after lunch; lasted ~3 minutes.',
-        createdAt: now,
-      },
-      {
-        id: createId(),
-        occurredOn: toDateKey(today),
-        kind: 'cycle',
-        body: 'Brain fog mid-morning; hard to focus.',
-        createdAt: now,
-      },
-      {
+    // --- Recent adherence logs (makes the chart look lived-in) ---
+    const doseLogs: DoseLog[] = []
+    const dailyMorning = [
+      { med: estradiol, time: '07:30', scheduleId: schedules[0].id },
+      { med: vitaminD, time: '08:00', scheduleId: schedules[3].id },
+    ]
+    const dailyEvening = [
+      { med: magnesium, time: '21:30', scheduleId: schedules[2].id },
+    ]
+
+    for (let daysAgo = 6; daysAgo >= 0; daysAgo--) {
+      const date = toDateKey(subDays(today, daysAgo))
+      // Mornings mostly taken; miss one vitamin D day
+      for (const { med, time, scheduleId } of dailyMorning) {
+        const taken =
+          !(med.id === vitaminD.id && daysAgo === 2) &&
+          !(med.id === estradiol.id && daysAgo === 4)
+        doseLogs.push({
+          id: createId(),
+          medicationId: med.id,
+          scheduleId,
+          plannedFor: plannedForIso(date, time),
+          status: taken ? 'taken' : 'pending',
+          confirmedAt: taken
+            ? new Date(
+                parseIsoLocal(date, time).getTime() + 15 * 60 * 1000,
+              ).toISOString()
+            : undefined,
+        })
+      }
+      for (const { med, time, scheduleId } of dailyEvening) {
+        const taken = daysAgo !== 1
+        doseLogs.push({
+          id: createId(),
+          medicationId: med.id,
+          scheduleId,
+          plannedFor: plannedForIso(date, time),
+          status: taken ? 'taken' : 'pending',
+          confirmedAt: taken
+            ? new Date(
+                parseIsoLocal(date, time).getTime() + 20 * 60 * 1000,
+              ).toISOString()
+            : undefined,
+        })
+      }
+    }
+
+    // Progesterone taken on recent “on” days of the 14/14 pack
+    for (let daysAgo = 5; daysAgo >= 0; daysAgo--) {
+      const date = toDateKey(subDays(today, daysAgo))
+      doseLogs.push({
         id: createId(),
         medicationId: progesterone.id,
-        occurredOn: toDateKey(subDays(today, 3)),
-        kind: 'side_effect',
-        body: 'Sleepy next morning after progesterone — took earlier at 20:30.',
-        createdAt: now,
-      },
-      {
+        scheduleId: schedules[1].id,
+        plannedFor: plannedForIso(date, '21:00'),
+        status: daysAgo === 3 ? 'pending' : 'taken',
+        confirmedAt:
+          daysAgo === 3
+            ? undefined
+            : new Date(
+                parseIsoLocal(date, '21:00').getTime() + 10 * 60 * 1000,
+              ).toISOString(),
+      })
+    }
+
+    // Iron on a couple of days during last period (p3)
+    for (const offset of [0, 1, 2]) {
+      const date = toDateKey(addDays(p3Start, offset))
+      doseLogs.push({
         id: createId(),
-        medicationId: estradiol.id,
-        occurredOn: toDateKey(subDays(today, 5)),
-        kind: 'side_effect',
-        body: 'Mild breast tenderness; noted for next visit.',
-        createdAt: now,
-      },
+        medicationId: iron.id,
+        scheduleId: schedules[4].id,
+        plannedFor: plannedForIso(date, '12:00'),
+        status: 'taken',
+        confirmedAt: new Date(
+          parseIsoLocal(date, '12:00').getTime() + 30 * 60 * 1000,
+        ).toISOString(),
+      })
+    }
+
+    await db.doseLogs.bulkAdd(doseLogs)
+
+    const remarks: Remark[] = [
       {
         id: createId(),
         occurredOn: toDateKey(p3Start),
@@ -265,12 +323,57 @@ export async function loadSampleData(): Promise<void> {
         body: 'Mood dip late afternoon; short walk helped.',
         createdAt: now,
       },
+      {
+        id: createId(),
+        medicationId: estradiol.id,
+        occurredOn: toDateKey(subDays(today, 5)),
+        kind: 'side_effect',
+        body: 'Mild breast tenderness; noted for next visit.',
+        createdAt: now,
+      },
+      {
+        id: createId(),
+        medicationId: progesterone.id,
+        occurredOn: toDateKey(subDays(today, 3)),
+        kind: 'side_effect',
+        body: 'Sleepy next morning after progesterone — took earlier at 20:30.',
+        createdAt: now,
+      },
+      {
+        id: createId(),
+        occurredOn: toDateKey(subDays(today, 2)),
+        kind: 'cycle',
+        body: 'Night sweats twice; woke at 3 a.m.',
+        createdAt: now,
+      },
+      {
+        id: createId(),
+        occurredOn: toDateKey(subDays(today, 1)),
+        kind: 'cycle',
+        body: 'Hot flush after lunch; lasted ~3 minutes.',
+        createdAt: now,
+      },
+      {
+        id: createId(),
+        occurredOn: todayKey,
+        kind: 'cycle',
+        body: 'Brain fog mid-morning; hard to focus.',
+        createdAt: now,
+      },
     ]
 
     await db.remarks.bulkAdd(remarks)
   })
 
   await ensureCycleSettings()
+}
+
+/** Local date + HH:mm → Date (for sample confirmedAt timestamps). */
+function parseIsoLocal(dateKey: string, timeOfDay: string): Date {
+  const [h, m] = timeOfDay.split(':').map(Number)
+  const d = new Date(`${dateKey}T00:00:00`)
+  d.setHours(h || 0, m || 0, 0, 0)
+  return d
 }
 
 export async function clearAllData(): Promise<void> {
