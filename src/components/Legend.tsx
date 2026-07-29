@@ -14,10 +14,7 @@ export function CalendarLegend() {
         <span className="h-2.5 w-2.5 rounded-full bg-[var(--color-taken)]" /> Taken
       </span>
       <span className="inline-flex items-center gap-1.5">
-        <span className="h-2.5 w-2.5 rounded-full bg-[var(--color-skipped)]" /> Skipped
-      </span>
-      <span className="inline-flex items-center gap-1.5">
-        <span className="h-2.5 w-2.5 rounded-full bg-[var(--color-pending)]" /> Open
+        <span className="h-2.5 w-2.5 rounded-full bg-[var(--color-pending)]" /> Not taken
       </span>
     </div>
   )

@@ -201,6 +201,10 @@ export function MoreSheet({ open, onClose }: Props) {
 
           <div>
             <p className="mb-2 text-sm font-semibold">Period history</p>
+            <p className="mb-2 text-xs text-ink-muted">
+              Tap Edit to change start/end dates. Open Period settings from the
+              cycle day strip for full editing.
+            </p>
             {sorted.length === 0 ? (
               <p className="text-sm text-ink-muted">No periods logged.</p>
             ) : (
@@ -217,15 +221,49 @@ export function MoreSheet({ open, onClose }: Props) {
                         ~{periodLengthDays(p, settings.averagePeriodLength)} days
                       </span>
                     </span>
-                    <button
-                      type="button"
-                      className="text-xs font-semibold text-rose-600"
-                      onClick={() => {
-                        if (confirm('Delete this period?')) void deletePeriod(p.id)
-                      }}
-                    >
-                      Delete
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        className="text-xs font-semibold text-blush-700"
+                        onClick={async () => {
+                          const start = window.prompt(
+                            'Start date (YYYY-MM-DD)',
+                            p.startDate,
+                          )
+                          if (!start) return
+                          const end = window.prompt(
+                            'End date (YYYY-MM-DD), empty if ongoing',
+                            p.endDate ?? '',
+                          )
+                          if (end === null) return
+                          if (end && end < start) {
+                            setError('End date cannot be before start.')
+                            return
+                          }
+                          await upsertPeriod({
+                            id: p.id,
+                            startDate: start,
+                            endDate: end || undefined,
+                            flowNote: p.flowNote,
+                            notes: p.notes,
+                          })
+                          setMessage('Period updated.')
+                          setError(null)
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="text-xs font-semibold text-rose-600"
+                        onClick={() => {
+                          if (confirm('Delete this period?'))
+                            void deletePeriod(p.id)
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>

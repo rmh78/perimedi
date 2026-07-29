@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 
 export function Sheet({
   open,
@@ -13,10 +14,32 @@ export function Sheet({
   children: ReactNode
   wide?: boolean
 }) {
+  // Lock body scroll while open so the page doesn't shift under the modal
+  useEffect(() => {
+    if (!open) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [open])
+
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
   if (!open) return null
 
-  return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-4">
+  // Portal to body so parents with overflow/transform (e.g. glass cards)
+  // cannot clip or trap the dialog.
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4">
       <button
         type="button"
         className="absolute inset-0 bg-ink/30 backdrop-blur-[2px]"
@@ -44,6 +67,7 @@ export function Sheet({
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

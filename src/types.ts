@@ -14,6 +14,8 @@ export interface Medication {
   form: MedForm
   doseLabel: string
   instructions?: string
+  /** Hex color for icon, dose bands, and taken marks (e.g. #d43d6c) */
+  color?: string
   createdAt: string
 }
 

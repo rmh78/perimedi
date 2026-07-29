@@ -19,6 +19,7 @@ export async function upsertMedication(input: {
   form: MedForm
   doseLabel: string
   instructions?: string
+  color?: string
 }): Promise<string> {
   const id = input.id ?? createId()
   const existing = input.id ? await db.medications.get(input.id) : undefined
@@ -28,6 +29,7 @@ export async function upsertMedication(input: {
     form: input.form,
     doseLabel: input.doseLabel.trim(),
     instructions: input.instructions?.trim() || undefined,
+    color: input.color?.trim() || undefined,
     createdAt: existing?.createdAt ?? new Date().toISOString(),
   })
   return id

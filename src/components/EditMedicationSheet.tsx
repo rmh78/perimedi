@@ -9,6 +9,12 @@ import {
 } from '../db/actions'
 import { useSchedules } from '../hooks/useAppData'
 import { describeTherapyCycle, getScheduleTimes } from '../lib/therapyCycle'
+import {
+  MED_COLOR_PALETTE,
+  MED_FORM_ICON_COLOR,
+  resolveMedColor,
+} from '../lib/medColors'
+import { MedFormIcon } from './MedFormIcon'
 
 type Props = {
   open: boolean
@@ -33,6 +39,7 @@ export function EditMedicationSheet({
   const [form, setForm] = useState<MedForm>('PILL')
   const [doseLabel, setDoseLabel] = useState('')
   const [instructions, setInstructions] = useState('')
+  const [color, setColor] = useState<string>(MED_FORM_ICON_COLOR.PILL)
 
   useEffect(() => {
     if (!open) return
@@ -41,11 +48,13 @@ export function EditMedicationSheet({
       setForm(medication.form)
       setDoseLabel(medication.doseLabel)
       setInstructions(medication.instructions ?? '')
+      setColor(resolveMedColor(medication))
     } else {
       setName('')
       setForm('PILL')
       setDoseLabel('')
       setInstructions('')
+      setColor(MED_FORM_ICON_COLOR.PILL)
     }
   }, [open, medication, isNew])
 
@@ -63,6 +72,7 @@ export function EditMedicationSheet({
       form,
       doseLabel,
       instructions,
+      color,
     })
     onSaved({
       id,
@@ -70,6 +80,7 @@ export function EditMedicationSheet({
       form,
       doseLabel: doseLabel.trim(),
       instructions: instructions.trim() || undefined,
+      color,
       createdAt: medication?.createdAt ?? new Date().toISOString(),
     })
   }
@@ -96,7 +107,15 @@ export function EditMedicationSheet({
           <select
             className="soft-input"
             value={form}
-            onChange={(e) => setForm(e.target.value as MedForm)}
+            onChange={(e) => {
+              const next = e.target.value as MedForm
+              setForm((prev) => {
+                if (color === MED_FORM_ICON_COLOR[prev]) {
+                  setColor(MED_FORM_ICON_COLOR[next])
+                }
+                return next
+              })
+            }}
           >
             {Object.entries(MED_FORM_LABELS).map(([k, v]) => (
               <option key={k} value={k}>
@@ -115,6 +134,44 @@ export function EditMedicationSheet({
             placeholder="e.g. 1 tablet, 10 mg"
           />
         </label>
+        <div className="block text-sm">
+          <span className="mb-2 block font-medium text-ink-soft">Color</span>
+          <div className="mb-2 flex items-center gap-3">
+            <span
+              className="h-14 w-14 shrink-0 overflow-hidden rounded-full shadow"
+              style={{
+                boxShadow: `0 0 0 3px ${color}`,
+                background: `${color}33`,
+              }}
+            >
+              <MedFormIcon form={form} fill />
+            </span>
+            <p className="text-xs text-ink-muted">
+              Used for the icon, dose band, and taken marks on the cycle chart.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {MED_COLOR_PALETTE.map((c) => {
+              const selected = color.toLowerCase() === c.toLowerCase()
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  title={c}
+                  onClick={() => setColor(c)}
+                  className={`h-8 w-8 rounded-full transition ${
+                    selected
+                      ? 'ring-2 ring-offset-2 ring-blush-600 scale-110'
+                      : 'ring-1 ring-black/10 hover:scale-105'
+                  }`}
+                  style={{ background: c }}
+                  aria-label={`Color ${c}`}
+                  aria-pressed={selected}
+                />
+              )
+            })}
+          </div>
+        </div>
         <label className="block text-sm">
           <span className="mb-1 block font-medium text-ink-soft">
             Instructions (optional)

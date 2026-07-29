@@ -1,6 +1,9 @@
 import { addDays, parseISO } from 'date-fns'
 import type { MedForm, PlannedDose } from '../types'
 import { toDateKey } from './dates'
+import { resolveMedColor } from './medColors'
+
+export type DoseStatusSummary = 'taken' | 'skipped' | 'open' | 'mixed'
 
 export type DoseDayCell = {
   cycleDay: number
@@ -8,6 +11,21 @@ export type DoseDayCell = {
   /** Combined dose label for that day (e.g. "100 mg" or "100 mg + 200 mg") */
   doseLabel: string
   statuses: Array<'pending' | 'taken' | 'skipped'>
+  /** Single status for coloring the day box */
+  status: DoseStatusSummary
+}
+
+export function summarizeDayStatuses(
+  statuses: Array<'pending' | 'taken' | 'skipped'>,
+): DoseStatusSummary {
+  if (statuses.length === 0) return 'open'
+  const allTaken = statuses.every((s) => s === 'taken')
+  const allSkipped = statuses.every((s) => s === 'skipped')
+  const allOpen = statuses.every((s) => s === 'pending')
+  if (allTaken) return 'taken'
+  if (allSkipped) return 'skipped'
+  if (allOpen) return 'open'
+  return 'mixed'
 }
 
 export type DoseSegment = {
@@ -26,6 +44,8 @@ export type MedLane = {
   name: string
   form: MedForm
   defaultDose: string
+  /** Resolved hex color for bands / taken marks */
+  color: string
   days: DoseDayCell[]
   segments: DoseSegment[]
 }
@@ -53,6 +73,7 @@ export function buildMedLanes(
     name: string
     form: MedForm
     defaultDose: string
+    color: string
     /** cycleDay -> { dose labels set, statuses } */
     byDay: Map<
       number,
@@ -76,6 +97,7 @@ export function buildMedLanes(
         name: d.medication.name,
         form: d.medication.form,
         defaultDose: d.medication.doseLabel,
+        color: resolveMedColor(d.medication),
         byDay: new Map(),
       }
       byMed.set(d.medication.id, acc)
@@ -105,6 +127,7 @@ export function buildMedLanes(
           : null,
         doseLabel,
         statuses: cell.statuses,
+        status: summarizeDayStatuses(cell.statuses),
       })
     }
 
@@ -117,6 +140,7 @@ export function buildMedLanes(
       name: acc.name,
       form: acc.form,
       defaultDose: acc.defaultDose,
+      color: acc.color,
       days,
       segments,
     })

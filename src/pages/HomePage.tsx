@@ -363,9 +363,7 @@ export function HomePage() {
                         className={`h-1.5 w-1.5 rounded-full ${
                           d.status === 'taken'
                             ? 'bg-[var(--color-taken)]'
-                            : d.status === 'skipped'
-                              ? 'bg-[var(--color-skipped)]'
-                              : 'bg-[var(--color-pending)]'
+                            : 'bg-[var(--color-pending)]'
                         }`}
                       />
                     ))}

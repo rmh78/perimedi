@@ -40,6 +40,7 @@ export async function loadSampleData(): Promise<void> {
         form: 'CREAM',
         doseLabel: '1 pump',
         instructions: 'Apply to clean dry skin in the morning (arms/thighs)',
+        color: '#9b6fc9',
         createdAt: now,
       },
       {
@@ -48,6 +49,7 @@ export async function loadSampleData(): Promise<void> {
         form: 'PILL',
         doseLabel: '100 mg',
         instructions: 'At bedtime; 14 days on, then pause (demo cyclic plan)',
+        color: '#d43d6c',
         createdAt: now,
       },
       {
@@ -56,6 +58,7 @@ export async function loadSampleData(): Promise<void> {
         form: 'PILL',
         doseLabel: '200 mg',
         instructions: 'Evening — may help sleep and muscle tension',
+        color: '#0d9488',
         createdAt: now,
       },
       {
@@ -64,6 +67,7 @@ export async function loadSampleData(): Promise<void> {
         form: 'PILL',
         doseLabel: '2000 IU',
         instructions: 'With breakfast and a little fat',
+        color: '#c97b3a',
         createdAt: now,
       },
       {
@@ -72,6 +76,7 @@ export async function loadSampleData(): Promise<void> {
         form: 'PILL',
         doseLabel: '25 mg',
         instructions: 'Only on heavier flow days if advised by clinician',
+        color: '#ea580c',
         createdAt: now,
       },
       {
@@ -80,6 +85,7 @@ export async function loadSampleData(): Promise<void> {
         form: 'CREAM',
         doseLabel: 'Thin application',
         instructions: 'A few evenings per week',
+        color: '#5b8fd9',
         createdAt: now,
       },
     ]
