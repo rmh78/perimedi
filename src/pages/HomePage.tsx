@@ -1,0 +1,428 @@
+import { useMemo, useState } from 'react'
+import { addDays, addMonths, format, isSameMonth, parseISO } from 'date-fns'
+import {
+  useCycleSettings,
+  useDoseLogs,
+  useMedications,
+  usePeriods,
+  useRemarks,
+  useSchedules,
+} from '../hooks/useAppData'
+import { getDayCycleInfo, lastPeriodStart, nextPredictedPeriodStart } from '../lib/cycle'
+import { expandPlannedDoses } from '../lib/schedule'
+import {
+  formatLongDate,
+  monthGridDays,
+  toDateKey,
+  todayKey,
+} from '../lib/dates'
+import { CycleBadge, cycleDayClass } from '../components/CycleBadge'
+import { CycleDiagram } from '../components/CycleDiagram'
+import { CalendarLegend } from '../components/Legend'
+import { EditMedicationSheet } from '../components/EditMedicationSheet'
+import { EditScheduleSheet } from '../components/EditScheduleSheet'
+import { DayNoteSheet } from '../components/DayNoteSheet'
+import { endOpenPeriods, startPeriodToday } from '../db/actions'
+import type { Medication, Schedule } from '../types'
+import { WEEKDAY_SHORT } from '../types'
+
+export function HomePage() {
+  const today = todayKey()
+  const medications = useMedications()
+  const schedules = useSchedules()
+  const doseLogs = useDoseLogs()
+  const periods = usePeriods()
+  const remarks = useRemarks()
+  const settings = useCycleSettings()
+
+  const [selected, setSelected] = useState(today)
+  const [monthAnchor, setMonthAnchor] = useState(() => new Date())
+
+  const [medSheet, setMedSheet] = useState<{
+    open: boolean
+    isNew: boolean
+    medication: Medication | null
+  }>({ open: false, isNew: false, medication: null })
+  const [schedSheet, setSchedSheet] = useState<{
+    open: boolean
+    medicationId: string | null
+    schedule: Schedule | null
+  }>({ open: false, medicationId: null, schedule: null })
+  const [noteSheet, setNoteSheet] = useState<{ open: boolean; dateKey: string }>(
+    { open: false, dateKey: today },
+  )
+
+  const monthGrid = monthGridDays(monthAnchor)
+  const monthFrom = toDateKey(monthGrid[0])
+  const monthTo = toDateKey(monthGrid[monthGrid.length - 1])
+
+  const cycleStartKey = lastPeriodStart(periods)
+  const cycleLen = Math.max(
+    settings.averagePeriodLength + 2,
+    settings.averageCycleLength,
+  )
+  const cycleEndKey = cycleStartKey
+    ? toDateKey(addDays(parseISO(cycleStartKey), cycleLen - 1))
+    : null
+
+  const rangeStart = [
+    today,
+    monthFrom,
+    ...(cycleStartKey ? [cycleStartKey] : []),
+  ].sort()[0]
+  const rangeEnd = [
+    today,
+    monthTo,
+    ...(cycleEndKey ? [cycleEndKey] : []),
+  ]
+    .sort()
+    .at(-1)!
+
+  const allDoses = useMemo(
+    () =>
+      expandPlannedDoses({
+        from: rangeStart,
+        to: rangeEnd,
+        medications,
+        schedules,
+        doseLogs,
+        periods,
+        settings,
+      }),
+    [rangeStart, rangeEnd, medications, schedules, doseLogs, periods, settings],
+  )
+
+  const todayDoses = allDoses.filter((d) => d.date === today)
+  const todayInfo = getDayCycleInfo(today, periods, settings)
+  const nextPeriod = nextPredictedPeriodStart(periods, settings)
+
+  const symptomsByDate = useMemo(() => {
+    const map = new Map<string, typeof remarks>()
+    for (const r of remarks) {
+      if (r.kind !== 'cycle' && r.kind !== 'side_effect' && r.kind !== 'note') {
+        continue
+      }
+      const key = toDateKey(r.occurredOn)
+      const list = map.get(key) ?? []
+      list.push(r)
+      map.set(key, list)
+    }
+    return map
+  }, [remarks])
+
+  const taken = todayDoses.filter((d) => d.status === 'taken').length
+  const total = todayDoses.length
+  const progress = total ? Math.round((taken / total) * 100) : 0
+
+  function openEditMed(medicationId: string) {
+    const med = medications.find((m) => m.id === medicationId) ?? null
+    setMedSheet({ open: true, isNew: false, medication: med })
+  }
+
+  function openAddMed() {
+    setMedSheet({ open: true, isNew: true, medication: null })
+  }
+
+  function openAddSymptom(dateKey: string) {
+    setNoteSheet({ open: true, dateKey })
+  }
+
+  return (
+    <div className="space-y-5">
+      {/* Hero: cycle + progress */}
+      <section className="glass-card relative overflow-hidden rounded-[1.75rem] p-5 sm:p-6">
+        <div className="pointer-events-none absolute -right-8 -top-10 h-36 w-36 rounded-full bg-blush-200/50 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-10 left-10 h-28 w-28 rounded-full bg-lilac-200/40 blur-2xl" />
+
+        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blush-600">
+              {formatLongDate(today)}
+            </p>
+            <h2 className="font-display text-3xl font-semibold text-blush-900 sm:text-4xl">
+              {todayInfo.cycleDay != null
+                ? `Cycle day ${todayInfo.cycleDay}`
+                : 'Your day'}
+            </h2>
+            <CycleBadge info={todayInfo} />
+            {nextPeriod && (
+              <p className="text-sm text-ink-soft">
+                Next period (est.):{' '}
+                <span className="font-medium text-blush-800">
+                  {formatLongDate(nextPeriod)}
+                </span>
+              </p>
+            )}
+          </div>
+
+          <div className="flex w-full max-w-[11rem] flex-col items-center rounded-3xl bg-gradient-to-b from-blush-50 to-white p-4 ring-1 ring-blush-100 sm:w-auto">
+            <div
+              className="relative flex h-24 w-24 items-center justify-center rounded-full"
+              style={{
+                background: `conic-gradient(#e85a84 ${progress}%, #fce7ef ${progress}%)`,
+              }}
+            >
+              <div className="flex h-[4.5rem] w-[4.5rem] flex-col items-center justify-center rounded-full bg-white">
+                <span className="font-display text-2xl font-semibold text-blush-800">
+                  {total ? `${taken}/${total}` : '—'}
+                </span>
+                <span className="text-[10px] font-medium uppercase tracking-wide text-ink-muted">
+                  taken
+                </span>
+              </div>
+            </div>
+            <p className="mt-2 text-center text-xs text-ink-soft">Doses today</p>
+          </div>
+        </div>
+
+        <div className="relative mt-5 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => startPeriodToday(today)}
+            className="btn-primary"
+          >
+            Start period
+          </button>
+          <button
+            type="button"
+            onClick={() => endOpenPeriods(today)}
+            className="btn-ghost"
+          >
+            End period
+          </button>
+          <button
+            type="button"
+            onClick={() => openAddSymptom(today)}
+            className="btn-soft"
+          >
+            + Symptom
+          </button>
+        </div>
+      </section>
+
+      {/* Cycle days, period, symptoms + meds */}
+      <CycleDiagram
+        periods={periods}
+        settings={settings}
+        doses={allDoses}
+        remarks={remarks}
+        selectedDate={selected}
+        onSelectDate={setSelected}
+        todayKey={today}
+        onAddMedication={openAddMed}
+        onEditMedication={openEditMed}
+        onAddSymptom={openAddSymptom}
+      />
+
+      {/* Month calendar */}
+      <section className="glass-card rounded-[1.75rem] p-4 sm:p-5">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="section-title text-[1.45rem]">Month</h3>
+            <p className="text-sm text-ink-soft">
+              {format(monthAnchor, 'MMMM yyyy')}
+            </p>
+          </div>
+          <div className="flex gap-1.5">
+            <button
+              type="button"
+              className="btn-ghost !px-3 !py-1.5 text-xs"
+              onClick={() => setMonthAnchor((d) => addMonths(d, -1))}
+            >
+              Prev
+            </button>
+            <button
+              type="button"
+              className="btn-ghost !px-3 !py-1.5 text-xs"
+              onClick={() => {
+                setMonthAnchor(new Date())
+                setSelected(today)
+              }}
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              className="btn-ghost !px-3 !py-1.5 text-xs"
+              onClick={() => setMonthAnchor((d) => addMonths(d, 1))}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+
+        <CalendarLegend />
+
+        <div className="mt-3 overflow-hidden rounded-2xl ring-1 ring-blush-100">
+          <div className="grid grid-cols-7 bg-blush-50/80">
+            {WEEKDAY_SHORT.map((d) => (
+              <div
+                key={d}
+                className="px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-ink-muted"
+              >
+                {d}
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 bg-white/50">
+            {monthGrid.map((day) => {
+              const key = toDateKey(day)
+              const info = getDayCycleInfo(key, periods, settings)
+              const dayDoses = allDoses.filter((d) => d.date === key)
+              const daySymptoms = symptomsByDate.get(key) ?? []
+              const inMonth = isSameMonth(day, monthAnchor)
+              const isSelected = selected === key
+              const isToday = key === today
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setSelected(key)}
+                  aria-current={isToday ? 'date' : undefined}
+                  title={[
+                    format(day, 'MMM d'),
+                    info.isLoggedPeriod
+                      ? 'Period'
+                      : info.isPredictedPeriod
+                        ? 'Predicted period'
+                        : null,
+                    daySymptoms.length
+                      ? `${daySymptoms.length} symptom(s)`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                  className={`relative min-h-16 border-b border-r border-blush-50 p-1.5 text-left transition sm:min-h-[4.5rem] ${cycleDayClass(info)} ${
+                    !inMonth ? 'opacity-35' : ''
+                  } ${
+                    isSelected
+                      ? 'ring-2 ring-inset ring-blush-500'
+                      : ''
+                  } ${
+                    isToday && !isSelected
+                      ? 'ring-2 ring-inset ring-blush-400/70'
+                      : ''
+                  } ${
+                    info.isLoggedPeriod
+                      ? 'bg-rose-100/70'
+                      : info.isPredictedPeriod
+                        ? 'bg-rose-50/80'
+                        : isToday
+                          ? 'bg-blush-50/90'
+                          : ''
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-0.5">
+                    <span
+                      className={`inline-flex h-6 min-w-6 items-center justify-center rounded-full text-xs font-bold sm:text-sm ${
+                        isToday
+                          ? 'bg-blush-600 px-1.5 text-white shadow-sm'
+                          : info.isLoggedPeriod
+                            ? 'text-rose-800'
+                            : 'text-ink'
+                      }`}
+                    >
+                      {format(day, 'd')}
+                    </span>
+                    <div className="flex flex-col items-end gap-0.5">
+                      {isToday && (
+                        <span className="rounded-full bg-blush-600/10 px-1 py-px text-[8px] font-bold uppercase tracking-wide text-blush-700">
+                          Today
+                        </span>
+                      )}
+                      {info.isLoggedPeriod && (
+                        <span className="rounded-full bg-rose-500/15 px-1 py-px text-[8px] font-bold uppercase tracking-wide text-rose-700">
+                          Period
+                        </span>
+                      )}
+                      {!info.isLoggedPeriod && info.isPredictedPeriod && (
+                        <span className="rounded-full bg-rose-200/40 px-1 py-px text-[8px] font-bold uppercase tracking-wide text-rose-600">
+                          Pred.
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Symptom + dose markers */}
+                  <div className="mt-1.5 flex flex-wrap items-center gap-0.5">
+                    {daySymptoms.slice(0, 3).map((s) => (
+                      <span
+                        key={s.id}
+                        className="h-1.5 w-1.5 rounded-full bg-violet-400"
+                        title={s.body}
+                      />
+                    ))}
+                    {daySymptoms.length > 3 && (
+                      <span className="text-[8px] font-bold text-violet-600">
+                        +{daySymptoms.length - 3}
+                      </span>
+                    )}
+                    {dayDoses.slice(0, 3).map((d) => (
+                      <span
+                        key={d.key}
+                        className={`h-1.5 w-1.5 rounded-full ${
+                          d.status === 'taken'
+                            ? 'bg-[var(--color-taken)]'
+                            : d.status === 'skipped'
+                              ? 'bg-[var(--color-skipped)]'
+                              : 'bg-[var(--color-pending)]'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      <EditMedicationSheet
+        open={medSheet.open}
+        medication={medSheet.medication}
+        isNew={medSheet.isNew}
+        onClose={() =>
+          setMedSheet({ open: false, isNew: false, medication: null })
+        }
+        onSaved={(med) => {
+          setMedSheet({ open: true, isNew: false, medication: med })
+        }}
+        onEditSchedule={(medicationId, schedule) => {
+          setMedSheet((s) => ({ ...s, open: false }))
+          setSchedSheet({
+            open: true,
+            medicationId,
+            schedule,
+          })
+        }}
+      />
+
+      <EditScheduleSheet
+        open={schedSheet.open}
+        medicationId={schedSheet.medicationId}
+        schedule={schedSheet.schedule}
+        defaultDoseLabel={
+          medications.find((m) => m.id === schedSheet.medicationId)?.doseLabel
+        }
+        onClose={() => {
+          setSchedSheet({ open: false, medicationId: null, schedule: null })
+          if (schedSheet.medicationId) {
+            openEditMed(schedSheet.medicationId)
+          }
+        }}
+        onSaved={() => {
+          const medId = schedSheet.medicationId
+          setSchedSheet({ open: false, medicationId: null, schedule: null })
+          if (medId) openEditMed(medId)
+        }}
+      />
+
+      <DayNoteSheet
+        open={noteSheet.open}
+        dateKey={noteSheet.dateKey}
+        onClose={() => setNoteSheet({ open: false, dateKey: today })}
+        onSaved={() => setNoteSheet({ open: false, dateKey: today })}
+      />
+    </div>
+  )
+}
