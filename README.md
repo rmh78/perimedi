@@ -46,13 +46,21 @@ npm run preview
 
 ## Deploy
 
-Static hosting (e.g. Vercel):
+Static SPA — no server, no env vars. Output is `dist/` after `npm run build`.
+
+### Vercel (recommended)
+
+The repo includes `vercel.json` so client-side routes fall back to `index.html`. Local CLI link state lives in `.vercel/` (gitignored).
 
 ```bash
-npx vercel
+npm install
+npx vercel          # preview deployment
+npx vercel --prod   # production
 ```
 
-No environment variables required.
+Or connect the GitHub repo in the [Vercel dashboard](https://vercel.com) for automatic deploys on push to `main`.
+
+No environment variables are required. App data still lives only in each visitor’s browser (IndexedDB); hosting does not sync data across devices.
 
 ## Privacy
 
