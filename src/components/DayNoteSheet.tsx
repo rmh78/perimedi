@@ -2,7 +2,8 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Sheet } from './Sheet'
 import type { RemarkKind } from '../types'
 import { addRemark } from '../db/actions'
-import { formatLongDate } from '../lib/dates'
+import { useLocale } from '../i18n'
+import { formatLongDateLocalized } from '../i18n'
 
 type Props = {
   open: boolean
@@ -12,6 +13,7 @@ type Props = {
 }
 
 export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
+  const { t, locale } = useLocale()
   const [body, setBody] = useState('')
   const [kind, setKind] = useState<RemarkKind>('cycle')
 
@@ -34,26 +36,27 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
   }
 
   return (
-    <Sheet open={open} title="Add symptom" onClose={onClose}>
+    <Sheet open={open} title={t('symptom.title')} onClose={onClose}>
       <p className="mb-3 text-sm text-ink-soft">
-        Date: <strong>{formatLongDate(dateKey)}</strong>
+        {t('symptom.date')}{' '}
+        <strong>{formatLongDateLocalized(dateKey, locale)}</strong>
       </p>
       <form onSubmit={onSubmit} className="space-y-3">
         <label className="block text-sm">
-          Type
+          {t('symptom.type')}
           <select
             className="soft-input mt-1"
             value={kind}
             onChange={(e) => setKind(e.target.value as RemarkKind)}
           >
-            <option value="cycle">Period / cycle</option>
-            <option value="side_effect">Side effect</option>
-            <option value="note">General note</option>
-            <option value="other">Other</option>
+            <option value="cycle">{t('remark.cycle')}</option>
+            <option value="side_effect">{t('remark.side_effect')}</option>
+            <option value="note">{t('remark.note')}</option>
+            <option value="other">{t('remark.other')}</option>
           </select>
         </label>
         <label className="block text-sm">
-          Description
+          {t('symptom.description')}
           <textarea
             className="soft-input mt-1"
             rows={3}
@@ -61,15 +64,15 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
             onChange={(e) => setBody(e.target.value)}
             required
             autoFocus
-            placeholder="e.g. cramps, headache, mood…"
+            placeholder={t('symptom.placeholder')}
           />
         </label>
         <div className="flex gap-2">
           <button type="submit" className="btn-primary">
-            Save
+            {t('common.save')}
           </button>
           <button type="button" className="btn-ghost" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </button>
         </div>
       </form>

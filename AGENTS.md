@@ -49,6 +49,7 @@ npm run preview
 
 ## Conventions
 
+- **i18n**: product chrome via `useT()` / `useLocale()` (`src/i18n`). English keys in `messages/en.ts`; German must satisfy the same key set in `messages/de.ts`. Prefer short labels. User-entered text is never translated. Language control lives in More; preference is `localStorage` (`perimedi.locale`).
 - Functional React components; state via hooks; Dexie `liveQuery` for reactive data.
 - Sheets: `Sheet` shell (portaled) + `EditMedicationSheet` (med + schedule), `DayNoteSheet`, `PeriodSettingsSheet`, `MoreSheet`.
 - Shared marks: `CycleMarks` (blood drop, symptom spark).

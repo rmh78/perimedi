@@ -1,29 +1,33 @@
+import { useT } from '../i18n'
 import type { DayCycleInfo } from '../types'
 
 export function CycleBadge({ info }: { info: DayCycleInfo }) {
+  const t = useT()
   const chips: { label: string; className: string }[] = []
 
   if (info.isLoggedPeriod) {
     chips.push({
-      label: 'Period',
+      label: t('badge.period'),
       className: 'bg-blush-100 text-blush-800 ring-blush-200',
     })
   } else if (info.isPredictedPeriod) {
     chips.push({
-      label: 'Predicted',
+      label: t('badge.predicted'),
       className: 'bg-blush-50 text-blush-700 ring-blush-100',
     })
   }
 
   if (info.cycleDay != null) {
     chips.push({
-      label: `Day ${info.cycleDay}`,
+      label: t('badge.day', { day: info.cycleDay }),
       className: 'bg-white/80 text-ink-soft ring-blush-100',
     })
   }
 
   if (chips.length === 0) {
-    return <span className="text-sm text-ink-muted">No cycle data yet</span>
+    return (
+      <span className="text-sm text-ink-muted">{t('badge.noCycleData')}</span>
+    )
   }
 
   return (

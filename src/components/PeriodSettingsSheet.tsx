@@ -6,13 +6,14 @@ import {
   saveCycleSettings,
   upsertPeriod,
 } from '../db/actions'
-import { formatLongDate, todayKey } from '../lib/dates'
+import { todayKey } from '../lib/dates'
 import {
   nextPredictedPeriodStart,
   periodLengthDays,
   sortPeriods,
 } from '../lib/cycle'
 import type { FlowNote, Period } from '../types'
+import { useLocale, formatLongDateLocalized } from '../i18n'
 
 type Props = {
   open: boolean
@@ -45,6 +46,7 @@ function draftFromPeriod(p: Period): PeriodDraft {
 }
 
 export function PeriodSettingsSheet({ open, onClose }: Props) {
+  const { t, locale } = useLocale()
   const settings = useCycleSettings()
   const periods = usePeriods()
   const sorted = sortPeriods(periods)
@@ -63,11 +65,11 @@ export function PeriodSettingsSheet({ open, onClose }: Props) {
     e.preventDefault()
     if (!editing) return
     if (!editing.startDate) {
-      setMessage('Start date is required.')
+      setMessage(t('period.startRequired'))
       return
     }
     if (editing.endDate && editing.endDate < editing.startDate) {
-      setMessage('End date cannot be before start date.')
+      setMessage(t('period.endBeforeStart'))
       return
     }
     await upsertPeriod({
@@ -77,18 +79,24 @@ export function PeriodSettingsSheet({ open, onClose }: Props) {
       flowNote: editing.flowNote || undefined,
       notes: editing.notes || undefined,
     })
-    setMessage(editing.id ? 'Period updated.' : 'Period added.')
+    setMessage(editing.id ? t('period.updated') : t('period.added'))
     setEditing(null)
   }
 
+  function flowLabel(note: FlowNote | undefined): string {
+    if (!note) return ''
+    return t(`flow.${note}` as 'flow.medium')
+  }
+
   return (
-    <Sheet open={open} title="Period settings" onClose={onClose}>
+    <Sheet open={open} title={t('period.title')} onClose={onClose}>
       <div className="space-y-4">
         <p className="text-sm text-ink-soft">
-          Used for the cycle day strip and predicted period days. Next period
-          (est.):{' '}
+          {t('period.intro')}{' '}
           <strong className="text-ink">
-            {nextStart ? formatLongDate(nextStart) : '—'}
+            {nextStart
+              ? formatLongDateLocalized(nextStart, locale)
+              : t('common.emDash')}
           </strong>
         </p>
 
@@ -107,12 +115,12 @@ export function PeriodSettingsSheet({ open, onClose }: Props) {
               averageCycleLength: Number(fd.get('cycleLen')) || 28,
               averagePeriodLength: Number(fd.get('periodLen')) || 5,
             })
-            setMessage('Settings saved.')
+            setMessage(t('period.settingsSaved'))
           }}
           className="grid gap-3 sm:grid-cols-2"
         >
           <label className="text-sm font-medium text-ink">
-            Avg cycle length (days)
+            {t('period.avgCycle')}
             <input
               name="cycleLen"
               type="number"
@@ -123,7 +131,7 @@ export function PeriodSettingsSheet({ open, onClose }: Props) {
             />
           </label>
           <label className="text-sm font-medium text-ink">
-            Avg period length (days)
+            {t('period.avgPeriod')}
             <input
               name="periodLen"
               type="number"
@@ -135,14 +143,14 @@ export function PeriodSettingsSheet({ open, onClose }: Props) {
           </label>
           <div className="sm:col-span-2">
             <button type="submit" className="btn-primary">
-              Save settings
+              {t('period.saveSettings')}
             </button>
           </div>
         </form>
 
         <div>
           <div className="mb-2 flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold text-ink">Period history</p>
+            <p className="text-sm font-semibold text-ink">{t('period.history')}</p>
             {!editing && (
               <button
                 type="button"
@@ -152,7 +160,7 @@ export function PeriodSettingsSheet({ open, onClose }: Props) {
                   setEditing(emptyDraft())
                 }}
               >
-                + Add period
+                {t('period.add')}
               </button>
             )}
           </div>
@@ -163,11 +171,11 @@ export function PeriodSettingsSheet({ open, onClose }: Props) {
               className="mb-3 space-y-3 rounded-2xl bg-white p-3 ring-1 ring-blush-100"
             >
               <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                {editing.id ? 'Edit period' : 'New period'}
+                {editing.id ? t('period.edit') : t('period.new')}
               </p>
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="text-sm font-medium text-ink">
-                  Start date
+                  {t('period.startDate')}
                   <input
                     type="date"
                     required
@@ -181,7 +189,7 @@ export function PeriodSettingsSheet({ open, onClose }: Props) {
                   />
                 </label>
                 <label className="text-sm font-medium text-ink">
-                  End date
+                  {t('period.endDate')}
                   <input
                     type="date"
                     value={editing.endDate}
@@ -194,11 +202,11 @@ export function PeriodSettingsSheet({ open, onClose }: Props) {
                     className="soft-input mt-1"
                   />
                   <span className="mt-0.5 block text-[10px] font-normal text-ink-muted">
-                    Leave empty if still ongoing
+                    {t('period.endHint')}
                   </span>
                 </label>
                 <label className="text-sm font-medium text-ink sm:col-span-2">
-                  Flow
+                  {t('period.flow')}
                   <select
                     value={editing.flowNote}
                     onChange={(e) =>
@@ -213,15 +221,15 @@ export function PeriodSettingsSheet({ open, onClose }: Props) {
                     }
                     className="soft-input mt-1"
                   >
-                    <option value="">—</option>
-                    <option value="spotting">Spotting</option>
-                    <option value="light">Light</option>
-                    <option value="medium">Medium</option>
-                    <option value="heavy">Heavy</option>
+                    <option value="">{t('common.emDash')}</option>
+                    <option value="spotting">{t('flow.spotting')}</option>
+                    <option value="light">{t('flow.light')}</option>
+                    <option value="medium">{t('flow.medium')}</option>
+                    <option value="heavy">{t('flow.heavy')}</option>
                   </select>
                 </label>
                 <label className="text-sm font-medium text-ink sm:col-span-2">
-                  Notes
+                  {t('period.notes')}
                   <input
                     type="text"
                     value={editing.notes}
@@ -230,28 +238,28 @@ export function PeriodSettingsSheet({ open, onClose }: Props) {
                         d ? { ...d, notes: e.target.value } : d,
                       )
                     }
-                    placeholder="Optional"
+                    placeholder={t('common.optional')}
                     className="soft-input mt-1"
                   />
                 </label>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button type="submit" className="btn-primary !px-3 !py-1.5 text-xs">
-                  {editing.id ? 'Save changes' : 'Add period'}
+                  {editing.id ? t('period.saveChanges') : t('period.addPeriod')}
                 </button>
                 <button
                   type="button"
                   className="btn-ghost !px-3 !py-1.5 text-xs"
                   onClick={() => setEditing(null)}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
               </div>
             </form>
           )}
 
           {sorted.length === 0 && !editing ? (
-            <p className="text-sm text-ink-muted">No periods logged yet.</p>
+            <p className="text-sm text-ink-muted">{t('period.none')}</p>
           ) : (
             <ul className="space-y-2">
               {sorted.map((p) => {
@@ -267,14 +275,18 @@ export function PeriodSettingsSheet({ open, onClose }: Props) {
                   >
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <span>
-                        {formatLongDate(p.startDate)}
+                        {formatLongDateLocalized(p.startDate, locale)}
                         {p.endDate
-                          ? ` → ${formatLongDate(p.endDate)}`
+                          ? ` → ${formatLongDateLocalized(p.endDate, locale)}`
                           : ' → …'}
                         <span className="block text-xs text-ink-muted">
-                          ~{periodLengthDays(p, settings.averagePeriodLength)}{' '}
-                          days
-                          {p.flowNote ? ` · ${p.flowNote}` : ''}
+                          {t('period.daysApprox', {
+                            days: periodLengthDays(
+                              p,
+                              settings.averagePeriodLength,
+                            ),
+                          })}
+                          {p.flowNote ? ` · ${flowLabel(p.flowNote)}` : ''}
                           {p.notes ? ` · ${p.notes}` : ''}
                         </span>
                       </span>
@@ -287,19 +299,19 @@ export function PeriodSettingsSheet({ open, onClose }: Props) {
                             setEditing(draftFromPeriod(p))
                           }}
                         >
-                          Edit
+                          {t('common.edit')}
                         </button>
                         <button
                           type="button"
                           className="text-xs font-semibold text-rose-600"
                           onClick={() => {
-                            if (confirm('Delete this period?')) {
+                            if (confirm(t('period.deleteConfirm'))) {
                               void deletePeriod(p.id)
                               if (editing?.id === p.id) setEditing(null)
                             }
                           }}
                         >
-                          Delete
+                          {t('common.delete')}
                         </button>
                       </div>
                     </div>

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { addDays, format, parseISO } from 'date-fns'
+import { addDays, parseISO } from 'date-fns'
 import type {
   CycleSettings,
   DayCycleInfo,
@@ -19,6 +19,7 @@ import { setDoseStatus } from '../db/actions'
 import { PeriodSettingsSheet } from './PeriodSettingsSheet'
 import { BloodDropIcon, SymptomMarkIcon } from './CycleMarks'
 import { iconBgFromColor, takenFillFromColor } from '../lib/medColors'
+import { useLocale, type MessageKey } from '../i18n'
 
 type Props = {
   periods: Period[]
@@ -69,6 +70,7 @@ export function CycleDiagram({
   onEditMedication,
   onAddSymptom,
 }: Props) {
+  const { t, formatDate } = useLocale()
   const [periodSettingsOpen, setPeriodSettingsOpen] = useState(false)
 
   // Anchor the chart to the cycle that contains the selected calendar day
@@ -157,9 +159,9 @@ export function CycleDiagram({
       <div className="border-b border-blush-100/80 px-5 py-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="section-title text-[1.45rem]">Meds & cycle</h3>
+            <h3 className="section-title text-[1.45rem]">{t('diagram.title')}</h3>
             <p className="mt-0.5 text-sm text-ink-soft">
-              Select a day · tap med icon to mark taken · tap name to edit
+              {t('diagram.hint')}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -172,12 +174,14 @@ export function CycleDiagram({
                 else onSelectDate(today)
               }}
             >
-              Today
+              {t('common.today')}
             </button>
             <p className="rounded-full bg-blush-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-blush-800 ring-1 ring-blush-100">
               {cycleStart
-                ? `Since ${format(parseISO(cycleStart), 'MMM d')}`
-                : 'Log period to align days'}
+                ? t('diagram.since', {
+                    date: formatDate(parseISO(cycleStart), 'MMM d'),
+                  })
+                : t('diagram.logPeriodAlign')}
             </p>
           </div>
         </div>
@@ -186,26 +190,25 @@ export function CycleDiagram({
       <div className="space-y-1 px-3 py-4 sm:px-5">
         <div className="mb-1 flex flex-wrap items-center gap-x-4 gap-y-1 px-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">
-            Medications & doses
+            {t('diagram.medsAndDoses')}
           </p>
           <div className="flex flex-wrap gap-3 text-[10px] text-ink-muted">
-            <LegendDot className="bg-emerald-500" label="Taken" />
-            <LegendDot className="bg-slate-400" label="Not taken" />
+            <LegendDot className="bg-emerald-500" label={t('diagram.taken')} />
+            <LegendDot className="bg-slate-400" label={t('diagram.notTaken')} />
             <span className="inline-flex items-center gap-1">
               <BloodDropIcon />
-              Period
+              {t('diagram.periodTitle')}
             </span>
             <span className="inline-flex items-center gap-1">
               <SymptomMarkIcon />
-              Symptom
+              {t('legend.symptom')}
             </span>
           </div>
         </div>
 
         {!cycleStart && (
           <p className="mb-3 rounded-2xl bg-lilac-50/80 px-3 py-2 text-sm text-ink-soft ring-1 ring-lilac-100">
-            Tap <strong>Start period</strong> above so meds and symptoms line up with
-            cycle days.
+            {t('diagram.periodAlignHint')}
           </p>
         )}
 
@@ -226,9 +229,9 @@ export function CycleDiagram({
                 style={{ left: `${dayCenterPct(selectedDay)}%` }}
               >
                 <span className="whitespace-nowrap rounded-full bg-blush-600 px-2.5 py-1 text-[11px] font-bold text-white shadow-md">
-                  Day {selectedDay}
+                  {t('diagram.dayBadge', { day: selectedDay })}
                   {selectedCol?.dateKey
-                    ? ` · ${format(parseISO(selectedCol.dateKey), 'MMM d')}`
+                    ? ` · ${formatDate(parseISO(selectedCol.dateKey), 'MMM d')}`
                     : ''}
                 </span>
               </div>
@@ -245,11 +248,10 @@ export function CycleDiagram({
                 </div>
                 <div className="space-y-1">
                   <p className="text-base font-semibold text-ink">
-                    No medications yet
+                    {t('diagram.noMedsTitle')}
                   </p>
                   <p className="max-w-xs text-sm text-ink-muted">
-                    Add a medication to plan doses along your cycle and mark them
-                    as taken.
+                    {t('diagram.noMedsBody')}
                   </p>
                 </div>
                 {onAddMedication && (
@@ -258,7 +260,7 @@ export function CycleDiagram({
                     className="btn-primary !px-5 !py-2 text-sm"
                     onClick={onAddMedication}
                   >
-                    + Add medication
+                    {t('diagram.addMedication')}
                   </button>
                 )}
               </div>
@@ -306,11 +308,13 @@ export function CycleDiagram({
                 className="relative z-40 flex shrink-0 flex-col justify-center pr-2"
               >
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
-                  Cycle days
+                  {t('diagram.cycleDays')}
                 </p>
                 <p className="mt-0.5 text-[10px] text-ink-muted">
-                  {settings.averageCycleLength}d ·{' '}
-                  {settings.averagePeriodLength}d period
+                  {t('diagram.cyclePeriodMeta', {
+                    cycle: settings.averageCycleLength,
+                    period: settings.averagePeriodLength,
+                  })}
                 </p>
               </div>
               <div className="relative z-10 min-w-0 flex-1">
@@ -341,25 +345,25 @@ export function CycleDiagram({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-ink">
-                  Day {selectedCol.cycleDay}
+                  {t('diagram.dayBadge', { day: selectedCol.cycleDay })}
                   {selectedCol.dateKey
-                    ? ` · ${format(parseISO(selectedCol.dateKey), 'EEE, MMM d')}`
+                    ? ` · ${formatDate(parseISO(selectedCol.dateKey), 'EEE, MMM d')}`
                     : ''}
                 </p>
                 <div className="mt-2 flex flex-wrap items-start gap-2">
                   {selectedCol.isLoggedPeriod ? (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-800 ring-1 ring-rose-200">
                       <span className="h-2 w-2 rounded-full bg-rose-500" />
-                      Period
+                      {t('diagram.periodTitle')}
                     </span>
                   ) : selectedCol.info?.isPredictedPeriod ? (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 ring-1 ring-rose-100">
                       <span className="h-2 w-2 rounded-full bg-rose-300" />
-                      Predicted period
+                      {t('diagram.predictedPeriodTitle')}
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 text-xs font-medium text-ink-muted ring-1 ring-slate-100">
-                      No period
+                      {t('diagram.noPeriod')}
                     </span>
                   )}
 
@@ -372,8 +376,8 @@ export function CycleDiagram({
                       >
                         <span className="h-2 w-2 shrink-0 rounded-full bg-violet-400" />
                         <span className="truncate">
-                          <span className="font-semibold capitalize text-violet-700">
-                            {s.kind.replace('_', ' ')}
+                          <span className="font-semibold text-violet-700">
+                            {t(`remark.${s.kind}` as MessageKey)}
                           </span>
                           {': '}
                           {s.body}
@@ -382,7 +386,7 @@ export function CycleDiagram({
                     ))
                   ) : (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 text-xs font-medium text-ink-muted ring-1 ring-slate-100">
-                      No symptoms logged
+                      {t('diagram.noSymptoms')}
                     </span>
                   )}
                 </div>
@@ -395,7 +399,7 @@ export function CycleDiagram({
                   className="btn-primary !px-3 !py-1.5 text-xs"
                   onClick={onAddMedication}
                 >
-                  + Med
+                  {t('diagram.addMed')}
                 </button>
               )}
               <button
@@ -403,7 +407,7 @@ export function CycleDiagram({
                 className="btn-ghost !px-3 !py-1.5 text-xs"
                 onClick={() => setPeriodSettingsOpen(true)}
               >
-                Cycle settings
+                {t('diagram.cycleSettings')}
               </button>
               {onAddSymptom && selectedCol.dateKey && (
                 <button
@@ -411,7 +415,7 @@ export function CycleDiagram({
                   className="btn-soft !px-3 !py-1.5 text-xs"
                   onClick={() => onAddSymptom(selectedCol.dateKey!)}
                 >
-                  + Symptom
+                  {t('diagram.addSymptom')}
                 </button>
               )}
             </div>
@@ -438,6 +442,7 @@ function CycleDayStrip({
   selectedDay: number
   onSelectDay: (col: DayColumn) => void
 }) {
+  const { t } = useLocale()
   return (
     <div className="overflow-hidden rounded-2xl bg-white/80 ring-1 ring-blush-100">
       <div
@@ -456,14 +461,19 @@ function CycleDayStrip({
               onClick={() => onSelectDay(col)}
               title={
                 col.dateKey
-                  ? `Day ${col.cycleDay} · ${col.dateKey}${
-                      col.isLoggedPeriod ? ' · period' : ''
-                    }${
+                  ? [
+                      t('diagram.dayN', { day: col.cycleDay }),
+                      col.dateKey,
+                      col.isLoggedPeriod ? t('diagram.periodTitle') : null,
                       col.symptoms.length
-                        ? ` · ${col.symptoms.length} symptom(s)`
-                        : ''
-                    }`
-                  : `Day ${col.cycleDay}`
+                        ? t('home.symptomsCount', {
+                            count: col.symptoms.length,
+                          })
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')
+                  : t('diagram.dayN', { day: col.cycleDay })
               }
               className={`flex min-h-[4.75rem] flex-col items-center justify-end gap-0.5 border-r border-blush-50 px-0.5 py-2 transition last:border-r-0 ${
                 col.isLoggedPeriod
@@ -484,7 +494,9 @@ function CycleDayStrip({
                       Boolean(col.info?.isPredictedPeriod)
                     }
                     title={
-                      col.isLoggedPeriod ? 'Period' : 'Predicted period'
+                      col.isLoggedPeriod
+                        ? t('diagram.periodTitle')
+                        : t('diagram.predictedPeriodTitle')
                     }
                   />
                 )}
@@ -544,6 +556,7 @@ function MedLaneLabel({
   dayDoses: PlannedDose[]
   onEdit?: () => void
 }) {
+  const { t } = useLocale()
   const color = lane.color
   const state = takenStateFromDoses(dayDoses)
   const isTaken = state === 'taken'
@@ -567,7 +580,11 @@ function MedLaneLabel({
   }
 
   const ring = isTaken ? color : hasDose ? `${color}99` : '#f0d0da'
-  const statusLabel = isTaken ? 'Taken' : hasDose ? 'Not taken' : 'No dose'
+  const statusLabel = isTaken
+    ? t('diagram.taken')
+    : hasDose
+      ? t('diagram.notTaken')
+      : t('diagram.noDose')
   const statusColor = isTaken ? color : hasDose ? '#64748b' : undefined
 
   return (
@@ -579,15 +596,15 @@ function MedLaneLabel({
         title={
           hasDose
             ? isTaken
-              ? `Mark ${lane.name} as not taken`
-              : `Mark ${lane.name} as taken`
-            : `${lane.name}: no dose on selected day`
+              ? t('diagram.markNotTaken', { name: lane.name })
+              : t('diagram.markTaken', { name: lane.name })
+            : `${lane.name}: ${t('diagram.noDose')}`
         }
         aria-pressed={hasDose ? isTaken : undefined}
         aria-label={
           hasDose
-            ? `${lane.name}: ${statusLabel}. Tap to toggle.`
-            : `${lane.name}: no dose on selected day`
+            ? `${lane.name}: ${statusLabel}`
+            : `${lane.name}: ${t('diagram.noDose')}`
         }
         className={`relative h-12 w-12 shrink-0 rounded-full transition ${
           hasDose
@@ -618,7 +635,7 @@ function MedLaneLabel({
         <button
           type="button"
           className="group min-w-0 flex-1 text-left"
-          title={`Edit ${lane.name}`}
+          title={t('diagram.editMed', { name: lane.name })}
           onClick={onEdit}
         >
           <p className="truncate text-sm font-semibold leading-tight text-ink underline-offset-2 group-hover:underline">
@@ -628,7 +645,7 @@ function MedLaneLabel({
             className="truncate text-[10px] font-semibold leading-tight"
             style={{ color: statusColor ?? undefined }}
           >
-            {statusLabel === 'No dose' ? (
+            {statusLabel === t('diagram.noDose') ? (
               <span className="font-medium text-ink-muted">{statusLabel}</span>
             ) : (
               statusLabel
@@ -644,7 +661,7 @@ function MedLaneLabel({
             className="truncate text-[10px] font-semibold leading-tight"
             style={{ color: statusColor ?? undefined }}
           >
-            {statusLabel === 'No dose' ? (
+            {statusLabel === t('diagram.noDose') ? (
               <span className="font-medium text-ink-muted">{statusLabel}</span>
             ) : (
               statusLabel
@@ -675,6 +692,7 @@ function MedLaneTrack({
   columns: DayColumn[]
   onSelectDay: (col: DayColumn) => void
 }) {
+  const { t } = useLocale()
   const color = lane.color
   const byDay = new Map(lane.days.map((d) => [d.cycleDay, d]))
   const takenFill = takenFillFromColor(color, 0.42)
@@ -713,12 +731,14 @@ function MedLaneTrack({
               onClick={() => onSelectDay(col)}
               title={
                 cell
-                  ? `Day ${col.cycleDay}: ${cell.doseLabel}${
-                      taken ? ' · Taken' : ' · Not taken'
+                  ? `${t('diagram.dayN', { day: col.cycleDay })}: ${cell.doseLabel}${
+                      taken
+                        ? ` · ${t('diagram.taken')}`
+                        : ` · ${t('diagram.notTaken')}`
                     }`
                   : col.dateKey
-                    ? `Day ${col.cycleDay} · ${col.dateKey}`
-                    : `Day ${col.cycleDay}`
+                    ? `${t('diagram.dayN', { day: col.cycleDay })} · ${col.dateKey}`
+                    : t('diagram.dayN', { day: col.cycleDay })
               }
               className={`min-h-0 px-[1.5px] ${
                 !col.dateKey ? 'cursor-default' : 'cursor-pointer'
@@ -747,6 +767,7 @@ function DoseBand({
   segment: DoseSegment
   color: string
 }) {
+  const { t } = useLocale()
   const span = segment.toDay - segment.fromDay + 1
   const roomy = span >= 4
   const medium = span === 2 || span === 3
@@ -754,8 +775,11 @@ function DoseBand({
 
   const dayLine =
     segment.fromDay === segment.toDay
-      ? `Day ${segment.fromDay}`
-      : `Days ${segment.fromDay}–${segment.toDay}`
+      ? t('diagram.dayN', { day: segment.fromDay })
+      : t('diagram.daysRange', {
+          from: segment.fromDay,
+          to: segment.toDay,
+        })
 
   return (
     <div

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { addDays, addMonths, format, isSameMonth, parseISO } from 'date-fns'
+import { addDays, addMonths, isSameMonth, parseISO } from 'date-fns'
 import {
   useCycleSettings,
   useDoseLogs,
@@ -17,7 +17,6 @@ import {
 } from '../lib/cycle'
 import { expandPlannedDoses } from '../lib/schedule'
 import {
-  formatLongDate,
   monthGridDays,
   toDateKey,
   todayKey,
@@ -29,9 +28,11 @@ import { CalendarLegend } from '../components/Legend'
 import { EditMedicationSheet } from '../components/EditMedicationSheet'
 import { DayNoteSheet } from '../components/DayNoteSheet'
 import type { Medication } from '../types'
-import { WEEKDAY_SHORT } from '../types'
+import { useLocale, formatLongDateLocalized } from '../i18n'
+import type { MessageKey } from '../i18n'
 
 export function HomePage() {
+  const { t, locale, formatDate } = useLocale()
   const today = todayKey()
   const medications = useMedications()
   const schedules = useSchedules()
@@ -130,6 +131,16 @@ export function HomePage() {
   const total = todayDoses.length
   const progress = total ? Math.round((taken / total) * 100) : 0
 
+  const weekdayKeys: MessageKey[] = [
+    'weekday.0',
+    'weekday.1',
+    'weekday.2',
+    'weekday.3',
+    'weekday.4',
+    'weekday.5',
+    'weekday.6',
+  ]
+
   function openEditMed(medicationId: string) {
     const med = medications.find((m) => m.id === medicationId) ?? null
     setMedSheet({ open: true, isNew: false, medication: med })
@@ -153,18 +164,18 @@ export function HomePage() {
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blush-600">
-              {formatLongDate(today)}
+              {formatLongDateLocalized(today, locale)}
             </p>
             <h2 className="font-display text-3xl font-semibold text-blush-900 sm:text-4xl">
               {todayInfo.cycleDay != null
-                ? `Cycle day ${todayInfo.cycleDay}`
-                : 'Your day'}
+                ? t('home.cycleDay', { day: todayInfo.cycleDay })
+                : t('home.yourDay')}
             </h2>
             {nextPeriod && (
               <p className="text-sm text-ink-soft">
-                Next period (est.):{' '}
+                {t('home.nextPeriod')}{' '}
                 <span className="font-medium text-blush-800">
-                  {formatLongDate(nextPeriod)}
+                  {formatLongDateLocalized(nextPeriod, locale)}
                 </span>
               </p>
             )}
@@ -179,17 +190,18 @@ export function HomePage() {
             >
               <div className="flex h-[4.5rem] w-[4.5rem] flex-col items-center justify-center rounded-full bg-white">
                 <span className="font-display text-2xl font-semibold text-blush-800">
-                  {total ? `${taken}/${total}` : '—'}
+                  {total ? `${taken}/${total}` : t('common.emDash')}
                 </span>
                 <span className="text-[10px] font-medium uppercase tracking-wide text-ink-muted">
-                  taken
+                  {t('home.taken')}
                 </span>
               </div>
             </div>
-            <p className="mt-2 text-center text-xs text-ink-soft">Doses today</p>
+            <p className="mt-2 text-center text-xs text-ink-soft">
+              {t('home.dosesToday')}
+            </p>
           </div>
         </div>
-
       </section>
 
       {/* Cycle days, period, symptoms + meds */}
@@ -210,9 +222,9 @@ export function HomePage() {
       <section className="glass-card rounded-[1.75rem] p-4 sm:p-5">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="section-title text-[1.45rem]">Month</h3>
+            <h3 className="section-title text-[1.45rem]">{t('home.month')}</h3>
             <p className="text-sm text-ink-soft">
-              {format(monthAnchor, 'MMMM yyyy')}
+              {formatDate(monthAnchor, 'MMMM yyyy')}
             </p>
           </div>
           <div className="flex gap-1.5">
@@ -221,7 +233,7 @@ export function HomePage() {
               className="btn-ghost !px-3 !py-1.5 text-xs"
               onClick={() => setMonthAnchor((d) => addMonths(d, -1))}
             >
-              Prev
+              {t('common.prev')}
             </button>
             <button
               type="button"
@@ -231,14 +243,14 @@ export function HomePage() {
                 setSelected(today)
               }}
             >
-              Today
+              {t('common.today')}
             </button>
             <button
               type="button"
               className="btn-ghost !px-3 !py-1.5 text-xs"
               onClick={() => setMonthAnchor((d) => addMonths(d, 1))}
             >
-              Next
+              {t('common.next')}
             </button>
           </div>
         </div>
@@ -247,12 +259,12 @@ export function HomePage() {
 
         <div className="mt-3 overflow-hidden rounded-2xl ring-1 ring-blush-100">
           <div className="grid grid-cols-7 bg-blush-50/80">
-            {WEEKDAY_SHORT.map((d) => (
+            {weekdayKeys.map((key) => (
               <div
-                key={d}
+                key={key}
                 className="px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-ink-muted"
               >
-                {d}
+                {t(key)}
               </div>
             ))}
           </div>
@@ -275,17 +287,19 @@ export function HomePage() {
                   onClick={() => setSelected(key)}
                   aria-current={isToday ? 'date' : undefined}
                   title={[
-                    format(day, 'MMM d'),
-                    info.cycleDay != null ? `Cycle day ${info.cycleDay}` : null,
-                    isCycleStart ? 'Cycle start' : null,
-                    isCycleEnd ? 'Cycle end' : null,
+                    formatDate(day, 'MMM d'),
+                    info.cycleDay != null
+                      ? t('home.cycleDay', { day: info.cycleDay })
+                      : null,
+                    isCycleStart ? t('home.cycleStart') : null,
+                    isCycleEnd ? t('home.cycleEnd') : null,
                     info.isLoggedPeriod
-                      ? 'Period'
+                      ? t('home.period')
                       : info.isPredictedPeriod
-                        ? 'Predicted period'
+                        ? t('home.predictedPeriod')
                         : null,
                     daySymptoms.length
-                      ? `${daySymptoms.length} symptom(s)`
+                      ? t('home.symptomsCount', { count: daySymptoms.length })
                       : null,
                   ]
                     .filter(Boolean)
@@ -310,7 +324,6 @@ export function HomePage() {
                           : ''
                   }`}
                 >
-                  {/* Quiet cycle boundary: thin top edge + corner ticks */}
                   {isCycleStart && (
                     <>
                       <span
@@ -347,12 +360,12 @@ export function HomePage() {
                               : 'text-ink'
                         }`}
                       >
-                        {format(day, 'd')}
+                        {formatDate(day, 'd')}
                       </span>
                       {info.cycleDay != null && (
                         <span
                           className="rounded-full bg-slate-800/[0.06] px-1.5 py-px text-[9px] font-semibold tabular-nums text-slate-600"
-                          title={`Cycle day ${info.cycleDay}`}
+                          title={t('home.cycleDay', { day: info.cycleDay })}
                         >
                           D{info.cycleDay}
                         </span>
@@ -361,7 +374,7 @@ export function HomePage() {
                     <div className="flex flex-col items-end gap-0.5">
                       {isToday && (
                         <span className="rounded-full bg-blush-600/10 px-1 py-px text-[8px] font-bold uppercase tracking-wide text-blush-700">
-                          Today
+                          {t('common.today')}
                         </span>
                       )}
                       {(info.isLoggedPeriod || info.isPredictedPeriod) && (
@@ -371,8 +384,8 @@ export function HomePage() {
                           }
                           title={
                             info.isLoggedPeriod
-                              ? 'Period'
-                              : 'Predicted period'
+                              ? t('home.period')
+                              : t('home.predictedPeriod')
                           }
                           size="md"
                         />
@@ -380,7 +393,6 @@ export function HomePage() {
                     </div>
                   </div>
 
-                  {/* Symptom + dose markers */}
                   <div className="mt-1.5 flex flex-wrap items-center gap-0.5">
                     {daySymptoms.slice(0, 3).map((s) => (
                       <span

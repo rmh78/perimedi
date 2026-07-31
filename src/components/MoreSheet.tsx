@@ -1,9 +1,6 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { Sheet } from './Sheet'
-import {
-  clearAllData,
-  loadSampleData,
-} from '../lib/seed'
+import { clearAllData, loadSampleData } from '../lib/seed'
 import {
   downloadJson,
   exportAllData,
@@ -16,12 +13,13 @@ import {
   saveCycleSettings,
   upsertPeriod,
 } from '../db/actions'
-import { formatLongDate, todayKey } from '../lib/dates'
+import { todayKey } from '../lib/dates'
 import {
   nextPredictedPeriodStart,
   periodLengthDays,
   sortPeriods,
 } from '../lib/cycle'
+import { useLocale, formatLongDateLocalized, type Locale } from '../i18n'
 
 type Props = {
   open: boolean
@@ -29,6 +27,7 @@ type Props = {
 }
 
 export function MoreSheet({ open, onClose }: Props) {
+  const { t, locale, setLocale } = useLocale()
   const [tab, setTab] = useState<'data' | 'cycle'>('data')
   const fileRef = useRef<HTMLInputElement>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -40,7 +39,30 @@ export function MoreSheet({ open, onClose }: Props) {
   const nextStart = nextPredictedPeriodStart(periods, settings)
 
   return (
-    <Sheet open={open} title="More" onClose={onClose} wide>
+    <Sheet open={open} title={t('more.title')} onClose={onClose} wide>
+      <div className="mb-4">
+        <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+          {t('language.label')}
+        </p>
+        <div className="flex gap-2">
+          {(['en', 'de'] as const).map((code) => (
+            <button
+              key={code}
+              type="button"
+              className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
+                locale === code
+                  ? 'bg-blush-600 text-white'
+                  : 'bg-blush-50 text-blush-800'
+              }`}
+              onClick={() => setLocale(code as Locale)}
+              aria-pressed={locale === code}
+            >
+              {t(code === 'en' ? 'language.en' : 'language.de')}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="mb-4 flex gap-2">
         <button
           type="button"
@@ -51,7 +73,7 @@ export function MoreSheet({ open, onClose }: Props) {
           }`}
           onClick={() => setTab('data')}
         >
-          Backup
+          {t('more.tabBackup')}
         </button>
         <button
           type="button"
@@ -62,7 +84,7 @@ export function MoreSheet({ open, onClose }: Props) {
           }`}
           onClick={() => setTab('cycle')}
         >
-          Period settings
+          {t('more.tabPeriod')}
         </button>
       </div>
 
@@ -81,50 +103,48 @@ export function MoreSheet({ open, onClose }: Props) {
       {tab === 'data' && (
         <div className="grid gap-3 sm:grid-cols-2">
           <Action
-            title="Sample data"
-            body="Fictional perimenopause demo (HRT-style plan, irregular cycles, symptoms)."
-            label="Load sample"
+            title={t('more.sampleTitle')}
+            body={t('more.sampleBody')}
+            label={t('more.sampleLabel')}
             onClick={async () => {
-              if (
-                confirm(
-                  'Replace all local data with the perimenopause sample set?',
-                )
-              ) {
+              if (confirm(t('more.sampleConfirm'))) {
                 await loadSampleData()
-                setMessage('Perimenopause sample data loaded.')
+                setMessage(t('more.sampleLoaded'))
                 setError(null)
               }
             }}
           />
           <Action
-            title="Export"
-            body="Download JSON backup."
-            label="Export"
+            title={t('more.exportTitle')}
+            body={t('more.exportBody')}
+            label={t('more.exportLabel')}
             onClick={async () => {
               try {
                 downloadJson(await exportAllData())
-                setMessage('Backup downloaded.')
+                setMessage(t('more.exportDone'))
                 setError(null)
               } catch (e) {
-                setError(e instanceof Error ? e.message : 'Export failed')
+                setError(
+                  e instanceof Error ? e.message : t('more.exportFailed'),
+                )
               }
             }}
           />
           <Action
-            title="Import"
-            body="Restore from a backup file."
-            label="Choose file"
+            title={t('more.importTitle')}
+            body={t('more.importBody')}
+            label={t('more.importLabel')}
             onClick={() => fileRef.current?.click()}
           />
           <Action
-            title="Clear"
-            body="Wipe everything on this device."
-            label="Clear all"
+            title={t('more.clearTitle')}
+            body={t('more.clearBody')}
+            label={t('more.clearLabel')}
             danger
             onClick={async () => {
-              if (confirm('Delete all PeriMedi data on this device?')) {
+              if (confirm(t('more.clearConfirm'))) {
                 await clearAllData()
-                setMessage('Cleared.')
+                setMessage(t('more.cleared'))
                 setError(null)
               }
             }}
@@ -140,10 +160,12 @@ export function MoreSheet({ open, onClose }: Props) {
               try {
                 const payload = JSON.parse(await file.text()) as ExportPayload
                 await importAllData(payload)
-                setMessage('Import complete.')
+                setMessage(t('more.importDone'))
                 setError(null)
               } catch (err) {
-                setError(err instanceof Error ? err.message : 'Import failed')
+                setError(
+                  err instanceof Error ? err.message : t('more.importFailed'),
+                )
               }
               e.target.value = ''
             }}
@@ -154,8 +176,12 @@ export function MoreSheet({ open, onClose }: Props) {
       {tab === 'cycle' && (
         <div className="space-y-4">
           <p className="text-sm text-ink-soft">
-            Next period (est.):{' '}
-            <strong>{nextStart ? formatLongDate(nextStart) : '—'}</strong>
+            {t('more.nextPeriod')}{' '}
+            <strong>
+              {nextStart
+                ? formatLongDateLocalized(nextStart, locale)
+                : t('common.emDash')}
+            </strong>
           </p>
           <form
             key={`${settings.averageCycleLength}-${settings.averagePeriodLength}`}
@@ -166,12 +192,12 @@ export function MoreSheet({ open, onClose }: Props) {
                 averageCycleLength: Number(fd.get('cycleLen')) || 28,
                 averagePeriodLength: Number(fd.get('periodLen')) || 5,
               })
-              setMessage('Cycle settings saved.')
+              setMessage(t('more.cycleSaved'))
             }}
             className="grid gap-3 sm:grid-cols-2"
           >
             <label className="text-sm">
-              Avg cycle length (days)
+              {t('period.avgCycle')}
               <input
                 name="cycleLen"
                 type="number"
@@ -182,7 +208,7 @@ export function MoreSheet({ open, onClose }: Props) {
               />
             </label>
             <label className="text-sm">
-              Avg period length (days)
+              {t('period.avgPeriod')}
               <input
                 name="periodLen"
                 type="number"
@@ -194,19 +220,16 @@ export function MoreSheet({ open, onClose }: Props) {
             </label>
             <div className="sm:col-span-2">
               <button type="submit" className="btn-primary">
-                Save settings
+                {t('period.saveSettings')}
               </button>
             </div>
           </form>
 
           <div>
-            <p className="mb-2 text-sm font-semibold">Period history</p>
-            <p className="mb-2 text-xs text-ink-muted">
-              Tap Edit to change start/end dates. Open Period settings from the
-              cycle day strip for full editing.
-            </p>
+            <p className="mb-2 text-sm font-semibold">{t('period.history')}</p>
+            <p className="mb-2 text-xs text-ink-muted">{t('more.historyHint')}</p>
             {sorted.length === 0 ? (
-              <p className="text-sm text-ink-muted">No periods logged.</p>
+              <p className="text-sm text-ink-muted">{t('more.noPeriods')}</p>
             ) : (
               <ul className="space-y-2">
                 {sorted.map((p) => (
@@ -215,10 +238,17 @@ export function MoreSheet({ open, onClose }: Props) {
                     className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-blush-50/80 px-3 py-2 text-sm"
                   >
                     <span>
-                      {formatLongDate(p.startDate)}
-                      {p.endDate ? ` → ${formatLongDate(p.endDate)}` : ' → …'}
+                      {formatLongDateLocalized(p.startDate, locale)}
+                      {p.endDate
+                        ? ` → ${formatLongDateLocalized(p.endDate, locale)}`
+                        : ' → …'}
                       <span className="block text-xs text-ink-muted">
-                        ~{periodLengthDays(p, settings.averagePeriodLength)} days
+                        {t('period.daysApprox', {
+                          days: periodLengthDays(
+                            p,
+                            settings.averagePeriodLength,
+                          ),
+                        })}
                       </span>
                     </span>
                     <div className="flex gap-2">
@@ -227,17 +257,17 @@ export function MoreSheet({ open, onClose }: Props) {
                         className="text-xs font-semibold text-blush-700"
                         onClick={async () => {
                           const start = window.prompt(
-                            'Start date (YYYY-MM-DD)',
+                            t('more.promptStart'),
                             p.startDate,
                           )
                           if (!start) return
                           const end = window.prompt(
-                            'End date (YYYY-MM-DD), empty if ongoing',
+                            t('more.promptEnd'),
                             p.endDate ?? '',
                           )
                           if (end === null) return
                           if (end && end < start) {
-                            setError('End date cannot be before start.')
+                            setError(t('more.endBeforeStart'))
                             return
                           }
                           await upsertPeriod({
@@ -247,21 +277,21 @@ export function MoreSheet({ open, onClose }: Props) {
                             flowNote: p.flowNote,
                             notes: p.notes,
                           })
-                          setMessage('Period updated.')
+                          setMessage(t('period.updated'))
                           setError(null)
                         }}
                       >
-                        Edit
+                        {t('common.edit')}
                       </button>
                       <button
                         type="button"
                         className="text-xs font-semibold text-rose-600"
                         onClick={() => {
-                          if (confirm('Delete this period?'))
+                          if (confirm(t('period.deleteConfirm')))
                             void deletePeriod(p.id)
                         }}
                       >
-                        Delete
+                        {t('common.delete')}
                       </button>
                     </div>
                   </li>
@@ -273,15 +303,15 @@ export function MoreSheet({ open, onClose }: Props) {
               className="mt-3 text-sm font-semibold text-blush-700"
               onClick={async () => {
                 const start = window.prompt(
-                  'Period start date (YYYY-MM-DD)',
+                  t('more.promptPeriodStart'),
                   todayKey(),
                 )
                 if (!start) return
                 await upsertPeriod({ startDate: start, flowNote: 'medium' })
-                setMessage('Period added.')
+                setMessage(t('period.added'))
               }}
             >
-              + Log period (date)
+              {t('more.logPeriodDate')}
             </button>
           </div>
         </div>

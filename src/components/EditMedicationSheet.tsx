@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Sheet } from './Sheet'
 import type { Medication, MedForm, Schedule, TherapyPresetId } from '../types'
-import { MED_FORM_LABELS, THERAPY_PRESETS, WEEKDAY_SHORT } from '../types'
+import { THERAPY_PRESETS } from '../types'
+import { useLocale, formatLocalized, type MessageKey } from '../i18n'
 import {
   deleteMedication,
   upsertMedication,
@@ -9,7 +10,6 @@ import {
 } from '../db/actions'
 import { useSchedules } from '../hooks/useAppData'
 import {
-  formatPreviewDate,
   normalizeTherapyCycle,
   previewTherapyCycle,
 } from '../lib/therapyCycle'
@@ -42,6 +42,7 @@ export function EditMedicationSheet({
   onClose,
   onSaved,
 }: Props) {
+  const { t, locale } = useLocale()
   const schedules = useSchedules()
   const [name, setName] = useState('')
   const [form, setForm] = useState<MedForm>('PILL')
@@ -164,11 +165,11 @@ export function EditMedicationSheet({
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     if (!name.trim() || !doseLabel.trim()) {
-      setError('Name and default dose are required.')
+      setError(t('med.errorNameDose'))
       return
     }
     if (!sched.times.length || !sched.times[0]) {
-      setError('Add at least one time for the schedule.')
+      setError(t('med.errorTime'))
       return
     }
     setSaving(true)
@@ -236,7 +237,7 @@ export function EditMedicationSheet({
         createdAt: medication?.createdAt ?? new Date().toISOString(),
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save medication.')
+      setError(err instanceof Error ? err.message : t('med.errorSave'))
     } finally {
       setSaving(false)
     }
@@ -245,7 +246,7 @@ export function EditMedicationSheet({
   return (
     <Sheet
       open={open}
-      title={isNew || !medication ? 'Add medication' : 'Edit medication'}
+      title={isNew || !medication ? t('med.addTitle') : t('med.editTitle')}
       onClose={onClose}
       wide
     >
@@ -253,11 +254,11 @@ export function EditMedicationSheet({
         {/* Medication — dense grid */}
         <section className="space-y-2">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
-            Medication
+            {t('med.sectionMed')}
           </p>
           <label className="block">
             <span className="mb-0.5 block text-xs font-medium text-ink-soft">
-              Name
+              {t('med.name')}
             </span>
             <input
               className="soft-input !rounded-xl !px-2.5 !py-1.5 !text-sm"
@@ -270,7 +271,7 @@ export function EditMedicationSheet({
           <div className="grid grid-cols-2 gap-2">
             <label className="block">
               <span className="mb-0.5 block text-xs font-medium text-ink-soft">
-                Form
+                {t('med.form')}
               </span>
               <select
                 className="soft-input !rounded-xl !px-2.5 !py-1.5 !text-sm"
@@ -285,29 +286,29 @@ export function EditMedicationSheet({
                   })
                 }}
               >
-                {Object.entries(MED_FORM_LABELS).map(([k, v]) => (
+                {(['PILL', 'CREAM', 'DROPS', 'INJECTION', 'OTHER'] as MedForm[]).map((k) => (
                   <option key={k} value={k}>
-                    {v}
+                    {t(`form.${k}` as MessageKey)}
                   </option>
                 ))}
               </select>
             </label>
             <label className="block">
               <span className="mb-0.5 block text-xs font-medium text-ink-soft">
-                Default dose
+                {t('med.defaultDose')}
               </span>
               <input
                 className="soft-input !rounded-xl !px-2.5 !py-1.5 !text-sm"
                 value={doseLabel}
                 onChange={(e) => setDoseLabel(e.target.value)}
                 required
-                placeholder="e.g. 10 mg"
+                placeholder={t('med.dosePlaceholder')}
               />
             </label>
           </div>
           <div>
             <span className="mb-0.5 block text-xs font-medium text-ink-soft">
-              Color
+              {t('med.color')}
             </span>
             <div className="flex items-center gap-2.5 py-1">
               <span
@@ -335,7 +336,7 @@ export function EditMedicationSheet({
                           ? `0 0 0 2px #fff, 0 0 0 4px ${c}`
                           : '0 0 0 1px rgba(0,0,0,0.1)',
                       }}
-                      aria-label={`Color ${c}`}
+                      aria-label={t('med.colorAria', { color: c })}
                       aria-pressed={selected}
                     />
                   )
@@ -348,17 +349,17 @@ export function EditMedicationSheet({
         {/* Schedule */}
         <section className="space-y-2 border-t border-blush-100 pt-3">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
-            Schedule
+            {t('med.sectionSchedule')}
           </p>
 
           <div className="flex flex-wrap gap-1 rounded-xl bg-blush-50/50 p-1 ring-1 ring-blush-100">
             {(
               [
-                ['every_day', 'Every day'],
-                ['specific_days', 'Specific days'],
-                ['cyclic', 'Cyclic'],
+                ['every_day', 'sched.everyDay'],
+                ['specific_days', 'sched.specificDays'],
+                ['cyclic', 'sched.cyclic'],
               ] as const
-            ).map(([mode, label]) => (
+            ).map(([mode, labelKey]) => (
               <button
                 key={mode}
                 type="button"
@@ -397,20 +398,21 @@ export function EditMedicationSheet({
                     : 'text-ink-soft hover:bg-white/80'
                 }`}
               >
-                {label}
+                {t(labelKey)}
               </button>
             ))}
           </div>
 
           {schedMode === 'specific_days' && (
             <div className="rounded-xl bg-blush-50/50 p-2.5 ring-1 ring-blush-100">
-              <p className="mb-1.5 text-xs font-semibold text-ink">Days</p>
+              <p className="mb-1.5 text-xs font-semibold text-ink">{t('med.days')}</p>
               <div className="flex flex-wrap gap-1">
-                {WEEKDAY_SHORT.map((label, idx) => {
+                {([0, 1, 2, 3, 4, 5, 6] as const).map((idx) => {
+                  const label = t(`weekday.${idx}` as MessageKey)
                   const on = sched.daysOfWeek.includes(idx)
                   return (
                     <button
-                      key={label}
+                      key={idx}
                       type="button"
                       onClick={() =>
                         setSched((f) => ({
@@ -438,7 +440,7 @@ export function EditMedicationSheet({
             <div className="space-y-2 rounded-xl bg-blush-50/50 p-2.5 ring-1 ring-blush-100">
               <label className="block">
                 <span className="mb-0.5 block text-xs font-medium text-ink-soft">
-                  Preset
+                  {t('med.preset')}
                 </span>
                 <select
                   className="soft-input !rounded-xl !px-2.5 !py-1.5 !text-sm"
@@ -450,7 +452,7 @@ export function EditMedicationSheet({
                   {THERAPY_PRESETS.filter((p) => p.id !== 'continuous').map(
                     (p) => (
                       <option key={p.id} value={p.id}>
-                        {p.label}
+                        {t(`therapy.preset.${p.id}` as MessageKey)}
                       </option>
                     ),
                   )}
@@ -461,7 +463,7 @@ export function EditMedicationSheet({
                 <div className="grid grid-cols-2 gap-2">
                   <label className="block">
                     <span className="mb-0.5 block text-xs font-medium text-ink-soft">
-                      Apply (days)
+                      {t('med.applyDays')}
                     </span>
                     <input
                       type="number"
@@ -480,7 +482,7 @@ export function EditMedicationSheet({
                   </label>
                   <label className="block">
                     <span className="mb-0.5 block text-xs font-medium text-ink-soft">
-                      Pause (days)
+                      {t('med.pauseDays')}
                     </span>
                     <input
                       type="number"
@@ -523,11 +525,11 @@ export function EditMedicationSheet({
                             : 'bg-slate-300 text-slate-800'
                         }`}
                       >
-                        {slot.take ? 'Apply' : 'Pause'}
+                        {slot.take ? t('med.apply') : t('med.pause')}
                       </button>
                       <input
                         className="soft-input !rounded-xl !px-2 !py-1 !text-sm"
-                        placeholder="Dose"
+                        placeholder={t('med.dose')}
                         disabled={!slot.take}
                         value={slot.doseLabel ?? ''}
                         onChange={(e) =>
@@ -548,7 +550,7 @@ export function EditMedicationSheet({
 
               <label className="block">
                 <span className="mb-0.5 block text-xs font-medium text-ink-soft">
-                  Cycle starts on
+                  {t('med.cycleStartsOn')}
                 </span>
                 <input
                   type="date"
@@ -561,29 +563,46 @@ export function EditMedicationSheet({
               </label>
 
               <p className="rounded-lg bg-white/90 px-2 py-1.5 text-[11px] text-ink-soft ring-1 ring-blush-100">
-                <span className="font-semibold text-ink">{preview.label}</span>
+                <span className="font-semibold text-ink">
+                  {sched.therapyPreset === 'week_slots'
+                    ? t('therapy.preset.week_slots')
+                    : sched.offDays <= 0
+                      ? t('therapy.preview.applyOnly', { on: sched.onDays })
+                      : t('therapy.preview.applyPause', {
+                          on: sched.onDays,
+                          off: sched.offDays,
+                        })}
+                </span>
                 {' · '}
-                Pause {formatPreviewDate(preview.nextPauseStart)}
+                {t('therapy.preview.pause', {
+                  date: preview.nextPauseStart
+                    ? formatLocalized(preview.nextPauseStart, 'd MMM yyyy', locale)
+                    : t('common.emDash'),
+                })}
                 {' · '}
-                Apply {formatPreviewDate(preview.nextApplyStart)}
+                {t('therapy.preview.apply', {
+                  date: preview.nextApplyStart
+                    ? formatLocalized(preview.nextApplyStart, 'd MMM yyyy', locale)
+                    : t('common.emDash'),
+                })}
               </p>
             </div>
           )}
 
           <div className="rounded-xl bg-blush-50/50 p-2.5 ring-1 ring-blush-100">
             <p className="mb-0.5 text-xs font-semibold text-ink">
-              Take at
+              {t('med.takeAt')}
             </p>
             <p className="mb-1.5 text-[11px] text-ink-muted">
-              Clock times for each dose (e.g. 08:00 and 20:00 if twice a day)
+              {t('med.takeAtHint')}
             </p>
             <div className="flex flex-wrap items-center gap-1.5">
-              {sched.times.map((t, i) => (
+              {sched.times.map((time, i) => (
                 <div key={i} className="flex items-center gap-1">
                   <input
                     type="time"
                     className="soft-input !w-auto !rounded-lg !px-2 !py-1 !text-sm"
-                    value={t}
+                    value={time}
                     onChange={(e) =>
                       setSched((f) => {
                         const times = [...f.times]
@@ -592,7 +611,7 @@ export function EditMedicationSheet({
                       })
                     }
                     required
-                    aria-label={`Dose time ${i + 1}`}
+                    aria-label={t('med.doseTimeAria', { n: i + 1 })}
                   />
                   {sched.times.length > 1 && (
                     <button
@@ -604,7 +623,7 @@ export function EditMedicationSheet({
                           times: f.times.filter((_, j) => j !== i),
                         }))
                       }
-                      aria-label={`Remove time ${i + 1}`}
+                      aria-label={t('med.removeTimeAria', { n: i + 1 })}
                     >
                       ×
                     </button>
@@ -618,7 +637,7 @@ export function EditMedicationSheet({
                   setSched((f) => ({ ...f, times: [...f.times, '12:00'] }))
                 }
               >
-                + Another dose time
+                {t('med.anotherTime')}
               </button>
             </div>
           </div>
@@ -626,7 +645,7 @@ export function EditMedicationSheet({
           <div className="grid grid-cols-2 gap-2 rounded-xl bg-blush-50/50 p-2.5 ring-1 ring-blush-100">
             <label className="block">
               <span className="mb-0.5 block text-xs font-medium text-ink-soft">
-                Start
+                {t('med.start')}
               </span>
               <input
                 type="date"
@@ -645,7 +664,7 @@ export function EditMedicationSheet({
             </label>
             <label className="block">
               <span className="mb-0.5 block text-xs font-medium text-ink-soft">
-                End (optional)
+                {t('med.endOptional')}
               </span>
               <input
                 type="date"
@@ -660,8 +679,7 @@ export function EditMedicationSheet({
 
           {!isNew && medSchedules.length > 1 && (
             <p className="text-[11px] text-ink-muted">
-              Edits the primary schedule ({medSchedules.length} total). Extra
-              schedules stay as-is.
+              {t('med.multiScheduleNote', { count: medSchedules.length })}
             </p>
           )}
         </section>
@@ -678,14 +696,14 @@ export function EditMedicationSheet({
             className="btn-primary !px-4 !py-1.5 text-sm"
             disabled={saving}
           >
-            {saving ? 'Saving…' : isNew ? 'Save medication' : 'Save changes'}
+            {saving ? t('common.saving') : isNew ? t('med.saveNew') : t('med.saveChanges')}
           </button>
           <button
             type="button"
             className="btn-ghost !px-3 !py-1.5 text-sm"
             onClick={onClose}
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           {!isNew && medication && (
             <button
@@ -693,13 +711,13 @@ export function EditMedicationSheet({
               className="ml-auto text-xs font-semibold text-rose-700"
               onClick={() => {
                 if (
-                  confirm(`Delete ${medication.name} and all its schedules?`)
+                  confirm(t('med.deleteConfirm', { name: medication.name }))
                 ) {
                   void deleteMedication(medication.id).then(onClose)
                 }
               }}
             >
-              Delete
+              {t('common.delete')}
             </button>
           )}
         </div>

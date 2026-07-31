@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { useT } from '../i18n'
 
 export function Sheet({
   open,
@@ -14,6 +15,8 @@ export function Sheet({
   children: ReactNode
   wide?: boolean
 }) {
+  const t = useT()
+
   // Lock body scroll while open so the page doesn't shift under the modal
   useEffect(() => {
     if (!open) return
@@ -43,7 +46,7 @@ export function Sheet({
       <button
         type="button"
         className="absolute inset-0 bg-ink/30 backdrop-blur-[2px]"
-        aria-label="Close"
+        aria-label={t('common.close')}
         onClick={onClose}
       />
       <div
@@ -60,7 +63,7 @@ export function Sheet({
             type="button"
             onClick={onClose}
             className="flex h-9 w-9 items-center justify-center rounded-full bg-blush-50 text-lg text-blush-800 hover:bg-blush-100"
-            aria-label="Close"
+            aria-label={t('common.close')}
           >
             ×
           </button>
