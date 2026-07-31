@@ -1,0 +1,33 @@
+schema: spec-driven
+
+context: |
+  PeriMedi is a perimenopause medication companion SPA.
+  Stack: React 19 + Vite + TypeScript + Tailwind CSS v4 + Dexie (IndexedDB name: perimedi) + React Router + date-fns.
+  Client-only: no backend, no accounts, no analytics unless the user explicitly requests them.
+  Home-first: single Home route; edit meds/schedules/symptoms via slide-over sheets, not separate care pages.
+  Domain: Medication (form, dose, color), Schedule (every day | specific weekdays | cyclic exclusive modes),
+  Period (day 1 = first bleed day), Remark/symptom notes, DoseLog (taken vs not taken / pending).
+  Not medical advice — sample data and UI are a personal demo.
+  Prefer short UI copy (+ Med, Cycle settings, + Symptom, Taken / Not taken).
+  Product behavior is specified in openspec/specs/<capability>/spec.md.
+  When behavior changes, update the relevant main specs or an OpenSpec change delta.
+
+rules:
+  specs:
+    - Use SHALL/MUST for normative requirements; avoid should/may for core behavior.
+    - Every requirement needs at least one #### Scenario with WHEN/THEN.
+    - Specs describe observable behavior, not React component or file names.
+    - Prefer capability-level specs over one giant app spec.
+  proposal:
+    - List capabilities using existing kebab-case names under openspec/specs/ when modifying behavior.
+  tasks:
+    - Prefer small, verifiable tasks that map to scenarios where possible.
+
+operations:
+  apply:
+    guidance:
+      - Prefer extending existing sheets over new full pages.
+      - Run npm run build after structural changes.
+  archive:
+    guidance:
+      - Ensure main specs stay free of delta headers (ADDED/MODIFIED/REMOVED).

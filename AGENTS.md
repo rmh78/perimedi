@@ -64,21 +64,15 @@ npm run preview
 4. No menstrual “phase” labels (follicular/luteal etc.) — removed by design.
 5. After structural changes, run `npm run build`.
 
-## Requirements maintenance (required on every commit)
+## OpenSpec
 
-**Always** keep `README.md` → section **Requirements** as the single consolidated list of product requirements for this app.
+Product behavior is specified under `openspec/specs/<capability>/spec.md` (capability-level specs, not a single mega-doc).
 
-Whenever you prepare or create a **git commit** (or finish a feature that will be committed):
+**Workflow**
 
-1. **Extract** functional requirements (FR) and non-functional requirements (NFR) implied by the change and by the commit message / diff.
-2. **Merge** them into `README.md` under **Requirements**:
-   - `### Functional requirements` — what the app must do (user-visible behavior, domain rules).
-   - `### Non-functional requirements` — quality attributes (privacy, stack, performance, UX constraints, offline, etc.).
-3. **Consolidate**, do not only append:
-   - Update or rephrase existing bullets if the change refines them.
-   - Remove bullets that are obsolete or contradicted by the new behavior.
-   - Prefer short, testable statements (one capability or constraint per bullet).
-4. Use stable IDs where practical (`FR-01`, `NFR-01`, …) and keep numbering contiguous when adding new items.
-5. Include this README update **in the same commit** as the feature/fix whenever requirements change.
+1. For behavior changes: update the relevant main specs, **or** open an OpenSpec **change** with delta specs (`## ADDED` / `## MODIFIED` / …) and archive/sync when the change completes.
+2. Spec shape: `## Purpose`, `## Requirements`, `### Requirement: …` (SHALL/MUST), and at least one `#### Scenario:` with WHEN/THEN. Describe observable behavior only — not component or file names.
+3. Ship OpenSpec updates **in the same commit** as the feature/fix when behavior changes.
+4. After editing specs: `openspec validate --specs --strict` when practical.
 
-Do **not** invent requirements unrelated to the product or the change. Do **not** put implementation detail dump (file names, component names) into FR/NFR unless the requirement is explicitly architectural.
+Do not invent requirements unrelated to the product or the change.

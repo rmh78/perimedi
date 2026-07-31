@@ -1,0 +1,35 @@
+# product-constraints Specification
+
+## Purpose
+
+Capture cross-cutting product constraints: demo/not-medical-advice stance, modal reliability, build quality, and UX clarity.
+
+## Requirements
+
+### Requirement: Not medical advice
+The system SHALL present the product as a personal demo companion and SHALL NOT present sample data or UI as clinical medical advice.
+
+#### Scenario: Demo stance
+- **WHEN** the user uses sample data or standard UI copy
+- **THEN** the product does not claim to provide medical advice
+
+### Requirement: Modal presentation
+The system SHALL render modal sheets above page content so they are not clipped by overflow containers and remain closable (including Escape and backdrop where provided).
+
+#### Scenario: Open sheet over chart
+- **WHEN** the user opens a sheet while the cycle chart is visible
+- **THEN** the sheet content is fully visible and can be closed
+
+### Requirement: Production build
+The system SHALL pass TypeScript checking and production bundling via the project’s standard build command.
+
+#### Scenario: Build
+- **WHEN** a developer runs `npm run build`
+- **THEN** the build completes successfully
+
+### Requirement: Clear, non-duplicative primary actions
+The system SHALL prefer compact UI copy and SHALL avoid duplicate primary actions for the same job when a clear single place exists (for example period/symptom actions on the day card rather than also on the hero).
+
+#### Scenario: Hero vs day card
+- **WHEN** the user views Home
+- **THEN** period and symptom primary actions are not duplicated on the hero when provided on the day card or cycle settings
