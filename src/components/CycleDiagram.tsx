@@ -529,7 +529,9 @@ export function CycleDiagram({
           */
           <div
             ref={plotScrollRef}
-            className="overflow-x-auto overscroll-x-contain touch-pan-x [-webkit-overflow-scrolling:touch]"
+            /* Do not set touch-pan-x: on iOS it traps vertical gestures so the
+               page cannot scroll when the finger starts on the med plot. */
+            className="overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch]"
             data-cycle-plot-scroll
           >
             <div
