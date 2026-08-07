@@ -261,7 +261,7 @@ export function EditMedicationSheet({
               {t('med.name')}
             </span>
             <input
-              className="soft-input !rounded-xl !px-2.5 !py-1.5 !text-sm"
+              className="soft-input !rounded-xl !px-2.5 !py-1.5"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -274,7 +274,7 @@ export function EditMedicationSheet({
                 {t('med.form')}
               </span>
               <select
-                className="soft-input !rounded-xl !px-2.5 !py-1.5 !text-sm"
+                className="soft-input !rounded-xl !px-2.5 !py-1.5"
                 value={form}
                 onChange={(e) => {
                   const next = e.target.value as MedForm
@@ -298,7 +298,7 @@ export function EditMedicationSheet({
                 {t('med.defaultDose')}
               </span>
               <input
-                className="soft-input !rounded-xl !px-2.5 !py-1.5 !text-sm"
+                className="soft-input !rounded-xl !px-2.5 !py-1.5"
                 value={doseLabel}
                 onChange={(e) => setDoseLabel(e.target.value)}
                 required
@@ -448,7 +448,7 @@ export function EditMedicationSheet({
                   {t('med.preset')}
                 </span>
                 <select
-                  className="soft-input !rounded-xl !px-2.5 !py-1.5 !text-sm"
+                  className="soft-input !rounded-xl !px-2.5 !py-1.5"
                   value={sched.therapyPreset}
                   onChange={(e) =>
                     applyTherapyPreset(e.target.value as TherapyPresetId)
@@ -474,7 +474,7 @@ export function EditMedicationSheet({
                       type="number"
                       min={1}
                       max={365}
-                      className="soft-input !rounded-xl !px-2.5 !py-1.5 !text-sm"
+                      className="soft-input !rounded-xl !px-2.5 !py-1.5"
                       value={sched.onDays}
                       onChange={(e) =>
                         setSched((f) => ({
@@ -493,7 +493,7 @@ export function EditMedicationSheet({
                       type="number"
                       min={0}
                       max={365}
-                      className="soft-input !rounded-xl !px-2.5 !py-1.5 !text-sm"
+                      className="soft-input !rounded-xl !px-2.5 !py-1.5"
                       value={sched.offDays}
                       onChange={(e) =>
                         setSched((f) => ({
@@ -533,7 +533,7 @@ export function EditMedicationSheet({
                         {slot.take ? t('med.apply') : t('med.pause')}
                       </button>
                       <input
-                        className="soft-input !rounded-xl !px-2 !py-1 !text-sm"
+                        className="soft-input !rounded-xl !px-2 !py-1"
                         placeholder={t('med.dose')}
                         disabled={!slot.take}
                         value={slot.doseLabel ?? ''}
@@ -559,7 +559,7 @@ export function EditMedicationSheet({
                 </span>
                 <input
                   type="date"
-                  className="soft-input !rounded-xl !px-2.5 !py-1.5 !text-sm"
+                  className="soft-input !rounded-xl !px-2.5 !py-1.5"
                   value={sched.anchorDate}
                   onChange={(e) =>
                     setSched((f) => ({ ...f, anchorDate: e.target.value }))
@@ -606,7 +606,7 @@ export function EditMedicationSheet({
                 <div key={i} className="flex items-center gap-1">
                   <input
                     type="time"
-                    className="soft-input !w-auto !rounded-lg !px-2 !py-1 !text-sm"
+                    className="soft-input !w-auto !rounded-lg !px-2 !py-1"
                     value={time}
                     onChange={(e) =>
                       setSched((f) => {
@@ -654,7 +654,7 @@ export function EditMedicationSheet({
               </span>
               <input
                 type="date"
-                className="soft-input !rounded-xl !px-2 !py-1.5 !text-sm"
+                className="soft-input !rounded-xl !px-2 !py-1.5"
                 value={sched.startDate}
                 onChange={(e) =>
                   setSched((f) => ({
@@ -673,7 +673,7 @@ export function EditMedicationSheet({
               </span>
               <input
                 type="date"
-                className="soft-input !rounded-xl !px-2 !py-1.5 !text-sm"
+                className="soft-input !rounded-xl !px-2 !py-1.5"
                 value={sched.endDate}
                 onChange={(e) =>
                   setSched((f) => ({ ...f, endDate: e.target.value }))

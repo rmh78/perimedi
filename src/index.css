@@ -77,9 +77,19 @@ textarea {
   border: 1px solid #f0d0da;
   background: #fffafb;
   padding: 0.6rem 0.85rem;
+  /* 16px minimum: iOS Safari zooms the page when focusing smaller inputs. */
+  font-size: 1rem;
+  line-height: 1.35;
   color: var(--color-ink);
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+/* Keep form controls at 16px even when utility classes use !text-sm (iOS zoom). */
+input.soft-input,
+select.soft-input,
+textarea.soft-input {
+  font-size: 1rem !important;
 }
 
 .soft-input:focus {

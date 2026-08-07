@@ -27,6 +27,9 @@ export function Sheet({
     return () => {
       document.body.style.overflow = prevOverflow
       document.body.style.touchAction = prevTouch
+      // Drop focus so iOS releases any focus-zoom left over from sheet fields.
+      const active = document.activeElement
+      if (active instanceof HTMLElement) active.blur()
     }
   }, [open])
 
