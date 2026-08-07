@@ -178,11 +178,16 @@ export const en = {
   'med.deleteConfirm': 'Delete {{name}} and all its schedules?',
 
   // Day note / symptom
-  'symptom.title': 'Add symptom',
+  'symptom.title': 'Symptoms',
   'symptom.date': 'Date:',
   'symptom.type': 'Type',
   'symptom.description': 'Description',
   'symptom.placeholder': 'e.g. cramps, headache, mood…',
+  'symptom.logged': 'Logged for this day',
+  'symptom.empty': 'No symptoms logged yet.',
+  'symptom.addSection': 'Add symptom',
+  'symptom.saveAdd': 'Add',
+  'symptom.deleteConfirm': 'Delete this symptom?',
 
   // Period settings
   'period.title': 'Period settings',

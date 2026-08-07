@@ -22,11 +22,11 @@ import {
   type MedLane,
 } from '../lib/medSegments'
 import { MedFormIcon } from './MedFormIcon'
-import { setDoseStatus } from '../db/actions'
+import { deleteRemark, setDoseStatus } from '../db/actions'
 import { PeriodSettingsSheet } from './PeriodSettingsSheet'
 import { BloodDropIcon, SymptomMarkIcon } from './CycleMarks'
 import { iconBgFromColor, takenFillFromColor } from '../lib/medColors'
-import { useLocale, type MessageKey } from '../i18n'
+import { useLocale } from '../i18n'
 import { computeDayScrollLeft } from '../lib/chartScroll'
 import {
   CYCLE_DAY_MIN_PX,
@@ -393,45 +393,69 @@ export function CycleDiagram({
         {/* Status chips + add actions under the header row */}
         {selectedCol && (
           <div className="mt-2 flex items-start justify-between gap-2 sm:mt-2.5">
-            <div className="flex min-w-0 flex-1 flex-wrap items-start gap-1.5 sm:gap-2">
-              {selectedCol.isLoggedPeriod ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-800 ring-1 ring-rose-200">
-                  <span className="h-2 w-2 rounded-full bg-rose-500" />
-                  {t('diagram.periodTitle')}
-                </span>
-              ) : selectedCol.info?.isPredictedPeriod ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 ring-1 ring-rose-100">
-                  <span className="h-2 w-2 rounded-full bg-rose-300" />
-                  {t('diagram.predictedPeriodTitle')}
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 text-xs font-medium text-ink-muted ring-1 ring-slate-100">
-                  {t('diagram.noPeriod')}
-                </span>
-              )}
-
-              {selectedSymptoms.length > 0 ? (
-                selectedSymptoms.map((s) => (
-                  <span
-                    key={s.id}
-                    className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-900 ring-1 ring-violet-100"
-                    title={s.body}
-                  >
-                    <span className="h-2 w-2 shrink-0 rounded-full bg-violet-400" />
-                    <span className="truncate">
-                      <span className="font-semibold text-violet-700">
-                        {t(`remark.${s.kind}` as MessageKey)}
-                      </span>
-                      {': '}
-                      {s.body}
-                    </span>
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
+                {selectedCol.isLoggedPeriod ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold leading-none text-rose-800 ring-1 ring-rose-200">
+                    <span className="h-2 w-2 rounded-full bg-rose-500" />
+                    {t('diagram.periodTitle')}
                   </span>
-                ))
-              ) : (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 text-xs font-medium text-ink-muted ring-1 ring-slate-100">
-                  {t('diagram.noSymptoms')}
-                </span>
-              )}
+                ) : selectedCol.info?.isPredictedPeriod ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold leading-none text-rose-700 ring-1 ring-rose-100">
+                    <span className="h-2 w-2 rounded-full bg-rose-300" />
+                    {t('diagram.predictedPeriodTitle')}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 text-xs font-medium leading-none text-ink-muted ring-1 ring-slate-100">
+                    {t('diagram.noPeriod')}
+                  </span>
+                )}
+              </div>
+
+              {/* Always under period; wrap side-by-side when there is room. */}
+              <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                {selectedSymptoms.length > 0 ? (
+                  selectedSymptoms.map((s) => (
+                    <div
+                      key={s.id}
+                      className="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full bg-violet-50 py-1 pl-2.5 pr-1 text-xs font-medium leading-none text-violet-900 ring-1 ring-violet-100"
+                    >
+                      <button
+                        type="button"
+                        className="inline-flex min-w-0 max-w-full items-center gap-1.5 text-left leading-none transition hover:text-violet-700"
+                        title={s.body}
+                        onClick={() => {
+                          if (onAddSymptom && selectedCol.dateKey) {
+                            onAddSymptom(selectedCol.dateKey)
+                          }
+                        }}
+                      >
+                        <span className="h-2 w-2 shrink-0 rounded-full bg-violet-400" />
+                        <span className="min-w-0 truncate leading-none">
+                          {s.body}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-sm leading-none text-violet-700 transition hover:bg-violet-100"
+                        aria-label={t('common.delete')}
+                        title={t('common.delete')}
+                        onClick={() => {
+                          if (confirm(t('symptom.deleteConfirm'))) {
+                            void deleteRemark(s.id)
+                          }
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 text-xs font-medium leading-none text-ink-muted ring-1 ring-slate-100">
+                    {t('diagram.noSymptoms')}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="flex shrink-0 items-center gap-1.5 pb-0.5 pr-0.5">
@@ -705,19 +729,19 @@ function CycleDayStrip({
                   />
                 )}
               </div>
-              {/* Row 2: symptom icons */}
-              <div className="flex h-2.5 w-full items-center justify-center gap-px">
-                {col.symptoms.slice(0, 3).map((s) => (
+              {/* One mark only — narrow day columns overflow with multiple icons */}
+              <div className="flex h-2.5 w-full items-center justify-center">
+                {col.symptoms[0] && (
                   <SymptomMarkIcon
-                    key={s.id}
-                    kind={s.kind}
-                    title={s.body}
+                    kind={col.symptoms[0].kind}
+                    title={
+                      col.symptoms.length > 1
+                        ? t('home.symptomsCount', {
+                            count: col.symptoms.length,
+                          })
+                        : col.symptoms[0].body
+                    }
                   />
-                ))}
-                {col.symptoms.length > 3 && (
-                  <span className="text-[7px] font-bold leading-none text-violet-600">
-                    +{col.symptoms.length - 3}
-                  </span>
                 )}
               </div>
 

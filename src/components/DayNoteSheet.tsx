@@ -1,8 +1,10 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Sheet } from './Sheet'
 import type { RemarkKind } from '../types'
-import { addRemark } from '../db/actions'
-import { useLocale } from '../i18n'
+import { addRemark, deleteRemark } from '../db/actions'
+import { useRemarks } from '../hooks/useAppData'
+import { toDateKey } from '../lib/dates'
+import { useLocale, type MessageKey } from '../i18n'
 import { formatLongDateLocalized } from '../i18n'
 
 type Props = {
@@ -12,10 +14,23 @@ type Props = {
   onSaved: () => void
 }
 
+function isSymptomKind(kind: string): boolean {
+  return kind === 'cycle' || kind === 'side_effect' || kind === 'note' || kind === 'other'
+}
+
 export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
   const { t, locale } = useLocale()
+  const remarks = useRemarks()
   const [body, setBody] = useState('')
   const [kind, setKind] = useState<RemarkKind>('cycle')
+
+  const daySymptoms = useMemo(
+    () =>
+      remarks.filter(
+        (r) => toDateKey(r.occurredOn) === dateKey && isSymptomKind(r.kind),
+      ),
+    [remarks, dateKey],
+  )
 
   useEffect(() => {
     if (open) {
@@ -32,6 +47,14 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
       kind,
       occurredOn: dateKey,
     })
+    setBody('')
+    setKind('cycle')
+    onSaved()
+  }
+
+  async function onDelete(id: string) {
+    if (!confirm(t('symptom.deleteConfirm'))) return
+    await deleteRemark(id)
     onSaved()
   }
 
@@ -41,7 +64,49 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
         {t('symptom.date')}{' '}
         <strong>{formatLongDateLocalized(dateKey, locale)}</strong>
       </p>
-      <form onSubmit={onSubmit} className="space-y-3">
+
+      <div className="mb-4 space-y-2">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
+          {t('symptom.logged')}
+        </p>
+        {daySymptoms.length === 0 ? (
+          <p className="rounded-xl bg-slate-50 px-3 py-2 text-xs text-ink-muted ring-1 ring-slate-100">
+            {t('symptom.empty')}
+          </p>
+        ) : (
+          <ul className="overflow-hidden rounded-xl ring-1 ring-blush-100">
+            {daySymptoms.map((s, i) => (
+              <li
+                key={s.id}
+                className={`flex items-start gap-2 px-2.5 py-2 ${
+                  i < daySymptoms.length - 1
+                    ? 'border-b border-blush-100/80'
+                    : ''
+                }`}
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-violet-800">
+                    {t(`remark.${s.kind}` as MessageKey)}
+                  </p>
+                  <p className="mt-0.5 text-sm text-ink">{s.body}</p>
+                </div>
+                <button
+                  type="button"
+                  className="btn-soft !min-h-9 shrink-0 !px-2.5 !py-1 text-xs"
+                  onClick={() => void onDelete(s.id)}
+                >
+                  {t('common.delete')}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <form onSubmit={onSubmit} className="space-y-3 border-t border-blush-100 pt-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
+          {t('symptom.addSection')}
+        </p>
         <label className="block text-sm">
           {t('symptom.type')}
           <select
@@ -68,10 +133,10 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
         </label>
         <div className="flex gap-2">
           <button type="submit" className="btn-primary">
-            {t('common.save')}
+            {t('symptom.saveAdd')}
           </button>
           <button type="button" className="btn-ghost" onClick={onClose}>
-            {t('common.cancel')}
+            {t('common.close')}
           </button>
         </div>
       </form>

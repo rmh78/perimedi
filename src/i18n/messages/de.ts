@@ -168,11 +168,16 @@ export const de: Record<MessageKey, string> = {
   'med.saveChanges': 'Änderungen speichern',
   'med.deleteConfirm': '{{name}} und alle Zeitpläne löschen?',
 
-  'symptom.title': 'Symptom hinzufügen',
+  'symptom.title': 'Symptome',
   'symptom.date': 'Datum:',
   'symptom.type': 'Typ',
   'symptom.description': 'Beschreibung',
   'symptom.placeholder': 'z. B. Krämpfe, Kopfschmerzen, Stimmung…',
+  'symptom.logged': 'An diesem Tag geloggt',
+  'symptom.empty': 'Noch keine Symptome geloggt.',
+  'symptom.addSection': 'Symptom hinzufügen',
+  'symptom.saveAdd': 'Hinzufügen',
+  'symptom.deleteConfirm': 'Dieses Symptom löschen?',
 
   'period.title': 'Perioden-Einstellungen',
   'period.intro':
