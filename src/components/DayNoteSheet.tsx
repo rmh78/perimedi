@@ -63,7 +63,6 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
             value={body}
             onChange={(e) => setBody(e.target.value)}
             required
-            autoFocus
             placeholder={t('symptom.placeholder')}
           />
         </label>

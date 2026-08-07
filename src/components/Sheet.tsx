@@ -1,6 +1,16 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useT } from '../i18n'
+
+const VIEWPORT_BASE =
+  'width=device-width, initial-scale=1, viewport-fit=cover'
+/** While a sheet is open, block iOS focus-zoom so padding stays and scale resets on close. */
+const VIEWPORT_SHEET_OPEN =
+  'width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover'
+
+function getViewportMeta(): HTMLMetaElement | null {
+  return document.querySelector('meta[name="viewport"]')
+}
 
 export function Sheet({
   open,
@@ -17,6 +27,28 @@ export function Sheet({
 }) {
   const t = useT()
 
+  // Before paint: lock scale so autoFocus / field focus cannot zoom the page.
+  useLayoutEffect(() => {
+    if (!open) return
+    const meta = getViewportMeta()
+    if (!meta) return
+    const previous = meta.getAttribute('content') ?? VIEWPORT_BASE
+    meta.setAttribute('content', VIEWPORT_SHEET_OPEN)
+    return () => {
+      meta.setAttribute('content', previous)
+      // Nudge iOS to re-apply the restored scale after focus is gone.
+      const active = document.activeElement
+      if (active instanceof HTMLElement) active.blur()
+      // Re-assert base viewport next frame (some iOS versions keep zoom otherwise).
+      requestAnimationFrame(() => {
+        const m = getViewportMeta()
+        if (m && m.getAttribute('content') === previous) {
+          m.setAttribute('content', VIEWPORT_BASE)
+        }
+      })
+    }
+  }, [open])
+
   // Lock body scroll while open so the page doesn't shift under the modal
   useEffect(() => {
     if (!open) return
@@ -27,7 +59,6 @@ export function Sheet({
     return () => {
       document.body.style.overflow = prevOverflow
       document.body.style.touchAction = prevTouch
-      // Drop focus so iOS releases any focus-zoom left over from sheet fields.
       const active = document.activeElement
       if (active instanceof HTMLElement) active.blur()
     }

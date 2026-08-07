@@ -51,11 +51,18 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-button,
+button {
+  font: inherit;
+}
+
+/* Never inherit text-sm (14px) into form fields — iOS Safari auto-zooms below 16px. */
 input,
 select,
 textarea {
-  font: inherit;
+  font-family: inherit;
+  font-weight: inherit;
+  font-size: 16px;
+  line-height: 1.35;
 }
 
 .font-display {

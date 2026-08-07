@@ -265,7 +265,6 @@ export function EditMedicationSheet({
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              autoFocus
             />
           </label>
           <div className="grid grid-cols-2 gap-2">
