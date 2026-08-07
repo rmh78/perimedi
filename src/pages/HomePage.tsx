@@ -155,24 +155,24 @@ export function HomePage() {
   }
 
   return (
-    <div className="space-y-5">
-      {/* Hero: cycle + progress */}
-      <section className="glass-card relative overflow-hidden rounded-[1.75rem] p-5 sm:p-6">
+    <div className="space-y-3 sm:space-y-5">
+      {/* Hero: compact on SE — text + dose ring side-by-side */}
+      <section className="glass-card relative overflow-hidden rounded-2xl p-3 sm:rounded-[1.75rem] sm:p-6">
         <div className="pointer-events-none absolute -right-8 -top-10 h-36 w-36 rounded-full bg-blush-200/50 blur-2xl" />
         <div className="pointer-events-none absolute -bottom-10 left-10 h-28 w-28 rounded-full bg-lilac-200/40 blur-2xl" />
 
-        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blush-600">
+        <div className="relative flex flex-row items-center justify-between gap-3 sm:items-start sm:gap-5">
+          <div className="min-w-0 flex-1 space-y-1 sm:space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-blush-600 sm:text-xs sm:tracking-[0.2em]">
               {formatLongDateLocalized(today, locale)}
             </p>
-            <h2 className="font-display text-3xl font-semibold text-blush-900 sm:text-4xl">
+            <h2 className="font-display text-2xl font-semibold leading-tight text-blush-900 sm:text-4xl">
               {todayInfo.cycleDay != null
                 ? t('home.cycleDay', { day: todayInfo.cycleDay })
                 : t('home.yourDay')}
             </h2>
             {nextPeriod && (
-              <p className="text-sm text-ink-soft">
+              <p className="text-xs text-ink-soft sm:text-sm">
                 {t('home.nextPeriod')}{' '}
                 <span className="font-medium text-blush-800">
                   {formatLongDateLocalized(nextPeriod, locale)}
@@ -181,23 +181,23 @@ export function HomePage() {
             )}
           </div>
 
-          <div className="flex w-full max-w-[11rem] flex-col items-center rounded-3xl bg-gradient-to-b from-blush-50 to-white p-4 ring-1 ring-blush-100 sm:w-auto">
+          <div className="flex w-auto shrink-0 flex-col items-center rounded-2xl bg-gradient-to-b from-blush-50 to-white p-2 ring-1 ring-blush-100 sm:rounded-3xl sm:p-4">
             <div
-              className="relative flex h-24 w-24 items-center justify-center rounded-full"
+              className="relative flex h-16 w-16 items-center justify-center rounded-full sm:h-24 sm:w-24"
               style={{
                 background: `conic-gradient(#e85a84 ${progress}%, #fce7ef ${progress}%)`,
               }}
             >
-              <div className="flex h-[4.5rem] w-[4.5rem] flex-col items-center justify-center rounded-full bg-white">
-                <span className="font-display text-2xl font-semibold text-blush-800">
+              <div className="flex h-12 w-12 flex-col items-center justify-center rounded-full bg-white sm:h-[4.5rem] sm:w-[4.5rem]">
+                <span className="font-display text-lg font-semibold text-blush-800 sm:text-2xl">
                   {total ? `${taken}/${total}` : t('common.emDash')}
                 </span>
-                <span className="text-[10px] font-medium uppercase tracking-wide text-ink-muted">
+                <span className="text-[8px] font-medium uppercase tracking-wide text-ink-muted sm:text-[10px]">
                   {t('home.taken')}
                 </span>
               </div>
             </div>
-            <p className="mt-2 text-center text-xs text-ink-soft">
+            <p className="mt-1 text-center text-[10px] text-ink-soft sm:mt-2 sm:text-xs">
               {t('home.dosesToday')}
             </p>
           </div>
@@ -219,10 +219,12 @@ export function HomePage() {
       />
 
       {/* Month calendar */}
-      <section className="glass-card rounded-[1.75rem] p-4 sm:p-5">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h3 className="section-title text-[1.45rem]">{t('home.month')}</h3>
+      <section className="glass-card rounded-2xl p-3 sm:rounded-[1.75rem] sm:p-5">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2 sm:mb-3 sm:gap-3">
+          <div className="min-w-0">
+            <h3 className="section-title text-[1.3rem] sm:text-[1.45rem]">
+              {t('home.month')}
+            </h3>
             <p className="text-sm text-ink-soft">
               {formatDate(monthAnchor, 'MMMM yyyy')}
             </p>
@@ -230,14 +232,14 @@ export function HomePage() {
           <div className="flex gap-1.5">
             <button
               type="button"
-              className="btn-ghost !px-3 !py-1.5 text-xs"
+              className="btn-ghost !min-h-10 !px-3 !py-2 text-xs"
               onClick={() => setMonthAnchor((d) => addMonths(d, -1))}
             >
               {t('common.prev')}
             </button>
             <button
               type="button"
-              className="btn-ghost !px-3 !py-1.5 text-xs"
+              className="btn-ghost !min-h-10 !px-3 !py-2 text-xs"
               onClick={() => {
                 setMonthAnchor(new Date())
                 setSelected(today)
@@ -247,7 +249,7 @@ export function HomePage() {
             </button>
             <button
               type="button"
-              className="btn-ghost !px-3 !py-1.5 text-xs"
+              className="btn-ghost !min-h-10 !px-3 !py-2 text-xs"
               onClick={() => setMonthAnchor((d) => addMonths(d, 1))}
             >
               {t('common.next')}
@@ -304,7 +306,7 @@ export function HomePage() {
                   ]
                     .filter(Boolean)
                     .join(' · ')}
-                  className={`relative min-h-16 border-b border-r border-blush-50 p-1.5 text-left transition sm:min-h-[4.5rem] ${cycleDayClass(info)} ${
+                  className={`relative min-h-11 border-b border-r border-blush-50 p-1.5 text-left transition sm:min-h-[4.5rem] ${cycleDayClass(info)} ${
                     !inMonth ? 'opacity-35' : ''
                   } ${
                     isSelected

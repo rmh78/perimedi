@@ -9,7 +9,8 @@ export function BloodDropIcon({
   title?: string
   size?: 'sm' | 'md'
 }) {
-  const w = size === 'md' ? 12 : 10
+  // Keep path inset in the viewBox so stroke never clips at cell borders.
+  const w = size === 'md' ? 11 : 9
   const h = size === 'md' ? 14 : 12
   return (
     <svg
@@ -22,10 +23,10 @@ export function BloodDropIcon({
     >
       {title ? <title>{title}</title> : null}
       <path
-        d="M6 1C6 1 1.5 6.2 1.5 9.2a4.5 4.5 0 0 0 9 0C10.5 6.2 6 1 6 1Z"
+        d="M6 1.75C6 1.75 2.2 6.1 2.2 9a3.8 3.8 0 0 0 7.6 0C9.8 6.1 6 1.75 6 1.75Z"
         fill={predicted ? '#f43f5e' : '#e11d48'}
         stroke={predicted ? '#fb7185' : '#be123c'}
-        strokeWidth="0.6"
+        strokeWidth="0.55"
         strokeLinejoin="round"
       />
     </svg>

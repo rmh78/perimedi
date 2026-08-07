@@ -93,6 +93,7 @@ textarea {
   color: white;
   font-weight: 600;
   font-size: 0.875rem;
+  min-height: 2.75rem;
   padding: 0.55rem 1.1rem;
   border: none;
   box-shadow: 0 8px 20px -10px rgb(177 45 87 / 0.55);
@@ -110,6 +111,7 @@ textarea {
   color: var(--color-blush-800);
   font-weight: 600;
   font-size: 0.875rem;
+  min-height: 2.75rem;
   padding: 0.55rem 1.1rem;
   border: 1px solid #f0d0da;
   transition: background 0.12s;
@@ -125,6 +127,7 @@ textarea {
   color: #94274b;
   font-weight: 600;
   font-size: 0.875rem;
+  min-height: 2.75rem;
   padding: 0.55rem 1.1rem;
   border: 1px solid #fecdd9;
 }

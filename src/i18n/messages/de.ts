@@ -16,8 +16,13 @@ export const de: Record<MessageKey, string> = {
 
   'layout.tagline': 'Unterstützung in der Perimenopause',
   'layout.subtitle':
-    'Medikamente, Zyklen und Symptome in der Perimenopause — alles auf einer Seite. Daten bleiben nur in diesem Browser.',
+    'Medikamente, Zyklen und Symptome in der Perimenopause. Daten bleiben nur in diesem Browser.',
   'layout.more': '⋯ Mehr',
+
+  'nav.aria': 'Hauptnavigation',
+  'nav.cycle': 'Zyklus',
+  'nav.month': 'Monat',
+  'nav.more': 'Mehr',
 
   'language.label': 'Sprache',
   'language.en': 'English',
@@ -69,6 +74,8 @@ export const de: Record<MessageKey, string> = {
   'diagram.addMed': '+ Med',
   'diagram.cycleSettings': 'Zyklus-Einstellungen',
   'diagram.addSymptom': '+ Symptom',
+  'diagram.prevDay': 'Vorheriger Tag',
+  'diagram.nextDay': 'Nächster Tag',
   'diagram.taken': 'Genommen',
   'diagram.notTaken': 'Nicht genommen',
   'diagram.noDose': 'Keine Dosis',

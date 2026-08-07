@@ -20,10 +20,13 @@ export function Sheet({
   // Lock body scroll while open so the page doesn't shift under the modal
   useEffect(() => {
     if (!open) return
-    const prev = document.body.style.overflow
+    const prevOverflow = document.body.style.overflow
+    const prevTouch = document.body.style.touchAction
     document.body.style.overflow = 'hidden'
+    document.body.style.touchAction = 'none'
     return () => {
-      document.body.style.overflow = prev
+      document.body.style.overflow = prevOverflow
+      document.body.style.touchAction = prevTouch
     }
   }, [open])
 
@@ -42,10 +45,17 @@ export function Sheet({
   // Portal to body so parents with overflow/transform (e.g. glass cards)
   // cannot clip or trap the dialog.
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4">
+    <div
+      className="fixed inset-0 z-[100] flex items-end justify-center px-3 pb-3 pt-6 sm:items-center sm:p-6"
+      style={{
+        paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))',
+        paddingLeft: 'max(0.75rem, env(safe-area-inset-left, 0px))',
+        paddingRight: 'max(0.75rem, env(safe-area-inset-right, 0px))',
+      }}
+    >
       <button
         type="button"
-        className="absolute inset-0 bg-ink/30 backdrop-blur-[2px]"
+        className="absolute inset-0 z-0 bg-ink/30 backdrop-blur-[2px]"
         aria-label={t('common.close')}
         onClick={onClose}
       />
@@ -53,22 +63,24 @@ export function Sheet({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`relative z-10 flex max-h-[92vh] w-full flex-col rounded-t-3xl bg-cream shadow-2xl ring-1 ring-blush-100 sm:rounded-3xl ${
+        className={`relative z-10 flex w-full max-h-[min(92dvh,92vh)] flex-col rounded-3xl bg-cream shadow-2xl ring-1 ring-blush-100 sm:max-h-[min(90dvh,90vh)] ${
           wide ? 'sm:max-w-xl' : 'sm:max-w-md'
         }`}
       >
-        <div className="flex shrink-0 items-center justify-between border-b border-blush-100 px-4 py-3">
-          <h2 className="font-display text-xl font-semibold text-ink">{title}</h2>
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-blush-100 px-4 py-3 sm:px-5">
+          <h2 className="font-display min-w-0 truncate text-xl font-semibold text-ink">
+            {title}
+          </h2>
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-blush-50 text-lg text-blush-800 hover:bg-blush-100"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blush-50 text-xl leading-none text-blush-800 hover:bg-blush-100"
             aria-label={t('common.close')}
           >
             ×
           </button>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-5 sm:py-3">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3 sm:px-5 sm:py-4">
           {children}
         </div>
       </div>

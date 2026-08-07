@@ -1,13 +1,7 @@
-# home-surface Specification
-
-## Purpose
-
-Provide a lean multi-screen shell with bottom navigation so the cycle chart, month calendar, and More tools are each a primary destination without one long scrolling page.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Bottom navigation shell
-The system SHALL present a bottom navigation band that switches among Cycle, Month, and More primary screens without requiring a modal as the only way to open those destinations.
+The system SHALL present a bottom navigation band that switches among **Cycle**, **Month**, and **More** primary screens without requiring a modal as the only way to open those destinations.
 
 #### Scenario: Open the app
 - **WHEN** the user opens the application
@@ -41,6 +35,8 @@ The system SHALL provide a control on the Cycle screen that sets the shared sele
 #### Scenario: Activate Today on Cycle
 - **WHEN** the user activates the Today control on the Cycle screen
 - **THEN** the selected date becomes today and the cycle plot scrolls so today’s day-cell is visible when the plot overflows
+
+## ADDED Requirements
 
 ### Requirement: Homogeneous primary cards
 Primary screens Cycle, Month, and More SHALL present content in a glass-style card without redundant page titles that only repeat the bottom-nav label (e.g. no standalone “Month” or “More” heading whose only role is the tab name).

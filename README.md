@@ -44,6 +44,17 @@ npm run build
 npm run preview
 ```
 
+### Layout screenshots (iPhone SE 375)
+
+With the app running (`npm run dev` or preview):
+
+```bash
+npm run shot:se
+# or: BASE_URL=http://127.0.0.1:4173 npm run shot:se
+```
+
+Writes PNGs under `shots/` (gitignored) at **375×667** for layout review.
+
 ## Deploy
 
 Static SPA — no server, no env vars. Output is `dist/` after `npm run build`.

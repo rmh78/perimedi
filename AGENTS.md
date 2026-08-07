@@ -50,6 +50,7 @@ npm run preview
 ## Conventions
 
 - **i18n**: product chrome via `useT()` / `useLocale()` (`src/i18n`). English keys in `messages/en.ts`; German must satisfy the same key set in `messages/de.ts`. Prefer short labels. User-entered text is never translated. Language control lives in More; preference is `localStorage` (`perimedi.locale`).
+- **Layout review (agent)**: use Playwright SE **375×667** screenshots, not guesswork. With app running (`npm run dev` or `npm run preview`): `npm run shot:se` → PNGs in `shots/` (gitignored). After layout changes, re-run shots and **read the PNGs** before claiming UI is good. Override URL with `BASE_URL=http://127.0.0.1:4173`.
 - Functional React components; state via hooks; Dexie `liveQuery` for reactive data.
 - Sheets: `Sheet` shell (portaled) + `EditMedicationSheet` (med + schedule), `DayNoteSheet`, `PeriodSettingsSheet`, `MoreSheet`.
 - Shared marks: `CycleMarks` (blood drop, symptom spark).

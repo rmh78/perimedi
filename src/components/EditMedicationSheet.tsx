@@ -310,9 +310,9 @@ export function EditMedicationSheet({
             <span className="mb-0.5 block text-xs font-medium text-ink-soft">
               {t('med.color')}
             </span>
-            <div className="flex items-center gap-2.5 py-1">
+            <div className="flex items-start gap-2.5 py-1">
               <span
-                className="h-9 w-9 shrink-0 overflow-hidden rounded-full"
+                className="mt-0.5 h-9 w-9 shrink-0 overflow-hidden rounded-full"
                 style={{
                   boxShadow: `0 0 0 4px ${color}`,
                   background: `${color}33`,
@@ -320,7 +320,12 @@ export function EditMedicationSheet({
               >
                 <MedFormIcon form={form} fill />
               </span>
-              <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-1.5 overflow-x-auto py-1">
+              {/* Two compact rows so the full palette fits on SE without horizontal scroll */}
+              <div
+                className="grid min-w-0 flex-1 grid-cols-8 gap-x-1.5 gap-y-2 py-0.5"
+                role="group"
+                aria-label={t('med.color')}
+              >
                 {MED_COLOR_PALETTE.map((c) => {
                   const selected = color.toLowerCase() === c.toLowerCase()
                   return (
@@ -329,7 +334,7 @@ export function EditMedicationSheet({
                       type="button"
                       title={c}
                       onClick={() => setColor(c)}
-                      className="h-5 w-5 shrink-0 rounded-full"
+                      className="mx-auto h-5 w-5 rounded-full"
                       style={{
                         background: c,
                         boxShadow: selected

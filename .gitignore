@@ -30,3 +30,6 @@ lerna-debug.log*
 !.env.example
 
 .vercel
+
+# Agent layout review screenshots (Playwright)
+shots/

@@ -16,8 +16,14 @@ export const en = {
   // Layout
   'layout.tagline': 'Perimenopause support',
   'layout.subtitle':
-    'Medications, cycles, and symptoms for perimenopause — all on this page. Data stays only in this browser.',
+    'Medications, cycles, and symptoms for perimenopause. Data stays only in this browser.',
   'layout.more': '⋯ More',
+
+  // Bottom navigation
+  'nav.aria': 'Main navigation',
+  'nav.cycle': 'Cycle',
+  'nav.month': 'Month',
+  'nav.more': 'More',
 
   // Language
   'language.label': 'Language',
@@ -74,6 +80,8 @@ export const en = {
   'diagram.addMed': '+ Med',
   'diagram.cycleSettings': 'Cycle settings',
   'diagram.addSymptom': '+ Symptom',
+  'diagram.prevDay': 'Previous day',
+  'diagram.nextDay': 'Next day',
   'diagram.taken': 'Taken',
   'diagram.notTaken': 'Not taken',
   'diagram.noDose': 'No dose',
