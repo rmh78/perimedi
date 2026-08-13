@@ -3,7 +3,6 @@ import type { MessageKey } from './en'
 export const de: Record<MessageKey, string> = {
   'common.close': 'Schließen',
   'common.cancel': 'Abbrechen',
-  'common.save': 'Speichern',
   'common.edit': 'Bearbeiten',
   'common.delete': 'Löschen',
   'common.today': 'Heute',
@@ -11,13 +10,9 @@ export const de: Record<MessageKey, string> = {
   'common.next': 'Weiter',
   'common.optional': 'Optional',
   'common.saving': 'Speichern…',
-  'common.days': 'Tage',
   'common.emDash': '—',
 
   'layout.tagline': 'Unterstützung in der Perimenopause',
-  'layout.subtitle':
-    'Medikamente, Zyklen und Symptome in der Perimenopause. Daten bleiben nur in diesem Browser.',
-  'layout.more': '⋯ Mehr',
 
   'nav.aria': 'Hauptnavigation',
   'nav.cycle': 'Zyklus',
@@ -28,14 +23,6 @@ export const de: Record<MessageKey, string> = {
   'language.en': 'English',
   'language.de': 'Deutsch',
 
-  'home.cycleDay': 'Zyklustag {{day}}',
-  'home.yourDay': 'Dein Tag',
-  'home.nextPeriod': 'Nächste Periode (geschätzt):',
-  'home.taken': 'genommen',
-  'home.dosesToday': 'Dosen heute',
-  'home.month': 'Monat',
-  'home.cycleStart': 'Zyklusbeginn',
-  'home.cycleEnd': 'Zyklusende',
   'home.period': 'Periode',
   'home.predictedPeriod': 'Vorhergesagte Periode',
   'home.symptomsCount': '{{count}} Symptom(e)',
@@ -49,16 +36,6 @@ export const de: Record<MessageKey, string> = {
   'legend.taken': 'Genommen',
   'legend.notTaken': 'Nicht genommen',
 
-  'badge.period': 'Periode',
-  'badge.predicted': 'Vorhergesagt',
-  'badge.day': 'Tag {{day}}',
-  'badge.noCycleData': 'Noch keine Zyklusdaten',
-
-  'diagram.title': 'Medikamente & Zyklus',
-  'diagram.hint':
-    'Tag wählen · Med-Symbol tippen = genommen · Name tippen = bearbeiten',
-  'diagram.since': 'Seit {{date}}',
-  'diagram.logPeriodAlign': 'Periode loggen, um Tage auszurichten',
   'diagram.medsAndDoses': 'Medikamente & Dosen',
   'diagram.periodAlignHint':
     'Öffne Zyklus-Einstellungen und logge eine Periode, damit Medikamente und Symptome zu den Zyklustagen passen.',
@@ -102,11 +79,6 @@ export const de: Record<MessageKey, string> = {
   'flow.light': 'Leicht',
   'flow.medium': 'Mittel',
   'flow.heavy': 'Stark',
-
-  'dose.taken': 'Genommen',
-  'dose.notTaken': 'Nicht genommen',
-  'dose.pending': 'Offen',
-  'dose.skipped': 'Übersprungen',
 
   'sched.everyDay': 'Jeden Tag',
   'sched.specificDays': 'Bestimmte Tage',
@@ -228,14 +200,4 @@ export const de: Record<MessageKey, string> = {
   'more.clearLabel': 'Alles löschen',
   'more.clearConfirm': 'Alle PeriMedi-Daten auf diesem Gerät löschen?',
   'more.cleared': 'Gelöscht.',
-  'more.nextPeriod': 'Nächste Periode (geschätzt):',
-  'more.cycleSaved': 'Zyklus-Einstellungen gespeichert.',
-  'more.historyHint':
-    'Tippe auf Bearbeiten für Start/Ende. Volle Bearbeitung über Perioden-Einstellungen in der Zyklustag-Leiste.',
-  'more.noPeriods': 'Keine Perioden geloggt.',
-  'more.promptStart': 'Startdatum (JJJJ-MM-TT)',
-  'more.promptEnd': 'Enddatum (JJJJ-MM-TT), leer wenn laufend',
-  'more.endBeforeStart': 'Enddatum darf nicht vor dem Start liegen.',
-  'more.promptPeriodStart': 'Periodenstart (JJJJ-MM-TT)',
-  'more.logPeriodDate': '+ Periode loggen (Datum)',
 }

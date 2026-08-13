@@ -2,7 +2,6 @@ export const en = {
   // Common
   'common.close': 'Close',
   'common.cancel': 'Cancel',
-  'common.save': 'Save',
   'common.edit': 'Edit',
   'common.delete': 'Delete',
   'common.today': 'Today',
@@ -10,14 +9,10 @@ export const en = {
   'common.next': 'Next',
   'common.optional': 'Optional',
   'common.saving': 'Saving…',
-  'common.days': 'days',
   'common.emDash': '—',
 
   // Layout
   'layout.tagline': 'Perimenopause support',
-  'layout.subtitle':
-    'Medications, cycles, and symptoms for perimenopause. Data stays only in this browser.',
-  'layout.more': '⋯ More',
 
   // Bottom navigation
   'nav.aria': 'Main navigation',
@@ -30,15 +25,6 @@ export const en = {
   'language.en': 'English',
   'language.de': 'Deutsch',
 
-  // Home hero
-  'home.cycleDay': 'Cycle day {{day}}',
-  'home.yourDay': 'Your day',
-  'home.nextPeriod': 'Next period (est.):',
-  'home.taken': 'taken',
-  'home.dosesToday': 'Doses today',
-  'home.month': 'Month',
-  'home.cycleStart': 'Cycle start',
-  'home.cycleEnd': 'Cycle end',
   'home.period': 'Period',
   'home.predictedPeriod': 'Predicted period',
   'home.symptomsCount': '{{count}} symptom(s)',
@@ -53,18 +39,7 @@ export const en = {
   'legend.taken': 'Taken',
   'legend.notTaken': 'Not taken',
 
-  // Cycle badge
-  'badge.period': 'Period',
-  'badge.predicted': 'Predicted',
-  'badge.day': 'Day {{day}}',
-  'badge.noCycleData': 'No cycle data yet',
-
   // Cycle diagram
-  'diagram.title': 'Meds & cycle',
-  'diagram.hint':
-    'Select a day · tap med icon to mark taken · tap name to edit',
-  'diagram.since': 'Since {{date}}',
-  'diagram.logPeriodAlign': 'Log period to align days',
   'diagram.medsAndDoses': 'Medications & doses',
   'diagram.periodAlignHint':
     'Open Cycle settings and log a period so meds and symptoms line up with cycle days.',
@@ -109,11 +84,6 @@ export const en = {
   'flow.light': 'Light',
   'flow.medium': 'Medium',
   'flow.heavy': 'Heavy',
-
-  'dose.taken': 'Taken',
-  'dose.notTaken': 'Not taken',
-  'dose.pending': 'Pending',
-  'dose.skipped': 'Skipped',
 
   'sched.everyDay': 'Every day',
   'sched.specificDays': 'Specific days',
@@ -240,16 +210,6 @@ export const en = {
   'more.clearLabel': 'Clear all',
   'more.clearConfirm': 'Delete all PeriMedi data on this device?',
   'more.cleared': 'Cleared.',
-  'more.nextPeriod': 'Next period (est.):',
-  'more.cycleSaved': 'Cycle settings saved.',
-  'more.historyHint':
-    'Tap Edit to change start/end dates. Open Period settings from the cycle day strip for full editing.',
-  'more.noPeriods': 'No periods logged.',
-  'more.promptStart': 'Start date (YYYY-MM-DD)',
-  'more.promptEnd': 'End date (YYYY-MM-DD), empty if ongoing',
-  'more.endBeforeStart': 'End date cannot be before start.',
-  'more.promptPeriodStart': 'Period start date (YYYY-MM-DD)',
-  'more.logPeriodDate': '+ Log period (date)',
 } as const
 
 export type MessageKey = keyof typeof en
