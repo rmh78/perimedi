@@ -9,6 +9,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "shot:se": "node scripts/shot-se.mjs",
+    "shot:responsive": "node scripts/shot-responsive.mjs",
     "test": "vitest run"
   },
   "dependencies": {

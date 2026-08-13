@@ -28,6 +28,7 @@ import { BloodDropIcon, SymptomMarkIcon } from './CycleMarks'
 import { iconBgFromColor, takenFillFromColor } from '../lib/medColors'
 import { useLocale } from '../i18n'
 import { useConfirm } from '../context/ConfirmContext'
+import { IconDrop, IconPlusMed, IconSparkPlus } from './Icons'
 import { computeDayScrollLeft } from '../lib/chartScroll'
 import {
   CYCLE_DAY_MIN_PX,
@@ -102,6 +103,7 @@ export function CycleDiagram({
   const confirm = useConfirm()
   const [periodSettingsOpen, setPeriodSettingsOpen] = useState(false)
   const plotScrollRef = useRef<HTMLDivElement>(null)
+  const [plotEdge, setPlotEdge] = useState({ left: false, right: false })
   /** When set, scroll the plot so this date's column is visible after layout. */
   const [scrollToDate, setScrollToDate] = useState<string | null>(null)
   /** One-shot per mount: scroll to current selectedDate after plot layout (never force today). */
@@ -321,6 +323,25 @@ export function CycleDiagram({
     setScrollToDate(dateKey)
   }
 
+  useLayoutEffect(() => {
+    const el = plotScrollRef.current
+    if (!el) return
+    const update = () => {
+      const max = el.scrollWidth - el.clientWidth
+      setPlotEdge({
+        left: el.scrollLeft > 4,
+        right: max > 4 && el.scrollLeft < max - 4,
+      })
+    }
+    update()
+    el.addEventListener('scroll', update, { passive: true })
+    window.addEventListener('resize', update)
+    return () => {
+      el.removeEventListener('scroll', update)
+      window.removeEventListener('resize', update)
+    }
+  }, [cycleLen, lanes.length, chartMinWidth])
+
   function pageDay(delta: -1 | 1) {
     if (!selectedCol) return
     const idx = columns.findIndex((c) => c.cycleDay === selectedCol.cycleDay)
@@ -347,11 +368,10 @@ export function CycleDiagram({
   return (
     <>
     <section className="glass-card overflow-hidden rounded-2xl sm:rounded-[1.75rem]">
-      <div className="border-b border-blush-100/80 px-3 py-2.5 sm:px-5 sm:py-4">
-        {/* Day paging takes the full header row; Today on the right */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+      <div className="border-b border-blush-100/80 px-3 py-2 sm:px-5 sm:py-3">
+        <div className="flex flex-wrap items-center gap-x-1 gap-y-1.5">
           {selectedCol ? (
-            <div className="flex min-w-0 flex-1 items-center">
+            <div className="flex min-w-0 flex-1 basis-full items-center sm:basis-0">
               <button
                 type="button"
                 className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-blush-700 transition hover:bg-blush-100 disabled:pointer-events-none disabled:opacity-35"
@@ -362,7 +382,7 @@ export function CycleDiagram({
               >
                 <ChevronLeftIcon />
               </button>
-              <p className="min-w-0 flex-1 truncate text-center text-sm font-semibold text-ink sm:text-base">
+              <p className="min-w-0 flex-1 truncate text-center text-sm font-semibold text-ink">
                 {t('diagram.dayBadge', { day: selectedCol.cycleDay })}
                 {selectedCol.dateKey
                   ? ` · ${formatDate(parseISO(selectedCol.dateKey), 'EEE, MMM d')}`
@@ -380,22 +400,47 @@ export function CycleDiagram({
               </button>
             </div>
           ) : (
-            <div className="min-w-0 flex-1" />
+            <div className="min-w-0 flex-1 basis-full sm:basis-0" />
           )}
 
-          <button
-            type="button"
-            className="btn-ghost !min-h-10 shrink-0 !px-3 !py-2 text-xs"
-            onClick={goToToday}
-          >
-            {t('common.today')}
-          </button>
+          <div className="ml-auto flex shrink-0 items-center gap-0.5">
+            <button
+              type="button"
+              className="btn-ghost !min-h-9 shrink-0 !px-2.5 !py-1.5 text-xs"
+              onClick={goToToday}
+            >
+              {t('common.today')}
+            </button>
+            {onAddMedication && (
+              <DayActionIconButton
+                label={t('diagram.addMed')}
+                onClick={onAddMedication}
+              >
+                <IconPlusMed />
+              </DayActionIconButton>
+            )}
+            <DayActionIconButton
+              label={t('diagram.cycleSettings')}
+              onClick={() => setPeriodSettingsOpen(true)}
+            >
+              <IconDrop />
+            </DayActionIconButton>
+            {onAddSymptom && selectedCol?.dateKey && (
+              <DayActionIconButton
+                label={t('diagram.addSymptom')}
+                onClick={() => onAddSymptom(selectedCol.dateKey!)}
+              >
+                <IconSparkPlus />
+              </DayActionIconButton>
+            )}
+          </div>
         </div>
 
-        {/* Status chips + add actions under the header row */}
-        {selectedCol && (
-          <div className="mt-2 flex items-start justify-between gap-2 sm:mt-2.5">
-            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        {selectedCol &&
+          (selectedCol.isLoggedPeriod ||
+            selectedCol.info?.isPredictedPeriod ||
+            selectedSymptoms.length > 0) && (
+            <div className="mt-1.5 flex min-w-0 flex-col gap-1">
               <div className="flex flex-wrap items-center gap-1.5">
                 {selectedCol.isLoggedPeriod ? (
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold leading-none text-rose-800 ring-1 ring-rose-200">
@@ -407,17 +452,11 @@ export function CycleDiagram({
                     <span className="h-2 w-2 rounded-full bg-rose-300" />
                     {t('diagram.predictedPeriodTitle')}
                   </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 text-xs font-medium leading-none text-ink-muted ring-1 ring-slate-100">
-                    {t('diagram.noPeriod')}
-                  </span>
-                )}
+                ) : null}
               </div>
-
-              {/* Always under period; wrap side-by-side when there is room. */}
-              <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                {selectedSymptoms.length > 0 ? (
-                  selectedSymptoms.map((s) => (
+              {selectedSymptoms.length > 0 && (
+                <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                  {selectedSymptoms.map((s) => (
                     <div
                       key={s.id}
                       className="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full bg-violet-50 py-1 pl-2.5 pr-1 text-xs font-medium leading-none text-violet-900 ring-1 ring-violet-100"
@@ -454,59 +493,19 @@ export function CycleDiagram({
                         ×
                       </button>
                     </div>
-                  ))
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 text-xs font-medium leading-none text-ink-muted ring-1 ring-slate-100">
-                    {t('diagram.noSymptoms')}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-1.5 pb-0.5 pr-0.5">
-              {onAddMedication && (
-                <DayActionIconButton
-                  label={t('diagram.addMed')}
-                  onClick={onAddMedication}
-                >
-                  <MedFormIcon form="PILL" fill />
-                </DayActionIconButton>
-              )}
-              <DayActionIconButton
-                label={t('diagram.cycleSettings')}
-                onClick={() => setPeriodSettingsOpen(true)}
-              >
-                <img
-                  src="/ui-icons/cycle-drop.jpg"
-                  alt=""
-                  className="h-full w-full object-cover"
-                  draggable={false}
-                />
-              </DayActionIconButton>
-              {onAddSymptom && selectedCol.dateKey && (
-                <DayActionIconButton
-                  label={t('diagram.addSymptom')}
-                  onClick={() => onAddSymptom(selectedCol.dateKey!)}
-                >
-                  <img
-                    src="/ui-icons/symptom.jpg"
-                    alt=""
-                    className="h-full w-full object-cover"
-                    draggable={false}
-                  />
-                </DayActionIconButton>
+                  ))}
+                </div>
               )}
             </div>
-          </div>
-        )}
+          )}
       </div>
 
       <div className="space-y-1 px-2 py-2.5 sm:px-5 sm:py-4">
         <div className="mb-1 flex flex-wrap items-center gap-x-3 gap-y-1 px-1 sm:gap-x-4">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-muted sm:text-[11px] sm:tracking-[0.14em]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-muted">
             {t('diagram.medsAndDoses')}
           </p>
-          <div className="flex flex-wrap gap-3 text-[10px] text-ink-muted">
+          <div className="flex flex-wrap gap-3 text-[11px] text-ink-muted">
             <LegendDot className="bg-emerald-500" label={t('diagram.taken')} />
             <LegendDot className="bg-slate-400" label={t('diagram.notTaken')} />
             <span className="inline-flex items-center gap-1">
@@ -556,6 +555,7 @@ export function CycleDiagram({
             Two-column scroll row: sticky identity (cycle meta + meds) + plot
             (day strip + dose bands). Selection highlight stays plot-only.
           */
+          <div className="relative">
           <div
             ref={plotScrollRef}
             /* Do not set touch-pan-x: on iOS it traps vertical gestures so the
@@ -575,10 +575,10 @@ export function CycleDiagram({
                 }}
               >
                 <div className="flex min-h-10 flex-col justify-center">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
                     {t('diagram.cycleDays')}
                   </p>
-                  <p className="mt-0.5 text-[10px] text-ink-muted">
+                  <p className="mt-0.5 text-[11px] text-ink-muted">
                     {t('diagram.cyclePeriodMeta', {
                       cycle: settings.averageCycleLength,
                       period: settings.averagePeriodLength,
@@ -644,12 +644,26 @@ export function CycleDiagram({
                     style={{
                       left: `${plotDayLeftPct}%`,
                       width: `${plotDayWidthPct}%`,
-                      background: 'rgba(15, 23, 42, 0.14)',
+                      background: 'rgba(232, 90, 132, 0.16)',
                     }}
                   />
                 </div>
               </div>
             </div>
+          </div>
+          {plotEdge.left && (
+            <div
+              className="pointer-events-none absolute inset-y-0 z-20 w-6 bg-gradient-to-r from-cream to-transparent"
+              style={{ left: LABEL_COL_PX }}
+              aria-hidden
+            />
+          )}
+          {plotEdge.right && (
+            <div
+              className="pointer-events-none absolute inset-y-0 right-0 z-20 w-8 bg-gradient-to-l from-cream to-transparent"
+              aria-hidden
+            />
+          )}
           </div>
         )}
       </div>
@@ -751,7 +765,7 @@ function CycleDayStrip({
               </div>
 
               <span
-                className={`text-[9px] font-semibold leading-none ${
+                className={`text-[11px] font-semibold leading-none ${
                   active
                     ? 'text-blush-700'
                     : col.isToday
@@ -780,10 +794,6 @@ function LegendDot({ className, label }: { className: string; label: string }) {
   )
 }
 
-/**
- * Soft 3D circular art button with a shared + badge.
- * Badge sits outside the clipped image circle so it is never cut off.
- */
 function DayActionIconButton({
   label,
   onClick,
@@ -796,20 +806,12 @@ function DayActionIconButton({
   return (
     <button
       type="button"
-      className="relative h-9 w-9 shrink-0 rounded-full transition hover:scale-[1.04] active:scale-95"
+      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-blush-800 ring-1 ring-blush-100 transition hover:bg-blush-50"
       aria-label={label}
       title={label}
       onClick={onClick}
     >
-      <span className="absolute inset-0 overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-blush-100/90">
-        {children}
-      </span>
-      <span
-        className="pointer-events-none absolute -bottom-0.5 -right-0.5 z-10 flex h-4 w-4 items-center justify-center rounded-full bg-blush-600 text-[11px] font-bold leading-none text-white shadow-md ring-2 ring-white"
-        aria-hidden
-      >
-        +
-      </span>
+      {children}
     </button>
   )
 }

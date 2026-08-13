@@ -13,11 +13,11 @@ export function Layout() {
         <div className="min-h-dvh min-h-screen text-ink">
         <header className="sticky top-0 z-40 overflow-hidden border-b border-blush-100/70 bg-cream/90 backdrop-blur-md">
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blush-200/50 via-white/30 to-lilac-100/50" />
-          <div className="relative mx-auto max-w-3xl px-3 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6 sm:pb-3 sm:pt-4">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-blush-700">
+          <div className="relative mx-auto max-w-3xl px-3 pb-1.5 pt-[max(0.5rem,env(safe-area-inset-top))] sm:px-6 sm:pb-2.5 sm:pt-3">
+            <p className="hidden text-[10px] font-semibold uppercase tracking-[0.22em] text-blush-700 sm:block">
               {t('layout.tagline')}
             </p>
-            <h1 className="font-display mt-0.5 text-[1.65rem] font-semibold leading-tight tracking-tight text-blush-900 sm:text-4xl">
+            <h1 className="font-display text-[1.35rem] font-semibold leading-tight tracking-tight text-blush-900 sm:mt-0.5 sm:text-3xl">
               PeriMedi
             </h1>
           </div>

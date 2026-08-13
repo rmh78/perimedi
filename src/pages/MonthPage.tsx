@@ -124,12 +124,24 @@ export function MonthPage() {
 
       <CalendarLegend />
 
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <p className="min-w-0 truncate text-sm font-semibold text-ink">
+          {formatDate(parseISO(selectedDate), 'EEE, MMM d')}
+        </p>
+        <Link
+          to="/"
+          className="btn-ghost !min-h-9 shrink-0 !px-3 !py-1.5 text-xs"
+        >
+          {t('month.openInCycle')}
+        </Link>
+      </div>
+
       <div className="mt-3 rounded-2xl ring-1 ring-blush-100">
         <div className="grid grid-cols-7 rounded-t-2xl bg-blush-50/80">
           {weekdayKeys.map((key) => (
             <div
               key={key}
-              className="px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-ink-muted"
+              className="px-1 py-2 text-center text-[11px] font-semibold uppercase tracking-wide text-ink-muted"
             >
               {t(key)}
             </div>
@@ -250,18 +262,6 @@ export function MonthPage() {
             )
           })}
         </div>
-      </div>
-
-      <div className="mt-3 flex items-center justify-between gap-2">
-        <p className="min-w-0 truncate text-sm font-semibold text-ink">
-          {formatDate(parseISO(selectedDate), 'EEE, MMM d')}
-        </p>
-        <Link
-          to="/"
-          className="btn-ghost !min-h-10 shrink-0 !px-3 !py-2 text-xs"
-        >
-          {t('month.openInCycle')}
-        </Link>
       </div>
     </section>
   )
