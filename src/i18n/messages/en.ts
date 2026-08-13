@@ -160,6 +160,8 @@ export const en = {
   'symptom.empty': 'No symptoms logged yet.',
   'symptom.addSection': 'Add symptom',
   'symptom.saveAdd': 'Add',
+  'symptom.editSection': 'Edit symptom',
+  'symptom.saveEdit': 'Save',
   'symptom.deleteConfirm': 'Delete this symptom?',
 
   // Period settings

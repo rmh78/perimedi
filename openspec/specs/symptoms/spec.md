@@ -34,3 +34,10 @@ The system SHALL allow the user to delete a logged symptom for a date from the s
 #### Scenario: Delete from selected-day summary
 - **WHEN** the user deletes a symptom from the selected-day symptom chip
 - **THEN** that symptom is removed for that date
+
+### Requirement: Edit symptom for a date
+The system SHALL allow the user to change the kind and body of a logged symptom for a date from the symptom sheet.
+
+#### Scenario: Save edited symptom
+- **WHEN** the user edits a logged symptom and saves
+- **THEN** the updated kind and body appear in day context and the sheet list

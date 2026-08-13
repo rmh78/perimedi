@@ -152,6 +152,8 @@ export const de: Record<MessageKey, string> = {
   'symptom.empty': 'Noch keine Symptome geloggt.',
   'symptom.addSection': 'Symptom hinzufügen',
   'symptom.saveAdd': 'Hinzufügen',
+  'symptom.editSection': 'Symptom bearbeiten',
+  'symptom.saveEdit': 'Speichern',
   'symptom.deleteConfirm': 'Dieses Symptom löschen?',
 
   'period.title': 'Perioden-Einstellungen',

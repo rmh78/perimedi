@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Sheet } from './Sheet'
 import type { RemarkKind } from '../types'
-import { addRemark, deleteRemark } from '../db/actions'
+import { addRemark, deleteRemark, updateRemark } from '../db/actions'
 import { useRemarks } from '../hooks/useAppData'
 import { toDateKey } from '../lib/dates'
 import { useLocale, type MessageKey } from '../i18n'
@@ -25,6 +25,7 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
   const remarks = useRemarks()
   const [body, setBody] = useState('')
   const [kind, setKind] = useState<RemarkKind>('cycle')
+  const [editingId, setEditingId] = useState<string | null>(null)
 
   const daySymptoms = useMemo(
     () =>
@@ -38,19 +39,37 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
     if (open) {
       setBody('')
       setKind('cycle')
+      setEditingId(null)
     }
   }, [open, dateKey])
+
+  function startEdit(id: string) {
+    const row = daySymptoms.find((s) => s.id === id)
+    if (!row) return
+    setEditingId(id)
+    setKind(row.kind)
+    setBody(row.body)
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+    setKind('cycle')
+    setBody('')
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     if (!body.trim()) return
-    await addRemark({
-      body,
-      kind,
-      occurredOn: dateKey,
-    })
-    setBody('')
-    setKind('cycle')
+    if (editingId) {
+      await updateRemark(editingId, { kind, body })
+    } else {
+      await addRemark({
+        body,
+        kind,
+        occurredOn: dateKey,
+      })
+    }
+    cancelEdit()
     onSaved()
   }
 
@@ -61,6 +80,7 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
     })
     if (!ok) return
     await deleteRemark(id)
+    if (editingId === id) cancelEdit()
     onSaved()
   }
 
@@ -88,7 +108,7 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
                   i < daySymptoms.length - 1
                     ? 'border-b border-blush-100/80'
                     : ''
-                }`}
+                } ${editingId === s.id ? 'bg-lilac-50/70' : ''}`}
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold text-violet-800">
@@ -96,13 +116,22 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
                   </p>
                   <p className="mt-0.5 text-sm text-ink">{s.body}</p>
                 </div>
-                <button
-                  type="button"
-                  className="btn-soft !min-h-9 shrink-0 !px-2.5 !py-1 text-xs"
-                  onClick={() => void onDelete(s.id)}
-                >
-                  {t('common.delete')}
-                </button>
+                <div className="flex shrink-0 gap-1.5">
+                  <button
+                    type="button"
+                    className="btn-ghost !min-h-9 !px-2.5 !py-1 text-xs"
+                    onClick={() => startEdit(s.id)}
+                  >
+                    {t('common.edit')}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-soft !min-h-9 !px-2.5 !py-1 text-xs"
+                    onClick={() => void onDelete(s.id)}
+                  >
+                    {t('common.delete')}
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -111,7 +140,7 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
 
       <form onSubmit={onSubmit} className="space-y-3 border-t border-blush-100 pt-3">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
-          {t('symptom.addSection')}
+          {editingId ? t('symptom.editSection') : t('symptom.addSection')}
         </p>
         <label className="block text-sm">
           {t('symptom.type')}
@@ -137,13 +166,19 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
             placeholder={t('symptom.placeholder')}
           />
         </label>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button type="submit" className="btn-primary">
-            {t('symptom.saveAdd')}
+            {editingId ? t('symptom.saveEdit') : t('symptom.saveAdd')}
           </button>
-          <button type="button" className="btn-ghost" onClick={onClose}>
-            {t('common.close')}
-          </button>
+          {editingId ? (
+            <button type="button" className="btn-ghost" onClick={cancelEdit}>
+              {t('common.cancel')}
+            </button>
+          ) : (
+            <button type="button" className="btn-ghost" onClick={onClose}>
+              {t('common.close')}
+            </button>
+          )}
         </div>
       </form>
     </Sheet>

@@ -137,6 +137,17 @@ export async function addRemark(input: {
   })
 }
 
+export async function updateRemark(
+  id: string,
+  patch: { kind?: RemarkKind; body?: string },
+): Promise<void> {
+  const next: { kind?: RemarkKind; body?: string } = {}
+  if (patch.kind) next.kind = patch.kind
+  if (patch.body != null) next.body = patch.body.trim()
+  if (Object.keys(next).length === 0) return
+  await db.remarks.update(id, next)
+}
+
 export async function deleteRemark(id: string): Promise<void> {
   await db.remarks.delete(id)
 }
