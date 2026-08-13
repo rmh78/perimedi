@@ -10,6 +10,7 @@ export const en = {
   'common.optional': 'Optional',
   'common.saving': 'Saving…',
   'common.emDash': '—',
+  'confirm.title': 'Please confirm',
 
   // Layout
   'layout.tagline': 'Perimenopause support',
@@ -46,7 +47,7 @@ export const en = {
   'diagram.dayBadge': 'Day {{day}}',
   'diagram.noMedsTitle': 'No medications yet',
   'diagram.noMedsBody':
-    'Add a medication to plan doses along your cycle and mark them as taken.',
+    'Add a medication, then log a period in Cycle settings so doses line up with your days.',
   'diagram.addMedication': '+ Add medication',
   'diagram.cycleDays': 'Cycle days',
   'diagram.cyclePeriodMeta': '{{cycle}}d · {{period}}d period',
@@ -67,6 +68,8 @@ export const en = {
   'diagram.predictedPeriodTitle': 'Predicted period',
   'diagram.dayN': 'Day {{day}}',
   'diagram.daysRange': 'Days {{from}}–{{to}}',
+
+  'month.openInCycle': 'Open in Cycle',
 
   // Forms / enums
   'form.PILL': 'Pill',

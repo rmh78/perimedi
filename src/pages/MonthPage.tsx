@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { addMonths, isSameMonth } from 'date-fns'
+import { Link } from 'react-router-dom'
+import { addMonths, isSameMonth, parseISO } from 'date-fns'
 import {
   useCycleSettings,
   useDoseLogs,
@@ -249,6 +250,18 @@ export function MonthPage() {
             )
           })}
         </div>
+      </div>
+
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <p className="min-w-0 truncate text-sm font-semibold text-ink">
+          {formatDate(parseISO(selectedDate), 'EEE, MMM d')}
+        </p>
+        <Link
+          to="/"
+          className="btn-ghost !min-h-10 shrink-0 !px-3 !py-2 text-xs"
+        >
+          {t('month.openInCycle')}
+        </Link>
       </div>
     </section>
   )

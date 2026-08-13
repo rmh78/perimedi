@@ -11,6 +11,7 @@ export const de: Record<MessageKey, string> = {
   'common.optional': 'Optional',
   'common.saving': 'Speichern…',
   'common.emDash': '—',
+  'confirm.title': 'Bitte bestätigen',
 
   'layout.tagline': 'Unterstützung in der Perimenopause',
 
@@ -42,7 +43,7 @@ export const de: Record<MessageKey, string> = {
   'diagram.dayBadge': 'Tag {{day}}',
   'diagram.noMedsTitle': 'Noch keine Medikamente',
   'diagram.noMedsBody':
-    'Füge ein Medikament hinzu, plane Dosen entlang deines Zyklus und markiere sie als genommen.',
+    'Füge ein Medikament hinzu und logge eine Periode in den Zyklus-Einstellungen, damit Dosen zu deinen Tagen passen.',
   'diagram.addMedication': '+ Medikament',
   'diagram.cycleDays': 'Zyklustage',
   'diagram.cyclePeriodMeta': '{{cycle}} T · {{period}} T Periode',
@@ -63,6 +64,8 @@ export const de: Record<MessageKey, string> = {
   'diagram.predictedPeriodTitle': 'Vorhergesagte Periode',
   'diagram.dayN': 'Tag {{day}}',
   'diagram.daysRange': 'Tage {{from}}–{{to}}',
+
+  'month.openInCycle': 'Im Zyklus öffnen',
 
   'form.PILL': 'Tablette',
   'form.CREAM': 'Creme',

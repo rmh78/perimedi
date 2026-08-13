@@ -3,6 +3,7 @@ import { Sheet } from './Sheet'
 import type { Medication, MedForm, Schedule, TherapyPresetId } from '../types'
 import { THERAPY_PRESETS } from '../types'
 import { useLocale, formatLocalized, type MessageKey } from '../i18n'
+import { useConfirm } from '../context/ConfirmContext'
 import {
   deleteMedication,
   upsertMedication,
@@ -43,6 +44,7 @@ export function EditMedicationSheet({
   onSaved,
 }: Props) {
   const { t, locale } = useLocale()
+  const confirm = useConfirm()
   const schedules = useSchedules()
   const [name, setName] = useState('')
   const [form, setForm] = useState<MedForm>('PILL')
@@ -714,11 +716,12 @@ export function EditMedicationSheet({
               type="button"
               className="ml-auto text-xs font-semibold text-rose-700"
               onClick={() => {
-                if (
-                  confirm(t('med.deleteConfirm', { name: medication.name }))
-                ) {
-                  void deleteMedication(medication.id).then(onClose)
-                }
+                void confirm({
+                  message: t('med.deleteConfirm', { name: medication.name }),
+                  danger: true,
+                }).then((ok) => {
+                  if (ok) void deleteMedication(medication.id).then(onClose)
+                })
               }}
             >
               {t('common.delete')}

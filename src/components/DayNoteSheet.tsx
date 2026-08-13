@@ -5,6 +5,7 @@ import { addRemark, deleteRemark } from '../db/actions'
 import { useRemarks } from '../hooks/useAppData'
 import { toDateKey } from '../lib/dates'
 import { useLocale, type MessageKey } from '../i18n'
+import { useConfirm } from '../context/ConfirmContext'
 import { formatLongDateLocalized } from '../i18n'
 
 type Props = {
@@ -20,6 +21,7 @@ function isSymptomKind(kind: string): boolean {
 
 export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
   const { t, locale } = useLocale()
+  const confirm = useConfirm()
   const remarks = useRemarks()
   const [body, setBody] = useState('')
   const [kind, setKind] = useState<RemarkKind>('cycle')
@@ -53,7 +55,11 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
   }
 
   async function onDelete(id: string) {
-    if (!confirm(t('symptom.deleteConfirm'))) return
+    const ok = await confirm({
+      message: t('symptom.deleteConfirm'),
+      danger: true,
+    })
+    if (!ok) return
     await deleteRemark(id)
     onSaved()
   }

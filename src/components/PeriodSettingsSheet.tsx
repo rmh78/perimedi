@@ -14,6 +14,7 @@ import {
 } from '../lib/cycle'
 import type { FlowNote, Period } from '../types'
 import { useLocale, formatLongDateLocalized } from '../i18n'
+import { useConfirm } from '../context/ConfirmContext'
 
 type Props = {
   open: boolean
@@ -47,6 +48,7 @@ function draftFromPeriod(p: Period): PeriodDraft {
 
 export function PeriodSettingsSheet({ open, onClose }: Props) {
   const { t, locale } = useLocale()
+  const confirm = useConfirm()
   const settings = useCycleSettings()
   const periods = usePeriods()
   const sorted = sortPeriods(periods)
@@ -305,10 +307,14 @@ export function PeriodSettingsSheet({ open, onClose }: Props) {
                           type="button"
                           className="text-xs font-semibold text-rose-600"
                           onClick={() => {
-                            if (confirm(t('period.deleteConfirm'))) {
+                            void confirm({
+                              message: t('period.deleteConfirm'),
+                              danger: true,
+                            }).then((ok) => {
+                              if (!ok) return
                               void deletePeriod(p.id)
                               if (editing?.id === p.id) setEditing(null)
-                            }
+                            })
                           }}
                         >
                           {t('common.delete')}

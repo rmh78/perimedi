@@ -73,3 +73,10 @@ The system SHALL identify the visible month with a month/year label and Prev / T
 #### Scenario: Month card header
 - **WHEN** the user opens Month
 - **THEN** the header shows the calendar month and year plus navigation controls
+
+### Requirement: Selected day opens Cycle
+The system SHALL show the currently selected calendar date on Month and provide a control that opens the Cycle screen so the user can act on that day.
+
+#### Scenario: Open selected day in Cycle
+- **WHEN** the user activates Open in Cycle on Month
+- **THEN** the Cycle screen is shown with that date still selected

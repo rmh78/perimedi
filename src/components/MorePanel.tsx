@@ -7,6 +7,7 @@ import {
 } from '../lib/backup'
 import type { ExportPayload } from '../types'
 import { useLocale, type Locale } from '../i18n'
+import { useConfirm } from '../context/ConfirmContext'
 
 const sectionShell =
   'rounded-xl ring-1 ring-blush-100 bg-white/40 px-2.5 py-2.5 space-y-2'
@@ -19,6 +20,7 @@ const pageBtn = '!min-h-10 !px-3 !py-2 text-xs'
 /** Language + backup tools — full More page content. */
 export function MorePanel() {
   const { t, locale, setLocale } = useLocale()
+  const confirm = useConfirm()
   const fileRef = useRef<HTMLInputElement>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -64,11 +66,14 @@ export function MorePanel() {
             body={t('more.sampleBody')}
             label={t('more.sampleLabel')}
             onClick={async () => {
-              if (confirm(t('more.sampleConfirm'))) {
-                await loadSampleData()
-                setMessage(t('more.sampleLoaded'))
-                setError(null)
-              }
+              const ok = await confirm({
+                message: t('more.sampleConfirm'),
+                confirmLabel: t('more.sampleLabel'),
+              })
+              if (!ok) return
+              await loadSampleData()
+              setMessage(t('more.sampleLoaded'))
+              setError(null)
             }}
           />
           <Action
@@ -100,11 +105,15 @@ export function MorePanel() {
             danger
             last
             onClick={async () => {
-              if (confirm(t('more.clearConfirm'))) {
-                await clearAllData()
-                setMessage(t('more.cleared'))
-                setError(null)
-              }
+              const ok = await confirm({
+                message: t('more.clearConfirm'),
+                confirmLabel: t('more.clearLabel'),
+                danger: true,
+              })
+              if (!ok) return
+              await clearAllData()
+              setMessage(t('more.cleared'))
+              setError(null)
             }}
           />
         </div>

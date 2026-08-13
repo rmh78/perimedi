@@ -51,7 +51,6 @@ async function shot(page, name, fullPage = true) {
 }
 
 async function loadSample(page) {
-  page.once('dialog', (d) => d.accept())
   await page.goto(BASE_URL + '/more', { waitUntil: 'networkidle' })
   await page.waitForTimeout(300)
   const load = page.getByRole('button', {
@@ -59,6 +58,10 @@ async function loadSample(page) {
   })
   if (await load.count()) {
     await load.first().click()
+    const dlg = page.getByRole('alertdialog')
+    if (await dlg.count()) {
+      await dlg.getByRole('button', { name: /Load sample|Beispiel laden/i }).click()
+    }
     await page.waitForTimeout(900)
     return true
   }

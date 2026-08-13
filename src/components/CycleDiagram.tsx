@@ -27,6 +27,7 @@ import { PeriodSettingsSheet } from './PeriodSettingsSheet'
 import { BloodDropIcon, SymptomMarkIcon } from './CycleMarks'
 import { iconBgFromColor, takenFillFromColor } from '../lib/medColors'
 import { useLocale } from '../i18n'
+import { useConfirm } from '../context/ConfirmContext'
 import { computeDayScrollLeft } from '../lib/chartScroll'
 import {
   CYCLE_DAY_MIN_PX,
@@ -98,6 +99,7 @@ export function CycleDiagram({
   onAddSymptom,
 }: Props) {
   const { t, formatDate } = useLocale()
+  const confirm = useConfirm()
   const [periodSettingsOpen, setPeriodSettingsOpen] = useState(false)
   const plotScrollRef = useRef<HTMLDivElement>(null)
   /** When set, scroll the plot so this date's column is visible after layout. */
@@ -441,9 +443,12 @@ export function CycleDiagram({
                         aria-label={t('common.delete')}
                         title={t('common.delete')}
                         onClick={() => {
-                          if (confirm(t('symptom.deleteConfirm'))) {
-                            void deleteRemark(s.id)
-                          }
+                          void confirm({
+                            message: t('symptom.deleteConfirm'),
+                            danger: true,
+                          }).then((ok) => {
+                            if (ok) void deleteRemark(s.id)
+                          })
                         }}
                       >
                         ×
@@ -515,7 +520,7 @@ export function CycleDiagram({
           </div>
         </div>
 
-        {!cycleStart && (
+        {periods.length === 0 && (
           <p className="mb-3 rounded-2xl bg-lilac-50/80 px-3 py-2 text-sm text-ink-soft ring-1 ring-lilac-100">
             {t('diagram.periodAlignHint')}
           </p>
