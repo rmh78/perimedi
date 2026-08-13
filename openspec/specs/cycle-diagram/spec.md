@@ -82,6 +82,13 @@ The system SHALL show the selected cycle day and calendar date in the Cycle card
 - **WHEN** a day is selected
 - **THEN** the selected day text is not shown as a separate floating chip over the selection column (header carries the day text)
 
+### Requirement: Today mark on the cycle strip
+The system SHALL mark today’s cycle-day number on the cycle strip the same way the month grid marks today: a filled blush circle with a white day number.
+
+#### Scenario: Today is visible in the strip
+- **WHEN** today falls inside the visible cycle window
+- **THEN** that day’s number appears in a filled blush circle with white type
+
 ### Requirement: Today scrolls the selected day into view
 When the user activates **Today** on the Cycle screen, the system SHALL select today’s date and SHALL horizontally scroll the cycle plot so today’s day column is visible when the plot overflows.
 

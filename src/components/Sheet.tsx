@@ -15,12 +15,14 @@ function getViewportMeta(): HTMLMetaElement | null {
 export function Sheet({
   open,
   title,
+  icon,
   onClose,
   children,
   wide,
 }: {
   open: boolean
   title: string
+  icon?: string
   onClose: () => void
   children: ReactNode
   wide?: boolean
@@ -102,8 +104,18 @@ export function Sheet({
         }`}
       >
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-blush-100 px-4 py-3 sm:px-5">
-          <h2 className="font-display min-w-0 truncate text-xl font-semibold text-ink">
-            {title}
+          <h2 className="font-display flex min-w-0 items-center gap-2.5 text-xl font-semibold text-ink">
+            {icon ? (
+              <span className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-blush-50 ring-1 ring-blush-100">
+                <img
+                  src={icon}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  draggable={false}
+                />
+              </span>
+            ) : null}
+            <span className="min-w-0 truncate">{title}</span>
           </h2>
           <button
             type="button"

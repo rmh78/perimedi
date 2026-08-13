@@ -33,6 +33,7 @@ export function CycleDayStrip({
               key={col.cycleDay}
               type="button"
               disabled={!col.dateKey}
+              aria-current={col.isToday ? 'date' : undefined}
               onClick={() => onSelectDay(col)}
               title={
                 col.dateKey
@@ -93,11 +94,11 @@ export function CycleDayStrip({
               </div>
 
               <span
-                className={`text-[11px] font-semibold leading-none ${
-                  active
-                    ? 'text-blush-700'
-                    : col.isToday
-                      ? 'text-blush-600'
+                className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full text-[11px] font-semibold leading-none ${
+                  col.isToday
+                    ? 'bg-blush-600 px-1 text-white shadow-sm'
+                    : active
+                      ? 'text-blush-700'
                       : col.isLoggedPeriod
                         ? 'text-rose-800'
                         : 'text-ink-muted'

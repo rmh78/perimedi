@@ -14,7 +14,7 @@ export function Layout() {
         <header className="sticky top-0 z-40 overflow-hidden border-b border-blush-100/70 bg-cream pt-[env(safe-area-inset-top,0px)]">
           <div className="relative mx-auto h-[4.5rem] max-w-3xl sm:h-[5.75rem]">
             <img
-              src="/brand/header.jpg?v=2"
+              src="/brand/header.jpg?v=3"
               alt=""
               className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
             />

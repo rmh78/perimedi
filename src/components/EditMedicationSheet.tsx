@@ -249,6 +249,7 @@ export function EditMedicationSheet({
     <Sheet
       open={open}
       title={isNew || !medication ? t('med.addTitle') : t('med.editTitle')}
+      icon="/action-icons/med.jpg"
       onClose={onClose}
       wide
     >

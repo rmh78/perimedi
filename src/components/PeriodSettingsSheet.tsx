@@ -91,7 +91,12 @@ export function PeriodSettingsSheet({ open, onClose }: Props) {
   }
 
   return (
-    <Sheet open={open} title={t('period.title')} onClose={onClose}>
+    <Sheet
+      open={open}
+      title={t('period.title')}
+      icon="/action-icons/period.jpg"
+      onClose={onClose}
+    >
       <div className="space-y-4">
         <p className="text-sm text-ink-soft">
           {t('period.intro')}{' '}

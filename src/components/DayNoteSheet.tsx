@@ -85,7 +85,12 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
   }
 
   return (
-    <Sheet open={open} title={t('symptom.title')} onClose={onClose}>
+    <Sheet
+      open={open}
+      title={t('symptom.title')}
+      icon="/action-icons/symptom.jpg"
+      onClose={onClose}
+    >
       <p className="mb-3 text-sm text-ink-soft">
         {t('symptom.date')}{' '}
         <strong>{formatLongDateLocalized(dateKey, locale)}</strong>
