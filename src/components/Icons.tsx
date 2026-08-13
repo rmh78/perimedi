@@ -41,14 +41,13 @@ export function IconPlusMed({ className = 'h-5 w-5' }: { className?: string }) {
     <svg viewBox="0 0 20 20" className={className} aria-hidden>
       <rect
         {...stroke}
-        x="4"
-        y="7.2"
-        width="10.5"
-        height="5.6"
-        rx="2.8"
-        transform="rotate(-32 9.25 10)"
+        x="3.2"
+        y="6.6"
+        width="13.6"
+        height="6.8"
+        rx="3.4"
+        transform="rotate(-32 10 10)"
       />
-      <path {...stroke} d="M14.2 3.6v3.6M12.4 5.4h3.6" />
     </svg>
   )
 }
@@ -58,7 +57,7 @@ export function IconDrop({ className = 'h-5 w-5' }: { className?: string }) {
     <svg viewBox="0 0 20 20" className={className} aria-hidden>
       <path
         {...stroke}
-        d="M10 3.4C10 3.4 5.6 8.6 5.6 12a4.4 4.4 0 0 0 8.8 0C14.4 8.6 10 3.4 10 3.4Z"
+        d="M10 2.2C10 2.2 4.8 8.4 4.8 12.2a5.2 5.2 0 0 0 10.4 0C15.2 8.4 10 2.2 10 2.2Z"
       />
     </svg>
   )
@@ -67,11 +66,7 @@ export function IconDrop({ className = 'h-5 w-5' }: { className?: string }) {
 export function IconSparkPlus({ className = 'h-5 w-5' }: { className?: string }) {
   return (
     <svg viewBox="0 0 20 20" className={className} aria-hidden>
-      <path
-        {...stroke}
-        d="M8.6 3.4 9.5 6.8 13 7.6 9.5 8.4 8.6 11.8 7.7 8.4 4.2 7.6 7.7 6.8 8.6 3.4Z"
-      />
-      <path {...stroke} d="M14.2 11.6v4M12.2 13.6h4" />
+      <path {...stroke} d="M11.2 2.2 5.4 10.4h4.2L7.6 17.8 15.4 8.8h-4.1L11.2 2.2Z" />
     </svg>
   )
 }

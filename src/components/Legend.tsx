@@ -1,5 +1,5 @@
 import { useT } from '../i18n'
-import { BloodDropIcon } from './CycleMarks'
+import { BloodDropIcon, SymptomMarkIcon } from './CycleMarks'
 
 export function CalendarLegend() {
   const t = useT()
@@ -32,8 +32,7 @@ export function CalendarLegend() {
         <BloodDropIcon predicted /> {t('legend.predicted')}
       </span>
       <span className="inline-flex items-center gap-1.5">
-        <span className="h-2.5 w-2.5 rounded-full bg-violet-400" />{' '}
-        {t('legend.symptom')}
+        <SymptomMarkIcon /> {t('legend.symptom')}
       </span>
       <span className="inline-flex items-center gap-1.5">
         <span className="h-2.5 w-2.5 rounded-full bg-[var(--color-taken)]" />{' '}

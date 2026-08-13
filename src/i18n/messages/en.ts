@@ -40,13 +40,15 @@ export const en = {
 
   // Cycle diagram
   'diagram.medsAndDoses': 'Medications & doses',
-  'diagram.periodAlignHint':
-    'Open Cycle settings and log a period so meds and symptoms line up with cycle days.',
   'diagram.dayBadge': 'Day {{day}}',
-  'diagram.noMedsTitle': 'No medications yet',
-  'diagram.noMedsBody':
-    'Add a medication, then log a period in Cycle settings so doses line up with your days.',
-  'diagram.addMedication': '+ Add medication',
+  'diagram.emptyMedsTitle': 'No medications yet',
+  'diagram.emptyMedsBody': 'Add one with the pill button above.',
+  'diagram.emptyTitle': 'This is PeriMedi',
+  'diagram.emptyBody':
+    'PeriMedi is a companion for perimenopause. Track medications, periods, and symptoms on your cycle. Use the three buttons next to Medications & doses to start.',
+  'diagram.emptyAddMed': 'Add a medication and when you take it',
+  'diagram.emptyAddPeriod': 'Log a period so days line up with your cycle',
+  'diagram.emptyAddSymptom': 'Add a symptom for the selected day',
   'diagram.cycleDays': 'Cycle days',
   'diagram.cyclePeriodMeta': '{{cycle}}d · {{period}}d period',
   'diagram.noPeriod': 'No period',

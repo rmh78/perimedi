@@ -36,13 +36,15 @@ export const de: Record<MessageKey, string> = {
   'legend.notTaken': 'Nicht genommen',
 
   'diagram.medsAndDoses': 'Medikamente & Dosen',
-  'diagram.periodAlignHint':
-    'Öffne Zyklus-Einstellungen und logge eine Periode, damit Medikamente und Symptome zu den Zyklustagen passen.',
   'diagram.dayBadge': 'Tag {{day}}',
-  'diagram.noMedsTitle': 'Noch keine Medikamente',
-  'diagram.noMedsBody':
-    'Füge ein Medikament hinzu und logge eine Periode in den Zyklus-Einstellungen, damit Dosen zu deinen Tagen passen.',
-  'diagram.addMedication': '+ Medikament',
+  'diagram.emptyMedsTitle': 'Noch keine Medikamente',
+  'diagram.emptyMedsBody': 'Füge eines mit dem Pillen-Button oben hinzu.',
+  'diagram.emptyTitle': 'Das ist PeriMedi',
+  'diagram.emptyBody':
+    'PeriMedi begleitet dich in der Perimenopause. Tracke Medikamente, Perioden und Symptome in deinem Zyklus. Starte mit den drei Buttons neben Medikamente & Dosen.',
+  'diagram.emptyAddMed': 'Medikament und Einnahmezeiten hinzufügen',
+  'diagram.emptyAddPeriod': 'Periode loggen, damit die Tage zum Zyklus passen',
+  'diagram.emptyAddSymptom': 'Symptom für den gewählten Tag hinzufügen',
   'diagram.cycleDays': 'Zyklustage',
   'diagram.cyclePeriodMeta': '{{cycle}} T · {{period}} T Periode',
   'diagram.noPeriod': 'Keine Periode',

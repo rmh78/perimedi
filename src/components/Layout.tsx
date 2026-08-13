@@ -11,15 +11,15 @@ export function Layout() {
     <SelectedDateProvider>
       <ConfirmProvider>
         <div className="min-h-dvh min-h-screen text-ink">
-        <header className="sticky top-0 z-40 overflow-hidden border-b border-blush-100/70 bg-cream/90 backdrop-blur-md">
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blush-200/50 via-white/30 to-lilac-100/50" />
-          <div className="relative mx-auto max-w-3xl px-3 pb-1.5 pt-[max(0.5rem,env(safe-area-inset-top))] sm:px-6 sm:pb-2.5 sm:pt-3">
-            <p className="hidden text-[10px] font-semibold uppercase tracking-[0.22em] text-blush-700 sm:block">
-              {t('layout.tagline')}
-            </p>
-            <h1 className="font-display text-[1.35rem] font-semibold leading-tight tracking-tight text-blush-900 sm:mt-0.5 sm:text-3xl">
-              PeriMedi
-            </h1>
+        <header className="sticky top-0 z-40 overflow-hidden border-b border-blush-100/70 bg-cream pt-[env(safe-area-inset-top,0px)]">
+          <div className="relative mx-auto h-[4.5rem] max-w-3xl sm:h-[5.75rem]">
+            <img
+              src="/brand/header.jpg?v=2"
+              alt=""
+              className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
+            />
+            <h1 className="sr-only">PeriMedi</h1>
+            <p className="sr-only">{t('layout.tagline')}</p>
           </div>
         </header>
 

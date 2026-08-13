@@ -4,7 +4,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type ReactNode,
 } from 'react'
 import { addDays, parseISO } from 'date-fns'
 import type { CycleSettings, Period, PlannedDose, Remark } from '../types'
@@ -26,7 +25,12 @@ import { CycleDayHeader } from './CycleDayHeader'
 import { CycleDayStrip } from './CycleDayStrip'
 import { MedLaneLabel, MedLaneTrack } from './CycleMedLanes'
 import type { DayColumn } from './cycleTypes'
-import { IconDrop, IconPlusMed, IconSparkPlus } from './Icons'
+
+const ACTION_ICON = {
+  med: '/action-icons/med.jpg',
+  period: '/action-icons/period.jpg',
+  symptom: '/action-icons/symptom.jpg',
+} as const
 
 type Props = {
   periods: Period[]
@@ -332,6 +336,7 @@ export function CycleDiagram({
 
   return (
     <>
+    <div className="space-y-3">
     <section className="glass-card overflow-hidden rounded-2xl sm:rounded-[1.75rem]">
       <CycleDayHeader
         selectedCol={selectedCol}
@@ -348,28 +353,27 @@ export function CycleDiagram({
           <p className="min-w-0 flex-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-muted">
             {t('diagram.medsAndDoses')}
           </p>
-          <div className="flex shrink-0 items-center gap-0.5">
+          <div className="flex shrink-0 items-center gap-1.5">
+            <DayActionIconButton
+              label={t('diagram.cycleSettings')}
+              onClick={() => setPeriodSettingsOpen(true)}
+              src={ACTION_ICON.period}
+            />
             {onAddMedication && (
               <DayActionIconButton
                 label={t('diagram.addMed')}
                 onClick={onAddMedication}
-              >
-                <IconPlusMed />
-              </DayActionIconButton>
+                src={ACTION_ICON.med}
+                plus
+              />
             )}
-            <DayActionIconButton
-              label={t('diagram.cycleSettings')}
-              onClick={() => setPeriodSettingsOpen(true)}
-            >
-              <IconDrop />
-            </DayActionIconButton>
             {onAddSymptom && selectedCol?.dateKey && (
               <DayActionIconButton
                 label={t('diagram.addSymptom')}
                 onClick={() => onAddSymptom(selectedCol.dateKey!)}
-              >
-                <IconSparkPlus />
-              </DayActionIconButton>
+                src={ACTION_ICON.symptom}
+                plus
+              />
             )}
           </div>
         </div>
@@ -386,36 +390,14 @@ export function CycleDiagram({
           </span>
         </div>
 
-        {periods.length === 0 && (
-          <p className="mb-3 rounded-2xl bg-lilac-50/80 px-3 py-2 text-sm text-ink-soft ring-1 ring-lilac-100">
-            {t('diagram.periodAlignHint')}
-          </p>
-        )}
-
         {lanes.length === 0 ? (
-          <div className="relative z-40 flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-blush-200 bg-white/70 px-3 py-3.5 text-center shadow-sm sm:gap-3 sm:px-6 sm:py-10">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blush-50 ring-1 ring-blush-100 sm:h-12 sm:w-12">
-              <span className="text-base text-blush-500 sm:text-xl" aria-hidden>
-                +
-              </span>
-            </div>
-            <div className="space-y-0.5 sm:space-y-1">
-              <p className="text-sm font-semibold text-ink sm:text-base">
-                {t('diagram.noMedsTitle')}
-              </p>
-              <p className="max-w-xs text-[11px] leading-snug text-ink-muted sm:text-sm">
-                {t('diagram.noMedsBody')}
-              </p>
-            </div>
-            {onAddMedication && (
-              <button
-                type="button"
-                className="btn-primary !min-h-10 !px-4 !py-2 text-sm sm:!px-5"
-                onClick={onAddMedication}
-              >
-                {t('diagram.addMedication')}
-              </button>
-            )}
+          <div className="rounded-2xl border border-dashed border-blush-200 bg-white/70 px-3 py-6 text-center sm:px-5">
+            <p className="text-sm font-semibold text-ink">
+              {t('diagram.emptyMedsTitle')}
+            </p>
+            <p className="mt-1 text-[12px] leading-snug text-ink-muted sm:text-sm">
+              {t('diagram.emptyMedsBody')}
+            </p>
           </div>
         ) : (
           /*
@@ -535,6 +517,47 @@ export function CycleDiagram({
         )}
       </div>
     </section>
+
+    {lanes.length === 0 && (
+      <section className="glass-card rounded-2xl px-3 py-3.5 sm:rounded-[1.75rem] sm:px-5 sm:py-5">
+        <p className="text-sm font-semibold text-ink">
+          {t('diagram.emptyTitle')}
+        </p>
+        <p className="mt-1 text-[12px] leading-snug text-ink-muted sm:text-sm">
+          {t('diagram.emptyBody')}
+        </p>
+        <ul className="mt-3 space-y-1.5">
+          <li>
+            <EmptyHintRow
+              label={t('diagram.emptyAddPeriod')}
+              onClick={() => setPeriodSettingsOpen(true)}
+              src={ACTION_ICON.period}
+            />
+          </li>
+          {onAddMedication && (
+            <li>
+              <EmptyHintRow
+                label={t('diagram.emptyAddMed')}
+                onClick={onAddMedication}
+                src={ACTION_ICON.med}
+                plus
+              />
+            </li>
+          )}
+          {onAddSymptom && selectedCol?.dateKey && (
+            <li>
+              <EmptyHintRow
+                label={t('diagram.emptyAddSymptom')}
+                onClick={() => onAddSymptom(selectedCol.dateKey!)}
+                src={ACTION_ICON.symptom}
+                plus
+              />
+            </li>
+          )}
+        </ul>
+      </section>
+    )}
+    </div>
     <PeriodSettingsSheet
       open={periodSettingsOpen}
       onClose={() => setPeriodSettingsOpen(false)}
@@ -552,24 +575,81 @@ function LegendDot({ className, label }: { className: string; label: string }) {
   )
 }
 
-function DayActionIconButton({
+function PlusBadge() {
+  return (
+    <span
+      className="absolute -bottom-0.5 -right-0.5 z-10 flex h-4 w-4 items-center justify-center rounded-full bg-blush-600 text-[12px] font-bold leading-none text-white ring-2 ring-white shadow-sm"
+      aria-hidden
+    >
+      +
+    </span>
+  )
+}
+
+function ActionGlyph({ src }: { src: string }) {
+  return (
+    <img
+      src={src}
+      alt=""
+      className="h-full w-full object-cover"
+      draggable={false}
+    />
+  )
+}
+
+function EmptyHintRow({
   label,
   onClick,
-  children,
+  src,
+  plus,
 }: {
   label: string
   onClick: () => void
-  children: ReactNode
+  src: string
+  plus?: boolean
 }) {
   return (
     <button
       type="button"
-      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-blush-800 ring-1 ring-blush-100 transition hover:bg-blush-50"
+      className="flex w-full items-center gap-2.5 rounded-xl px-1 py-1 text-left transition hover:bg-blush-50"
+      onClick={onClick}
+    >
+      <span className="relative h-9 w-9 shrink-0">
+        <span className="absolute inset-0 overflow-hidden rounded-full bg-blush-50 ring-1 ring-blush-100">
+          <ActionGlyph src={src} />
+        </span>
+        {plus ? <PlusBadge /> : null}
+      </span>
+      <span className="min-w-0 text-[13px] font-medium leading-snug text-ink">
+        {label}
+      </span>
+    </button>
+  )
+}
+
+function DayActionIconButton({
+  label,
+  onClick,
+  src,
+  plus,
+}: {
+  label: string
+  onClick: () => void
+  src: string
+  plus?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      className="relative h-9 w-9 shrink-0 overflow-visible rounded-full transition hover:scale-105 active:scale-95"
       aria-label={label}
       title={label}
       onClick={onClick}
     >
-      {children}
+      <span className="absolute inset-0 overflow-hidden rounded-full bg-blush-50 ring-1 ring-blush-100">
+        <ActionGlyph src={src} />
+      </span>
+      {plus ? <PlusBadge /> : null}
     </button>
   )
 }

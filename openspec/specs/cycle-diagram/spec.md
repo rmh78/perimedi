@@ -15,7 +15,7 @@ The system SHALL show one lane per medication with dose segments across the visi
 
 #### Scenario: Empty med list
 - **WHEN** no medications have planned doses in the window
-- **THEN** an empty state invites the user to add a medication
+- **THEN** the medications card shows a no-data message and a separate card below introduces PeriMedi and describes the three actions in this order: period settings, add medication, add symptom
 
 ### Requirement: Shared day selection
 The system SHALL maintain a selected date that can be changed from the cycle day strip or medication band day columns and SHALL highlight the selected day with a semi-transparent column overlay spanning the chart plot.

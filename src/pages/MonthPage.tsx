@@ -13,7 +13,7 @@ import { expandPlannedDoses } from '../lib/schedule'
 import { doseExpansionRange } from '../lib/doseRange'
 import { monthGridDays, toDateKey, todayKey } from '../lib/dates'
 import { cycleDayClass } from '../components/CycleBadge'
-import { BloodDropIcon } from '../components/CycleMarks'
+import { BloodDropIcon, SymptomMarkIcon } from '../components/CycleMarks'
 import { CalendarLegend } from '../components/Legend'
 import { PagerRow } from '../components/PagerRow'
 import { useLocale } from '../i18n'
@@ -212,13 +212,18 @@ export function MonthPage() {
                   )}
                 </div>
                 <div className="mt-1.5 flex flex-wrap items-center gap-0.5">
-                  {daySymptoms.slice(0, 3).map((s) => (
-                    <span
-                      key={s.id}
-                      className="h-1.5 w-1.5 rounded-full bg-violet-400"
-                      title={s.body}
+                  {daySymptoms[0] && (
+                    <SymptomMarkIcon
+                      kind={daySymptoms[0].kind}
+                      title={
+                        daySymptoms.length > 1
+                          ? t('home.symptomsCount', {
+                              count: daySymptoms.length,
+                            })
+                          : daySymptoms[0].body
+                      }
                     />
-                  ))}
+                  )}
                   {dayDoses.slice(0, 3).map((d) => (
                     <span
                       key={d.key}

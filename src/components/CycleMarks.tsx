@@ -55,20 +55,21 @@ export function SymptomMarkIcon({
 
   return (
     <svg
-      width="10"
-      height="10"
-      viewBox="0 0 12 12"
+      width="9"
+      height="12"
+      viewBox="0 0 12 14"
       className="shrink-0"
       aria-hidden={title ? undefined : true}
       role={title ? 'img' : undefined}
     >
       {title ? <title>{title}</title> : null}
       <path
-        d="M6 1.2 6.95 4.4 10.4 4.7 7.85 6.95 8.7 10.4 6 8.55 3.3 10.4 4.15 6.95 1.6 4.7 5.05 4.4Z"
+        d="M7.15 1.55 3.25 7.15h2.85L4.55 12.4 9.55 6.15H6.6L7.15 1.55Z"
         fill={fill}
         stroke={stroke}
         strokeWidth="0.55"
         strokeLinejoin="round"
+        strokeLinecap="round"
       />
     </svg>
   )
