@@ -6,8 +6,6 @@ export const de: Record<MessageKey, string> = {
   'common.edit': 'Bearbeiten',
   'common.delete': 'Löschen',
   'common.today': 'Heute',
-  'common.prev': 'Zurück',
-  'common.next': 'Weiter',
   'common.optional': 'Optional',
   'common.saving': 'Speichern…',
   'common.emDash': '—',
@@ -65,7 +63,8 @@ export const de: Record<MessageKey, string> = {
   'diagram.dayN': 'Tag {{day}}',
   'diagram.daysRange': 'Tage {{from}}–{{to}}',
 
-  'month.openInCycle': 'Im Zyklus öffnen',
+  'month.prevMonth': 'Vorheriger Monat',
+  'month.nextMonth': 'Nächster Monat',
 
   'form.PILL': 'Tablette',
   'form.CREAM': 'Creme',

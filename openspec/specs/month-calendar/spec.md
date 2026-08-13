@@ -68,15 +68,15 @@ The system SHALL render period blood-drop marks fully inside their day cell (not
 - **THEN** the full blood-drop glyph is visible within that cell
 
 ### Requirement: Month chrome without redundant title
-The system SHALL identify the visible month with a month/year label and Prev / Today / Next controls, without a separate page title that only repeats the nav label “Month”.
+The system SHALL identify the visible month on one header row in this order: Today, previous, next, then the month/year label, without a separate page title that only repeats the nav label “Month”. The header row SHALL be separated from the calendar body by a divider matching the Cycle screen.
 
 #### Scenario: Month card header
 - **WHEN** the user opens Month
-- **THEN** the header shows the calendar month and year plus navigation controls
+- **THEN** the header row shows Today, previous/next paging, and the calendar month and year, with a divider below it
 
-### Requirement: Selected day opens Cycle
-The system SHALL show the currently selected calendar date on Month and provide a control that opens the Cycle screen so the user can act on that day.
+### Requirement: Cycle tab keeps the selected month day
+The system SHALL NOT present a dedicated control on Month whose only purpose is to open Cycle. The shared selected date SHALL remain in effect when the user switches to Cycle via the bottom navigation.
 
-#### Scenario: Open selected day in Cycle
-- **WHEN** the user activates Open in Cycle on Month
+#### Scenario: Open Cycle from Month via nav
+- **WHEN** the user selects a day on Month and then activates Cycle in the bottom navigation
 - **THEN** the Cycle screen is shown with that date still selected

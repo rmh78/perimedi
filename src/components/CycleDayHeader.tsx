@@ -1,10 +1,9 @@
 import { parseISO } from 'date-fns'
-import type { ReactNode } from 'react'
 import type { Remark } from '../types'
 import { deleteRemark } from '../db/actions'
 import { useConfirm } from '../context/ConfirmContext'
 import { useLocale } from '../i18n'
-import { IconDrop, IconPlusMed, IconSparkPlus } from './Icons'
+import { PagerRow } from './PagerRow'
 import type { DayColumn } from './cycleTypes'
 
 type Props = {
@@ -14,9 +13,7 @@ type Props = {
   canPageNext: boolean
   onPageDay: (delta: -1 | 1) => void
   onGoToToday: () => void
-  onAddMedication?: () => void
   onAddSymptom?: (dateKey: string) => void
-  onOpenPeriodSettings: () => void
 }
 
 export function CycleDayHeader({
@@ -26,81 +23,30 @@ export function CycleDayHeader({
   canPageNext,
   onPageDay,
   onGoToToday,
-  onAddMedication,
   onAddSymptom,
-  onOpenPeriodSettings,
 }: Props) {
   const { t, formatDate } = useLocale()
   const confirm = useConfirm()
 
   return (
     <div className="border-b border-blush-100/80 px-3 py-2 sm:px-5 sm:py-3">
-      <div className="flex flex-wrap items-center gap-x-1 gap-y-1.5">
-        {selectedCol ? (
-          <div className="flex min-w-0 flex-1 basis-full items-center sm:basis-0">
-            <button
-              type="button"
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-blush-700 transition hover:bg-blush-100 disabled:pointer-events-none disabled:opacity-35"
-              aria-label={t('diagram.prevDay')}
-              title={t('diagram.prevDay')}
-              disabled={!canPagePrev}
-              onClick={() => onPageDay(-1)}
-            >
-              <ChevronLeftIcon />
-            </button>
-            <p className="min-w-0 flex-1 truncate text-center text-sm font-semibold text-ink">
-              {t('diagram.dayBadge', { day: selectedCol.cycleDay })}
-              {selectedCol.dateKey
-                ? ` · ${formatDate(parseISO(selectedCol.dateKey), 'EEE, MMM d')}`
-                : ''}
-            </p>
-            <button
-              type="button"
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-blush-700 transition hover:bg-blush-100 disabled:pointer-events-none disabled:opacity-35"
-              aria-label={t('diagram.nextDay')}
-              title={t('diagram.nextDay')}
-              disabled={!canPageNext}
-              onClick={() => onPageDay(1)}
-            >
-              <ChevronRightIcon />
-            </button>
-          </div>
-        ) : (
-          <div className="min-w-0 flex-1 basis-full sm:basis-0" />
-        )}
-
-        <div className="ml-auto flex shrink-0 items-center gap-0.5">
-          <button
-            type="button"
-            className="btn-ghost !min-h-9 shrink-0 !px-2.5 !py-1.5 text-xs"
-            onClick={onGoToToday}
-          >
-            {t('common.today')}
-          </button>
-          {onAddMedication && (
-            <DayActionIconButton
-              label={t('diagram.addMed')}
-              onClick={onAddMedication}
-            >
-              <IconPlusMed />
-            </DayActionIconButton>
-          )}
-          <DayActionIconButton
-            label={t('diagram.cycleSettings')}
-            onClick={onOpenPeriodSettings}
-          >
-            <IconDrop />
-          </DayActionIconButton>
-          {onAddSymptom && selectedCol?.dateKey && (
-            <DayActionIconButton
-              label={t('diagram.addSymptom')}
-              onClick={() => onAddSymptom(selectedCol.dateKey!)}
-            >
-              <IconSparkPlus />
-            </DayActionIconButton>
-          )}
-        </div>
-      </div>
+      {selectedCol ? (
+        <PagerRow
+          label={`${t('diagram.dayBadge', { day: selectedCol.cycleDay })}${
+            selectedCol.dateKey
+              ? ` · ${formatDate(parseISO(selectedCol.dateKey), 'EEE, MMM d')}`
+              : ''
+          }`}
+          todayLabel={t('common.today')}
+          prevLabel={t('diagram.prevDay')}
+          nextLabel={t('diagram.nextDay')}
+          onToday={onGoToToday}
+          onPrev={() => onPageDay(-1)}
+          onNext={() => onPageDay(1)}
+          canPrev={canPagePrev}
+          canNext={canPageNext}
+        />
+      ) : null}
 
       {selectedCol &&
         (selectedCol.isLoggedPeriod ||
@@ -165,65 +111,5 @@ export function CycleDayHeader({
           </div>
         )}
     </div>
-  )
-}
-
-function DayActionIconButton({
-  label,
-  onClick,
-  children,
-}: {
-  label: string
-  onClick: () => void
-  children: ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-blush-800 ring-1 ring-blush-100 transition hover:bg-blush-50"
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-    >
-      {children}
-    </button>
-  )
-}
-
-function ChevronLeftIcon() {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="none"
-      className="h-5 w-5"
-      aria-hidden
-    >
-      <path
-        d="M12.5 4.5 7 10l5.5 5.5"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function ChevronRightIcon() {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="none"
-      className="h-5 w-5"
-      aria-hidden
-    >
-      <path
-        d="M7.5 4.5 13 10l-5.5 5.5"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   )
 }

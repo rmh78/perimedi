@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { addMonths, isSameMonth, parseISO } from 'date-fns'
+import { addMonths, isSameMonth } from 'date-fns'
 import {
   useCycleSettings,
   useDoseLogs,
@@ -16,6 +15,7 @@ import { monthGridDays, toDateKey, todayKey } from '../lib/dates'
 import { cycleDayClass } from '../components/CycleBadge'
 import { BloodDropIcon } from '../components/CycleMarks'
 import { CalendarLegend } from '../components/Legend'
+import { PagerRow } from '../components/PagerRow'
 import { useLocale } from '../i18n'
 import type { MessageKey } from '../i18n'
 import { useSelectedDate } from '../context/SelectedDateContext'
@@ -89,52 +89,24 @@ export function MonthPage() {
   ]
 
   return (
-    <section className="glass-card rounded-2xl p-3 sm:rounded-[1.75rem] sm:p-5">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="min-w-0 truncate text-sm font-semibold text-ink sm:text-base">
-          {formatDate(monthAnchor, 'MMMM yyyy')}
-        </p>
-        <div className="flex shrink-0 gap-1.5">
-          <button
-            type="button"
-            className="btn-ghost !min-h-10 !px-3 !py-2 text-xs"
-            onClick={() => setMonthAnchor((d) => addMonths(d, -1))}
-          >
-            {t('common.prev')}
-          </button>
-          <button
-            type="button"
-            className="btn-ghost !min-h-10 !px-3 !py-2 text-xs"
-            onClick={() => {
-              setMonthAnchor(new Date())
-              goToToday()
-            }}
-          >
-            {t('common.today')}
-          </button>
-          <button
-            type="button"
-            className="btn-ghost !min-h-10 !px-3 !py-2 text-xs"
-            onClick={() => setMonthAnchor((d) => addMonths(d, 1))}
-          >
-            {t('common.next')}
-          </button>
-        </div>
+    <section className="glass-card overflow-hidden rounded-2xl sm:rounded-[1.75rem]">
+      <div className="border-b border-blush-100/80 px-3 py-2 sm:px-5 sm:py-3">
+        <PagerRow
+          label={formatDate(monthAnchor, 'MMMM yyyy')}
+          todayLabel={t('common.today')}
+          prevLabel={t('month.prevMonth')}
+          nextLabel={t('month.nextMonth')}
+          onToday={() => {
+            setMonthAnchor(new Date())
+            goToToday()
+          }}
+          onPrev={() => setMonthAnchor((d) => addMonths(d, -1))}
+          onNext={() => setMonthAnchor((d) => addMonths(d, 1))}
+        />
       </div>
 
+      <div className="px-3 py-2.5 sm:px-5 sm:py-4">
       <CalendarLegend />
-
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <p className="min-w-0 truncate text-sm font-semibold text-ink">
-          {formatDate(parseISO(selectedDate), 'EEE, MMM d')}
-        </p>
-        <Link
-          to="/"
-          className="btn-ghost !min-h-9 shrink-0 !px-3 !py-1.5 text-xs"
-        >
-          {t('month.openInCycle')}
-        </Link>
-      </div>
 
       <div className="mt-3 rounded-2xl ring-1 ring-blush-100">
         <div className="grid grid-cols-7 rounded-t-2xl bg-blush-50/80">
@@ -262,6 +234,7 @@ export function MonthPage() {
             )
           })}
         </div>
+      </div>
       </div>
     </section>
   )

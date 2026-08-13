@@ -5,8 +5,6 @@ export const en = {
   'common.edit': 'Edit',
   'common.delete': 'Delete',
   'common.today': 'Today',
-  'common.prev': 'Prev',
-  'common.next': 'Next',
   'common.optional': 'Optional',
   'common.saving': 'Saving…',
   'common.emDash': '—',
@@ -69,7 +67,8 @@ export const en = {
   'diagram.dayN': 'Day {{day}}',
   'diagram.daysRange': 'Days {{from}}–{{to}}',
 
-  'month.openInCycle': 'Open in Cycle',
+  'month.prevMonth': 'Previous month',
+  'month.nextMonth': 'Next month',
 
   // Forms / enums
   'form.PILL': 'Pill',

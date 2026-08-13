@@ -72,7 +72,7 @@ The system SHALL keep the selected-day highlight aligned with the selected day�
 - **THEN** the selection indicator remains on that day’s column relative to the plot content
 
 ### Requirement: Header day paging and selected-day context
-The system SHALL show the selected cycle day and calendar date in the Cycle card header with previous/next controls to page through days in the current cycle window, and SHALL show period/symptom status and day actions (add medication, cycle settings, add symptom) in that header region—not as a separate floating badge over the plot.
+The system SHALL show the selected cycle day and calendar date in the Cycle card header on one row in this order: Today, previous, next, then the day/date text. The header SHALL also show period/symptom status. Day actions (add medication, cycle settings, add symptom) SHALL appear on the medications-and-doses title row, aligned to the trailing edge—not as a separate floating badge over the plot.
 
 #### Scenario: Page to next day
 - **WHEN** the user activates next day and a later day with a date exists in the cycle window

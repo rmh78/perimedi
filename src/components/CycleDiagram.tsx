@@ -4,6 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from 'react'
 import { addDays, parseISO } from 'date-fns'
 import type { CycleSettings, Period, PlannedDose, Remark } from '../types'
@@ -25,6 +26,7 @@ import { CycleDayHeader } from './CycleDayHeader'
 import { CycleDayStrip } from './CycleDayStrip'
 import { MedLaneLabel, MedLaneTrack } from './CycleMedLanes'
 import type { DayColumn } from './cycleTypes'
+import { IconDrop, IconPlusMed, IconSparkPlus } from './Icons'
 
 type Props = {
   periods: Period[]
@@ -338,28 +340,50 @@ export function CycleDiagram({
         canPageNext={canPageNext}
         onPageDay={pageDay}
         onGoToToday={goToToday}
-        onAddMedication={onAddMedication}
         onAddSymptom={onAddSymptom}
-        onOpenPeriodSettings={() => setPeriodSettingsOpen(true)}
       />
 
       <div className="space-y-1 px-2 py-2.5 sm:px-5 sm:py-4">
-        <div className="mb-1 flex flex-wrap items-center gap-x-3 gap-y-1 px-1 sm:gap-x-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-muted">
+        <div className="mb-1 flex items-center gap-2 px-1">
+          <p className="min-w-0 flex-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-muted">
             {t('diagram.medsAndDoses')}
           </p>
-          <div className="flex flex-wrap gap-3 text-[11px] text-ink-muted">
-            <LegendDot className="bg-emerald-500" label={t('diagram.taken')} />
-            <LegendDot className="bg-slate-400" label={t('diagram.notTaken')} />
-            <span className="inline-flex items-center gap-1">
-              <BloodDropIcon />
-              {t('diagram.periodTitle')}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <SymptomMarkIcon />
-              {t('legend.symptom')}
-            </span>
+          <div className="flex shrink-0 items-center gap-0.5">
+            {onAddMedication && (
+              <DayActionIconButton
+                label={t('diagram.addMed')}
+                onClick={onAddMedication}
+              >
+                <IconPlusMed />
+              </DayActionIconButton>
+            )}
+            <DayActionIconButton
+              label={t('diagram.cycleSettings')}
+              onClick={() => setPeriodSettingsOpen(true)}
+            >
+              <IconDrop />
+            </DayActionIconButton>
+            {onAddSymptom && selectedCol?.dateKey && (
+              <DayActionIconButton
+                label={t('diagram.addSymptom')}
+                onClick={() => onAddSymptom(selectedCol.dateKey!)}
+              >
+                <IconSparkPlus />
+              </DayActionIconButton>
+            )}
           </div>
+        </div>
+        <div className="mb-1 flex flex-wrap gap-3 px-1 text-[11px] text-ink-muted">
+          <LegendDot className="bg-emerald-500" label={t('diagram.taken')} />
+          <LegendDot className="bg-slate-400" label={t('diagram.notTaken')} />
+          <span className="inline-flex items-center gap-1">
+            <BloodDropIcon />
+            {t('diagram.periodTitle')}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <SymptomMarkIcon />
+            {t('legend.symptom')}
+          </span>
         </div>
 
         {periods.length === 0 && (
@@ -525,5 +549,27 @@ function LegendDot({ className, label }: { className: string; label: string }) {
       <span className={`h-2 w-2 rounded-full ${className}`} />
       {label}
     </span>
+  )
+}
+
+function DayActionIconButton({
+  label,
+  onClick,
+  children,
+}: {
+  label: string
+  onClick: () => void
+  children: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-blush-800 ring-1 ring-blush-100 transition hover:bg-blush-50"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+    >
+      {children}
+    </button>
   )
 }

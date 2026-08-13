@@ -75,3 +75,19 @@ export function IconSparkPlus({ className = 'h-5 w-5' }: { className?: string })
     </svg>
   )
 }
+
+export function IconChevronLeft({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" className={className} aria-hidden>
+      <path {...stroke} d="M12.5 4.5 7 10l5.5 5.5" />
+    </svg>
+  )
+}
+
+export function IconChevronRight({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" className={className} aria-hidden>
+      <path {...stroke} d="M7.5 4.5 13 10l-5.5 5.5" />
+    </svg>
+  )
+}
