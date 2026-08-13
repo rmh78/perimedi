@@ -4,42 +4,27 @@ import {
   useMemo,
   useRef,
   useState,
-  type ReactNode,
 } from 'react'
 import { addDays, parseISO } from 'date-fns'
-import type {
-  CycleSettings,
-  DayCycleInfo,
-  Period,
-  PlannedDose,
-  Remark,
-} from '../types'
+import type { CycleSettings, Period, PlannedDose, Remark } from '../types'
 import { cycleWindowForDate, getDayCycleInfo } from '../lib/cycle'
 import { toDateKey } from '../lib/dates'
-import {
-  buildMedLanes,
-  type DoseSegment,
-  type MedLane,
-} from '../lib/medSegments'
-import { MedFormIcon } from './MedFormIcon'
-import { deleteRemark, setDoseStatus } from '../db/actions'
+import { buildMedLanes } from '../lib/medSegments'
 import { PeriodSettingsSheet } from './PeriodSettingsSheet'
 import { BloodDropIcon, SymptomMarkIcon } from './CycleMarks'
-import { iconBgFromColor, takenFillFromColor } from '../lib/medColors'
 import { useLocale } from '../i18n'
-import { useConfirm } from '../context/ConfirmContext'
-import { IconDrop, IconPlusMed, IconSparkPlus } from './Icons'
 import { computeDayScrollLeft } from '../lib/chartScroll'
 import {
   CYCLE_DAY_MIN_PX,
-  CYCLE_DOSE_META_MAX_WIDTH_PX,
-  CYCLE_DOSE_META_STICKY_LEFT_PX,
   CYCLE_LABEL_COL_PX,
   CYCLE_LABEL_PAD_LEFT_PX,
-  CYCLE_MED_RING_PX,
   selectedDayPlotLeftPct,
   selectedDayPlotWidthPct,
 } from '../lib/cycleLayout'
+import { CycleDayHeader } from './CycleDayHeader'
+import { CycleDayStrip } from './CycleDayStrip'
+import { MedLaneLabel, MedLaneTrack } from './CycleMedLanes'
+import type { DayColumn } from './cycleTypes'
 
 type Props = {
   periods: Period[]
@@ -54,25 +39,9 @@ type Props = {
   onAddSymptom?: (dateKey: string) => void
 }
 
-type DayColumn = {
-  cycleDay: number
-  dateKey: string | null
-  info: DayCycleInfo | null
-  isToday: boolean
-  isSelected: boolean
-  /** Logged or predicted period */
-  isPeriod: boolean
-  isLoggedPeriod: boolean
-  symptoms: Remark[]
-}
-
-/** Binary adherence for the selected day: taken or not. */
-type TakenState = 'taken' | 'open' | null
-
 const DAY_MIN_PX = CYCLE_DAY_MIN_PX
 const LABEL_COL_PX = CYCLE_LABEL_COL_PX
 const LABEL_PAD_LEFT_PX = CYCLE_LABEL_PAD_LEFT_PX
-const MED_RING_PX = CYCLE_MED_RING_PX
 
 function isSymptomRemark(r: Remark): boolean {
   return r.kind === 'cycle' || r.kind === 'side_effect' || r.kind === 'note'
@@ -80,11 +49,6 @@ function isSymptomRemark(r: Remark): boolean {
 
 function dayGridTemplate(cycleLen: number): string {
   return `repeat(${cycleLen}, minmax(${DAY_MIN_PX}px, 1fr))`
-}
-
-function takenStateFromDoses(dayDoses: PlannedDose[]): TakenState {
-  if (dayDoses.length === 0) return null
-  return dayDoses.every((d) => d.status === 'taken') ? 'taken' : 'open'
 }
 
 export function CycleDiagram({
@@ -99,8 +63,7 @@ export function CycleDiagram({
   onEditMedication,
   onAddSymptom,
 }: Props) {
-  const { t, formatDate } = useLocale()
-  const confirm = useConfirm()
+  const { t } = useLocale()
   const [periodSettingsOpen, setPeriodSettingsOpen] = useState(false)
   const plotScrollRef = useRef<HTMLDivElement>(null)
   const [plotEdge, setPlotEdge] = useState({ left: false, right: false })
@@ -368,137 +331,17 @@ export function CycleDiagram({
   return (
     <>
     <section className="glass-card overflow-hidden rounded-2xl sm:rounded-[1.75rem]">
-      <div className="border-b border-blush-100/80 px-3 py-2 sm:px-5 sm:py-3">
-        <div className="flex flex-wrap items-center gap-x-1 gap-y-1.5">
-          {selectedCol ? (
-            <div className="flex min-w-0 flex-1 basis-full items-center sm:basis-0">
-              <button
-                type="button"
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-blush-700 transition hover:bg-blush-100 disabled:pointer-events-none disabled:opacity-35"
-                aria-label={t('diagram.prevDay')}
-                title={t('diagram.prevDay')}
-                disabled={!canPagePrev}
-                onClick={() => pageDay(-1)}
-              >
-                <ChevronLeftIcon />
-              </button>
-              <p className="min-w-0 flex-1 truncate text-center text-sm font-semibold text-ink">
-                {t('diagram.dayBadge', { day: selectedCol.cycleDay })}
-                {selectedCol.dateKey
-                  ? ` · ${formatDate(parseISO(selectedCol.dateKey), 'EEE, MMM d')}`
-                  : ''}
-              </p>
-              <button
-                type="button"
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-blush-700 transition hover:bg-blush-100 disabled:pointer-events-none disabled:opacity-35"
-                aria-label={t('diagram.nextDay')}
-                title={t('diagram.nextDay')}
-                disabled={!canPageNext}
-                onClick={() => pageDay(1)}
-              >
-                <ChevronRightIcon />
-              </button>
-            </div>
-          ) : (
-            <div className="min-w-0 flex-1 basis-full sm:basis-0" />
-          )}
-
-          <div className="ml-auto flex shrink-0 items-center gap-0.5">
-            <button
-              type="button"
-              className="btn-ghost !min-h-9 shrink-0 !px-2.5 !py-1.5 text-xs"
-              onClick={goToToday}
-            >
-              {t('common.today')}
-            </button>
-            {onAddMedication && (
-              <DayActionIconButton
-                label={t('diagram.addMed')}
-                onClick={onAddMedication}
-              >
-                <IconPlusMed />
-              </DayActionIconButton>
-            )}
-            <DayActionIconButton
-              label={t('diagram.cycleSettings')}
-              onClick={() => setPeriodSettingsOpen(true)}
-            >
-              <IconDrop />
-            </DayActionIconButton>
-            {onAddSymptom && selectedCol?.dateKey && (
-              <DayActionIconButton
-                label={t('diagram.addSymptom')}
-                onClick={() => onAddSymptom(selectedCol.dateKey!)}
-              >
-                <IconSparkPlus />
-              </DayActionIconButton>
-            )}
-          </div>
-        </div>
-
-        {selectedCol &&
-          (selectedCol.isLoggedPeriod ||
-            selectedCol.info?.isPredictedPeriod ||
-            selectedSymptoms.length > 0) && (
-            <div className="mt-1.5 flex min-w-0 flex-col gap-1">
-              <div className="flex flex-wrap items-center gap-1.5">
-                {selectedCol.isLoggedPeriod ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold leading-none text-rose-800 ring-1 ring-rose-200">
-                    <span className="h-2 w-2 rounded-full bg-rose-500" />
-                    {t('diagram.periodTitle')}
-                  </span>
-                ) : selectedCol.info?.isPredictedPeriod ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold leading-none text-rose-700 ring-1 ring-rose-100">
-                    <span className="h-2 w-2 rounded-full bg-rose-300" />
-                    {t('diagram.predictedPeriodTitle')}
-                  </span>
-                ) : null}
-              </div>
-              {selectedSymptoms.length > 0 && (
-                <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                  {selectedSymptoms.map((s) => (
-                    <div
-                      key={s.id}
-                      className="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full bg-violet-50 py-1 pl-2.5 pr-1 text-xs font-medium leading-none text-violet-900 ring-1 ring-violet-100"
-                    >
-                      <button
-                        type="button"
-                        className="inline-flex min-w-0 max-w-full items-center gap-1.5 text-left leading-none transition hover:text-violet-700"
-                        title={s.body}
-                        onClick={() => {
-                          if (onAddSymptom && selectedCol.dateKey) {
-                            onAddSymptom(selectedCol.dateKey)
-                          }
-                        }}
-                      >
-                        <span className="h-2 w-2 shrink-0 rounded-full bg-violet-400" />
-                        <span className="min-w-0 truncate leading-none">
-                          {s.body}
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-sm leading-none text-violet-700 transition hover:bg-violet-100"
-                        aria-label={t('common.delete')}
-                        title={t('common.delete')}
-                        onClick={() => {
-                          void confirm({
-                            message: t('symptom.deleteConfirm'),
-                            danger: true,
-                          }).then((ok) => {
-                            if (ok) void deleteRemark(s.id)
-                          })
-                        }}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-      </div>
+      <CycleDayHeader
+        selectedCol={selectedCol}
+        selectedSymptoms={selectedSymptoms}
+        canPagePrev={canPagePrev}
+        canPageNext={canPageNext}
+        onPageDay={pageDay}
+        onGoToToday={goToToday}
+        onAddMedication={onAddMedication}
+        onAddSymptom={onAddSymptom}
+        onOpenPeriodSettings={() => setPeriodSettingsOpen(true)}
+      />
 
       <div className="space-y-1 px-2 py-2.5 sm:px-5 sm:py-4">
         <div className="mb-1 flex flex-wrap items-center gap-x-3 gap-y-1 px-1 sm:gap-x-4">
@@ -676,463 +519,11 @@ export function CycleDiagram({
   )
 }
 
-function CycleDayStrip({
-  columns,
-  cycleLen: _cycleLen,
-  gridTemplate,
-  selectedDay,
-  onSelectDay,
-}: {
-  columns: DayColumn[]
-  cycleLen: number
-  gridTemplate: string
-  selectedDay: number
-  onSelectDay: (col: DayColumn) => void
-}) {
-  const { t } = useLocale()
-  return (
-    <div className="overflow-hidden rounded-2xl bg-white/80 ring-1 ring-blush-100">
-      <div
-        className="grid"
-        style={{
-          gridTemplateColumns: gridTemplate,
-        }}
-      >
-        {columns.map((col) => {
-          const active = col.cycleDay === selectedDay
-          return (
-            <button
-              key={col.cycleDay}
-              type="button"
-              disabled={!col.dateKey}
-              onClick={() => onSelectDay(col)}
-              title={
-                col.dateKey
-                  ? [
-                      t('diagram.dayN', { day: col.cycleDay }),
-                      col.dateKey,
-                      col.isLoggedPeriod ? t('diagram.periodTitle') : null,
-                      col.symptoms.length
-                        ? t('home.symptomsCount', {
-                            count: col.symptoms.length,
-                          })
-                        : null,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')
-                  : t('diagram.dayN', { day: col.cycleDay })
-              }
-              className={`flex min-h-10 flex-col items-center justify-end gap-px border-r border-blush-50 px-px py-1 transition last:border-r-0 ${
-                col.isLoggedPeriod
-                  ? 'bg-rose-100/80'
-                  : col.info?.isPredictedPeriod
-                    ? 'bg-rose-50/70'
-                    : 'hover:bg-blush-50/80'
-              } ${active ? 'bg-blush-50/50' : ''} ${
-                !col.dateKey ? 'cursor-default opacity-60' : 'cursor-pointer'
-              }`}
-            >
-              {/* Row 1: period blood drops */}
-              <div className="flex h-2.5 w-full items-center justify-center">
-                {(col.isLoggedPeriod || col.info?.isPredictedPeriod) && (
-                  <BloodDropIcon
-                    predicted={
-                      !col.isLoggedPeriod &&
-                      Boolean(col.info?.isPredictedPeriod)
-                    }
-                    title={
-                      col.isLoggedPeriod
-                        ? t('diagram.periodTitle')
-                        : t('diagram.predictedPeriodTitle')
-                    }
-                  />
-                )}
-              </div>
-              {/* One mark only — narrow day columns overflow with multiple icons */}
-              <div className="flex h-2.5 w-full items-center justify-center">
-                {col.symptoms[0] && (
-                  <SymptomMarkIcon
-                    kind={col.symptoms[0].kind}
-                    title={
-                      col.symptoms.length > 1
-                        ? t('home.symptomsCount', {
-                            count: col.symptoms.length,
-                          })
-                        : col.symptoms[0].body
-                    }
-                  />
-                )}
-              </div>
-
-              <span
-                className={`text-[11px] font-semibold leading-none ${
-                  active
-                    ? 'text-blush-700'
-                    : col.isToday
-                      ? 'text-blush-600'
-                      : col.isLoggedPeriod
-                        ? 'text-rose-800'
-                        : 'text-ink-muted'
-                }`}
-              >
-                {col.cycleDay}
-              </span>
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
 function LegendDot({ className, label }: { className: string; label: string }) {
   return (
     <span className="inline-flex items-center gap-1">
       <span className={`h-2 w-2 rounded-full ${className}`} />
       {label}
     </span>
-  )
-}
-
-function DayActionIconButton({
-  label,
-  onClick,
-  children,
-}: {
-  label: string
-  onClick: () => void
-  children: ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-blush-800 ring-1 ring-blush-100 transition hover:bg-blush-50"
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-    >
-      {children}
-    </button>
-  )
-}
-
-function ChevronLeftIcon() {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="none"
-      className="h-5 w-5"
-      aria-hidden
-    >
-      <path
-        d="M12.5 4.5 7 10l5.5 5.5"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function ChevronRightIcon() {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="none"
-      className="h-5 w-5"
-      aria-hidden
-    >
-      <path
-        d="M7.5 4.5 13 10l-5.5 5.5"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function MedLaneLabel({
-  lane,
-  dayDoses,
-  onEdit,
-}: {
-  lane: MedLane
-  dayDoses: PlannedDose[]
-  onEdit?: () => void
-}) {
-  const { t } = useLocale()
-  const color = lane.color
-  const state = takenStateFromDoses(dayDoses)
-  const isTaken = state === 'taken'
-  const hasDose = state != null
-
-  async function toggleTaken() {
-    if (!hasDose) return
-    const next = isTaken ? 'pending' : 'taken'
-    await Promise.all(
-      dayDoses.map((dose) =>
-        setDoseStatus({
-          medicationId: dose.medication.id,
-          scheduleId: dose.schedule.id,
-          date: dose.date,
-          timeOfDay: dose.timeOfDay,
-          status: next,
-          existingLogId: dose.log?.id,
-        }),
-      ),
-    )
-  }
-
-  const ring = isTaken ? color : hasDose ? `${color}99` : '#f0d0da'
-  const statusLabel = isTaken
-    ? t('diagram.taken')
-    : hasDose
-      ? t('diagram.notTaken')
-      : t('diagram.noDose')
-  const statusColor = isTaken ? color : hasDose ? '#64748b' : undefined
-
-  return (
-    <div className="flex w-full min-w-0 items-center gap-1.5 py-1">
-      {/*
-        Ring is a padded wrapper (not box-shadow): horizontal scrollports clip
-        outer shadows on sticky labels, which made the left side of the circle vanish.
-      */}
-      <span
-        className={`relative shrink-0 rounded-full ${
-          hasDose ? '' : 'opacity-70'
-        }`}
-        style={{
-          padding: MED_RING_PX,
-          background: ring,
-        }}
-      >
-        <button
-          type="button"
-          disabled={!hasDose}
-          onClick={toggleTaken}
-          title={
-            hasDose
-              ? isTaken
-                ? t('diagram.markNotTaken', { name: lane.name })
-                : t('diagram.markTaken', { name: lane.name })
-              : `${lane.name}: ${t('diagram.noDose')}`
-          }
-          aria-pressed={hasDose ? isTaken : undefined}
-          aria-label={
-            hasDose
-              ? `${lane.name}: ${statusLabel}`
-              : `${lane.name}: ${t('diagram.noDose')}`
-          }
-          className={`relative block h-10 w-10 overflow-hidden rounded-full transition ${
-            hasDose
-              ? 'cursor-pointer hover:scale-105 active:scale-95'
-              : 'cursor-default'
-          }`}
-          style={{
-            background: iconBgFromColor(color, 0.35),
-          }}
-        >
-          <MedFormIcon form={lane.form} fill />
-        </button>
-        {isTaken && (
-          <span
-            className="absolute -bottom-0.5 -right-0.5 z-10 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white ring-2 ring-white shadow-sm"
-            style={{ background: color }}
-            aria-hidden
-          >
-            ✓
-          </span>
-        )}
-      </span>
-
-      {onEdit ? (
-        <button
-          type="button"
-          className="group min-w-0 flex-1 text-left"
-          title={t('diagram.editMed', { name: lane.name })}
-          onClick={onEdit}
-        >
-          <p className="line-clamp-2 break-words text-left text-[12px] font-semibold leading-snug text-ink underline-offset-2 group-hover:underline sm:text-sm">
-            {lane.name}
-          </p>
-          <p
-            className="mt-0.5 text-[10px] font-semibold leading-tight"
-            style={{ color: statusColor ?? undefined }}
-          >
-            {statusLabel === t('diagram.noDose') ? (
-              <span className="font-medium text-ink-muted">{statusLabel}</span>
-            ) : (
-              statusLabel
-            )}
-          </p>
-        </button>
-      ) : (
-        <div className="min-w-0 flex-1 text-left">
-          <p className="line-clamp-2 break-words text-[12px] font-semibold leading-snug text-ink sm:text-sm">
-            {lane.name}
-          </p>
-          <p
-            className="mt-0.5 text-[10px] font-semibold leading-tight"
-            style={{ color: statusColor ?? undefined }}
-          >
-            {statusLabel === t('diagram.noDose') ? (
-              <span className="font-medium text-ink-muted">{statusLabel}</span>
-            ) : (
-              statusLabel
-            )}
-          </p>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function dayIsTaken(cell: {
-  statuses: Array<'pending' | 'taken' | 'skipped'>
-}) {
-  return cell.statuses.length > 0 && cell.statuses.every((s) => s === 'taken')
-}
-
-/** Shared track chrome for every med — multi-day bands and single-day doses. */
-function MedLaneTrack({
-  lane,
-  cycleLen: _cycleLen,
-  gridTemplate,
-  columns,
-  onSelectDay,
-}: {
-  lane: MedLane
-  cycleLen: number
-  gridTemplate: string
-  columns: DayColumn[]
-  onSelectDay: (col: DayColumn) => void
-}) {
-  const { t } = useLocale()
-  const color = lane.color
-  const byDay = new Map(lane.days.map((d) => [d.cycleDay, d]))
-  const takenFill = takenFillFromColor(color, 0.42)
-
-  return (
-    <div className="relative">
-      <div
-        className="pointer-events-none grid min-h-11 items-stretch bg-gradient-to-r from-blush-50/40 to-lilac-50/30 py-1.5 ring-1 ring-blush-100/80"
-        style={{
-          gridTemplateColumns: gridTemplate,
-        }}
-      >
-        {lane.segments.map((seg) => (
-          <DoseBand
-            key={`${seg.fromDay}-${seg.toDay}-${seg.doseLabel}`}
-            segment={seg}
-            color={color}
-          />
-        ))}
-      </div>
-      {/* Taken fill (med color) + day pick — min height ~44px for touch */}
-      <div
-        className="absolute inset-0 z-10 grid py-1.5"
-        style={{
-          gridTemplateColumns: gridTemplate,
-        }}
-      >
-        {columns.map((col) => {
-          const cell = byDay.get(col.cycleDay)
-          const taken = Boolean(cell && dayIsTaken(cell))
-          return (
-            <button
-              key={col.cycleDay}
-              type="button"
-              disabled={!col.dateKey}
-              onClick={() => onSelectDay(col)}
-              title={
-                cell
-                  ? `${t('diagram.dayN', { day: col.cycleDay })}: ${cell.doseLabel}${
-                      taken
-                        ? ` · ${t('diagram.taken')}`
-                        : ` · ${t('diagram.notTaken')}`
-                    }`
-                  : col.dateKey
-                    ? `${t('diagram.dayN', { day: col.cycleDay })} · ${col.dateKey}`
-                    : t('diagram.dayN', { day: col.cycleDay })
-              }
-              className={`min-h-0 px-px ${
-                !col.dateKey ? 'cursor-default' : 'cursor-pointer'
-              }`}
-            >
-              <span
-                className="block h-full min-h-11 w-full rounded-md transition hover:bg-blush-300/10"
-                style={taken ? { background: takenFill } : undefined}
-              />
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-/**
- * Dose segment card. Dose + day meta is position:sticky so it stays visible
- * while the day grid scrolls horizontally (pinned just right of med labels).
- */
-function DoseBand({
-  segment,
-  color,
-}: {
-  segment: DoseSegment
-  color: string
-}) {
-  const { t } = useLocale()
-  const span = segment.toDay - segment.fromDay + 1
-  const narrow = span === 1
-
-  const dayLine =
-    segment.fromDay === segment.toDay
-      ? t('diagram.dayN', { day: segment.fromDay })
-      : t('diagram.daysRange', {
-          from: segment.fromDay,
-          to: segment.toDay,
-        })
-
-  const meta = `${segment.doseLabel} · ${dayLine}`
-
-  return (
-    <div
-      title={meta}
-      className="relative box-border flex min-h-11 min-w-0 flex-col justify-center overflow-visible rounded-md text-left"
-      style={{
-        gridColumn: `${segment.fromDay} / span ${span}`,
-        margin: '0 1.5px',
-        maxWidth: '100%',
-        background: '#fffafb',
-        border: `1px solid ${color}55`,
-        boxShadow: '0 1px 2px rgba(61, 44, 51, 0.04)',
-      }}
-    >
-      {narrow ? (
-        <span className="sr-only">{meta}</span>
-      ) : (
-        <div
-          className="sticky z-[25] box-border rounded px-1.5 py-0.5 backdrop-blur-[1px]"
-          style={{
-            left: CYCLE_DOSE_META_STICKY_LEFT_PX,
-            maxWidth: CYCLE_DOSE_META_MAX_WIDTH_PX,
-            // Semi-transparent so band color shows through behind the label
-            background: 'color-mix(in srgb, #fffafb 55%, transparent)',
-            borderLeft: `2px solid ${color}`,
-          }}
-        >
-          <p className="truncate text-[11px] font-bold leading-snug text-[#3d2c33]">
-            {segment.doseLabel}
-          </p>
-          <p className="truncate text-[10px] font-medium leading-tight text-[#6b5560]">
-            {dayLine}
-          </p>
-        </div>
-      )}
-    </div>
   )
 }
