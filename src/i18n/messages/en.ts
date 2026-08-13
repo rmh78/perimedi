@@ -217,9 +217,7 @@ export const en = {
   'period.daysApprox': '~{{days}} days',
 
   // More / backup
-  'more.title': 'More',
   'more.tabBackup': 'Backup',
-  'more.tabPeriod': 'Period settings',
   'more.sampleTitle': 'Sample data',
   'more.sampleBody':
     'Fictional perimenopause demo (HRT-style plan, irregular cycles, symptoms).',

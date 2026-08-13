@@ -205,9 +205,7 @@ export const de: Record<MessageKey, string> = {
   'period.deleteConfirm': 'Diese Periode löschen?',
   'period.daysApprox': '~{{days}} Tage',
 
-  'more.title': 'Mehr',
   'more.tabBackup': 'Backup',
-  'more.tabPeriod': 'Perioden-Einstellungen',
   'more.sampleTitle': 'Beispieldaten',
   'more.sampleBody':
     'Fiktive Perimenopause-Demo (HRT-ähnlicher Plan, unregelmäßige Zyklen, Symptome).',

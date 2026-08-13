@@ -6,24 +6,25 @@ Perimenopause medication companion: track doses, periods, and symptoms. Client-o
 
 - React 19 + Vite + TypeScript + Tailwind CSS v4 (`@tailwindcss/vite`)
 - Dexie (IndexedDB database name: `perimedi`)
-- React Router (single route: Home)
+- React Router (Cycle `/`, Month `/month`, More `/more`)
 - date-fns
 
 ## Project layout
 
 ```
 src/
-  components/   # UI: diagram, sheets, cards
-  pages/        # HomePage only
+  components/   # UI: diagram, sheets, nav, cards
+  pages/        # CyclePage, MonthPage, MorePage
+  context/      # SelectedDateContext
   db/           # Dexie schema + write actions
   hooks/        # liveQuery wrappers
-  lib/          # pure logic: cycle, schedule expansion, therapy cycles, seed
+  lib/          # pure logic: cycle, schedule, dose range, seed
   types.ts      # shared domain types
 ```
 
 ## Product rules
 
-- **Home-first**: edit meds/schedules/symptoms via slide-over sheets on Home, not a separate “care” page.
+- **Cycle / Month / More** via bottom nav. Cycle is the default home. Edit meds/schedules/symptoms via slide-over sheets, not extra full pages.
 - **Not medical advice** — sample data and UI are a personal demo, not clinical guidance.
 - Keep privacy local: never introduce a server or analytics without explicit user request.
 - Prefer clear, short UI copy (+ Med, Cycle settings, + Symptom, Taken / Not taken).
@@ -36,7 +37,7 @@ src/
 - **Remark** — symptoms/notes (`cycle`, `side_effect`, `note`, `other`) on calendar/diagram
 - **DoseLog** — taken / pending (open) per planned dose; UI toggles taken ↔ not taken
 
-Schedule expansion: `lib/schedule.ts` + `lib/therapyCycle.ts` + `lib/cycle.ts`.
+Schedule expansion: `lib/schedule.ts` + `lib/therapyCycle.ts` + `lib/cycle.ts` + `lib/doseRange.ts`.
 
 ## Commands
 
@@ -45,6 +46,7 @@ npm install
 npm run dev      # Vite dev server
 npm run build    # tsc -b && vite build
 npm run preview
+npm test
 ```
 
 ## Conventions
@@ -52,10 +54,10 @@ npm run preview
 - **i18n**: product chrome via `useT()` / `useLocale()` (`src/i18n`). English keys in `messages/en.ts`; German must satisfy the same key set in `messages/de.ts`. Prefer short labels. User-entered text is never translated. Language control lives in More; preference is `localStorage` (`perimedi.locale`).
 - **Layout review (agent)**: use Playwright SE **375×667** screenshots, not guesswork. With app running (`npm run dev` or `npm run preview`): `npm run shot:se` → PNGs in `shots/` (gitignored). After layout changes, re-run shots and **read the PNGs** before claiming UI is good. Override URL with `BASE_URL=http://127.0.0.1:4173`.
 - Functional React components; state via hooks; Dexie `liveQuery` for reactive data.
-- Sheets: `Sheet` shell (portaled) + `EditMedicationSheet` (med + schedule), `DayNoteSheet`, `PeriodSettingsSheet`, `MoreSheet`.
+- Sheets: `Sheet` shell (portaled) + `EditMedicationSheet` (med + schedule), `DayNoteSheet`, `PeriodSettingsSheet`.
 - Shared marks: `CycleMarks` (blood drop, symptom spark).
 - Styling: Tailwind utilities + shared classes in `index.css` (`.btn-primary`, `.soft-input`, blush/lilac theme).
-- Sample data: `lib/seed.ts` — ~26–29 day cycles; load via ⋯ More → Backup.
+- Sample data: `lib/seed.ts` — ~26–29 day cycles; load via More → Backup.
 - Do not commit `node_modules/`, `dist/`, or secrets. No `.env` required.
 
 ## When changing features

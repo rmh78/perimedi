@@ -6,14 +6,14 @@ Browser-only SPA — all data stays in **IndexedDB** on your device (no server, 
 
 ## Features
 
-- **Home-first**: meds, cycle chart, month calendar, and day detail on one page
+- **Cycle / Month / More** via bottom navigation (Cycle is the home screen)
 - Medications with form icons, custom colors, default dose, and integrated schedule
 - Schedules: every day, specific weekdays, or cyclic apply/pause — not mixed
 - Mark doses taken/not taken via med icon; taken days tinted with med color
-- Cycle diagram: day selection overlay, period blood drops, symptom marks
+- Cycle: scrollable day plot, period/symptom marks, header paging and day actions
 - Month calendar: cycle start/end marks, cycle-day badges, period drops
-- Day card: period/symptom summary, + Med, cycle settings, + Symptom
-- **⋯ More**: backup (export/import/sample/clear), period settings also via day card
+- **More**: language (EN/DE) and backup (export/import/sample/clear)
+- Cycle settings and period history via the Cycle header action
 
 ## Specs (OpenSpec)
 
@@ -77,7 +77,7 @@ No environment variables are required. App data still lives only in each visitor
 
 - Storage is **per browser / device**
 - Clearing site data deletes the local database
-- Use **⋯ More → Backup → Export** for backups
+- Use **More → Backup → Export** for backups
 
 ## License
 

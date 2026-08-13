@@ -28,10 +28,9 @@ const SE = {
 }
 
 const TABS = [
-  { path: '/', name: '01-today', nav: /Today|Heute/i },
-  { path: '/cycle', name: '02-cycle', nav: /Cycle|Zyklus/i },
-  { path: '/month', name: '03-month', nav: /Month|Monat/i },
-  { path: '/more', name: '04-more', nav: /^More$|^Mehr$/i },
+  { path: '/', name: '01-cycle', nav: /Cycle|Zyklus/i },
+  { path: '/month', name: '02-month', nav: /Month|Monat/i },
+  { path: '/more', name: '03-more', nav: /^More$|^Mehr$/i },
 ]
 
 async function waitApp(page) {
@@ -112,9 +111,9 @@ async function main() {
         await shot(page, '08-cycle-meds-scroll-mid', false)
       }
 
-      await page.goto(BASE_URL + '/', { waitUntil: 'networkidle' })
+      await page.goto(BASE_URL + '/month', { waitUntil: 'networkidle' })
       await page.waitForTimeout(400)
-      await shot(page, '06-today-meds-viewport', false)
+      await shot(page, '06-month-meds-viewport', false)
     }
 
     console.log('Done. Review PNGs under shots/')

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { addDays, addMonths, isSameMonth, parseISO } from 'date-fns'
+import { addMonths, isSameMonth } from 'date-fns'
 import {
   useCycleSettings,
   useDoseLogs,
@@ -8,13 +8,9 @@ import {
   useRemarks,
   useSchedules,
 } from '../hooks/useAppData'
-import {
-  cycleBoundaryMarkers,
-  cycleWindowForDate,
-  getDayCycleInfo,
-  lastPeriodStart,
-} from '../lib/cycle'
+import { cycleBoundaryMarkers, getDayCycleInfo } from '../lib/cycle'
 import { expandPlannedDoses } from '../lib/schedule'
+import { doseExpansionRange } from '../lib/doseRange'
 import { monthGridDays, toDateKey, todayKey } from '../lib/dates'
 import { cycleDayClass } from '../components/CycleBadge'
 import { BloodDropIcon } from '../components/CycleMarks'
@@ -39,35 +35,14 @@ export function MonthPage() {
   const monthFrom = toDateKey(monthGrid[0])
   const monthTo = toDateKey(monthGrid[monthGrid.length - 1])
 
-  const selectedWindow = cycleWindowForDate(selectedDate, periods, settings)
-  const selectedWindowEnd = toDateKey(
-    addDays(parseISO(selectedWindow.start), selectedWindow.length - 1),
-  )
-  const latestCycleStart = lastPeriodStart(periods)
-  const latestCycleLen = Math.max(
-    settings.averagePeriodLength + 2,
-    settings.averageCycleLength,
-  )
-  const latestCycleEnd = latestCycleStart
-    ? toDateKey(addDays(parseISO(latestCycleStart), latestCycleLen - 1))
-    : null
-
-  const rangeStart = [
+  const { from: rangeStart, to: rangeEnd } = doseExpansionRange({
     today,
     selectedDate,
-    monthFrom,
-    selectedWindow.start,
-    ...(latestCycleStart ? [latestCycleStart] : []),
-  ].sort()[0]
-  const rangeEnd = [
-    today,
-    selectedDate,
-    monthTo,
-    selectedWindowEnd,
-    ...(latestCycleEnd ? [latestCycleEnd] : []),
-  ]
-    .sort()
-    .at(-1)!
+    periods,
+    settings,
+    extraFrom: [monthFrom],
+    extraTo: [monthTo],
+  })
 
   const allDoses = useMemo(
     () =>

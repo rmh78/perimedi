@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { addDays, parseISO } from 'date-fns'
 import {
   useCycleSettings,
   useDoseLogs,
@@ -8,9 +7,9 @@ import {
   useRemarks,
   useSchedules,
 } from '../hooks/useAppData'
-import { cycleWindowForDate, lastPeriodStart } from '../lib/cycle'
 import { expandPlannedDoses } from '../lib/schedule'
-import { toDateKey, todayKey } from '../lib/dates'
+import { doseExpansionRange } from '../lib/doseRange'
+import { todayKey } from '../lib/dates'
 import { CycleDiagram } from '../components/CycleDiagram'
 import { EditMedicationSheet } from '../components/EditMedicationSheet'
 import { DayNoteSheet } from '../components/DayNoteSheet'
@@ -36,33 +35,12 @@ export function CyclePage() {
     { open: false, dateKey: selectedDate },
   )
 
-  const selectedWindow = cycleWindowForDate(selectedDate, periods, settings)
-  const selectedWindowEnd = toDateKey(
-    addDays(parseISO(selectedWindow.start), selectedWindow.length - 1),
-  )
-  const latestCycleStart = lastPeriodStart(periods)
-  const latestCycleLen = Math.max(
-    settings.averagePeriodLength + 2,
-    settings.averageCycleLength,
-  )
-  const latestCycleEnd = latestCycleStart
-    ? toDateKey(addDays(parseISO(latestCycleStart), latestCycleLen - 1))
-    : null
-
-  const rangeStart = [
+  const { from: rangeStart, to: rangeEnd } = doseExpansionRange({
     today,
     selectedDate,
-    selectedWindow.start,
-    ...(latestCycleStart ? [latestCycleStart] : []),
-  ].sort()[0]
-  const rangeEnd = [
-    today,
-    selectedDate,
-    selectedWindowEnd,
-    ...(latestCycleEnd ? [latestCycleEnd] : []),
-  ]
-    .sort()
-    .at(-1)!
+    periods,
+    settings,
+  })
 
   const allDoses = useMemo(
     () =>

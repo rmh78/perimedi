@@ -28,11 +28,11 @@ The system SHALL pass TypeScript checking and production bundling via the projec
 - **THEN** the build completes successfully
 
 ### Requirement: Clear, non-duplicative primary actions
-The system SHALL prefer compact UI copy and SHALL avoid duplicate primary actions for the same job when a clear single place exists (for example period/symptom actions on the day card rather than also on the hero).
+The system SHALL prefer compact UI copy and SHALL avoid duplicate primary actions for the same job when a clear single place exists (for example period and symptom actions on the Cycle header rather than also as a second hero row).
 
-#### Scenario: Hero vs day card
-- **WHEN** the user views Home
-- **THEN** period and symptom primary actions are not duplicated on the hero when provided on the day card or cycle settings
+#### Scenario: Cycle header is the action hub
+- **WHEN** the user views the Cycle screen
+- **THEN** add-medication, cycle-settings, and add-symptom are not duplicated as a second primary row elsewhere on that screen
 
 ### Requirement: Localized clear UI copy
 The system SHALL provide clear, compact product chrome in each supported language and SHALL keep the not-medical-advice stance in the active language’s copy where such messaging appears.
