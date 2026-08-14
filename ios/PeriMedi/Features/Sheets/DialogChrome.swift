@@ -3,6 +3,7 @@ import SwiftUI
 struct DialogChrome<Content: View>: View {
     var title: String
     var icon: String?
+    var identifier: String? = nil
     var onClose: () -> Void
     @ViewBuilder var content: () -> Content
 
@@ -21,6 +22,7 @@ struct DialogChrome<Content: View>: View {
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(Theme.ink)
                     .lineLimit(1)
+                    .a11y(identifier)
                 Spacer(minLength: 8)
                 Button(action: onClose) {
                     Image(systemName: "xmark")
@@ -30,6 +32,7 @@ struct DialogChrome<Content: View>: View {
                         .background(Circle().fill(Theme.blush50))
                 }
                 .accessibilityLabel("Close")
+                .accessibilityIdentifier(A11yID.sheetClose)
                 .buttonStyle(.plain)
             }
             .padding(.horizontal, 16)

@@ -1,13 +1,13 @@
 import Foundation
 
 public enum DateKeys {
-    public static var calendar: Calendar {
+    public static let calendar: Calendar = {
         var cal = Calendar(identifier: .gregorian)
         cal.locale = Locale(identifier: "en_US_POSIX")
         cal.timeZone = .current
         cal.firstWeekday = 1 // Sunday
         return cal
-    }
+    }()
 
     private static let keyFormatter: DateFormatter = {
         let f = DateFormatter()
@@ -23,18 +23,29 @@ public enum DateKeys {
     }
 
     public static func toDateKey(_ value: String) -> String {
-        if let date = parseDateKey(String(value.prefix(10))) {
+        let key = String(value.prefix(10))
+        if key.count == 10,
+           key[key.index(key.startIndex, offsetBy: 4)] == "-",
+           key[key.index(key.startIndex, offsetBy: 7)] == "-"
+        {
+            return key
+        }
+        if let date = parseDateKey(key) {
             return toDateKey(date)
         }
-        return String(value.prefix(10))
+        return key
     }
 
     public static func parseDateKey(_ key: String) -> Date? {
         keyFormatter.date(from: String(key.prefix(10)))
     }
 
+    /// When set (UI tests / launch `-today=`), `todayKey()` returns this instead of the device clock.
+    nonisolated(unsafe) public static var pinnedTodayKey: String?
+
     public static func todayKey(_ now: Date = Date()) -> String {
-        toDateKey(now)
+        if let pinnedTodayKey { return pinnedTodayKey }
+        return toDateKey(now)
     }
 
     public static func addDays(_ date: Date, _ days: Int) -> Date {

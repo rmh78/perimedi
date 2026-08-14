@@ -59,6 +59,7 @@ struct GlassCard<Content: View>: View {
 struct PillButton: View {
     var title: String
     var filled: Bool
+    var identifier: String? = nil
     var action: () -> Void
 
     var body: some View {
@@ -76,6 +77,7 @@ struct PillButton: View {
                 .overlay(Capsule().stroke(Theme.blush200, lineWidth: filled ? 0 : 1))
         }
         .buttonStyle(.plain)
+        .a11y(identifier)
     }
 }
 

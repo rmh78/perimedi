@@ -42,6 +42,24 @@ xcodebuild \
 
 Open `ios/PeriMedi.xcodeproj` in Xcode and Run on **iPhone 17e** (or the narrowest iPhone listed).
 
+## UI tests (interaction proof)
+
+Instrumented XCUITests live in `PeriMediUITests/`. There is one first-use journey: empty home → log a period → add medications → mark taken → symptom → Month. Tests start empty, pin English and today (`2026-03-15`), and tap Cycle / sheets. Watch **iPhone 17e** (Simulator → Window → iPhone 17e). **iPhone 17** is a different Simulator and will stay idle.
+
+```bash
+source ios/env.sh
+xcodebuild test \
+  -project ios/PeriMedi.xcodeproj \
+  -scheme PeriMedi \
+  -destination 'platform=iOS Simulator,name=iPhone 17e' \
+  -derivedDataPath ios/DerivedData \
+  CODE_SIGNING_ALLOWED=NO
+```
+
+Launch contract used by the suite: `-en -clear -today=2026-03-15`. Do not pass `-journeyStep` or `-loadSample` for these tests.
+
+`JourneyScript` and `scripts/shot-journey.sh` only seed the store and take screenshots for visual review. They are not the interaction proof.
+
 ## Persistence
 
 - On-device **SwiftData**. Survives force-quit and Simulator reboot.

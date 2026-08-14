@@ -2,14 +2,26 @@ import Foundation
 import SwiftData
 import PeriMediDomain
 
+struct StoreSnapshot: Equatable {
+    var medications: [Medication] = []
+    var schedules: [Schedule] = []
+    var doseLogs: [DoseLog] = []
+    var remarks: [Remark] = []
+    var periods: [Period] = []
+    var settings: CycleSettings = .default
+}
+
 @MainActor
 final class Store: ObservableObject {
-    @Published private(set) var medications: [Medication] = []
-    @Published private(set) var schedules: [Schedule] = []
-    @Published private(set) var doseLogs: [DoseLog] = []
-    @Published private(set) var remarks: [Remark] = []
-    @Published private(set) var periods: [Period] = []
-    @Published private(set) var settings: CycleSettings = .default
+    /// Single published bag so a refresh invalidates SwiftUI once, not six times.
+    @Published private(set) var snapshot = StoreSnapshot()
+
+    var medications: [Medication] { snapshot.medications }
+    var schedules: [Schedule] { snapshot.schedules }
+    var doseLogs: [DoseLog] { snapshot.doseLogs }
+    var remarks: [Remark] { snapshot.remarks }
+    var periods: [Period] { snapshot.periods }
+    var settings: CycleSettings { snapshot.settings }
 
     private let context: ModelContext
 
@@ -20,17 +32,21 @@ final class Store: ObservableObject {
     }
 
     func refresh() {
-        medications = (try? context.fetch(FetchDescriptor<SDMedication>()))?.map { $0.toDomain() }
+        var next = StoreSnapshot()
+        next.medications = (try? context.fetch(FetchDescriptor<SDMedication>()))?.map { $0.toDomain() }
             .sorted { $0.createdAt < $1.createdAt } ?? []
-        schedules = (try? context.fetch(FetchDescriptor<SDSchedule>()))?.map { $0.toDomain() } ?? []
-        doseLogs = (try? context.fetch(FetchDescriptor<SDDoseLog>()))?.map { $0.toDomain() } ?? []
-        remarks = (try? context.fetch(FetchDescriptor<SDRemark>()))?.map { $0.toDomain() } ?? []
-        periods = (try? context.fetch(FetchDescriptor<SDPeriod>()))?.map { $0.toDomain() }
+        next.schedules = (try? context.fetch(FetchDescriptor<SDSchedule>()))?.map { $0.toDomain() } ?? []
+        next.doseLogs = (try? context.fetch(FetchDescriptor<SDDoseLog>()))?.map { $0.toDomain() } ?? []
+        next.remarks = (try? context.fetch(FetchDescriptor<SDRemark>()))?.map { $0.toDomain() } ?? []
+        next.periods = (try? context.fetch(FetchDescriptor<SDPeriod>()))?.map { $0.toDomain() }
             .sorted { $0.startDate > $1.startDate } ?? []
         if let row = try? context.fetch(FetchDescriptor<SDCycleSettings>()).first {
-            settings = row.toDomain()
+            next.settings = row.toDomain()
         } else {
-            settings = .default
+            next.settings = .default
+        }
+        if next != snapshot {
+            snapshot = next
         }
     }
 
@@ -100,17 +116,23 @@ final class Store: ObservableObject {
             context.insert(created)
             return created
         }()
-        row.apply(
-            DoseLog(
-                id: id,
-                medicationId: medicationId,
-                scheduleId: scheduleId,
-                plannedFor: plannedFor,
-                status: status,
-                confirmedAt: status == .pending ? nil : ISO8601DateFormatter().string(from: Date())
-            )
+        let log = DoseLog(
+            id: id,
+            medicationId: medicationId,
+            scheduleId: scheduleId,
+            plannedFor: plannedFor,
+            status: status,
+            confirmedAt: status == .pending ? nil : ISO8601DateFormatter().string(from: Date())
         )
-        save()
+        row.apply(log)
+        try? context.save()
+        var next = snapshot
+        if let idx = next.doseLogs.firstIndex(where: { $0.id == id }) {
+            next.doseLogs[idx] = log
+        } else {
+            next.doseLogs.append(log)
+        }
+        snapshot = next
     }
 
     func addRemark(_ remark: Remark) {

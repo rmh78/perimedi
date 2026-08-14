@@ -30,38 +30,57 @@ public enum ScheduleLogic {
             logBySlot[logKey(scheduleId: scheduleId, dateKey: dateKey, timeOfDay: time)] = log
         }
 
+        struct PreparedSchedule {
+            let schedule: Schedule
+            let start: String?
+            let end: String?
+            let weekdaySet: Set<Int>
+            let times: [String]
+        }
+        let prepared: [PreparedSchedule] = schedules.compactMap { schedule in
+            guard schedule.active else { return nil }
+            guard medById[schedule.medicationId] != nil else { return nil }
+            return PreparedSchedule(
+                schedule: schedule,
+                start: schedule.startDate.map(DateKeys.toDateKey),
+                end: schedule.endDate.map(DateKeys.toDateKey),
+                weekdaySet: Set(schedule.daysOfWeek),
+                times: TherapyCycleLogic.getScheduleTimes(schedule)
+            )
+        }
+        let lookup = CycleLogic.dayCycleLookup(periods: periods, settings: settings)
+
         var result: [PlannedDose] = []
         for day in DateKeys.eachDay(from: from, to: to) {
             let dateKey = DateKeys.toDateKey(day)
             let weekday = DateKeys.weekdaySundayZero(day)
-            let cycleInfo = CycleLogic.getDayCycleInfo(dateKey: dateKey, periods: periods, settings: settings)
+            let cycleInfo = lookup.info(dateKey: dateKey)
 
-            for schedule in schedules {
-                if !schedule.active { continue }
-                if let start = schedule.startDate, dateKey < DateKeys.toDateKey(start) { continue }
-                if let end = schedule.endDate, dateKey > DateKeys.toDateKey(end) { continue }
-                if !schedule.daysOfWeek.isEmpty && !schedule.daysOfWeek.contains(weekday) { continue }
+            for item in prepared {
+                if let start = item.start, dateKey < start { continue }
+                if let end = item.end, dateKey > end { continue }
+                if !item.weekdaySet.isEmpty && !item.weekdaySet.contains(weekday) { continue }
                 if !CycleLogic.matchesCycleRule(
                     cycleInfo,
-                    cycleRule: schedule.cycleRule,
-                    cycleDayFrom: schedule.cycleDayFrom,
-                    cycleDayTo: schedule.cycleDayTo
+                    cycleRule: item.schedule.cycleRule,
+                    cycleDayFrom: item.schedule.cycleDayFrom,
+                    cycleDayTo: item.schedule.cycleDayTo
                 ) { continue }
 
-                let therapy = TherapyCycleLogic.matchTherapyCycle(schedule: schedule, dateKey: dateKey)
+                let therapy = TherapyCycleLogic.matchTherapyCycle(schedule: item.schedule, dateKey: dateKey)
                 if let therapy, !therapy.take { continue }
-                guard let med = medById[schedule.medicationId] else { continue }
+                guard let med = medById[item.schedule.medicationId] else { continue }
 
-                for timeOfDay in TherapyCycleLogic.getScheduleTimes(schedule) {
-                    let log = logBySlot[logKey(scheduleId: schedule.id, dateKey: dateKey, timeOfDay: timeOfDay)]
+                for timeOfDay in item.times {
+                    let log = logBySlot[logKey(scheduleId: item.schedule.id, dateKey: dateKey, timeOfDay: timeOfDay)]
                     result.append(
                         PlannedDose(
-                            key: "\(schedule.id)-\(dateKey)-\(timeOfDay)",
+                            key: "\(item.schedule.id)-\(dateKey)-\(timeOfDay)",
                             date: dateKey,
                             timeOfDay: timeOfDay,
                             medication: med,
-                            schedule: schedule,
-                            doseLabel: therapy?.doseLabel ?? schedule.doseLabel ?? med.doseLabel,
+                            schedule: item.schedule,
+                            doseLabel: therapy?.doseLabel ?? item.schedule.doseLabel ?? med.doseLabel,
                             log: log,
                             status: log?.status ?? .pending
                         )

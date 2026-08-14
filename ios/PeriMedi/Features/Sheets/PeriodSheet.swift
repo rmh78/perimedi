@@ -22,7 +22,7 @@ struct PeriodSheet: View {
     }
 
     var body: some View {
-        DialogChrome(title: app.t("period.title"), icon: "ActionPeriod", onClose: { dismiss() }) {
+        DialogChrome(title: app.t("period.title"), icon: "ActionPeriod", identifier: A11yID.sheetPeriod, onClose: { dismiss() }) {
             VStack(alignment: .leading, spacing: 14) {
                 Text("\(app.t("period.intro")) \(formatted(nextPeriod) ?? "—")")
                     .font(.subheadline)
@@ -56,6 +56,7 @@ struct PeriodSheet: View {
                         }
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.blush600)
+                        .accessibilityIdentifier(A11yID.periodAdd)
                     }
                 }
 
@@ -113,9 +114,15 @@ struct PeriodSheet: View {
                 .foregroundStyle(Theme.inkMuted)
                 .textCase(.uppercase)
             FieldLabel(text: app.t("period.startDate"))
-            SoftField { TextField("YYYY-MM-DD", text: $start) }
+            SoftField {
+                TextField("YYYY-MM-DD", text: $start)
+                    .accessibilityIdentifier(A11yID.periodStart)
+            }
             FieldLabel(text: app.t("period.endDate"))
-            SoftField { TextField("YYYY-MM-DD", text: $end) }
+            SoftField {
+                TextField("YYYY-MM-DD", text: $end)
+                    .accessibilityIdentifier(A11yID.periodEnd)
+            }
             Text(app.t("period.endHint"))
                 .font(.caption2)
                 .foregroundStyle(Theme.inkMuted)
@@ -131,7 +138,7 @@ struct PeriodSheet: View {
             FieldLabel(text: app.t("period.notes"))
             SoftField { TextField(app.t("common.optional"), text: $notes) }
             HStack(spacing: 10) {
-                PillButton(title: app.t(editing == nil ? "period.addPeriod" : "period.saveChanges"), filled: true) {
+                PillButton(title: app.t(editing == nil ? "period.addPeriod" : "period.saveChanges"), filled: true, identifier: A11yID.periodSave) {
                     store.upsertPeriod(
                         Period(
                             id: editing?.id ?? createId(),

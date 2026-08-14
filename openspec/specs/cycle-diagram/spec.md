@@ -57,6 +57,17 @@ The system SHALL size day columns in the medication bands and cycle day strip so
 - **WHEN** the visible cycle window has many days and the plot is narrower than (day count × day column minimum)
 - **THEN** the user can scroll horizontally to reach every day column rather than compressing columns to zero width
 
+### Requirement: Day columns rest on full cells
+When the cycle plot is at rest, every visible day column SHALL be fully visible. Horizontal scrolling SHALL snap to a day-column boundary so a clipped day cell is not a resting scroll position. Column width SHALL be chosen so an integer number of columns fills the plot viewport.
+
+#### Scenario: Scroll then rest
+- **WHEN** the user scrolls the cycle plot horizontally and lifts their finger
+- **THEN** the plot settles so the leading edge aligns with a day column and no day cell is clipped by the plot viewport
+
+#### Scenario: Viewport leftover width
+- **WHEN** the remaining plot width is not an exact multiple of the minimum day-column width
+- **THEN** day columns widen just enough that an integer number of full columns fills the viewport
+
 ### Requirement: Sticky medication lane labels while scrolling
 While the cycle plot scrolls horizontally, the system SHALL keep each medication’s lane label (name / taken control) visible in a fixed leading column.
 
@@ -90,11 +101,19 @@ The system SHALL mark today’s cycle-day number on the cycle strip the same way
 - **THEN** that day’s number appears in a filled blush circle with white type
 
 ### Requirement: Today scrolls the selected day into view
-When the user activates **Today** on the Cycle screen, the system SHALL select today’s date and SHALL horizontally scroll the cycle plot so today’s day column is visible when the plot overflows.
+When the user activates **Today** on the Cycle screen, the system SHALL select today’s date and SHALL horizontally scroll the cycle plot so today’s day column is visible when the plot overflows. On first open of Cycle with a plot, and again when the app returns from the background, the system SHALL select today and SHALL scroll so today’s column is fully visible without the user activating Today.
 
 #### Scenario: Today while scrolled away
 - **WHEN** the cycle plot is scrolled so today is off-screen and the user activates Today
 - **THEN** today’s date becomes selected and the plot scrolls so today’s day-cell is visible
+
+#### Scenario: App opens on today
+- **WHEN** the user opens Cycle and a cycle plot is shown
+- **THEN** today is the selected day and the plot is scrolled so today’s column is fully visible
+
+#### Scenario: Return from Home
+- **WHEN** the app was in the background and the user opens it again
+- **THEN** today is the selected day and the plot is scrolled so today’s column is fully visible
 
 ### Requirement: Compact cycle-days strip
 The system SHALL keep the cycle-days strip shorter in height than a full med lane so more of the chart fits on a small viewport while still showing day numbers and period/symptom marks.

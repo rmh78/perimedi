@@ -11,7 +11,7 @@ struct PillTabBar: View {
         }
         .padding(.horizontal, 6)
         .padding(.top, 6)
-        .padding(.bottom, 4)
+        .padding(.bottom, 10)
         .background(Theme.cream.opacity(0.95))
         .overlay(alignment: .top) { Rectangle().fill(Theme.blush100).frame(height: 1) }
         .accessibilityLabel(app.t("nav.aria"))
@@ -25,19 +25,29 @@ struct PillTabBar: View {
             VStack(spacing: 3) {
                 Image(systemName: icon)
                     .font(.system(size: 16, weight: .semibold))
+                    .frame(height: 18)
                 Text(app.t(key))
                     .font(.system(size: 11, weight: .semibold))
                     .lineLimit(1)
             }
             .foregroundStyle(active ? Theme.blush800 : Theme.inkMuted)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
+            .frame(height: 48)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(active ? Theme.blush100 : Color.clear)
             )
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier(tabIdentifier(tab))
         .accessibilityAddTraits(active ? .isSelected : [])
+    }
+
+    private func tabIdentifier(_ tab: AppModel.Tab) -> String {
+        switch tab {
+        case .cycle: return A11yID.tabCycle
+        case .month: return A11yID.tabMonth
+        case .more: return A11yID.tabMore
+        }
     }
 }

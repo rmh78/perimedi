@@ -17,7 +17,7 @@ struct SymptomSheet: View {
     }
 
     var body: some View {
-        DialogChrome(title: app.t("symptom.title"), icon: "ActionSymptom", onClose: { dismiss() }) {
+        DialogChrome(title: app.t("symptom.title"), icon: "ActionSymptom", identifier: A11yID.sheetSymptom, onClose: { dismiss() }) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 4) {
                     Text(app.t("symptom.date")).foregroundStyle(Theme.inkSoft)
@@ -69,10 +69,15 @@ struct SymptomSheet: View {
                 SoftField {
                     TextField(app.t("symptom.placeholder"), text: $bodyText, axis: .vertical)
                         .lineLimit(3...5)
+                        .accessibilityIdentifier(A11yID.symptomBody)
                 }
 
                 HStack(spacing: 10) {
-                    PillButton(title: app.t(editing == nil ? "symptom.saveAdd" : "symptom.saveEdit"), filled: true) {
+                    PillButton(
+                        title: app.t(editing == nil ? "symptom.saveAdd" : "symptom.saveEdit"),
+                        filled: true,
+                        identifier: A11yID.symptomSave
+                    ) {
                         saveNote()
                     }
                     PillButton(title: app.t("common.close"), filled: false) { dismiss() }

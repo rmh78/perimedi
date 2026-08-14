@@ -8,6 +8,8 @@ final class AppModel: ObservableObject {
     @Published var selectedTab: Tab = .cycle
     @Published var launchSheet: String?
     @Published var launchPeriodEditor = false
+    /// Bumped when Cycle should snap the plot to today (launch / return from background).
+    @Published private(set) var todayFocusNonce = 0
 
     enum Tab: Hashable {
         case cycle, month, more
@@ -24,6 +26,11 @@ final class AppModel: ObservableObject {
 
     func goToToday() {
         selectedDate = DateKeys.todayKey()
+    }
+
+    func focusTodayAfterForeground() {
+        goToToday()
+        todayFocusNonce += 1
     }
 
     func t(_ key: String, _ vars: [String: String] = [:]) -> String {

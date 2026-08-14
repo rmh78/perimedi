@@ -57,40 +57,13 @@ public enum CycleLogic {
         periods: [Period],
         settings: CycleSettings
     ) -> DayCycleInfo {
-        let isLoggedPeriod = periods.contains {
-            periodCoversDate($0, dateKey: dateKey, defaultPeriodLength: settings.averagePeriodLength)
-        }
-        let cycleDay = getCycleDay(dateKey: dateKey, periods: periods)
-        var isPredictedPeriod = false
+        dayCycleLookup(periods: periods, settings: settings).info(dateKey: dateKey)
+    }
 
-        if let lastStart = lastPeriodStart(periods), let lastDate = DateKeys.parseDateKey(lastStart) {
-            let cycleLen = max(2, settings.averageCycleLength)
-            let periodLen = max(1, settings.averagePeriodLength)
-            let horizon = DateKeys.addDaysKey(dateKey, cycleLen * 3)
-            var cycleStart = lastDate
-            for i in 0..<24 {
-                let cs = DateKeys.toDateKey(cycleStart)
-                if cs > horizon { break }
-                if i > 0 {
-                    let pe = DateKeys.toDateKey(DateKeys.addDays(cycleStart, periodLen - 1))
-                    if dateKey >= cs && dateKey <= pe {
-                        isPredictedPeriod = true
-                    }
-                }
-                cycleStart = DateKeys.addDays(cycleStart, cycleLen)
-            }
-        }
-
-        if isLoggedPeriod {
-            isPredictedPeriod = false
-        }
-
-        return DayCycleInfo(
-            date: dateKey,
-            isLoggedPeriod: isLoggedPeriod,
-            isPredictedPeriod: isPredictedPeriod,
-            cycleDay: cycleDay
-        )
+    /// Precomputes logged / predicted windows so a day range can be classified without
+    /// repeating period scans and the 24-step prediction walk on every date.
+    public static func dayCycleLookup(periods: [Period], settings: CycleSettings) -> DayCycleLookup {
+        DayCycleLookup(periods: periods, settings: settings)
     }
 
     public static func matchesCycleRule(
@@ -182,5 +155,74 @@ public enum CycleLogic {
             map[e] = CycleBoundaryMark(isStart: prev.isStart, isEnd: true)
         }
         return map
+    }
+}
+
+/// Cached period windows for repeated `getDayCycleInfo` lookups.
+public struct DayCycleLookup: Sendable {
+    private let loggedRanges: [(start: String, end: String)]
+    private let startsAsc: [String]
+    private let predictedRanges: [(start: String, end: String)]
+
+    public init(periods: [Period], settings: CycleSettings) {
+        let defaultLen = settings.averagePeriodLength
+        loggedRanges = periods.map { period in
+            let start = DateKeys.toDateKey(period.startDate)
+            if let endDate = period.endDate {
+                return (start, DateKeys.toDateKey(endDate))
+            }
+            return (start, DateKeys.addDaysKey(start, defaultLen - 1))
+        }
+        startsAsc = periods.map { DateKeys.toDateKey($0.startDate) }.sorted()
+
+        var predicted: [(start: String, end: String)] = []
+        if let lastStart = startsAsc.last, let lastDate = DateKeys.parseDateKey(lastStart) {
+            let cycleLen = max(2, settings.averageCycleLength)
+            let periodLen = max(1, settings.averagePeriodLength)
+            var cycleStart = lastDate
+            for i in 0..<24 {
+                if i > 0 {
+                    let cs = DateKeys.toDateKey(cycleStart)
+                    let pe = DateKeys.toDateKey(DateKeys.addDays(cycleStart, periodLen - 1))
+                    predicted.append((cs, pe))
+                }
+                cycleStart = DateKeys.addDays(cycleStart, cycleLen)
+            }
+        }
+        predictedRanges = predicted
+    }
+
+    public func info(dateKey: String) -> DayCycleInfo {
+        let key = DateKeys.toDateKey(dateKey)
+        let isLoggedPeriod = loggedRanges.contains { key >= $0.start && key <= $0.end }
+        let cycleDay: Int?
+        if let start = startOnOrBefore(key) {
+            cycleDay = DateKeys.differenceInCalendarDays(fromKey: start, toKey: key) + 1
+        } else {
+            cycleDay = nil
+        }
+        let isPredictedPeriod = !isLoggedPeriod && predictedRanges.contains {
+            key >= $0.start && key <= $0.end
+        }
+        return DayCycleInfo(
+            date: dateKey,
+            isLoggedPeriod: isLoggedPeriod,
+            isPredictedPeriod: isPredictedPeriod,
+            cycleDay: cycleDay
+        )
+    }
+
+    private func startOnOrBefore(_ dateKey: String) -> String? {
+        var lo = 0
+        var hi = startsAsc.count
+        while lo < hi {
+            let mid = (lo + hi) / 2
+            if startsAsc[mid] <= dateKey {
+                lo = mid + 1
+            } else {
+                hi = mid
+            }
+        }
+        return lo > 0 ? startsAsc[lo - 1] : nil
     }
 }

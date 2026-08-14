@@ -29,12 +29,17 @@ struct MedicationSheet: View {
         DialogChrome(
             title: app.t(isNew ? "med.addTitle" : "med.editTitle"),
             icon: medFormImage(form),
+            identifier: A11yID.sheetMed,
             onClose: { dismiss() }
         ) {
             VStack(alignment: .leading, spacing: 16) {
                 SectionLabel(text: app.t("med.sectionMed"))
                 FieldLabel(text: app.t("med.name"))
-                SoftField { TextField("", text: $name).foregroundStyle(Theme.ink) }
+                SoftField {
+                    TextField("", text: $name)
+                        .foregroundStyle(Theme.ink)
+                        .accessibilityIdentifier(A11yID.medName)
+                }
 
                 HStack(alignment: .top, spacing: 10) {
                     VStack(alignment: .leading, spacing: 6) {
@@ -47,6 +52,7 @@ struct MedicationSheet: View {
                             }
                             .labelsHidden()
                             .tint(Theme.ink)
+                            .accessibilityIdentifier(A11yID.medForm)
                         }
                     }
                     VStack(alignment: .leading, spacing: 6) {
@@ -54,6 +60,7 @@ struct MedicationSheet: View {
                         SoftField {
                             TextField(app.t("med.dosePlaceholder"), text: $doseLabel)
                                 .foregroundStyle(Theme.ink)
+                                .accessibilityIdentifier(A11yID.medDose)
                         }
                     }
                 }
@@ -88,7 +95,10 @@ struct MedicationSheet: View {
                 HStack(spacing: 10) {
                     VStack(alignment: .leading, spacing: 6) {
                         FieldLabel(text: app.t("med.start"))
-                        SoftField { TextField("YYYY-MM-DD", text: $startDate) }
+                        SoftField {
+                            TextField("YYYY-MM-DD", text: $startDate)
+                                .accessibilityIdentifier(A11yID.medStart)
+                        }
                     }
                     VStack(alignment: .leading, spacing: 6) {
                         FieldLabel(text: app.t("med.endOptional"))
@@ -108,13 +118,19 @@ struct MedicationSheet: View {
                 }
 
                 HStack(spacing: 10) {
-                    PillButton(title: app.t(isNew ? "med.saveNew" : "med.saveChanges"), filled: true, action: save)
+                    PillButton(
+                        title: app.t(isNew ? "med.saveNew" : "med.saveChanges"),
+                        filled: true,
+                        identifier: A11yID.medSave,
+                        action: save
+                    )
                     if !isNew, medication != nil {
                         Button(app.t("common.delete"), role: .destructive) {
                             if let medication { store.deleteMedication(id: medication.id) }
                             dismiss()
                         }
                         .font(.subheadline.weight(.semibold))
+                        .accessibilityIdentifier(A11yID.medDelete)
                     }
                     Spacer()
                 }
@@ -165,6 +181,15 @@ struct MedicationSheet: View {
                 )
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier(modeTabId(value))
+    }
+
+    private func modeTabId(_ value: Mode) -> String {
+        switch value {
+        case .everyDay: return A11yID.medModeEveryday
+        case .cyclic: return A11yID.medModeCyclic
+        case .specificDays: return "med.mode.specific"
+        }
     }
 
     private var weekdayRow: some View {
@@ -196,6 +221,7 @@ struct MedicationSheet: View {
                     Text(app.t("therapy.preset.custom_days")).tag(TherapyPresetId.custom_days)
                 }
                 .labelsHidden()
+                .accessibilityIdentifier(A11yID.medPreset)
             }
             if preset != .continuous {
                 HStack {

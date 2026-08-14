@@ -47,11 +47,15 @@ The system SHALL keep a shared selected calendar date across Cycle and Month so 
 - **THEN** the cycle chart and day-context area reflect that selected date
 
 ### Requirement: iPhone layout and safe areas
-The system SHALL keep Cycle, Month, More, and sheets usable on an iPhone-class Simulator viewport, including the home-indicator and status-bar safe areas, without requiring the user to pan the whole screen horizontally to reach primary controls.
+The system SHALL keep Cycle, Month, More, and sheets usable on an iPhone-class Simulator viewport, including the home-indicator and status-bar safe areas, without requiring the user to pan the whole screen horizontally to reach primary controls. The brand header SHALL extend into the status-bar region and the bottom navigation SHALL extend into the home-indicator region so those bands are app chrome, not empty margins. Tappable controls SHALL stay clear of the status-bar island and the home indicator.
 
 #### Scenario: iPhone SE-class Simulator
 - **WHEN** the user uses the app on a narrow iPhone Simulator
 - **THEN** bottom navigation, header actions, and sheet close controls remain reachable and are not permanently covered by system insets
+
+#### Scenario: Notch and home indicator chrome
+- **WHEN** the user opens Cycle on a device with a status-bar island and a home indicator
+- **THEN** the header’s background fills the status-bar band without covering the island or status icons, the wordmark and header art sit below the island, and Cycle / Month / More sit on the bottom edge just above the home indicator
 
 ### Requirement: English and German chrome
 The system SHALL provide English and German product chrome on iOS and SHALL keep user-entered text untranslated.

@@ -1,7 +1,7 @@
 import Foundation
 import PeriMediDomain
 
-struct DoseDayCell {
+struct DoseDayCell: Equatable {
     var cycleDay: Int
     var dateKey: String?
     var doseLabel: String
@@ -9,7 +9,7 @@ struct DoseDayCell {
     var summary: String
 }
 
-struct DoseSegment {
+struct DoseSegment: Equatable {
     var fromDay: Int
     var toDay: Int
     var doseLabel: String
@@ -18,7 +18,7 @@ struct DoseSegment {
     var total: Int
 }
 
-struct MedLane: Identifiable {
+struct MedLane: Identifiable, Equatable {
     var medicationId: String
     var name: String
     var form: MedForm

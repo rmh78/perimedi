@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PROJ = ROOT / "PeriMedi.xcodeproj"
 APP = ROOT / "PeriMedi"
+UITESTS = ROOT / "PeriMediUITests"
 
 
 def hid(name: str) -> str:
@@ -40,6 +41,17 @@ def main() -> None:
         "strings": hid("file_strings"),
         "entitlements": hid("file_entitlements"),
         "info": hid("file_info"),
+        "ui_target": hid("ui_target"),
+        "ui_product": hid("product_ui"),
+        "ui_sources": hid("phase_ui_sources"),
+        "ui_frameworks": hid("phase_ui_frameworks"),
+        "ui_resources": hid("phase_ui_resources"),
+        "ui_group": hid("group_ui"),
+        "config_list_ui": hid("xc_list_ui"),
+        "debug_ui": hid("xc_debug_ui"),
+        "release_ui": hid("xc_release_ui"),
+        "ui_proxy": hid("proxy_ui"),
+        "ui_dep": hid("dep_ui"),
     }
 
     file_refs = []
@@ -168,12 +180,33 @@ def main() -> None:
         )
         flat_children.append(f"{key} /* {rel} */,")
 
+    ui_swift = sorted(p.relative_to(UITESTS) for p in UITESTS.rglob("*.swift")) if UITESTS.exists() else []
+    ui_file_refs = [
+        f"\t\t{ids['ui_product']} /* PeriMediUITests.xctest */ = {{isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PeriMediUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; }};"
+    ]
+    ui_build_files = []
+    ui_source_builds = []
+    ui_group_children = []
+    for rel in ui_swift:
+        key = hid(f"ui-swift:{rel}")
+        bkey = hid(f"ui-build:{rel}")
+        ui_file_refs.append(
+            f"\t\t{key} /* {rel} */ = {{isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = {rel.as_posix()}; sourceTree = \"<group>\"; }};"
+        )
+        ui_build_files.append(
+            f"\t\t{bkey} /* {rel.name} in Sources */ = {{isa = PBXBuildFile; fileRef = {key} /* {rel} */; }};"
+        )
+        ui_source_builds.append(f"\t\t\t\t{bkey} /* {rel.name} in Sources */,")
+        ui_group_children.append(f"{key} /* {rel} */,")
+
     nl = "\n"
-    build_files_block = nl.join(build_files)
-    file_refs_block = nl.join(file_refs_flat)
+    build_files_block = nl.join(build_files + ui_build_files)
+    file_refs_block = nl.join(file_refs_flat + ui_file_refs)
     app_children_block = nl.join("\t\t\t\t" + c for c in flat_children)
     resource_block = nl.join(resource_builds)
     source_block = nl.join(source_builds)
+    ui_source_block = nl.join(ui_source_builds)
+    ui_group_block = nl.join("\t\t\t\t" + c for c in ui_group_children)
 
     pbx = f"""// !$*UTF8*$!
 {{
@@ -191,12 +224,29 @@ def main() -> None:
 {file_refs_block}
 /* End PBXFileReference section */
 
+/* Begin PBXContainerItemProxy section */
+		{ids['ui_proxy']} /* PBXContainerItemProxy */ = {{
+			isa = PBXContainerItemProxy;
+			containerPortal = {ids['project']} /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = {ids['app_target']};
+			remoteInfo = PeriMedi;
+		}};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		{ids['frameworks']} /* Frameworks */ = {{
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				{pkg_build} /* PeriMediDomain in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
+		{ids['ui_frameworks']} /* Frameworks */ = {{
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		}};
@@ -207,6 +257,7 @@ def main() -> None:
 			isa = PBXGroup;
 			children = (
 				{ids['group_app']} /* PeriMedi */,
+				{ids['ui_group']} /* PeriMediUITests */,
 				{ids['group_products']} /* Products */,
 			);
 			sourceTree = "<group>";
@@ -223,6 +274,7 @@ def main() -> None:
 			isa = PBXGroup;
 			children = (
 				{ids['product']} /* PeriMedi.app */,
+				{ids['ui_product']} /* PeriMediUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -232,6 +284,14 @@ def main() -> None:
 			children = (
 			);
 			name = Resources;
+			sourceTree = "<group>";
+		}};
+		{ids['ui_group']} /* PeriMediUITests */ = {{
+			isa = PBXGroup;
+			children = (
+{ui_group_block}
+			);
+			path = PeriMediUITests;
 			sourceTree = "<group>";
 		}};
 /* End PBXGroup section */
@@ -256,6 +316,24 @@ def main() -> None:
 			productName = PeriMedi;
 			productReference = {ids['product']} /* PeriMedi.app */;
 			productType = "com.apple.product-type.application";
+		}};
+		{ids['ui_target']} /* PeriMediUITests */ = {{
+			isa = PBXNativeTarget;
+			buildConfigurationList = {ids['config_list_ui']} /* Build configuration list for PBXNativeTarget "PeriMediUITests" */;
+			buildPhases = (
+				{ids['ui_sources']} /* Sources */,
+				{ids['ui_frameworks']} /* Frameworks */,
+				{ids['ui_resources']} /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				{ids['ui_dep']} /* PBXTargetDependency */,
+			);
+			name = PeriMediUITests;
+			productName = PeriMediUITests;
+			productReference = {ids['ui_product']} /* PeriMediUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
 		}};
 /* End PBXNativeTarget section */
 
@@ -285,6 +363,7 @@ def main() -> None:
 			projectRoot = "";
 			targets = (
 				{ids['app_target']} /* PeriMedi */,
+				{ids['ui_target']} /* PeriMediUITests */,
 			);
 		}};
 /* End PBXProject section */
@@ -295,6 +374,13 @@ def main() -> None:
 			buildActionMask = 2147483647;
 			files = (
 {resource_block}
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
+		{ids['ui_resources']} /* Resources */ = {{
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		}};
@@ -309,7 +395,23 @@ def main() -> None:
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		}};
+		{ids['ui_sources']} /* Sources */ = {{
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+{ui_source_block}
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		{ids['ui_dep']} /* PBXTargetDependency */ = {{
+			isa = PBXTargetDependency;
+			target = {ids['app_target']} /* PeriMedi */;
+			targetProxy = {ids['ui_proxy']} /* PBXContainerItemProxy */;
+		}};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		{ids['debug_proj']} /* Debug */ = {{
@@ -396,6 +498,46 @@ def main() -> None:
 			}};
 			name = Release;
 		}};
+		{ids['debug_ui']} /* Debug */ = {{
+			isa = XCBuildConfiguration;
+			buildSettings = {{
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_STYLE = Manual;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = app.perimedi.ios.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = PeriMedi;
+				USES_XCTRUNNER = YES;
+			}};
+			name = Debug;
+		}};
+		{ids['release_ui']} /* Release */ = {{
+			isa = XCBuildConfiguration;
+			buildSettings = {{
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_STYLE = Manual;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = app.perimedi.ios.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = PeriMedi;
+				USES_XCTRUNNER = YES;
+			}};
+			name = Release;
+		}};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -413,6 +555,15 @@ def main() -> None:
 			buildConfigurations = (
 				{ids['debug_app']} /* Debug */,
 				{ids['release_app']} /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		}};
+		{ids['config_list_ui']} /* Build configuration list for PBXNativeTarget "PeriMediUITests" */ = {{
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				{ids['debug_ui']} /* Debug */,
+				{ids['release_ui']} /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -463,6 +614,17 @@ def main() -> None:
    </BuildAction>
    <TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="YES">
       <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "{ids['ui_target']}"
+               BuildableName = "PeriMediUITests.xctest"
+               BlueprintName = "PeriMediUITests"
+               ReferencedContainer = "container:PeriMedi.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" launchStyle="0" useCustomWorkingDirectory="NO" ignoresPersistentStateOnLaunch="NO" debugDocumentVersioning="YES" debugServiceExtension="internal" allowLocationSimulation="YES">
@@ -494,7 +656,7 @@ def main() -> None:
 </Scheme>
 """
     )
-    print(f"Wrote {PROJ / 'project.pbxproj'} ({len(swift)} swift files)")
+    print(f"Wrote {PROJ / 'project.pbxproj'} ({len(swift)} app swift, {len(ui_swift)} UI test swift)")
 
 
 if __name__ == "__main__":

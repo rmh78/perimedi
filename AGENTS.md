@@ -16,6 +16,7 @@ The original **web companion** is in `web/` (React + Dexie/IndexedDB). Keep it b
 ```
 ios/                 # Xcode app + PeriMediDomain package
   PeriMedi/          # SwiftUI app (Cycle / Month / More, sheets, SwiftData)
+  PeriMediUITests/   # one first-use XCUITest journey (empty → tracking)
   Sources/           # portable domain (cycle, schedule, therapy, backup, seed)
   Tests/             # XCTest for domain (mirrors web/src/lib tests)
   docs/              # iCloud device-switch notes
@@ -59,7 +60,16 @@ swift test --package-path ios
 xcodebuild -project ios/PeriMedi.xcodeproj -scheme PeriMedi \
   -destination 'platform=iOS Simulator,name=iPhone 17e' \
   -derivedDataPath ios/DerivedData CODE_SIGNING_ALLOWED=NO build
+
+# iOS UI tests (iPhone 17e — not iPhone 17)
+xcodebuild test -project ios/PeriMedi.xcodeproj -scheme PeriMedi \
+  -destination 'platform=iOS Simulator,name=iPhone 17e' \
+  -derivedDataPath ios/DerivedData CODE_SIGNING_ALLOWED=NO
 ```
+
+UI tests are one first-use journey (`FirstUseJourneyTests`). They launch with `-en -clear -today=2026-03-15` and tap real controls. They never pass `-journeyStep` or `-loadSample`. Watch **iPhone 17e** in Simulator (Window → iPhone 17e); iPhone 17 is a different device.
+
+`JourneyScript` / `ios/scripts/shot-journey.sh` remain optional visual capture (seeded store snapshots). They are not the interaction proof.
 
 Root `npm test` / `npm run build` delegate to `web/`.
 
@@ -82,7 +92,8 @@ Simulator signing does not require a paid team. Add an Apple ID in Xcode → Acc
 2. Keep med lane labels and dose tracks row-aligned on Cycle.
 3. Period UI: label + background only (no duplicate red bar).
 4. No menstrual “phase” labels (follicular/luteal etc.).
-5. After structural changes: `swift test --package-path ios` and an iOS Simulator build; if `web/` changed, `npm --prefix web run build`.
+5. After structural changes: `swift test --package-path ios` and an iOS Simulator build; if UI behavior changed, also `xcodebuild test` on iPhone 17e; if `web/` changed, `npm --prefix web run build`.
+6. After any iOS UI change: rebuild, **uninstall**, reinstall, and launch on **iPhone 17e** so the Simulator is not showing a leftover install. Do not leave a stale app on the device.
 
 ## OpenSpec
 
