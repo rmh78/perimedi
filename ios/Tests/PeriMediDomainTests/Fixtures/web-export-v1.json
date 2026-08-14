@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "exportedAt": "2026-08-07T12:00:00.000Z",
+  "medications": [
+    {
+      "id": "med-e2",
+      "name": "Estradiol gel",
+      "form": "CREAM",
+      "doseLabel": "1 pump",
+      "color": "#9b6fc9",
+      "createdAt": "2026-08-07T12:00:00.000Z"
+    },
+    {
+      "id": "med-p",
+      "name": "Micronized progesterone",
+      "form": "PILL",
+      "doseLabel": "100 mg",
+      "color": "#d43d6c",
+      "createdAt": "2026-08-07T12:00:00.000Z"
+    }
+  ],
+  "schedules": [
+    {
+      "id": "sch-e2",
+      "medicationId": "med-e2",
+      "daysOfWeek": [],
+      "timeOfDay": "07:30",
+      "times": ["07:30"],
+      "active": true,
+      "startDate": "2026-06-08",
+      "cycleRule": "none"
+    },
+    {
+      "id": "sch-p",
+      "medicationId": "med-p",
+      "daysOfWeek": [],
+      "timeOfDay": "21:00",
+      "times": ["21:00"],
+      "active": true,
+      "startDate": "2026-07-16",
+      "cycleRule": "none",
+      "therapyCycle": {
+        "enabled": true,
+        "mode": "on_off_days",
+        "anchorDate": "2026-07-16",
+        "onDays": 14,
+        "offDays": 14
+      }
+    }
+  ],
+  "doseLogs": [
+    {
+      "id": "log-1",
+      "medicationId": "med-e2",
+      "scheduleId": "sch-e2",
+      "plannedFor": "2026-08-07T07:30:00",
+      "status": "taken"
+    }
+  ],
+  "remarks": [
+    {
+      "id": "rem-1",
+      "occurredOn": "2026-08-01",
+      "kind": "cycle",
+      "body": "Cramps day 1",
+      "createdAt": "2026-08-07T12:00:00.000Z"
+    }
+  ],
+  "cycleSettings": {
+    "id": "default",
+    "averageCycleLength": 28,
+    "averagePeriodLength": 5
+  },
+  "periods": [
+    {
+      "id": "per-1",
+      "startDate": "2026-07-29",
+      "endDate": "2026-08-02",
+      "flowNote": "light"
+    }
+  ]
+}

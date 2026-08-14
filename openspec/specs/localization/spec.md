@@ -18,32 +18,32 @@ The system SHALL support product UI in English (`en`) and German (`de`) only.
 - **THEN** product chrome is shown in German
 
 ### Requirement: Language selection
-The system SHALL allow the user to switch the active language between English and German from the More surface (or an equally discoverable settings control on Home).
+The system SHALL allow the user to switch the active language between English and German from the More surface (or an equally discoverable settings control).
 
 #### Scenario: Switch to German
 - **WHEN** the user selects German
-- **THEN** the active language becomes German and visible product chrome updates without requiring a full page reload outside normal SPA rendering
+- **THEN** the active language becomes German and visible product chrome updates without requiring the user to relaunch the app
 
 #### Scenario: Switch to English
 - **WHEN** the user selects English
 - **THEN** the active language becomes English and visible product chrome updates accordingly
 
 ### Requirement: Persist language preference
-The system SHALL persist the user’s language choice on the device so it is restored on later visits in the same browser profile.
+The system SHALL persist the user’s language choice on the device so it is restored the next time the user opens the app on that same installation.
 
 #### Scenario: Return visit
-- **WHEN** the user previously selected a language and later opens the app in the same browser profile
+- **WHEN** the user previously selected a language and later opens the app on the same device or Simulator installation
 - **THEN** the previously selected language is active
 
 ### Requirement: Default language when unset
-When no language preference is stored, the system SHALL choose German if the browser’s preferred languages indicate German, otherwise English.
+When no language preference is stored, the system SHALL choose German if the device’s preferred languages indicate German, otherwise English.
 
-#### Scenario: German browser, no preference
-- **WHEN** no language preference is stored and the browser preferred languages include German
+#### Scenario: German device, no preference
+- **WHEN** no language preference is stored and the device preferred languages include German
 - **THEN** the initial active language is German
 
-#### Scenario: Other browser, no preference
-- **WHEN** no language preference is stored and the browser preferred languages do not include German
+#### Scenario: Other device, no preference
+- **WHEN** no language preference is stored and the device preferred languages do not include German
 - **THEN** the initial active language is English
 
 ### Requirement: User-entered content stays as typed
@@ -65,8 +65,8 @@ The system SHALL format dates and calendar weekday/month labels according to the
 - **THEN** month and weekday labels use English locale conventions
 
 ### Requirement: Document language attribute
-The system SHALL reflect the active language on the document language attribute so assistive tech and the browser can treat the page language correctly.
+The system SHALL expose the active language to the platform so assistive technologies treat the UI language correctly.
 
 #### Scenario: Active language reflected
 - **WHEN** the active language is German
-- **THEN** the document language indicates German
+- **THEN** the platform accessibility language indicates German

@@ -7,22 +7,23 @@ Keep all personal tracking data on the user’s device without requiring account
 ## Requirements
 
 ### Requirement: Client-only data storage
-The system SHALL store application data only in the browser (IndexedDB) on the user’s device and SHALL NOT require a backend account or server-side store for app data.
+The system SHALL store application domain data on the user’s device and SHALL NOT require a PeriMedi backend account, API, or server-side database. The system MAY use the user’s Apple iCloud account to sync that on-device data across the user’s devices. The system SHALL NOT send tracking data to any non-Apple service operated by PeriMedi.
 
 #### Scenario: Offline use
 - **WHEN** the user uses the app after initial load with data already local
-- **THEN** core tracking features work without a network account or API key
+- **THEN** core tracking features work without a PeriMedi network account or API key
+
+#### Scenario: No PeriMedi server
+- **WHEN** the user saves a medication, dose, period, or note
+- **THEN** that record is stored on the device (and, when iCloud is enabled, through Apple iCloud) and is not submitted to a PeriMedi backend
 
 ### Requirement: No required environment configuration
-The system SHALL run and build as a static app without required environment variables or secrets.
+The system SHALL run and build without required environment variables or secrets checked into the project or supplied by the developer for normal Simulator use.
 
 #### Scenario: Local development
-- **WHEN** a developer runs install and dev with no .env file
+- **WHEN** a developer opens the iOS project and runs it on the Simulator with no `.env` file
 - **THEN** the application starts successfully
 
-### Requirement: Data loss on site data clear
-The system SHALL rely on browser storage such that clearing site data can delete the local database, with export as the supported backup path.
-
-#### Scenario: User clears site data
-- **WHEN** the user clears site data for the app origin in the browser
-- **THEN** previously stored local app data is no longer available unless restored from export
+#### Scenario: Web reference app
+- **WHEN** a developer runs install and dev for the web companion with no `.env` file
+- **THEN** the web application starts successfully

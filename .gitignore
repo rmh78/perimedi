@@ -33,3 +33,24 @@ lerna-debug.log*
 
 # Agent layout review screenshots (Playwright)
 shots/
+web/shots/
+ios/shots/
+
+# Vite cache (created if `vite` is run from the repo root)
+.vite/
+
+# Xcode / iOS
+ios/DerivedData
+ios/.build
+ios/.swiftpm
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+timeline.xctimeline
+playground.xcworkspace

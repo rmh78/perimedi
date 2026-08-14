@@ -1,0 +1,24 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "nav.cycle" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cycle" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Zyklus" } }
+      }
+    },
+    "nav.month" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Month" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Monat" } }
+      }
+    },
+    "nav.more" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "More" } },
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Mehr" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}
