@@ -53,6 +53,8 @@ npm --prefix web run build
 
 Root scripts (`npm test`, `npm run build`, `npm run shot:se`, `npm run shot:journey`) delegate to `web/`.
 
+Vercel still deploys the web companion from this repo. The root `vercel.json` installs and builds `web/` and publishes `web/dist`. Alternatively set the Vercel project **Root Directory** to `web`.
+
 Layout screenshots (iPhone SE 375×667) are a **web** check: start Vite, then `npm run shot:se`. The empty-to-tracking journey is `npm run shot:journey` (writes `web/shots/journey-*.png`, gitignored).
 
 ## Specs (OpenSpec)
