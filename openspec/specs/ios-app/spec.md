@@ -57,6 +57,10 @@ The system SHALL keep Cycle, Month, More, and sheets usable on an iPhone-class S
 - **WHEN** the user opens Cycle on a device with a status-bar island and a home indicator
 - **THEN** the header’s background fills the status-bar band without covering the island or status icons, the wordmark and header art sit below the island, and Cycle / Month / More sit on the bottom edge just above the home indicator
 
+#### Scenario: Keyboard over a dialog
+- **WHEN** the user types in a dialog field on an iPhone
+- **THEN** the dialog panel sits above the software keyboard so the field and close control remain usable
+
 ### Requirement: English and German chrome
 The system SHALL provide English and German product chrome on iOS and SHALL keep user-entered text untranslated.
 
@@ -90,11 +94,11 @@ The Month screen SHALL use the same regions as the web companion: month title wi
 - **THEN** the pager, legend, seven-column grid, cycle-day badges, and period/symptom/taken marks are visible and the selected day is outlined
 
 ### Requirement: More layout matches the web companion
-The More screen SHALL present a Language block (English and German as selectable pills) and a Backup block whose rows (sample, export, import, clear) each have a trailing action, matching the web companion’s section order.
+The More screen SHALL present a Language block (English and German as selectable pills), a Reminders block with a master switch for dose reminders and a sound picker, and a Backup block whose rows (sample, export, import, clear) each have a trailing action.
 
 #### Scenario: More sections
 - **WHEN** the user opens More
-- **THEN** language pills appear above backup rows, and each backup action sits on the trailing side of its row
+- **THEN** language pills appear first, then the reminders switch, then backup rows, and each backup action sits on the trailing side of its row
 
 ### Requirement: Dialog layout matches the web companion
 The medication, period-settings, and symptom editors SHALL use the same visual pattern as the current web companion: an inset rounded panel over the current screen (not a full-bleed gray system form as the primary look), a header with title and a dedicated close control, and the same field groups in the same order. The medication dialog SHALL NOT repeat a second medication heading under the title. The medication color palette SHALL be a single row of swatches with no horizontal scrolling. Take times SHALL sit on a compact row with the Take at label and SHALL wrap onto additional rows when they no longer fit, without shrinking a time chip so its digits stack. Field order under the schedule heading SHALL be start and end dates, then take times, then a labeled Type dropdown (every day, specific days, cyclic) that is only as wide as its selected label. Mode-specific extras SHALL appear only after that dropdown: weekday chips for specific days, and apply/pause day counts for cyclic (no cyclic preset list).
@@ -133,7 +137,7 @@ The medication, period-settings, and symptom editors SHALL use the same visual p
 
 #### Scenario: History rows share icon edit and delete
 - **WHEN** the user views period history or logged symptoms
-- **THEN** each row uses the same circular pencil and trash buttons, with the date or kind as the title and a shorter secondary line for details
+- **THEN** each row uses the same circular pencil and trash buttons, with the date as the title on period rows and the symptom text as the title on symptom rows
 
 #### Scenario: Dialog backdrop
 - **WHEN** a medication, period, or symptom dialog is open

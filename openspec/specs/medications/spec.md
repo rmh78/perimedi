@@ -7,7 +7,7 @@ Let the user define medications with form, default dose, and color so they can b
 ## Requirements
 
 ### Requirement: Unified medication dialog
-The system SHALL allow the user to add and edit a medication including form, default dose, color, and primary schedule in a single dialog without requiring a separate primary-schedule-only flow.
+The system SHALL allow the user to add and edit a medication including form, default dose, color, primary schedule, and whether reminders fire at take times, in a single dialog without requiring a separate primary-schedule-only flow.
 
 #### Scenario: Add medication with schedule
 - **WHEN** the user saves a new medication with a valid name, default dose, and at least one take time
@@ -16,6 +16,14 @@ The system SHALL allow the user to add and edit a medication including form, def
 #### Scenario: Edit existing medication
 - **WHEN** the user opens an existing medication and saves changes
 - **THEN** the medication fields and primary schedule are updated
+
+#### Scenario: Remind at take times
+- **WHEN** the user saves a medication with reminders on
+- **THEN** pending take times for that medication are eligible for dose reminders
+
+#### Scenario: Remind off
+- **WHEN** the user saves a medication with reminders off
+- **THEN** that medication does not produce dose reminders until reminders are turned on again
 
 ### Requirement: Medication forms and icons
 The system SHALL support medication forms pill, cream, drops, injection, and other, each with an icon that fills the medication avatar circle.

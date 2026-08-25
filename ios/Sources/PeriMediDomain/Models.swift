@@ -33,6 +33,8 @@ public struct Medication: Codable, Equatable, Identifiable, Sendable {
     public var instructions: String?
     public var color: String?
     public var createdAt: String
+    /// Missing in older backups means on.
+    public var remindersEnabled: Bool
 
     public init(
         id: String,
@@ -41,7 +43,8 @@ public struct Medication: Codable, Equatable, Identifiable, Sendable {
         doseLabel: String,
         instructions: String? = nil,
         color: String? = nil,
-        createdAt: String
+        createdAt: String,
+        remindersEnabled: Bool = true
     ) {
         self.id = id
         self.name = name
@@ -50,6 +53,35 @@ public struct Medication: Codable, Equatable, Identifiable, Sendable {
         self.instructions = instructions
         self.color = color
         self.createdAt = createdAt
+        self.remindersEnabled = remindersEnabled
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, form, doseLabel, instructions, color, createdAt, remindersEnabled
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        form = try c.decode(MedForm.self, forKey: .form)
+        doseLabel = try c.decode(String.self, forKey: .doseLabel)
+        instructions = try c.decodeIfPresent(String.self, forKey: .instructions)
+        color = try c.decodeIfPresent(String.self, forKey: .color)
+        createdAt = try c.decode(String.self, forKey: .createdAt)
+        remindersEnabled = try c.decodeIfPresent(Bool.self, forKey: .remindersEnabled) ?? true
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(name, forKey: .name)
+        try c.encode(form, forKey: .form)
+        try c.encode(doseLabel, forKey: .doseLabel)
+        try c.encodeIfPresent(instructions, forKey: .instructions)
+        try c.encodeIfPresent(color, forKey: .color)
+        try c.encode(createdAt, forKey: .createdAt)
+        try c.encode(remindersEnabled, forKey: .remindersEnabled)
     }
 }
 

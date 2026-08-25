@@ -11,6 +11,7 @@ final class SDMedication {
     var instructions: String?
     var color: String?
     var createdAt: String = ""
+    var remindersEnabled: Bool = true
 
     init() {}
 
@@ -22,7 +23,8 @@ final class SDMedication {
             doseLabel: doseLabel,
             instructions: instructions,
             color: color,
-            createdAt: createdAt
+            createdAt: createdAt,
+            remindersEnabled: remindersEnabled
         )
     }
 
@@ -34,6 +36,7 @@ final class SDMedication {
         instructions = m.instructions
         color = m.color
         createdAt = m.createdAt
+        remindersEnabled = m.remindersEnabled
     }
 }
 

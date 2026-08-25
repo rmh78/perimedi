@@ -37,7 +37,6 @@ struct DialogChrome<Content: View>: View {
     var onClose: () -> Void
     @ViewBuilder var content: () -> Content
 
-    @EnvironmentObject private var app: AppModel
     @Environment(\.dialogMaxHeight) private var maxHeight
     @State private var bodyHeight: CGFloat = 360
 
@@ -91,13 +90,6 @@ struct DialogChrome<Content: View>: View {
             .scrollDismissesKeyboard(.interactively)
             .frame(height: min(bodyHeight, max(80, maxHeight - headerHeight)))
             .onPreferenceChange(ContentHeightKey.self) { bodyHeight = $0 }
-        }
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button(app.t("common.done"), action: resignKeyboard)
-                .accessibilityIdentifier("keyboard.done")
-            }
         }
         .background(Theme.cream)
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
@@ -335,77 +327,29 @@ func dialogPresentation() -> some ViewModifier {
     DialogPresentation()
 }
 
-/// Partial-intensity blur. Fading `.ultraThinMaterial` with opacity kills sampling;
-/// a blur animator parked at a fraction keeps frost without the full radius.
-/// The animator is finished at the current frame so XCTest is not blocked waiting
-/// for a paused animation to complete.
-private final class IntensityBlurView: UIVisualEffectView {
-    private let style: UIBlurEffect.Style
-    var intensity: CGFloat {
-        didSet { applyIntensity() }
-    }
-
-    private var clampedIntensity: CGFloat {
-        min(max(intensity, 0.05), 0.95)
-    }
-
-    init(style: UIBlurEffect.Style, intensity: CGFloat) {
-        self.style = style
-        self.intensity = intensity
-        super.init(effect: nil)
-        backgroundColor = .clear
-        isUserInteractionEnabled = false
-    }
-
-    required init?(coder: NSCoder) { nil }
-
-    override func didMoveToWindow() {
-        super.didMoveToWindow()
-        if window != nil { applyIntensity() }
-    }
-
-    private func applyIntensity() {
-        effect = nil
-        let animator = UIViewPropertyAnimator(duration: 1, curve: .linear)
-        animator.addAnimations { [weak self] in
-            self?.effect = UIBlurEffect(style: self?.style ?? .systemUltraThinMaterial)
-        }
-        animator.startAnimation()
-        animator.pauseAnimation()
-        animator.fractionComplete = clampedIntensity
-        animator.stopAnimation(false)
-        animator.finishAnimation(at: .current)
-    }
-}
-
-private struct IntensityBlur: UIViewRepresentable {
-    var intensity: CGFloat
-    func makeUIView(context: Context) -> IntensityBlurView {
-        IntensityBlurView(style: .systemUltraThinMaterial, intensity: intensity)
-    }
-    func updateUIView(_ uiView: IntensityBlurView, context: Context) {
-        uiView.intensity = intensity
-    }
-}
-
 struct DialogBackdrop<Content: View>: View {
     var onClose: () -> Void
     @ViewBuilder var content: () -> Content
 
     @State private var shown = false
+    @State private var keyboardFrame: CGRect = .zero
 
     var body: some View {
         GeometryReader { geo in
+            let overlap = keyboardOverlap(in: geo)
             ZStack(alignment: .bottom) {
                 ZStack {
-                    IntensityBlur(intensity: shown ? 0.22 : 0.05)
-                    Theme.ink.opacity(shown ? 0.08 : 0)
+                    // Real alpha, not UIVisualEffectView. Materials in this overlay
+                    // composite as an opaque light-gray slab on LCD phones (SE).
+                    Theme.cream.opacity(shown ? 0.22 : 0)
+                    Theme.ink.opacity(shown ? 0.28 : 0)
                 }
                 .ignoresSafeArea()
                 .onTapGesture(perform: requestClose)
                 content()
                     .environment(\.dialogClose, requestClose)
-                    .environment(\.dialogMaxHeight, geo.size.height * 0.9)
+                    .environment(\.dialogMaxHeight, max(180, geo.size.height - overlap) * 0.92)
+                    .padding(.bottom, overlap)
                     .offset(y: shown ? 0 : geo.size.height)
             }
         }
@@ -419,6 +363,33 @@ struct DialogBackdrop<Content: View>: View {
             } else {
                 shown = true
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)) { note in
+            syncKeyboard(note)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { note in
+            setKeyboardFrame(.zero, from: note)
+        }
+    }
+
+    private func keyboardOverlap(in geo: GeometryProxy) -> CGFloat {
+        guard !keyboardFrame.isEmpty else { return 0 }
+        return max(0, geo.frame(in: .global).maxY - keyboardFrame.minY)
+    }
+
+    private func syncKeyboard(_ note: Notification) {
+        guard let frame = note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+        setKeyboardFrame(frame, from: note)
+    }
+
+    private func setKeyboardFrame(_ frame: CGRect, from note: Notification) {
+        let duration = (note.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double) ?? 0.25
+        if UIView.areAnimationsEnabled {
+            withAnimation(.easeOut(duration: duration)) {
+                keyboardFrame = frame
+            }
+        } else {
+            keyboardFrame = frame
         }
     }
 
@@ -476,6 +447,53 @@ struct ConfirmCard: View {
             )
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
+        }
+    }
+}
+
+struct ReminderCard: View {
+    @EnvironmentObject private var app: AppModel
+    var reminder: PendingReminder
+
+    var body: some View {
+        DialogBackdrop(onClose: { app.pendingReminder = nil }) {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(reminder.medicationName)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(Theme.ink)
+                Text(app.t("reminder.body", ["dose": reminder.doseLabel, "time": reminder.timeOfDay]))
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.inkSoft)
+                HStack(spacing: 8) {
+                    Spacer()
+                    PillButton(
+                        title: app.t("reminder.snooze"),
+                        kind: .secondary,
+                        identifier: A11yID.reminderSnooze
+                    ) {
+                        DoseReminderCenter.shared.snooze(reminder: reminder)
+                    }
+                    PillButton(
+                        title: app.t("reminder.taken"),
+                        kind: .primary,
+                        identifier: A11yID.reminderTaken
+                    ) {
+                        DoseReminderCenter.shared.take(reminder: reminder)
+                    }
+                }
+            }
+            .padding(20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.cream)
+            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .stroke(Theme.blush100, lineWidth: 1)
+            )
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier(A11yID.reminderBanner)
         }
     }
 }

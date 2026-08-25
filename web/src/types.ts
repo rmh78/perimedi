@@ -17,6 +17,8 @@ export interface Medication {
   /** Hex color for icon, dose bands, and taken marks (e.g. #d43d6c) */
   color?: string
   createdAt: string
+  /** Missing in older backups means on. iOS uses this for dose reminders. */
+  remindersEnabled?: boolean
 }
 
 /**

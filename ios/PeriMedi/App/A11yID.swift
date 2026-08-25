@@ -46,6 +46,9 @@ enum A11yID {
     static let medStart = "med.start"
     static let medSave = "med.save"
     static let medDelete = "med.delete"
+    static let medRemind = "med.remind"
+    static let moreReminders = "more.reminders"
+    static let moreReminderSound = "more.reminderSound"
 
     static let periodAdd = "period.add"
     static let periodStart = "period.start"
@@ -60,6 +63,9 @@ enum A11yID {
     static let confirmDelete = "confirm.delete"
     static let confirmCancel = "confirm.cancel"
     static let confirmAction = "confirm.action"
+    static let reminderBanner = "reminder.banner"
+    static let reminderTaken = "reminder.taken"
+    static let reminderSnooze = "reminder.snooze"
 
     static func slug(_ name: String) -> String {
         name.trimmingCharacters(in: .whitespacesAndNewlines)

@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import UIKit
+import UserNotifications
 
 @main
 struct PeriMediApp: App {
@@ -16,7 +17,10 @@ struct PeriMediApp: App {
         self.container = container
         let store = Store(container: container)
         let locale = LocaleController()
-        _appModel = StateObject(wrappedValue: AppModel(store: store, locale: locale))
+        let model = AppModel(store: store, locale: locale)
+        _appModel = StateObject(wrappedValue: model)
+        UNUserNotificationCenter.current().delegate = DoseReminderCenter.shared
+        DoseReminderCenter.shared.attach(store: store, app: model)
     }
 
     var body: some Scene {

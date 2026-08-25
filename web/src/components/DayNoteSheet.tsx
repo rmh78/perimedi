@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Sheet } from './Sheet'
-import type { RemarkKind } from '../types'
 import { addRemark, deleteRemark, updateRemark } from '../db/actions'
 import { useRemarks } from '../hooks/useAppData'
 import { toDateKey } from '../lib/dates'
-import { useLocale, type MessageKey } from '../i18n'
+import { useLocale } from '../i18n'
 import { useConfirm } from '../context/ConfirmContext'
 import { formatLongDateLocalized } from '../i18n'
 import { HistoryIconButton } from './HistoryIconButton'
@@ -25,7 +24,6 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
   const confirm = useConfirm()
   const remarks = useRemarks()
   const [body, setBody] = useState('')
-  const [kind, setKind] = useState<RemarkKind>('cycle')
   const [editingId, setEditingId] = useState<string | null>(null)
 
   const daySymptoms = useMemo(
@@ -39,7 +37,6 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
   useEffect(() => {
     if (open) {
       setBody('')
-      setKind('cycle')
       setEditingId(null)
     }
   }, [open, dateKey])
@@ -48,13 +45,11 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
     const row = daySymptoms.find((s) => s.id === id)
     if (!row) return
     setEditingId(id)
-    setKind(row.kind)
     setBody(row.body)
   }
 
   function cancelEdit() {
     setEditingId(null)
-    setKind('cycle')
     setBody('')
   }
 
@@ -62,11 +57,11 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
     e.preventDefault()
     if (!body.trim()) return
     if (editingId) {
-      await updateRemark(editingId, { kind, body })
+      await updateRemark(editingId, { body })
     } else {
       await addRemark({
         body,
-        kind,
+        kind: 'note',
         occurredOn: dateKey,
       })
     }
@@ -102,22 +97,9 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
           {editingId ? t('symptom.editSection') : t('symptom.addSection')}
         </p>
         <label className="block text-sm">
-          {t('symptom.type')}
-          <select
-            className="soft-input mt-1"
-            value={kind}
-            onChange={(e) => setKind(e.target.value as RemarkKind)}
-          >
-            <option value="cycle">{t('remark.cycle')}</option>
-            <option value="side_effect">{t('remark.side_effect')}</option>
-            <option value="note">{t('remark.note')}</option>
-            <option value="other">{t('remark.other')}</option>
-          </select>
-        </label>
-        <label className="block text-sm">
           {t('symptom.description')}
           <textarea
-            className="soft-input mt-1"
+            className="soft-input mt-1 py-2.5"
             rows={3}
             value={body}
             onChange={(e) => setBody(e.target.value)}
@@ -159,10 +141,7 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
                 }`}
               >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-ink">
-                    {t(`remark.${s.kind}` as MessageKey)}
-                  </p>
-                  <p className="mt-px truncate text-xs text-ink-muted">{s.body}</p>
+                  <p className="line-clamp-2 text-sm font-semibold text-ink">{s.body}</p>
                 </div>
                 <div className="flex shrink-0 gap-1">
                   <HistoryIconButton

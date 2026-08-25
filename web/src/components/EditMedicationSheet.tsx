@@ -123,6 +123,7 @@ export function EditMedicationSheet({
         form,
         doseLabel,
         color,
+        remindersEnabled: medication?.remindersEnabled,
       })
 
       const isCyclic = schedMode === 'cyclic'
@@ -171,6 +172,7 @@ export function EditMedicationSheet({
         doseLabel: doseLabel.trim(),
         color,
         createdAt: medication?.createdAt ?? new Date().toISOString(),
+        remindersEnabled: medication?.remindersEnabled ?? true,
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : t('med.errorSave'))

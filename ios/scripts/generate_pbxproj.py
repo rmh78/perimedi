@@ -103,6 +103,20 @@ def main() -> None:
     resource_builds.append(f"\t\t\t\t{assets_build} /* Assets.xcassets in Resources */,")
     resource_builds.append(f"\t\t\t\t{strings_build} /* Localizable.xcstrings in Resources */,")
 
+    sound_children = []
+    for caf in sorted((APP / "Resources").glob("*.caf")):
+        key = hid(f"caf:{caf.name}")
+        bkey = hid(f"build-caf:{caf.name}")
+        file_refs.append(
+            f"\t\t{key} /* {caf.name} */ = {{isa = PBXFileReference; lastKnownFileType = file; path = {caf.name}; sourceTree = \"<group>\"; }};"
+        )
+        build_files.append(
+            f"\t\t{bkey} /* {caf.name} in Resources */ = {{isa = PBXBuildFile; fileRef = {key} /* {caf.name} */; }};"
+        )
+        resource_builds.append(f"\t\t\t\t{bkey} /* {caf.name} in Resources */,")
+        sound_children.append(f"{key} /* {caf.name} */,")
+        ids[f"caf:{caf.name}"] = key
+
     # Group children by directory
     dirs: dict[str, list[str]] = {}
     for rel in swift:
@@ -113,6 +127,7 @@ def main() -> None:
     group_blocks = []
     # Resources group
     res_id = hid("group:Resources")
+    sound_child_block = "".join(f"\n\t\t\t\t{c}" for c in sound_children)
     group_blocks.append(
         f"""\t\t{res_id} /* Resources */ = {{
 			isa = PBXGroup;
@@ -120,7 +135,7 @@ def main() -> None:
 				{ids['assets']} /* Assets.xcassets */,
 				{ids['strings']} /* Localizable.xcstrings */,
 				{ids['entitlements']} /* PeriMedi.entitlements */,
-				{ids['info']} /* Info.plist */,
+				{ids['info']} /* Info.plist */,{sound_child_block}
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -180,6 +195,13 @@ def main() -> None:
             f"\t\t{key} /* {rel} */ = {{isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = {rel.as_posix()}; sourceTree = \"<group>\"; }};"
         )
         flat_children.append(f"{key} /* {rel} */,")
+
+    for caf in sorted((APP / "Resources").glob("*.caf")):
+        key = ids[f"caf:{caf.name}"]
+        file_refs_flat.append(
+            f"\t\t{key} /* {caf.name} */ = {{isa = PBXFileReference; lastKnownFileType = file; path = Resources/{caf.name}; sourceTree = \"<group>\"; }};"
+        )
+        flat_children.append(f"{key} /* {caf.name} */,")
 
     ui_swift = sorted(p.relative_to(UITESTS) for p in UITESTS.rglob("*.swift")) if UITESTS.exists() else []
     ui_file_refs = [

@@ -57,7 +57,7 @@ Simulator CLI builds can still pass `CODE_SIGNING_ALLOWED=NO`.
 
 ## UI tests (interaction proof)
 
-Instrumented XCUITests live in `PeriMediUITests/`. There is one first-use journey: empty home → log a period → add medications → mark taken → symptom → Month. Tests start empty, pin English and today (`2026-03-15`), and tap Cycle / sheets. Watch **iPhone 17e** (Simulator → Window → iPhone 17e). **iPhone 17** is a different Simulator and will stay idle.
+Instrumented XCUITests live in `PeriMediUITests/`. There is a first-use journey (empty home → log a period → add medications → mark taken → symptom → Month) and a dose-reminder journey (add a pending med, take it from the reminder card). Tests start empty, pin English and today (`2026-03-15`), and tap Cycle / sheets. Watch **iPhone 17e** (Simulator → Window → iPhone 17e). **iPhone 17** is a different Simulator and will stay idle.
 
 ```bash
 source ios/env.sh
@@ -69,7 +69,7 @@ xcodebuild test \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-Launch contract used by the suite: `-en -clear -today=2026-03-15 -uiTesting`. `-uiTesting` turns off UIView animations so XCTest is not blocked on springs. Do not pass `-journeyStep` or `-loadSample` for these tests.
+Launch contract used by the suite: `-en -clear -today=2026-03-15 -uiTesting`. `-uiTesting` turns off UIView animations so XCTest is not blocked on springs. The reminder test also passes `-remindIn=4` so the next pending slot appears as a tappable in-app card (system banners are not asserted). Do not pass `-journeyStep` or `-loadSample` for these tests.
 
 `JourneyScript` and `scripts/shot-journey.sh` only seed the store and take screenshots for visual review. They are not the interaction proof.
 

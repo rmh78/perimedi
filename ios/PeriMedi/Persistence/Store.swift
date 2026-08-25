@@ -24,6 +24,7 @@ final class Store: ObservableObject {
     var settings: CycleSettings { snapshot.settings }
 
     private let context: ModelContext
+    var afterChange: (() -> Void)?
 
     init(container: ModelContainer) {
         self.context = container.mainContext
@@ -53,6 +54,7 @@ final class Store: ObservableObject {
     private func save() {
         try? context.save()
         refresh()
+        afterChange?()
     }
 
     private func ensureSettings() {
@@ -133,6 +135,7 @@ final class Store: ObservableObject {
             next.doseLogs.append(log)
         }
         snapshot = next
+        afterChange?()
     }
 
     func addRemark(_ remark: Remark) {

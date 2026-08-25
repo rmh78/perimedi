@@ -17,6 +17,10 @@ The system SHALL store application domain data on the user’s device and SHALL 
 - **WHEN** the user saves a medication, dose, period, or note
 - **THEN** that record is stored on the device (and, when iCloud is enabled, through Apple iCloud) and is not submitted to a PeriMedi backend
 
+#### Scenario: Dose reminders stay on device
+- **WHEN** a planned take time is due and reminders are on
+- **THEN** the reminder is delivered by the device and is not sent through a PeriMedi server
+
 ### Requirement: No required environment configuration
 The system SHALL run and build without required environment variables or secrets checked into the project or supplied by the developer for normal Simulator use.
 

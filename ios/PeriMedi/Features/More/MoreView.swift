@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import UniformTypeIdentifiers
 import PeriMediDomain
 
@@ -12,6 +13,9 @@ struct MoreView: View {
     @State private var exportURL: URL?
     @State private var showShare = false
     @State private var showImporter = false
+    @AppStorage(DoseReminderCenter.masterKey) private var remindersOn = true
+    @AppStorage(ReminderSound.storageKey) private var reminderSoundRaw = ReminderSound.system.rawValue
+    @State private var notifyDenied = false
 
 
     var body: some View {
@@ -33,6 +37,84 @@ struct MoreView: View {
                     }
                     .padding(14)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                GlassCard {
+                    VStack(alignment: .leading, spacing: 10) {
+                        sectionLabel(app.t("more.reminders"))
+                        HStack(alignment: .center, spacing: 10) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(app.t("more.reminders"))
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(Theme.ink)
+                                Text(app.t("more.remindersBody"))
+                                    .font(.caption)
+                                    .foregroundStyle(Theme.inkMuted)
+                            }
+                            Spacer(minLength: 8)
+                            Toggle("", isOn: $remindersOn)
+                                .labelsHidden()
+                                .tint(Theme.blush600)
+                                .accessibilityIdentifier(A11yID.moreReminders)
+                        }
+                        HStack(alignment: .center, spacing: 10) {
+                            Text(app.t("more.reminderSound"))
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Theme.ink)
+                            Spacer(minLength: 8)
+                            HStack(spacing: 8) {
+                                Picker("", selection: $reminderSoundRaw) {
+                                    ForEach(ReminderSound.allCases) { sound in
+                                        Text(app.t(sound.labelKey))
+                                            .lineLimit(1)
+                                            .tag(sound.rawValue)
+                                    }
+                                }
+                                .labelsHidden()
+                                .pickerStyle(.menu)
+                                .tint(Theme.ink)
+                                .fixedSize(horizontal: true, vertical: false)
+                                .accessibilityIdentifier(A11yID.moreReminderSound)
+                                Button {
+                                    DoseReminderCenter.shared.previewSound(ReminderSound(rawValue: reminderSoundRaw) ?? .system)
+                                } label: {
+                                    Image(systemName: "speaker.wave.2")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundStyle(Theme.blush700)
+                                        .frame(width: 36, height: 36)
+                                        .background(Circle().fill(Theme.blush50))
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel(app.t("more.reminderSoundPreview"))
+                            }
+                        }
+                        if remindersOn, notifyDenied {
+                            Text(app.t("more.remindersDenied"))
+                                .font(.caption)
+                                .foregroundStyle(Theme.blush700)
+                            PillButton(title: app.t("more.remindersSettings"), kind: .secondary) {
+                                if let url = URL(string: UIApplication.openSettingsURLString) {
+                                    UIApplication.shared.open(url)
+                                }
+                            }
+                        }
+                    }
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .onChange(of: remindersOn) { _, on in
+                    if on {
+                        Task {
+                            await DoseReminderCenter.shared.requestAuthorizationIfNeeded()
+                            notifyDenied = await DoseReminderCenter.shared.authorizationDenied()
+                            DoseReminderCenter.shared.refresh()
+                        }
+                    } else {
+                        DoseReminderCenter.shared.refresh()
+                    }
+                }
+                .onChange(of: reminderSoundRaw) { _, _ in
+                    DoseReminderCenter.shared.refresh()
                 }
 
                 if let status {
@@ -109,6 +191,9 @@ struct MoreView: View {
             .padding(12)
         }
         .scrollIndicators(.hidden)
+        .onAppear {
+            Task { notifyDenied = await DoseReminderCenter.shared.authorizationDenied() }
+        }
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.json, .plainText, .data]) { result in
             switch result {
             case .success(let url): importFile(url)

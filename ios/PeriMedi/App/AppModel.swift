@@ -12,6 +12,7 @@ final class AppModel: ObservableObject {
     @Published var showPeriod = false
     @Published var showSymptom = false
     @Published var confirm: ConfirmPrompt?
+    @Published var pendingReminder: PendingReminder?
     /// Bumped when Cycle should snap the plot to today (launch / return from background).
     @Published private(set) var todayFocusNonce = 0
 
@@ -65,6 +66,17 @@ final class AppModel: ObservableObject {
     func dismissConfirm() {
         confirm = nil
     }
+}
+
+struct PendingReminder: Identifiable, Equatable {
+    var medicationId: String
+    var scheduleId: String
+    var date: String
+    var timeOfDay: String
+    var medicationName: String
+    var doseLabel: String
+
+    var id: String { "\(scheduleId)|\(date)|\(timeOfDay)" }
 }
 
 struct ConfirmPrompt: Identifiable {

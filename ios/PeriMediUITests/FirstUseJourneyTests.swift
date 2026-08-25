@@ -87,4 +87,23 @@ final class FirstUseJourneyTests: PeriMediUITestCase {
             XCTAssertEqual(robot.value(of: "cycle.lane.estrogen.status"), "taken")
         }
     }
+
+    /// Springboard banners are unreliable in XCTest. `-remindIn` fires the next
+    /// pending slot in-process; Taken uses the same path as the notification action.
+    func testDoseReminderTaken() {
+        robot.launch(extra: ["-remindIn=4"])
+
+        XCTContext.runActivity(named: "add a dose that is still pending") { _ in
+            robot.addMedication(name: "Estrogen", dose: "1 mg", start: UITestDate.today)
+            robot.waitFor(id: "cycle.lane.estrogen")
+            XCTAssertEqual(robot.value(of: "cycle.lane.estrogen.status"), "not-taken")
+        }
+
+        XCTContext.runActivity(named: "take from the reminder") { _ in
+            robot.waitFor(id: "reminder.banner", timeout: 12)
+            robot.tap("reminder.taken")
+            robot.waitGone(id: "reminder.banner")
+            XCTAssertEqual(robot.value(of: "cycle.lane.estrogen.status"), "taken")
+        }
+    }
 }

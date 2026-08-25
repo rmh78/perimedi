@@ -21,6 +21,7 @@ struct MedicationSheet: View {
     @State private var offDays = 7
     @State private var startDate = DateKeys.todayKey()
     @State private var endDate = ""
+    @State private var remindersEnabled = true
     @State private var error: String?
 
     enum Mode: String, CaseIterable { case everyDay, specificDays, cyclic }
@@ -93,6 +94,14 @@ struct MedicationSheet: View {
                 }
 
                 takeAtRow
+
+                Toggle(isOn: $remindersEnabled) {
+                    Text(app.t("med.remind"))
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.ink)
+                }
+                .tint(Theme.blush600)
+                .accessibilityIdentifier(A11yID.medRemind)
 
                 VStack(alignment: .leading, spacing: 6) {
                     FieldLabel(text: app.t("med.scheduleType"))
@@ -292,6 +301,7 @@ struct MedicationSheet: View {
         form = medication.form
         doseLabel = medication.doseLabel
         color = MedColors.resolve(form: medication.form, color: medication.color)
+        remindersEnabled = medication.remindersEnabled
         if let schedule = store.schedules.first(where: { $0.medicationId == medication.id }) {
             times = TherapyCycleLogic.getScheduleTimes(schedule)
             daysOfWeek = schedule.daysOfWeek
@@ -325,9 +335,13 @@ struct MedicationSheet: View {
             form: form,
             doseLabel: trimmedDose,
             color: color,
-            createdAt: medication?.createdAt ?? ISO8601DateFormatter().string(from: Date())
+            createdAt: medication?.createdAt ?? ISO8601DateFormatter().string(from: Date()),
+            remindersEnabled: remindersEnabled
         )
         store.upsertMedication(med)
+        if remindersEnabled {
+            Task { await DoseReminderCenter.shared.requestAuthorizationIfNeeded() }
+        }
         var therapy: TherapyCycle?
         if mode == .cyclic {
             therapy = TherapyCycleLogic.normalizeTherapyCycle(

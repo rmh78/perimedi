@@ -126,6 +126,16 @@ public enum DateKeys {
         return "\(dateKey)T\(hh):\(mm):00"
     }
 
+    public static func date(dateKey: String, timeOfDay: String) -> Date? {
+        guard let day = parseDateKey(dateKey) else { return nil }
+        let parts = timeOfDay.split(separator: ":")
+        var comps = calendar.dateComponents([.year, .month, .day], from: day)
+        comps.hour = Int(parts.first.map(String.init) ?? "8") ?? 8
+        comps.minute = parts.count > 1 ? Int(parts[1].prefix(2)) ?? 0 : 0
+        comps.second = 0
+        return calendar.date(from: comps)
+    }
+
     public static func monthGridDays(anchor: Date) -> [Date] {
         let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: anchor)) ?? anchor
         let range = calendar.range(of: .day, in: .month, for: startOfMonth) ?? 1..<31

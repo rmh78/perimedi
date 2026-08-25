@@ -42,6 +42,13 @@ The system SHALL keep modal sheets closable on narrow phone viewports: the dedic
 - **WHEN** sheet body content is taller than the available panel height on a phone
 - **THEN** the body scrolls within the panel and the close control in the sheet header remains reachable
 
+### Requirement: Sheets sit above the software keyboard
+When the software keyboard is visible, the system SHALL lift the open dialog so the panel sits above the keyboard. The dialog body SHALL shrink and scroll if needed so the close control remains reachable.
+
+#### Scenario: Type in a dialog field
+- **WHEN** the user focuses a text field in a medication, period, or symptom dialog
+- **THEN** the dialog moves up with the keyboard and is not covered by it
+
 ### Requirement: Sheets have horizontal inset
 The system SHALL present modal sheets with visible left and right inset from the viewport edges (including safe-area insets) so the panel is not flush edge-to-edge on small phones.
 

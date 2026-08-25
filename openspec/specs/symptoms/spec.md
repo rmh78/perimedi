@@ -7,7 +7,7 @@ Allow the user to log symptoms and notes for a date and surface them on the cycl
 ## Requirements
 
 ### Requirement: Log symptom for a date
-The system SHALL allow the user to log a symptom or note for a chosen date via a sheet, including a kind such as cycle, side effect, note, or other, and a text body.
+The system SHALL allow the user to log a symptom or note for a chosen date via a sheet using a text body. The sheet SHALL NOT ask the user to pick a symptom kind.
 
 #### Scenario: Add symptom from day card
 - **WHEN** the user activates + Symptom for the selected date and saves a note
@@ -37,11 +37,11 @@ The system SHALL allow the user to delete a logged symptom for a date from the s
 
 #### Scenario: Logged list matches period history chrome
 - **WHEN** the user opens the symptom sheet for a date with logged symptoms
-- **THEN** add fields appear first, the logged list is at the bottom, and each symptom is a compact row with kind, body, and the same circular edit and delete icons as period history
+- **THEN** add fields appear first, the logged list is at the bottom, and each symptom is a compact row with the text body and the same circular edit and delete icons as period history
 
 ### Requirement: Edit symptom for a date
-The system SHALL allow the user to change the kind and body of a logged symptom for a date from the symptom sheet.
+The system SHALL allow the user to change the body of a logged symptom for a date from the symptom sheet.
 
 #### Scenario: Save edited symptom
 - **WHEN** the user edits a logged symptom and saves
-- **THEN** the updated kind and body appear in day context and the sheet list
+- **THEN** the updated body appears in day context and the sheet list

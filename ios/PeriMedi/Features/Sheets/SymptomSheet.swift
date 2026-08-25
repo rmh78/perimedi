@@ -9,7 +9,6 @@ struct SymptomSheet: View {
 
     let dateKey: String
 
-    @State private var kind: RemarkKind = .cycle
     @State private var bodyText = ""
     @State private var editing: Remark?
 
@@ -30,22 +29,15 @@ struct SymptomSheet: View {
                 .font(.subheadline)
 
                 SectionLabel(text: editing == nil ? app.t("symptom.addSection") : app.t("symptom.saveEdit"))
-                FieldLabel(text: app.t("symptom.type"))
-                SoftField {
-                    Picker("", selection: $kind) {
-                        ForEach(RemarkKind.allCases, id: \.self) { k in
-                            Text(app.t("remark.\(k.rawValue)")).tag(k)
-                        }
+                VStack(alignment: .leading, spacing: 6) {
+                    FieldLabel(text: app.t("symptom.description"))
+                    SoftField {
+                        TextField(app.t("symptom.placeholder"), text: $bodyText, axis: .vertical)
+                            .padding(.vertical, 10)
+                            .lineLimit(3...5)
+                            .submitLabel(.done)
+                            .accessibilityIdentifier(A11yID.symptomBody)
                     }
-                    .labelsHidden()
-                    .tint(Theme.ink)
-                }
-                FieldLabel(text: app.t("symptom.description"))
-                SoftField {
-                    TextField(app.t("symptom.placeholder"), text: $bodyText, axis: .vertical)
-                        .lineLimit(3...5)
-                        .submitLabel(.done)
-                        .accessibilityIdentifier(A11yID.symptomBody)
                 }
 
                 HStack(spacing: 10) {
@@ -71,20 +63,13 @@ struct SymptomSheet: View {
                 VStack(spacing: 0) {
                     ForEach(Array(dayNotes.enumerated()), id: \.element.id) { index, note in
                         HStack(spacing: 8) {
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(app.t("remark.\(note.kind.rawValue)"))
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(Theme.ink)
-                                    .lineLimit(1)
-                                Text(note.body)
-                                    .font(.caption)
-                                    .foregroundStyle(Theme.inkMuted)
-                                    .lineLimit(2)
-                            }
+                            Text(note.body)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Theme.ink)
+                                .lineLimit(2)
                             Spacer(minLength: 4)
                             IconCircleButton(systemName: "pencil", label: app.t("common.edit")) {
                                 editing = note
-                                kind = note.kind
                                 bodyText = note.body
                             }
                             IconCircleButton(systemName: "trash", label: app.t("common.delete"), tint: Theme.blush800) {
@@ -115,13 +100,13 @@ struct SymptomSheet: View {
         let text = bodyText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
         if let editing {
-            store.updateRemark(id: editing.id, kind: kind, body: text)
+            store.updateRemark(id: editing.id, kind: nil, body: text)
         } else {
             store.addRemark(
                 Remark(
                     id: createId(),
                     occurredOn: dateKey,
-                    kind: kind,
+                    kind: .note,
                     body: text,
                     createdAt: ISO8601DateFormatter().string(from: Date())
                 )

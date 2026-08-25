@@ -31,13 +31,15 @@ class PeriMediUITestCase: XCTestCase {
 struct AppRobot {
     let app = XCUIApplication()
 
-    func launch() {
+    func launch(extra: [String] = []) {
         XCTAssertFalse(
             ["-journeyStep", "-loadSample"].contains { flag in
                 app.launchArguments.contains(where: { $0.hasPrefix(flag) })
             }
         )
-        app.launchArguments = ["-en", "-clear", "-today=\(UITestDate.today)", "-uiTesting"]
+        XCTAssertFalse(extra.contains { $0.hasPrefix("-journeyStep") })
+        XCTAssertFalse(extra.contains { $0.hasPrefix("-loadSample") })
+        app.launchArguments = ["-en", "-clear", "-today=\(UITestDate.today)", "-uiTesting"] + extra
         XCTAssertFalse(app.launchArguments.contains { $0.hasPrefix("-journeyStep") })
         XCTAssertFalse(app.launchArguments.contains { $0.hasPrefix("-loadSample") })
         app.launch()
@@ -187,25 +189,16 @@ struct AppRobot {
     func dismissKeyboard() {
         let keyboard = app.keyboards.firstMatch
         guard keyboard.exists else { return }
-        let toolbarDone = app.buttons["keyboard.done"]
-        if toolbarDone.exists {
-            toolbarDone.tap()
-            _ = spin(timeout: 1) { !keyboard.exists }
-            return
-        }
-        if keyboard.buttons["Done"].exists {
-            keyboard.buttons["Done"].tap()
-            _ = spin(timeout: 1) { !keyboard.exists }
-            return
-        }
-        // Return on a multiline field inserts a newline and leaves the
-        // keyboard up, covering Save.
         for title in ["sheet.symptom", "sheet.med", "sheet.period"] {
             if element(title).exists {
                 element(title).tap()
-                _ = spin(timeout: 0.4) { !keyboard.exists }
+                _ = spin(timeout: 1) { !keyboard.exists }
                 return
             }
+        }
+        if keyboard.buttons["Return"].exists {
+            keyboard.buttons["Return"].tap()
+            _ = spin(timeout: 1) { !keyboard.exists }
         }
     }
 

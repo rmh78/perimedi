@@ -45,14 +45,27 @@ struct RootView: View {
                 ConfirmCard(prompt: prompt)
             }
         }
+        .overlay {
+            if let reminder = app.pendingReminder {
+                ReminderCard(reminder: reminder)
+            }
+        }
         .environment(\.locale, app.locale.language.locale)
         .id(app.locale.language)
         .onAppear {
             applyLaunchFlags()
+            DoseReminderCenter.shared.attach(store: store, app: app)
+            if ProcessInfo.processInfo.arguments.contains("-clear") {
+                DoseReminderCenter.shared.clearAll()
+            }
             UIAccessibility.post(notification: .layoutChanged, argument: nil)
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             app.focusTodayAfterForeground()
+            DoseReminderCenter.shared.refresh()
+        }
+        .onChange(of: app.locale.language) { _, _ in
+            DoseReminderCenter.shared.registerCategories()
         }
         .accessibilityHint(a11yLang)
     }
