@@ -26,4 +26,4 @@ The system SHALL reflect taken status on the cycle chart using the medication’
 
 #### Scenario: Taken day fill
 - **WHEN** a planned dose day is marked taken for a medication
-- **THEN** the corresponding day cell on that med’s lane uses a tint derived from the medication color
+- **THEN** the corresponding day cell on that med’s lane uses a tint derived from the medication color, inset slightly from the lane edges

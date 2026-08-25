@@ -14,8 +14,9 @@ enum PersistenceController {
     ])
 
     /// Local SwiftData always works. CloudKit is only enabled when the process
-    /// is signed with a CloudKit entitlement — unsigned Simulator builds
-    /// SIGTRAP inside CloudKit setup if we request a private database.
+    /// is actually entitled for the PeriMedi iCloud container. A signed Personal
+    /// Team build has a provisioning profile but no iCloud capability — do not
+    /// treat that as CloudKit or SwiftData will fail at launch.
     static func makeContainer() -> ModelContainer {
         if hasCloudKitEntitlement() {
             do {
@@ -43,6 +44,11 @@ enum PersistenceController {
     }
 
     private static func hasCloudKitEntitlement() -> Bool {
-        Bundle.main.url(forResource: "embedded", withExtension: "mobileprovision") != nil
+        guard
+            let url = Bundle.main.url(forResource: "embedded", withExtension: "mobileprovision"),
+            let data = try? Data(contentsOf: url),
+            let raw = String(data: data, encoding: .isoLatin1)
+        else { return false }
+        return raw.contains(cloudContainer)
     }
 }

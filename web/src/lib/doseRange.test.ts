@@ -6,6 +6,7 @@ const settings: CycleSettings = {
   id: 'default',
   averageCycleLength: 28,
   averagePeriodLength: 5,
+  tracksPeriods: true,
 }
 
 describe('doseExpansionRange', () => {
@@ -37,10 +38,10 @@ describe('doseExpansionRange', () => {
       selectedDate: '2026-08-07',
       periods: [],
       settings,
-      extraFrom: ['2026-07-26'],
+      extraFrom: ['2026-07-01'],
       extraTo: ['2026-09-05'],
     })
-    expect(r.from).toBe('2026-07-26')
+    expect(r.from).toBe('2026-07-01')
     expect(r.to).toBe('2026-09-05')
   })
 })

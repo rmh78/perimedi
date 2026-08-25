@@ -281,6 +281,15 @@ export function CycleDiagram({
     }
   }, [selectedDate, lanes.length, cycleLen, columns, scrollDayIntoView])
 
+  const prevCycleStart = useRef(cycleStart)
+  useLayoutEffect(() => {
+    if (prevCycleStart.current === cycleStart) return
+    prevCycleStart.current = cycleStart
+    if (!didInitialScrollToSelected.current) return
+    const col = columns.find((c) => c.dateKey === selectedDate)
+    if (col) scrollDayIntoView(col.cycleDay, 'auto')
+  }, [cycleStart, selectedDate, columns, scrollDayIntoView])
+
   function selectDay(col: DayColumn) {
     if (col.dateKey) onSelectDate(col.dateKey)
   }
@@ -312,27 +321,15 @@ export function CycleDiagram({
   }, [cycleLen, lanes.length, chartMinWidth])
 
   function pageDay(delta: -1 | 1) {
-    if (!selectedCol) return
-    const idx = columns.findIndex((c) => c.cycleDay === selectedCol.cycleDay)
-    if (idx < 0) return
-    const next = columns[idx + delta]
-    if (!next?.dateKey) return
-    onSelectDate(next.dateKey)
-    setScrollToDate(next.dateKey)
+    const key = selectedCol?.dateKey ?? selectedDate
+    if (!key) return
+    const nextKey = toDateKey(addDays(parseISO(key), delta))
+    onSelectDate(nextKey)
+    setScrollToDate(nextKey)
   }
 
-  const canPagePrev = Boolean(
-    selectedCol &&
-      columns.some(
-        (c) => c.cycleDay === selectedCol.cycleDay - 1 && c.dateKey,
-      ),
-  )
-  const canPageNext = Boolean(
-    selectedCol &&
-      columns.some(
-        (c) => c.cycleDay === selectedCol.cycleDay + 1 && c.dateKey,
-      ),
-  )
+  const canPagePrev = true
+  const canPageNext = true
 
   return (
     <>
@@ -427,12 +424,14 @@ export function CycleDiagram({
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
                     {t('diagram.cycleDays')}
                   </p>
-                  <p className="mt-0.5 text-[11px] text-ink-muted">
-                    {t('diagram.cyclePeriodMeta', {
-                      cycle: settings.averageCycleLength,
-                      period: settings.averagePeriodLength,
-                    })}
-                  </p>
+                  {settings.tracksPeriods !== false && (
+                    <p className="mt-0.5 text-[11px] text-ink-muted">
+                      {t('diagram.cyclePeriodMeta', {
+                        cycle: settings.averageCycleLength,
+                        period: settings.averagePeriodLength,
+                      })}
+                    </p>
+                  )}
                 </div>
                 {lanes.map((lane) => {
                   const dayDoses = selectedDayDoses.filter(

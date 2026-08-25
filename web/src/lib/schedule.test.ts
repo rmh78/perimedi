@@ -12,6 +12,7 @@ const settings: CycleSettings = {
   id: 'default',
   averageCycleLength: 28,
   averagePeriodLength: 5,
+  tracksPeriods: true,
 }
 
 function med(partial: Partial<Medication> = {}): Medication {

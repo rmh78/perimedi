@@ -185,6 +185,7 @@ export interface CycleSettings {
   id: 'default'
   averageCycleLength: number
   averagePeriodLength: number
+  tracksPeriods: boolean
 }
 
 export interface Period {

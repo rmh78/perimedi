@@ -18,7 +18,7 @@ The system SHALL present Cycle, Month, and More in one SPA layout that adapts fr
 - **THEN** the same screens appear with spacing that uses the wider viewport without page-level horizontal scroll for the shell
 
 ### Requirement: Comfortable primary touch targets
-The system SHALL size primary interactive controls (bottom nav items, day selection, month day cells, primary/ghost action buttons, medication taken toggles, sheet close) so they are easy to activate with a finger under normal use.
+The system SHALL size primary interactive controls (bottom nav items, day selection, month day cells, primary/ghost/destructive capsule buttons, medication taken toggles, sheet close) so they are easy to activate with a finger under normal use. Dialog capsule buttons SHALL be at least 36 points tall.
 
 #### Scenario: Primary buttons on phone
 - **WHEN** the user views primary actions on a phone
@@ -50,8 +50,8 @@ The system SHALL present modal sheets with visible left and right inset from the
 - **THEN** the panel leaves space on the left and right of the viewport
 
 ### Requirement: Medication color palette fits narrow sheets
-When the user edits or adds a medication, the system SHALL present the color palette so all swatches are visible without horizontal scrolling on a narrow phone (for example two rows of swatches).
+When the user edits or adds a medication, the system SHALL present the color palette as a single row so all swatches are visible without horizontal scrolling on a narrow phone.
 
 #### Scenario: Color picker on SE-class width
 - **WHEN** the user opens add/edit medication on a narrow phone
-- **THEN** every palette color is reachable without scrolling the palette row sideways
+- **THEN** every palette color is reachable on one row without scrolling the palette sideways

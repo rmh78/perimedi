@@ -22,11 +22,11 @@ The system SHALL mark cycle start and end days on the month grid using quiet edg
 
 #### Scenario: Cycle start day
 - **WHEN** a day is a cycle start (first period day of a cycle)
-- **THEN** the cell shows a cycle-start edge mark
+- **THEN** the cell shows a cycle-start edge mark along the top and leading edges
 
 #### Scenario: Cycle end day
 - **WHEN** a day is a cycle end (day before next cycle start, or natural cycle length end when no next start)
-- **THEN** the cell shows a cycle-end edge mark
+- **THEN** the cell shows a cycle-end edge mark along the bottom and trailing edges
 
 ### Requirement: Cycle day badges
 The system SHALL show a cycle-day badge (for example D12) on days where a cycle day can be derived.

@@ -6,11 +6,11 @@ struct RootView: View {
     @EnvironmentObject private var app: AppModel
     @EnvironmentObject private var store: Store
     @Environment(\.accessibilityLanguage) private var a11yLang
-    @State private var topBleed: CGFloat = 59
 
     var body: some View {
         VStack(spacing: 0) {
-            BrandHeader(topBleed: topBleed)
+            BrandHeader()
+                .zIndex(0)
             ZStack {
                 tabPane(CycleView(), tab: .cycle)
                 if app.selectedTab == .month {
@@ -21,16 +21,33 @@ struct RootView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .zIndex(1)
             PillTabBar()
                 .zIndex(2)
         }
         .background(Theme.pageBackground)
         .ignoresSafeArea(edges: [.top, .bottom])
+        .overlay {
+            if app.medSheet != nil || app.showPeriod || app.showSymptom {
+                DialogBackdrop(onClose: { app.closeDialog() }) {
+                    if let state = app.medSheet {
+                        MedicationSheet(isNew: state.isNew, medication: state.medication)
+                    } else if app.showPeriod {
+                        PeriodSheet(startInAddEditor: app.launchPeriodEditor)
+                    } else if app.showSymptom {
+                        SymptomSheet(dateKey: app.selectedDate)
+                    }
+                }
+            }
+        }
+        .overlay {
+            if let prompt = app.confirm {
+                ConfirmCard(prompt: prompt)
+            }
+        }
         .environment(\.locale, app.locale.language.locale)
         .id(app.locale.language)
         .onAppear {
-            let top = Self.windowTopInset()
-            if top > 0 { topBleed = top }
             applyLaunchFlags()
             UIAccessibility.post(notification: .layoutChanged, argument: nil)
         }
@@ -52,6 +69,9 @@ struct RootView: View {
 
     private func applyLaunchFlags() {
         let args = ProcessInfo.processInfo.arguments
+        if args.contains("-uiTesting") {
+            UIView.setAnimationsEnabled(false)
+        }
         if args.contains("-en") {
             app.locale.language = .en
         }
@@ -74,9 +94,14 @@ struct RootView: View {
         }
         if args.contains("-tabMonth") { app.selectedTab = .month }
         if args.contains("-tabMore") { app.selectedTab = .more }
-        if args.contains("-sheetMed") { app.launchSheet = "med" }
-        if args.contains("-sheetPeriod") { app.launchSheet = "period" }
-        if args.contains("-sheetSymptom") { app.launchSheet = "symptom" }
+        if args.contains("-sheetMed") {
+            app.medSheet = MedSheetState(isNew: true, medication: nil)
+        }
+        if args.contains("-sheetPeriod") {
+            app.showPeriod = true
+            app.launchPeriodEditor = false
+        }
+        if args.contains("-sheetSymptom") { app.showSymptom = true }
     }
 
     private func journeyStep(from args: [String]) -> Int? {
@@ -103,10 +128,4 @@ struct RootView: View {
         stringArg(name, from: args).flatMap(Int.init)
     }
 
-    private static func windowTopInset() -> CGFloat {
-        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
-        let window = scenes.flatMap(\.windows).first(where: \.isKeyWindow)
-            ?? scenes.first?.windows.first
-        return window?.safeAreaInsets.top ?? 0
-    }
 }

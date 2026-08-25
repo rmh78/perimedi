@@ -19,6 +19,7 @@ enum Theme {
     static let inkMuted = Color(hex: "#9a8490")
     static let taken = Color(hex: "#5a9e7a")
     static let pending = Color(hex: "#b8a0ab")
+    static let symptom = Color(hex: "#c47f00")
 
     static var pageBackground: some View {
         ZStack {
@@ -56,28 +57,76 @@ struct GlassCard<Content: View>: View {
     }
 }
 
+struct IconCircleButton: View {
+    var systemName: String
+    var label: String
+    var tint: Color = Theme.blush700
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(tint)
+                .frame(width: 36, height: 36)
+                .background(Circle().fill(Theme.blush50))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+    }
+}
+
 struct PillButton: View {
+    enum Kind {
+        case primary, secondary, destructive
+    }
+
     var title: String
-    var filled: Bool
+    var kind: Kind = .secondary
     var identifier: String? = nil
     var action: () -> Void
 
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(filled ? .white : Theme.blush700)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(foreground)
                 .padding(.horizontal, 14)
                 .frame(minHeight: 36)
-                .background(
-                    Capsule().fill(filled
-                        ? AnyShapeStyle(LinearGradient(colors: [Theme.blush500, Color(hex: "#c45a9a")], startPoint: .topLeading, endPoint: .bottomTrailing))
-                        : AnyShapeStyle(Color.white.opacity(0.7)))
-                )
-                .overlay(Capsule().stroke(Theme.blush200, lineWidth: filled ? 0 : 1))
+                .background(Capsule().fill(fill))
+                .overlay(Capsule().stroke(stroke, lineWidth: kind == .primary ? 0 : 1))
         }
         .buttonStyle(.plain)
         .a11y(identifier)
+    }
+
+    private var foreground: Color {
+        switch kind {
+        case .primary: return .white
+        case .secondary: return Theme.blush700
+        case .destructive: return Theme.blush800
+        }
+    }
+
+    private var fill: AnyShapeStyle {
+        switch kind {
+        case .primary:
+            return AnyShapeStyle(LinearGradient(
+                colors: [Theme.blush500, Color(hex: "#c45a9a")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ))
+        case .secondary, .destructive:
+            return AnyShapeStyle(Theme.cream)
+        }
+    }
+
+    private var stroke: Color {
+        switch kind {
+        case .primary: return .clear
+        case .secondary: return Theme.blush200
+        case .destructive: return Theme.blush300
+        }
     }
 }
 

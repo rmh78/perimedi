@@ -31,6 +31,7 @@ export async function loadSampleData(): Promise<void> {
       id: 'default',
       averageCycleLength: 28,
       averagePeriodLength: 5,
+      tracksPeriods: true,
     })
 
     const today = new Date()

@@ -39,7 +39,7 @@ struct MonthView: View {
 
     private var pager: some View {
         HStack(spacing: 4) {
-            PillButton(title: app.t("common.today"), filled: false, identifier: A11yID.pagerToday) {
+            PillButton(title: app.t("common.today"), kind: .secondary, identifier: A11yID.pagerToday) {
                 monthAnchor = DateKeys.parseDateKey(DateKeys.todayKey()) ?? Date()
                 app.goToToday()
             }
@@ -129,7 +129,7 @@ struct MonthView: View {
                 }
                 HStack(spacing: 2) {
                     if hasSymptom {
-                        Image(systemName: "bolt.fill").font(.system(size: 7)).foregroundStyle(Color(hex: "#7c3aed"))
+                        Image(systemName: "bolt.fill").font(.system(size: 7)).foregroundStyle(Theme.symptom)
                     }
                     ForEach(dayDoses.prefix(3)) { dose in
                         Circle()
@@ -145,14 +145,30 @@ struct MonthView: View {
                     : info.isPredictedPeriod ? Color.pink.opacity(0.08)
                     : Color.white.opacity(0.5)
             )
-            .overlay(alignment: .top) {
+            .overlay {
                 if mark?.isStart == true {
-                    Rectangle().fill(Color.slate).frame(height: 2)
+                    VStack(spacing: 0) {
+                        Rectangle().fill(Color.slate).frame(height: 2)
+                        HStack(spacing: 0) {
+                            Rectangle().fill(Color.slate).frame(width: 2, height: 10)
+                            Spacer(minLength: 0)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .allowsHitTesting(false)
                 }
             }
-            .overlay(alignment: .bottom) {
+            .overlay {
                 if mark?.isEnd == true {
-                    Rectangle().fill(Color.slate.opacity(0.7)).frame(height: 2)
+                    VStack(spacing: 0) {
+                        Spacer(minLength: 0)
+                        HStack(spacing: 0) {
+                            Spacer(minLength: 0)
+                            Rectangle().fill(Color.slate.opacity(0.7)).frame(width: 2, height: 10)
+                        }
+                        Rectangle().fill(Color.slate.opacity(0.7)).frame(height: 2)
+                    }
+                    .allowsHitTesting(false)
                 }
             }
             .overlay(
@@ -311,7 +327,7 @@ private struct FlowLegend: View {
                 legend(app.t("legend.period"), Color.red)
                 legend(app.t("legend.predicted"), Color.pink.opacity(0.6))
                 HStack(spacing: 4) {
-                    Image(systemName: "bolt.fill").font(.system(size: 8)).foregroundStyle(Color(hex: "#7c3aed"))
+                    Image(systemName: "bolt.fill").font(.system(size: 8)).foregroundStyle(Theme.symptom)
                     Text(app.t("legend.symptom")).font(.caption2).foregroundStyle(Theme.inkSoft)
                 }
                 legend(app.t("legend.taken"), Theme.taken)

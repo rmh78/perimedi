@@ -65,11 +65,15 @@ The system SHALL provide English and German product chrome on iOS and SHALL keep
 - **THEN** primary actions, navigation labels, and sheet titles are in German and user-entered medication names stay as typed
 
 ### Requirement: Visual family matches the web companion
-The system SHALL present Cycle, Month, and More in the same visual family as the web companion: a blush/lilac background, a PeriMedi wordmark in the header, rounded card surfaces, and a pill-style bottom navigation. The system SHALL NOT use stock system-gray chrome as the primary look.
+The system SHALL present Cycle, Month, and More in the same visual family as the web companion: a blush/peach background, the brand header photograph with the PeriMedi wordmark, rounded card surfaces, and a pill-style bottom navigation. The system SHALL NOT use stock system-gray chrome as the primary look. The header artwork SHALL include the portrait and the drop/pill atmosphere as part of the banner.
 
 #### Scenario: Cycle chrome
 - **WHEN** the user opens Cycle
-- **THEN** the wordmark, blush/lilac surfaces, rounded cards, and pill-style Cycle / Month / More navigation are visible
+- **THEN** the PeriMedi wordmark in the brand header, blush/peach surfaces, rounded cards, and pill-style Cycle / Month / More navigation are visible
+
+#### Scenario: Header uses the brand photograph
+- **WHEN** the user views the brand header
+- **THEN** the banner shows the peach portrait artwork with the PeriMedi wordmark and tagline readable, the portrait is fully visible from hair through chin, the lower edge of the photograph fades into the page background, and there is no second title overlay or toolbar of small icons
 
 ### Requirement: Cycle layout matches the web companion
 The Cycle screen SHALL use the same regions in the same order as the web companion: wordmark; selected-day pager (previous, day/date, next) with Today and compact medication, period, and symptom actions; a cycle-day strip with period drops and symptom marks; sticky medication labels beside horizontally scrolling multi-day dose bands; and a highlight on the selected day’s column.
@@ -93,15 +97,47 @@ The More screen SHALL present a Language block (English and German as selectable
 - **THEN** language pills appear above backup rows, and each backup action sits on the trailing side of its row
 
 ### Requirement: Dialog layout matches the web companion
-The medication, period-settings, and symptom editors SHALL use the same visual pattern as the current web companion: an inset rounded panel over the current screen (not a full-bleed gray system form as the primary look), a header with title and a dedicated close control, and the same field groups in the same order. The medication color palette SHALL show every swatch without horizontal scrolling.
+The medication, period-settings, and symptom editors SHALL use the same visual pattern as the current web companion: an inset rounded panel over the current screen (not a full-bleed gray system form as the primary look), a header with title and a dedicated close control, and the same field groups in the same order. The medication dialog SHALL NOT repeat a second medication heading under the title. The medication color palette SHALL be a single row of swatches with no horizontal scrolling. Take times SHALL sit on a compact row with the Take at label and SHALL wrap onto additional rows when they no longer fit, without shrinking a time chip so its digits stack. Field order under the schedule heading SHALL be start and end dates, then take times, then a labeled Type dropdown (every day, specific days, cyclic) that is only as wide as its selected label. Mode-specific extras SHALL appear only after that dropdown: weekday chips for specific days, and apply/pause day counts for cyclic (no cyclic preset list).
 
 #### Scenario: Add medication dialog
 - **WHEN** the user opens add medication
-- **THEN** the panel shows a close control, name/form/dose/color, exclusive schedule modes (every day, specific days, cyclic), take times, and start/end dates
+- **THEN** the panel shows a close control, name, form, dose, a Color-labeled single-row palette, start/end dates, compact take times, then a Type dropdown sized to its selected label, and it does not show a second medication heading under the title
+
+#### Scenario: Shared dates stay above the schedule dropdown
+- **WHEN** the user switches among every day, specific days, and cyclic
+- **THEN** start/end and take times remain above the dropdown, and only weekday chips or apply/pause day counts appear below it
+
+#### Scenario: Cyclic shows custom day counts
+- **WHEN** the user chooses cyclic
+- **THEN** apply-days and pause-days controls are shown, pause days start at 1 (not 0), and no cyclic preset list is shown
+
+#### Scenario: Extra take times wrap
+- **WHEN** the user adds more take times than fit beside Take at on a narrow phone
+- **THEN** additional time chips and the add control move to the next row and each time stays on one line
+
+#### Scenario: Date fields open a date chooser
+- **WHEN** the user activates a start or end date field in a medication or period editor
+- **THEN** a calendar date chooser is shown instead of a text keyboard
+
+#### Scenario: Time fields open a time chooser
+- **WHEN** the user activates a take-time field in the medication editor
+- **THEN** a time chooser is shown instead of a text keyboard
 
 #### Scenario: Period and symptom dialogs
 - **WHEN** the user opens period settings or the symptom editor
-- **THEN** each is an inset closable panel with the same section order as the current web companion (settings and history for period; logged list plus add fields for symptoms)
+- **THEN** each is an inset closable panel with the same section order as the current web companion (settings and add/edit, then history at the bottom for period; add fields, then logged list at the bottom for symptoms)
+
+#### Scenario: Dialog actions are capsule buttons
+- **WHEN** the user sees add, save, or cancel in a medication, period, or symptom dialog
+- **THEN** those actions are capsule buttons whose type size matches field labels, and save is the filled blush action
+
+#### Scenario: History rows share icon edit and delete
+- **WHEN** the user views period history or logged symptoms
+- **THEN** each row uses the same circular pencil and trash buttons, with the date or kind as the title and a shorter secondary line for details
+
+#### Scenario: Dialog backdrop
+- **WHEN** a medication, period, or symptom dialog is open
+- **THEN** the screen behind the panel is a light transparent blur of the app (the Cycle screen remains faintly recognizable), the panel is only as tall as its content (up to a maximum), and there is no solid gray rounded sheet behind it
 
 ### Requirement: Screenshot comparison against the web companion
 Comparisons SHALL use screenshots taken from the **current** web companion at approximately 375-point phone width (not older stored files) and iOS Simulator screenshots of the same screen. Cycle, Month, More, and the three dialogs SHALL show the same major regions in the same order. Small differences in type size, spacing, or system chrome are allowed. Missing a major region (dose tracks, month legend, wordmark, pill navigation, dialog header/close, color palette, or schedule modes) is not.

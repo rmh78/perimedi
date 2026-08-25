@@ -214,17 +214,33 @@ public struct CycleSettings: Codable, Equatable, Sendable {
     public var id: String
     public var averageCycleLength: Int
     public var averagePeriodLength: Int
+    public var tracksPeriods: Bool
 
     public static let `default` = CycleSettings(
         id: "default",
         averageCycleLength: 28,
-        averagePeriodLength: 5
+        averagePeriodLength: 5,
+        tracksPeriods: true
     )
 
-    public init(id: String = "default", averageCycleLength: Int, averagePeriodLength: Int) {
+    public init(
+        id: String = "default",
+        averageCycleLength: Int,
+        averagePeriodLength: Int,
+        tracksPeriods: Bool = true
+    ) {
         self.id = id
         self.averageCycleLength = averageCycleLength
         self.averagePeriodLength = averagePeriodLength
+        self.tracksPeriods = tracksPeriods
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decodeIfPresent(String.self, forKey: .id) ?? "default"
+        averageCycleLength = try c.decode(Int.self, forKey: .averageCycleLength)
+        averagePeriodLength = try c.decode(Int.self, forKey: .averagePeriodLength)
+        tracksPeriods = try c.decodeIfPresent(Bool.self, forKey: .tracksPeriods) ?? true
     }
 }
 

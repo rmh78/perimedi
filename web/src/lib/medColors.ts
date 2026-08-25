@@ -9,11 +9,8 @@ export const MED_FORM_ICON_COLOR: Record<MedForm, string> = {
   OTHER: '#8a6b78',
 }
 
-/** Curated palette — light pinks / roses first (rendered as two rows in the med sheet) */
+/** Curated palette — readable mid and deep tones (single row in the med sheet) */
 export const MED_COLOR_PALETTE = [
-  '#fce7ef', // blush powder
-  '#fbcfe0', // soft rose
-  '#f9a8c9', // light pink
   '#f472b6', // pink
   '#ec4899', // hot pink
   '#e85a84', // brand blush

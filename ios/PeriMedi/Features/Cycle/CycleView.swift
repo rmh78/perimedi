@@ -5,10 +5,6 @@ struct CycleView: View {
     @EnvironmentObject private var app: AppModel
     @EnvironmentObject private var store: Store
 
-    @State private var medSheet: MedSheetState?
-    @State private var showPeriod = false
-    @State private var showSymptom = false
-    @State private var openPeriodEditor = false
     @StateObject private var plotScroll = PlotScrollHandle()
 
     private let dayMin: CGFloat = 22
@@ -18,7 +14,7 @@ struct CycleView: View {
     private let laneGap: CGFloat = 12
     private let laneBottomPad: CGFloat = 12
     private let cellInset: CGFloat = 1.5
-    private let cellInsetY: CGFloat = 6
+    private let cellInsetY: CGFloat = 3
 
     var body: some View {
         let snap = CycleSnapshot.build(
@@ -54,36 +50,25 @@ struct CycleView: View {
             .padding(.bottom, 16)
         }
         .scrollIndicators(.hidden)
-        .sheet(item: $medSheet) { state in
-            MedicationSheet(isNew: state.isNew, medication: state.medication)
-                .periDialog()
-        }
-        .sheet(isPresented: $showPeriod) {
-            PeriodSheet(startInAddEditor: openPeriodEditor).periDialog()
-        }
-        .sheet(isPresented: $showSymptom) { SymptomSheet(dateKey: app.selectedDate).periDialog() }
         .onAppear {
             switch app.launchSheet {
-            case "med": medSheet = MedSheetState(isNew: true, medication: nil)
-            case "period":
-                openPeriodEditor = app.launchPeriodEditor
-                showPeriod = true
-            case "symptom": showSymptom = true
+            case "med": app.medSheet = MedSheetState(isNew: true, medication: nil)
+            case "period": app.showPeriod = true
+            case "symptom": app.showSymptom = true
             default: break
             }
             app.launchSheet = nil
-            app.launchPeriodEditor = false
         }
     }
 
     private func pager(_ snap: CycleSnapshot) -> some View {
         HStack(spacing: 4) {
-            PillButton(title: app.t("common.today"), filled: false, identifier: A11yID.pagerToday) {
+            PillButton(title: app.t("common.today"), kind: .secondary, identifier: A11yID.pagerToday) {
                 app.goToToday()
                 plotScroll.centerDay(snap.days.firstIndex(of: snap.today) ?? snap.selectedIndex)
             }
-            chevron("left", app.t("diagram.prevDay"), snap.selectedIndex <= 0) { page(snap, -1) }
-            chevron("right", app.t("diagram.nextDay"), snap.selectedIndex >= snap.days.count - 1) { page(snap, 1) }
+            chevron("left", app.t("diagram.prevDay"), false) { page(snap, -1) }
+            chevron("right", app.t("diagram.nextDay"), false) { page(snap, 1) }
             Text(pagerLabel(snap))
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(Theme.ink)
@@ -114,33 +99,30 @@ struct CycleView: View {
         let notes = snap.selectedNotes
         return VStack(alignment: .leading, spacing: 6) {
             if info.isLoggedPeriod {
-                chip(app.t("diagram.periodTitle"), Theme.blush600, identifier: A11yID.chipPeriod)
+                periodChip(app.t("diagram.periodTitle"), predicted: false, identifier: A11yID.chipPeriod)
             } else if info.isPredictedPeriod {
-                chip(app.t("diagram.predictedPeriodTitle"), Theme.blush400)
+                periodChip(app.t("diagram.predictedPeriodTitle"), predicted: true)
             }
             ForEach(notes.prefix(2)) { note in
-                HStack(spacing: 6) {
-                    Circle().fill(Color(hex: "#7c3aed")).frame(width: 6, height: 6)
-                    Text(note.body)
-                        .font(.caption)
-                        .foregroundStyle(Color(hex: "#4c1d95"))
-                        .lineLimit(1)
-                    Button {
-                        store.deleteRemark(id: note.id)
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 9, weight: .bold))
-                            .foregroundStyle(Color(hex: "#6d28d9"))
-                            .frame(width: 18, height: 18)
+                Button {
+                    app.showSymptom = true
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "bolt.fill")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(Theme.symptom)
+                        Text(note.body)
+                            .font(.caption)
+                            .foregroundStyle(Color(hex: "#7a4a00"))
+                            .lineLimit(1)
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(app.t("common.delete"))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(Capsule().fill(Color(hex: "#fff6e0")))
+                    .overlay(Capsule().stroke(Color(hex: "#f0dc9a"), lineWidth: 1))
                 }
-                .padding(.leading, 10)
-                .padding(.trailing, 4)
-                .padding(.vertical, 4)
-                .background(Capsule().fill(Color(hex: "#f5f3ff")))
-                .overlay(Capsule().stroke(Color(hex: "#ede9fe"), lineWidth: 1))
+                .buttonStyle(.plain)
+                .accessibilityLabel(note.body)
             }
         }
     }
@@ -154,11 +136,11 @@ struct CycleView: View {
                 .tracking(1.1)
             Spacer()
             HStack(spacing: 8) {
-                actionIcon("ActionPeriod", app.t("diagram.cycleSettings"), identifier: A11yID.actionPeriod) { showPeriod = true }
+                actionIcon("ActionPeriod", app.t("diagram.cycleSettings"), identifier: A11yID.actionPeriod) { app.showPeriod = true }
                 actionIcon("ActionMed", app.t("diagram.addMed"), plus: true, identifier: A11yID.actionMed) {
-                    medSheet = MedSheetState(isNew: true, medication: nil)
+                    app.medSheet = MedSheetState(isNew: true, medication: nil)
                 }
-                actionIcon("ActionSymptom", app.t("diagram.addSymptom"), plus: true, identifier: A11yID.actionSymptom) { showSymptom = true }
+                actionIcon("ActionSymptom", app.t("diagram.addSymptom"), plus: true, identifier: A11yID.actionSymptom) { app.showSymptom = true }
             }
         }
     }
@@ -172,7 +154,7 @@ struct CycleView: View {
                 Text(app.t("diagram.periodTitle")).font(.system(size: 11)).foregroundStyle(Theme.inkMuted)
             }
             HStack(spacing: 4) {
-                Image(systemName: "bolt.fill").font(.system(size: 9)).foregroundStyle(Color(hex: "#7c3aed"))
+                Image(systemName: "bolt.fill").font(.system(size: 9)).foregroundStyle(Theme.symptom)
                 Text(app.t("legend.symptom")).font(.system(size: 11)).foregroundStyle(Theme.inkMuted)
             }
         }
@@ -205,7 +187,7 @@ struct CycleView: View {
                                 columnWidth: colW,
                                 columnCount: snap.days.count,
                                 contentRevision: snap.plotRevision,
-                                focusColumn: snap.days.firstIndex(of: snap.today) ?? snap.selectedIndex,
+                                focusColumn: snap.selectedIndex,
                                 focusToken: "\(snap.windowStart)#\(app.todayFocusNonce)",
                                 onOffset: { plotScroll.state.offsetX = $0 },
                                 scrollState: plotScroll.state,
@@ -252,12 +234,14 @@ struct CycleView: View {
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Theme.inkMuted)
                     .textCase(.uppercase)
-                Text(app.t("diagram.cyclePeriodMeta", [
-                    "cycle": "\(store.settings.averageCycleLength)",
-                    "period": "\(store.settings.averagePeriodLength)",
-                ]))
-                .font(.system(size: 11))
-                .foregroundStyle(Theme.inkMuted)
+                if store.settings.tracksPeriods {
+                    Text(app.t("diagram.cyclePeriodMeta", [
+                        "cycle": "\(store.settings.averageCycleLength)",
+                        "period": "\(store.settings.averagePeriodLength)",
+                    ]))
+                    .font(.system(size: 11))
+                    .foregroundStyle(Theme.inkMuted)
+                }
             }
             .frame(height: stripH, alignment: .center)
 
@@ -274,7 +258,7 @@ struct CycleView: View {
 
                     Button {
                         if let med = store.medications.first(where: { $0.id == lane.medicationId }) {
-                            medSheet = MedSheetState(isNew: false, medication: med)
+                            app.medSheet = MedSheetState(isNew: false, medication: med)
                         }
                     } label: {
                         VStack(alignment: .leading, spacing: 1) {
@@ -327,22 +311,22 @@ struct CycleView: View {
                             Image(systemName: "drop.fill")
                                 .font(.system(size: 7, weight: .semibold))
                                 .foregroundStyle(info.isLoggedPeriod ? Color.red : Color.pink.opacity(0.55))
+                        } else if day.hasSymptom {
+                            stripBolt
                         } else {
                             Color.clear
                         }
                     }
                     .frame(height: 13)
                     Group {
-                        if day.hasSymptom {
-                            Image(systemName: "bolt.fill")
-                                .font(.system(size: 7, weight: .semibold))
-                                .foregroundStyle(Color(hex: "#7c3aed"))
+                        if day.hasSymptom && (info.isLoggedPeriod || info.isPredictedPeriod) {
+                            stripBolt
                         } else {
                             Color.clear
                         }
                     }
                     .frame(height: 10)
-                    Text("\(day.index + 1)")
+                    Text("\(DateKeys.dayOfMonth(day.dateKey) ?? (day.index + 1))")
                         .font(.system(size: 11, weight: isToday || isSelected ? .semibold : .regular).monospacedDigit())
                         .foregroundStyle(isToday ? .white : isSelected ? Theme.blush700 : info.isLoggedPeriod ? Color(hex: "#9f1239") : Theme.inkMuted)
                         .frame(width: 18, height: 18)
@@ -365,7 +349,7 @@ struct CycleView: View {
                 )
                 .accessibilityElement(children: .ignore)
                 .accessibilityIdentifier(A11yID.stripDay(day.dateKey))
-                .accessibilityLabel("\(day.index + 1)")
+                .accessibilityLabel("\(DateKeys.dayOfMonth(day.dateKey) ?? (day.index + 1))")
                 .accessibilityValue(stripValue(info: info, hasSymptom: day.hasSymptom))
             }
         }
@@ -396,12 +380,12 @@ struct CycleView: View {
             }
             for cell in lane.days where !cell.statuses.isEmpty && cell.statuses.allSatisfy({ $0 == .taken }) {
                 let rect = CGRect(
-                    x: CGFloat(cell.cycleDay - 1) * colW + 1,
-                    y: 0,
-                    width: max(colW - 2, 6),
-                    height: size.height
+                    x: CGFloat(cell.cycleDay - 1) * colW + cellInset,
+                    y: cellInsetY,
+                    width: max(colW - cellInset * 2, 4),
+                    height: max(size.height - cellInsetY * 2, 4)
                 )
-                context.fill(Path(roundedRect: rect, cornerRadius: 6), with: .color(laneColor.opacity(0.42)))
+                context.fill(Path(roundedRect: rect, cornerRadius: 5), with: .color(laneColor.opacity(0.42)))
             }
         }
         .frame(width: plotWidth, height: laneH, alignment: .leading)
@@ -493,15 +477,19 @@ struct CycleView: View {
     }
 
     private func pagerLabel(_ snap: CycleSnapshot) -> String {
-        let dayPart = app.t("diagram.dayBadge", ["day": "\(snap.selectedInfo.cycleDay ?? snap.selectedIndex + 1)"])
-        return "\(dayPart) · \(formatted(snap.selectedDate))"
+        let datePart = formatted(snap.selectedDate)
+        if let cycleDay = snap.selectedInfo.cycleDay {
+            return "\(app.t("diagram.dayBadge", ["day": "\(cycleDay)"])) · \(datePart)"
+        }
+        return datePart
     }
 
     private func page(_ snap: CycleSnapshot, _ delta: Int) {
-        let next = snap.selectedIndex + delta
-        guard snap.days.indices.contains(next) else { return }
-        app.selectedDate = snap.days[next]
-        plotScroll.centerIfAtBoundary(next)
+        let nextKey = DateKeys.addDaysKey(snap.selectedDate, delta)
+        app.selectedDate = nextKey
+        if let next = snap.days.firstIndex(of: nextKey) {
+            plotScroll.centerIfAtBoundary(next)
+        }
     }
 
     private func actionIcon(
@@ -512,35 +500,57 @@ struct CycleView: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            ZStack(alignment: .bottomTrailing) {
-                Image(image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 36, height: 36)
-                    .clipShape(Circle())
-                    .overlay(Circle().stroke(Theme.blush200, lineWidth: 1))
-                if plus {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Theme.blush600)
-                        .background(Circle().fill(.white).padding(2))
-                }
-            }
+            actionGlyph(image, plus: plus)
         }
         .accessibilityLabel(label)
         .a11y(identifier)
         .buttonStyle(.plain)
     }
 
-    private func chip(_ text: String, _ color: Color, identifier: String? = nil) -> some View {
-        HStack(spacing: 6) {
-            Circle().fill(color).frame(width: 6, height: 6)
-            Text(text).font(.caption.weight(.semibold)).foregroundStyle(Theme.blush800)
+    private func actionGlyph(_ image: String, plus: Bool) -> some View {
+        ZStack(alignment: .bottomTrailing) {
+            Image(image)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 36, height: 36)
+                .clipShape(Circle())
+                .overlay(Circle().stroke(Theme.blush200, lineWidth: 1))
+            if plus { plusBadge }
+        }
+    }
+
+    private var plusBadge: some View {
+        Image(systemName: "plus")
+            .font(.system(size: 9, weight: .bold))
+            .foregroundStyle(.white)
+            .frame(width: 18, height: 18)
+            .background(Circle().fill(Theme.blush600))
+            .overlay(Circle().stroke(Color.white, lineWidth: 2))
+            .offset(x: 3, y: 3)
+    }
+
+    private func periodChip(_ text: String, predicted: Bool, identifier: String? = nil) -> some View {
+        let drop = predicted ? Color(hex: "#f43f5e") : Color(hex: "#e11d48")
+        return HStack(spacing: 6) {
+            Image(systemName: "drop.fill")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(drop.opacity(predicted ? 0.7 : 1))
+            Text(text)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(predicted ? Color(hex: "#be123c") : Color(hex: "#9f1239"))
         }
         .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(Capsule().fill(Theme.blush100))
+        .padding(.vertical, 4)
+        .background(Capsule().fill(predicted ? Color(hex: "#fff1f2") : Color(hex: "#ffe4e6")))
+        .overlay(Capsule().stroke(predicted ? Color(hex: "#fecdd3") : Color(hex: "#fda4af"), lineWidth: 1))
         .a11y(identifier)
+    }
+
+    private var stripBolt: some View {
+        Image(systemName: "bolt.fill")
+            .font(.system(size: 8, weight: .bold))
+            .foregroundStyle(Theme.symptom)
+            .shadow(color: Theme.symptom.opacity(0.45), radius: 0.5, y: 0.5)
     }
 
     private func legendDot(_ color: Color, _ label: String) -> some View {
@@ -589,26 +599,49 @@ struct CycleView: View {
                 Text(app.t("diagram.emptyBody"))
                     .font(.caption)
                     .foregroundStyle(Theme.inkSoft)
-                hintRow("ActionPeriod", app.t("diagram.emptyAddPeriod"), plus: false) { showPeriod = true }
+                hintRow("ActionPeriod", app.t("diagram.emptyAddPeriod"), plus: false) { app.showPeriod = true }
                 hintRow("ActionMed", app.t("diagram.emptyAddMedHint"), plus: true) {
-                    medSheet = MedSheetState(isNew: true, medication: nil)
+                    app.medSheet = MedSheetState(isNew: true, medication: nil)
                 }
-                hintRow("ActionSymptom", app.t("diagram.emptyAddSymptomHint"), plus: true) { showSymptom = true }
+                hintRow("ActionSymptom", app.t("diagram.emptyAddSymptomHint"), plus: true) { app.showSymptom = true }
+                HStack(spacing: 12) {
+                    takenHintGlyph
+                    Text(app.t("diagram.emptyToggleTaken"))
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.ink)
+                        .multilineTextAlignment(.leading)
+                    Spacer()
+                }
             }
             .padding(16)
         }
         .accessibilityIdentifier(A11yID.intro)
     }
 
+    private var takenHintGlyph: some View {
+        let creamColor = Color(hex: "#9b6fc9")
+        return ZStack(alignment: .bottomTrailing) {
+            Image("MedCream")
+                .resizable()
+                .scaledToFill()
+                .frame(width: 36, height: 36)
+                .clipShape(Circle())
+                .padding(3)
+                .background(Circle().fill(creamColor))
+            Text("✓")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 20, height: 20)
+                .background(Circle().fill(creamColor))
+                .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                .offset(x: 2, y: 2)
+        }
+    }
+
     private func hintRow(_ image: String, _ text: String, plus: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {
-                ZStack(alignment: .bottomTrailing) {
-                    Image(image).resizable().scaledToFill().frame(width: 34, height: 34).clipShape(Circle())
-                    if plus {
-                        Image(systemName: "plus.circle.fill").font(.system(size: 12)).foregroundStyle(Theme.blush600)
-                    }
-                }
+                actionGlyph(image, plus: plus)
                 Text(text).font(.subheadline).foregroundStyle(Theme.ink).multilineTextAlignment(.leading)
                 Spacer()
             }

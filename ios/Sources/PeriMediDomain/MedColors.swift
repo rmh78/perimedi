@@ -10,9 +10,9 @@ public enum MedColors {
     ]
 
     public static let palette: [String] = [
-        "#fce7ef", "#fbcfe0", "#f9a8c9", "#f472b6", "#ec4899",
-        "#e85a84", "#db2777", "#d43d6c", "#be185d", "#9b6fc9",
-        "#7c3aed", "#5b8fd9", "#0d9488", "#c97b3a", "#64748b",
+        "#f472b6", "#ec4899", "#e85a84", "#db2777", "#d43d6c",
+        "#be185d", "#9b6fc9", "#7c3aed", "#5b8fd9", "#0d9488",
+        "#c97b3a", "#64748b",
     ]
 
     public static func resolve(form: MedForm, color: String?) -> String {

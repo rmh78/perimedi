@@ -182,7 +182,7 @@ export function MedLaneTrack({
   return (
     <div className="relative">
       <div
-        className="pointer-events-none grid min-h-11 items-stretch bg-gradient-to-r from-blush-50/40 to-lilac-50/30 py-1.5 ring-1 ring-blush-100/80"
+        className="pointer-events-none grid min-h-11 items-stretch bg-gradient-to-r from-blush-50/40 to-lilac-50/30 py-[3px] ring-1 ring-blush-100/80"
         style={{
           gridTemplateColumns: gridTemplate,
         }}
@@ -197,7 +197,7 @@ export function MedLaneTrack({
       </div>
       {/* Taken fill (med color) + day pick — min height ~44px for touch */}
       <div
-        className="absolute inset-0 z-10 grid py-1.5"
+        className="absolute inset-0 z-10 grid py-[3px]"
         style={{
           gridTemplateColumns: gridTemplate,
         }}
@@ -222,7 +222,7 @@ export function MedLaneTrack({
                     ? `${t('diagram.dayN', { day: col.cycleDay })} · ${col.dateKey}`
                     : t('diagram.dayN', { day: col.cycleDay })
               }
-              className={`min-h-0 px-px ${
+              className={`min-h-0 px-0.5 ${
                 !col.dateKey ? 'cursor-default' : 'cursor-pointer'
               }`}
             >

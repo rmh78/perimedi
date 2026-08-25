@@ -13,8 +13,9 @@ import {
   sortPeriods,
 } from '../lib/cycle'
 import type { FlowNote, Period } from '../types'
-import { useLocale, formatLongDateLocalized } from '../i18n'
+import { useLocale, formatLocalized, formatLongDateLocalized, type Locale } from '../i18n'
 import { useConfirm } from '../context/ConfirmContext'
+import { HistoryIconButton } from './HistoryIconButton'
 
 type Props = {
   open: boolean
@@ -44,6 +45,20 @@ function draftFromPeriod(p: Period): PeriodDraft {
     flowNote: p.flowNote ?? '',
     notes: p.notes ?? '',
   }
+}
+
+function compactRange(startKey: string, endKey: string | undefined, locale: Locale): string {
+  const start = formatLocalized(startKey, 'd MMM yyyy', locale)
+  if (!endKey) return `${start} → …`
+  const [sy, sm] = startKey.split('-')
+  const [ey, em] = endKey.split('-')
+  if (sy === ey && sm === em) {
+    return `${formatLocalized(startKey, 'd', locale)}–${formatLocalized(endKey, 'd', locale)} ${formatLocalized(endKey, 'MMM yyyy', locale)}`
+  }
+  if (sy === ey) {
+    return `${formatLocalized(startKey, 'd MMM', locale)} – ${formatLocalized(endKey, 'd MMM yyyy', locale)}`
+  }
+  return `${start} – ${formatLocalized(endKey, 'd MMM yyyy', locale)}`
 }
 
 export function PeriodSettingsSheet({ open, onClose }: Props) {
@@ -95,9 +110,32 @@ export function PeriodSettingsSheet({ open, onClose }: Props) {
       open={open}
       title={t('period.title')}
       icon="/action-icons/period.jpg"
-      onClose={onClose}
+      onClose={() => {
+        void saveCycleSettings({
+          averageCycleLength: settings.averageCycleLength,
+          averagePeriodLength: settings.averagePeriodLength,
+          tracksPeriods: settings.tracksPeriods,
+        })
+        onClose()
+      }}
     >
       <div className="space-y-4">
+        <label className="flex items-center justify-between gap-3 text-sm font-semibold text-ink">
+          {t('period.track')}
+          <input
+            type="checkbox"
+            className="h-5 w-5 accent-blush-600"
+            checked={settings.tracksPeriods !== false}
+            onChange={(e) => {
+              void saveCycleSettings({ tracksPeriods: e.target.checked })
+            }}
+          />
+        </label>
+
+        {settings.tracksPeriods === false ? (
+          <p className="text-sm text-ink-soft">{t('period.trackOffHint')}</p>
+        ) : (
+          <>
         <p className="text-sm text-ink-soft">
           {t('period.intro')}{' '}
           <strong className="text-ink">
@@ -113,74 +151,67 @@ export function PeriodSettingsSheet({ open, onClose }: Props) {
           </p>
         )}
 
-        <form
-          key={`${settings.averageCycleLength}-${settings.averagePeriodLength}`}
-          onSubmit={async (e: FormEvent<HTMLFormElement>) => {
-            e.preventDefault()
-            const fd = new FormData(e.currentTarget)
-            await saveCycleSettings({
-              averageCycleLength: Number(fd.get('cycleLen')) || 28,
-              averagePeriodLength: Number(fd.get('periodLen')) || 5,
-            })
-            setMessage(t('period.settingsSaved'))
-          }}
-          className="grid gap-3 sm:grid-cols-2"
-        >
+        <div className="grid grid-cols-2 gap-3">
           <label className="text-sm font-medium text-ink">
             {t('period.avgCycle')}
-            <input
-              name="cycleLen"
-              type="number"
-              min={15}
-              max={60}
-              defaultValue={settings.averageCycleLength}
+            <select
               className="soft-input mt-1"
-            />
+              value={settings.averageCycleLength}
+              onChange={(e) => {
+                void saveCycleSettings({
+                  averageCycleLength: Number(e.target.value) || 28,
+                })
+              }}
+            >
+              {Array.from({ length: 31 }, (_, i) => i + 15).map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="text-sm font-medium text-ink">
             {t('period.avgPeriod')}
-            <input
-              name="periodLen"
-              type="number"
-              min={1}
-              max={15}
-              defaultValue={settings.averagePeriodLength}
+            <select
               className="soft-input mt-1"
-            />
-          </label>
-          <div className="sm:col-span-2">
-            <button type="submit" className="btn-primary">
-              {t('period.saveSettings')}
-            </button>
-          </div>
-        </form>
-
-        <div>
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold text-ink">{t('period.history')}</p>
-            {!editing && (
-              <button
-                type="button"
-                className="text-xs font-semibold text-blush-700"
-                onClick={() => {
-                  setMessage(null)
-                  setEditing(emptyDraft())
-                }}
-              >
-                {t('period.add')}
-              </button>
-            )}
-          </div>
-
-          {editing && (
-            <form
-              onSubmit={savePeriod}
-              className="mb-3 space-y-3 rounded-2xl bg-white p-3 ring-1 ring-blush-100"
+              value={settings.averagePeriodLength}
+              onChange={(e) => {
+                void saveCycleSettings({
+                  averagePeriodLength: Number(e.target.value) || 5,
+                })
+              }}
             >
+              {Array.from({ length: 15 }, (_, i) => i + 1).map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        {!editing && (
+          <button
+            type="button"
+            className="btn-ghost !min-h-9 !px-3"
+            onClick={() => {
+              setMessage(null)
+              setEditing(emptyDraft())
+            }}
+          >
+            {t('period.add')}
+          </button>
+        )}
+
+        {editing && (
+          <form
+            onSubmit={savePeriod}
+            className="space-y-3 rounded-2xl bg-white p-3 ring-1 ring-blush-100"
+          >
               <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
                 {editing.id ? t('period.edit') : t('period.new')}
               </p>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-2 gap-3">
                 <label className="text-sm font-medium text-ink">
                   {t('period.startDate')}
                   <input
@@ -212,7 +243,7 @@ export function PeriodSettingsSheet({ open, onClose }: Props) {
                     {t('period.endHint')}
                   </span>
                 </label>
-                <label className="text-sm font-medium text-ink sm:col-span-2">
+                <label className="text-sm font-medium text-ink col-span-2">
                   {t('period.flow')}
                   <select
                     value={editing.flowNote}
@@ -235,20 +266,6 @@ export function PeriodSettingsSheet({ open, onClose }: Props) {
                     <option value="heavy">{t('flow.heavy')}</option>
                   </select>
                 </label>
-                <label className="text-sm font-medium text-ink sm:col-span-2">
-                  {t('period.notes')}
-                  <input
-                    type="text"
-                    value={editing.notes}
-                    onChange={(e) =>
-                      setEditing((d) =>
-                        d ? { ...d, notes: e.target.value } : d,
-                      )
-                    }
-                    placeholder={t('common.optional')}
-                    className="soft-input mt-1"
-                  />
-                </label>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button type="submit" className="btn-primary !px-3 !py-1.5 text-xs">
@@ -265,28 +282,27 @@ export function PeriodSettingsSheet({ open, onClose }: Props) {
             </form>
           )}
 
-          {sorted.length === 0 && !editing ? (
+        <div>
+          <p className="mb-2 text-sm font-semibold text-ink">{t('period.history')}</p>
+
+          {sorted.length === 0 ? (
             <p className="text-sm text-ink-muted">{t('period.none')}</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="divide-y divide-blush-100">
               {sorted.map((p) => {
                 const isActive = editing?.id === p.id
                 return (
                   <li
                     key={p.id}
-                    className={`rounded-xl px-3 py-2 text-sm ${
-                      isActive
-                        ? 'bg-blush-100 ring-1 ring-blush-200'
-                        : 'bg-blush-50/80'
+                    className={`flex items-center gap-2 py-2 text-sm ${
+                      isActive ? 'bg-blush-50/80' : ''
                     }`}
                   >
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <span>
-                        {formatLongDateLocalized(p.startDate, locale)}
-                        {p.endDate
-                          ? ` → ${formatLongDateLocalized(p.endDate, locale)}`
-                          : ' → …'}
-                        <span className="block text-xs text-ink-muted">
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-semibold text-ink">
+                          {compactRange(p.startDate, p.endDate, locale)}
+                        </span>
+                        <span className="block truncate text-xs text-ink-muted">
                           {t('period.daysApprox', {
                             days: periodLengthDays(
                               p,
@@ -297,20 +313,18 @@ export function PeriodSettingsSheet({ open, onClose }: Props) {
                           {p.notes ? ` · ${p.notes}` : ''}
                         </span>
                       </span>
-                      <div className="flex shrink-0 gap-2">
-                        <button
-                          type="button"
-                          className="text-xs font-semibold text-blush-700"
+                      <div className="flex shrink-0 gap-1">
+                        <HistoryIconButton
+                          kind="edit"
+                          label={t('common.edit')}
                           onClick={() => {
                             setMessage(null)
                             setEditing(draftFromPeriod(p))
                           }}
-                        >
-                          {t('common.edit')}
-                        </button>
-                        <button
-                          type="button"
-                          className="text-xs font-semibold text-rose-600"
+                        />
+                        <HistoryIconButton
+                          kind="delete"
+                          label={t('common.delete')}
                           onClick={() => {
                             void confirm({
                               message: t('period.deleteConfirm'),
@@ -321,17 +335,16 @@ export function PeriodSettingsSheet({ open, onClose }: Props) {
                               if (editing?.id === p.id) setEditing(null)
                             })
                           }}
-                        >
-                          {t('common.delete')}
-                        </button>
+                        />
                       </div>
-                    </div>
                   </li>
                 )
               })}
             </ul>
           )}
         </div>
+          </>
+        )}
       </div>
     </Sheet>
   )

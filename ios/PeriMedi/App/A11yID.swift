@@ -39,6 +39,7 @@ enum A11yID {
     static let medName = "med.name"
     static let medForm = "med.form"
     static let medDose = "med.dose"
+    static let medMode = "med.mode"
     static let medModeEveryday = "med.mode.everyday"
     static let medModeCyclic = "med.mode.cyclic"
     static let medPreset = "med.preset"
@@ -51,9 +52,14 @@ enum A11yID {
     static let periodEnd = "period.end"
     static let periodSave = "period.save"
 
+    static let dateDone = "date.done"
+    static let timeDone = "time.done"
+
     static let symptomBody = "symptom.body"
     static let symptomSave = "symptom.save"
     static let confirmDelete = "confirm.delete"
+    static let confirmCancel = "confirm.cancel"
+    static let confirmAction = "confirm.action"
 
     static func slug(_ name: String) -> String {
         name.trimmingCharacters(in: .whitespacesAndNewlines)

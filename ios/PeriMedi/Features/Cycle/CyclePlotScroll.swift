@@ -203,7 +203,7 @@ final class PlotScrollView: UIScrollView, UIGestureRecognizerDelegate {
         guard abs(target.x - contentOffset.x) > 0.5 else { return }
 
         animator?.stopAnimation(true)
-        guard animated else {
+        guard animated, UIView.areAnimationsEnabled else {
             contentOffset = target
             return
         }

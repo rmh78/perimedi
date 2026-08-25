@@ -7,15 +7,15 @@ Summarize the selected day (period and symptoms) on the Cycle screen and expose 
 ## Requirements
 
 ### Requirement: Selected day summary
-The system SHALL show the selected cycle day number, calendar date, period status (logged, predicted, or none), and symptom summary on the Cycle screen header.
+The system SHALL show the selected calendar date, period status (logged, predicted, or none), and symptom summary on the Cycle screen header. The header SHALL include a cycle-day number only when a logged period defines one for that date. Period chips SHALL use a blood-drop mark in the period-drop color. Symptom chips SHALL use the lightning-bolt color and mark, SHALL open the symptom sheet, and SHALL NOT delete a symptom.
 
 #### Scenario: Selected day with period
 - **WHEN** the selected day is a logged period day
-- **THEN** the Cycle header indicates period for that day
+- **THEN** the Cycle header indicates period for that day with a blood-drop chip in the period-drop color, and includes the cycle-day number
 
-#### Scenario: Selected day without period
-- **WHEN** the selected day is not period or predicted period
-- **THEN** the Cycle header indicates no period
+#### Scenario: Selected day without a logged period
+- **WHEN** no period defines a cycle day for the selected date
+- **THEN** the Cycle header shows the calendar date and does not show a cycle-day number
 
 ### Requirement: Day primary actions
 The system SHALL provide add-medication, cycle-settings, and add-symptom actions on the Cycle header when the corresponding capabilities are available.

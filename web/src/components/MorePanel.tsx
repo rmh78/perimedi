@@ -15,7 +15,7 @@ const sectionTitle =
   'text-[11px] font-semibold uppercase tracking-wide text-ink-muted'
 
 /** Compact size shared with Month / Cycle header controls. */
-const pageBtn = '!min-h-10 !px-3 !py-2 text-xs'
+const pageBtn = '!min-h-9 !px-3'
 
 /** Language + backup tools — full More page content. */
 export function MorePanel() {

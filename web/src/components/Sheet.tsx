@@ -16,6 +16,7 @@ export function Sheet({
   open,
   title,
   icon,
+  iconAccent,
   onClose,
   children,
   wide,
@@ -23,6 +24,7 @@ export function Sheet({
   open: boolean
   title: string
   icon?: string
+  iconAccent?: string
   onClose: () => void
   children: ReactNode
   wide?: boolean
@@ -106,11 +108,14 @@ export function Sheet({
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-blush-100 px-4 py-3 sm:px-5">
           <h2 className="font-display flex min-w-0 items-center gap-2.5 text-xl font-semibold text-ink">
             {icon ? (
-              <span className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-blush-50 ring-1 ring-blush-100">
+              <span
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full p-[3px]"
+                style={{ background: iconAccent || '#fff1f4' }}
+              >
                 <img
                   src={icon}
                   alt=""
-                  className="h-full w-full object-cover"
+                  className="h-full w-full rounded-full object-cover"
                   draggable={false}
                 />
               </span>

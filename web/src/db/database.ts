@@ -35,6 +35,7 @@ export const DEFAULT_CYCLE_SETTINGS: CycleSettings = {
   id: 'default',
   averageCycleLength: 28,
   averagePeriodLength: 5,
+  tracksPeriods: true,
 }
 
 export async function ensureCycleSettings(): Promise<CycleSettings> {
@@ -44,6 +45,7 @@ export async function ensureCycleSettings(): Promise<CycleSettings> {
       id: 'default',
       averageCycleLength: existing.averageCycleLength ?? 28,
       averagePeriodLength: existing.averagePeriodLength ?? 5,
+      tracksPeriods: existing.tracksPeriods ?? true,
     }
   }
   await db.cycleSettings.put(DEFAULT_CYCLE_SETTINGS)

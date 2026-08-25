@@ -40,6 +40,24 @@ public enum DateKeys {
         keyFormatter.date(from: String(key.prefix(10)))
     }
 
+    public static func dayOfMonth(_ dateKey: String) -> Int? {
+        guard let date = parseDateKey(dateKey) else { return nil }
+        return calendar.component(.day, from: date)
+    }
+
+    public static func startOfMonthKey(_ dateKey: String) -> String {
+        guard let date = parseDateKey(dateKey) else { return dateKey }
+        let comps = calendar.dateComponents([.year, .month], from: date)
+        return toDateKey(calendar.date(from: comps) ?? date)
+    }
+
+    public static func daysInMonth(_ dateKey: String) -> Int {
+        guard let date = parseDateKey(dateKey),
+              let range = calendar.range(of: .day, in: .month, for: date)
+        else { return 30 }
+        return range.count
+    }
+
     /// When set (UI tests / launch `-today=`), `todayKey()` returns this instead of the device clock.
     nonisolated(unsafe) public static var pinnedTodayKey: String?
 
@@ -84,6 +102,21 @@ public enum DateKeys {
             cursor = addDays(cursor, 1)
         }
         return days
+    }
+
+    public static func parseTimeOfDay(_ time: String, on day: Date = Date()) -> Date {
+        let parts = time.split(separator: ":")
+        var comps = calendar.dateComponents([.year, .month, .day], from: calendar.startOfDay(for: day))
+        comps.hour = Int(parts.first.map(String.init) ?? "") ?? 8
+        comps.minute = parts.count > 1 ? Int(parts[1].prefix(2)) ?? 0 : 0
+        comps.second = 0
+        return calendar.date(from: comps) ?? day
+    }
+
+    public static func formatTimeOfDay(_ date: Date) -> String {
+        let hour = calendar.component(.hour, from: date)
+        let minute = calendar.component(.minute, from: date)
+        return String(format: "%02d:%02d", hour, minute)
     }
 
     public static func combineDateAndTime(dateKey: String, timeOfDay: String) -> String {

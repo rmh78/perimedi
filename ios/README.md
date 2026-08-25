@@ -42,6 +42,19 @@ xcodebuild \
 
 Open `ios/PeriMedi.xcodeproj` in Xcode and Run on **iPhone 17e** (or the narrowest iPhone listed).
 
+## Run on a physical iPhone
+
+A free Apple ID is enough for **your** phone (the app expires after about 7 days; Run again to refresh). TestFlight / other people’s phones need a paid Apple Developer Program membership.
+
+1. On the iPhone: **Settings → Privacy & Security → Developer Mode** → On, then restart. Xcode reports `Developer Mode disabled` until this is on.
+2. Unlock the phone, plug it in, tap **Trust**.
+3. Open `ios/PeriMedi.xcodeproj`, select destination **iPhone Harald** (or your device), press Run.
+4. First launch: **Settings → General → VPN & Device Management** → trust your Apple ID if iOS asks.
+
+The app target uses Automatic signing with the Personal Team already in the project. Do **not** add the iCloud capability on a free team — Xcode will fail to provision. Data stays in on-device SwiftData; use More → Export / Import to copy from the Simulator.
+
+Simulator CLI builds can still pass `CODE_SIGNING_ALLOWED=NO`.
+
 ## UI tests (interaction proof)
 
 Instrumented XCUITests live in `PeriMediUITests/`. There is one first-use journey: empty home → log a period → add medications → mark taken → symptom → Month. Tests start empty, pin English and today (`2026-03-15`), and tap Cycle / sheets. Watch **iPhone 17e** (Simulator → Window → iPhone 17e). **iPhone 17** is a different Simulator and will stay idle.
@@ -56,7 +69,7 @@ xcodebuild test \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-Launch contract used by the suite: `-en -clear -today=2026-03-15`. Do not pass `-journeyStep` or `-loadSample` for these tests.
+Launch contract used by the suite: `-en -clear -today=2026-03-15 -uiTesting`. `-uiTesting` turns off UIView animations so XCTest is not blocked on springs. Do not pass `-journeyStep` or `-loadSample` for these tests.
 
 `JourneyScript` and `scripts/shot-journey.sh` only seed the store and take screenshots for visual review. They are not the interaction proof.
 

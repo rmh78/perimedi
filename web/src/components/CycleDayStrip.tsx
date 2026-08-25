@@ -1,4 +1,5 @@
 import { useLocale } from '../i18n'
+import { dayOfMonth } from '../lib/dates'
 import { BloodDropIcon, SymptomMarkIcon } from './CycleMarks'
 import type { DayColumn } from './cycleTypes'
 
@@ -38,8 +39,10 @@ export function CycleDayStrip({
               title={
                 col.dateKey
                   ? [
-                      t('diagram.dayN', { day: col.cycleDay }),
                       col.dateKey,
+                      col.info?.cycleDay != null
+                        ? t('diagram.dayN', { day: col.info.cycleDay })
+                        : null,
                       col.isLoggedPeriod ? t('diagram.periodTitle') : null,
                       col.symptoms.length
                         ? t('home.symptomsCount', {
@@ -49,7 +52,7 @@ export function CycleDayStrip({
                     ]
                       .filter(Boolean)
                       .join(' · ')
-                  : t('diagram.dayN', { day: col.cycleDay })
+                  : undefined
               }
               className={`flex min-h-10 flex-col items-center justify-end gap-px border-r border-blush-50 px-px py-1 transition last:border-r-0 ${
                 col.isLoggedPeriod
@@ -104,7 +107,7 @@ export function CycleDayStrip({
                         : 'text-ink-muted'
                 }`}
               >
-                {col.cycleDay}
+                {col.dateKey ? dayOfMonth(col.dateKey) : ''}
               </span>
             </button>
           )

@@ -1,5 +1,7 @@
+import { addDays, parseISO } from 'date-fns'
 import { describe, expect, it } from 'vitest'
 import type { CycleSettings, Period } from '../types'
+import { toDateKey } from './dates'
 import {
   cycleWindowForDate,
   getCycleDay,
@@ -12,13 +14,30 @@ const settings: CycleSettings = {
   id: 'default',
   averageCycleLength: 28,
   averagePeriodLength: 5,
+  tracksPeriods: true,
 }
 
 describe('cycleWindowForDate', () => {
-  it('starts at the selected date when no periods exist', () => {
+  it('starts the window on the first of the month when no periods exist', () => {
     const w = cycleWindowForDate('2026-08-07', [], settings)
-    expect(w.start).toBe('2026-08-07')
-    expect(w.length).toBeGreaterThanOrEqual(28)
+    expect(w.start).toBe('2026-08-01')
+    expect(w.length).toBe(31)
+    const days = Array.from({ length: w.length }, (_, i) =>
+      toDateKey(addDays(parseISO(w.start), i)),
+    )
+    expect(days[0]).toBe('2026-08-01')
+    expect(days).toContain('2026-08-07')
+    expect(days.at(-1)).toBe('2026-08-31')
+  })
+
+  it('ignores period history when tracksPeriods is false', () => {
+    const off: CycleSettings = { ...settings, tracksPeriods: false }
+    const periods: Period[] = [{ id: 'p1', startDate: '2026-07-10' }]
+    const w = cycleWindowForDate('2026-08-19', periods, off)
+    expect(w.start).toBe('2026-08-01')
+    expect(w.length).toBe(31)
+    expect(getDayCycleInfo('2026-07-10', periods, off).cycleDay).toBeNull()
+    expect(nextPredictedPeriodStart(periods, off)).toBeNull()
   })
 
   it('uses the period start on or before the date', () => {

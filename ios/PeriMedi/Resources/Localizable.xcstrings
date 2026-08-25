@@ -1,23 +1,96 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "nav.cycle" : {
+    "" : {
+
+    },
+    "%@ %@" : {
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cycle" } },
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Zyklus" } }
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$@"
+          }
+        }
+      }
+    },
+    "%lld" : {
+
+    },
+    "+" : {
+
+    },
+    "✓" : {
+
+    },
+    "Clear" : {
+
+    },
+    "Close" : {
+
+    },
+    "D%lld" : {
+
+    },
+    "D12" : {
+
+    },
+    "Done" : {
+
+    },
+    "nav.cycle" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zyklus"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cycle"
+          }
+        }
       }
     },
     "nav.month" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Month" } },
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Monat" } }
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monat"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Month"
+          }
+        }
       }
     },
     "nav.more" : {
+      "extractionState" : "stale",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "More" } },
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Mehr" } }
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mehr"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More"
+          }
+        }
       }
+    },
+    "PeriMedi" : {
+
     }
   },
   "version" : "1.0"

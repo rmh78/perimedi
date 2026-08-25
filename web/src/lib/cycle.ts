@@ -1,6 +1,6 @@
 import { addDays, differenceInCalendarDays, parseISO } from 'date-fns'
 import type { CycleSettings, DayCycleInfo, Period } from '../types'
-import { toDateKey } from './dates'
+import { daysInMonth, startOfMonthKey, toDateKey } from './dates'
 
 function periodCoversDate(
   period: Period,
@@ -47,27 +47,24 @@ export function cycleWindowForDate(
   periods: Period[],
   settings: CycleSettings,
 ): { start: string; length: number } {
-  const baseLen = Math.max(
-    2,
-    settings.averagePeriodLength + 2,
-    settings.averageCycleLength,
-  )
-
-  const start = periodStartOnOrBefore(dateKey, periods)
-  if (start) {
-    const dayIndex =
-      differenceInCalendarDays(parseISO(dateKey), parseISO(start)) + 1
-    // Keep selected day on the chart (cap so a far calendar pick stays usable)
-    const length = Math.min(
-      90,
-      Math.max(baseLen, dayIndex > 0 ? dayIndex : baseLen),
-    )
-    return { start, length }
+  if (settings.tracksPeriods !== false) {
+    const start = periodStartOnOrBefore(dateKey, periods)
+    if (start) {
+      const baseLen = Math.max(
+        2,
+        settings.averagePeriodLength + 2,
+        settings.averageCycleLength,
+      )
+      const dayIndex =
+        differenceInCalendarDays(parseISO(dateKey), parseISO(start)) + 1
+      const length = Math.min(
+        90,
+        Math.max(baseLen, dayIndex > 0 ? dayIndex : baseLen),
+      )
+      return { start, length }
+    }
   }
-
-  // Selected date is before any logged period: still show a window starting
-  // at that date so the month calendar can drive selection.
-  return { start: dateKey, length: baseLen }
+  return { start: startOfMonthKey(dateKey), length: daysInMonth(dateKey) }
 }
 
 export function getCycleDay(dateKey: string, periods: Period[]): number | null {
@@ -81,6 +78,14 @@ export function getDayCycleInfo(
   periods: Period[],
   settings: CycleSettings,
 ): DayCycleInfo {
+  if (settings.tracksPeriods === false) {
+    return {
+      date: dateKey,
+      isLoggedPeriod: false,
+      isPredictedPeriod: false,
+      cycleDay: null,
+    }
+  }
   const isLoggedPeriod = periods.some((p) =>
     periodCoversDate(p, dateKey, settings.averagePeriodLength),
   )
@@ -154,6 +159,7 @@ export function nextPredictedPeriodStart(
   periods: Period[],
   settings: CycleSettings,
 ): string | null {
+  if (settings.tracksPeriods === false) return null
   const last = lastPeriodStart(periods)
   if (!last) return null
   return toDateKey(addDays(parseISO(last), settings.averageCycleLength))

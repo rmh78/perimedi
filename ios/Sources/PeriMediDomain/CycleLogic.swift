@@ -36,13 +36,14 @@ public enum CycleLogic {
         periods: [Period],
         settings: CycleSettings
     ) -> (start: String, length: Int) {
-        let baseLen = max(2, settings.averagePeriodLength + 2, settings.averageCycleLength)
-        if let start = periodStartOnOrBefore(dateKey: dateKey, periods: periods) {
+        if settings.tracksPeriods, let start = periodStartOnOrBefore(dateKey: dateKey, periods: periods) {
+            let baseLen = max(2, settings.averagePeriodLength + 2, settings.averageCycleLength)
             let dayIndex = DateKeys.differenceInCalendarDays(fromKey: start, toKey: dateKey) + 1
             let length = min(90, max(baseLen, dayIndex > 0 ? dayIndex : baseLen))
             return (start, length)
         }
-        return (dateKey, baseLen)
+        let start = DateKeys.startOfMonthKey(dateKey)
+        return (start, DateKeys.daysInMonth(dateKey))
     }
 
     public static func getCycleDay(dateKey: String, periods: [Period]) -> Int? {
@@ -89,7 +90,7 @@ public enum CycleLogic {
         periods: [Period],
         settings: CycleSettings
     ) -> String? {
-        guard let last = lastPeriodStart(periods) else { return nil }
+        guard settings.tracksPeriods, let last = lastPeriodStart(periods) else { return nil }
         return DateKeys.addDaysKey(last, settings.averageCycleLength)
     }
 
@@ -165,6 +166,7 @@ public struct DayCycleLookup: Sendable {
     private let predictedRanges: [(start: String, end: String)]
 
     public init(periods: [Period], settings: CycleSettings) {
+        let periods = settings.tracksPeriods ? periods : []
         let defaultLen = settings.averagePeriodLength
         loggedRanges = periods.map { period in
             let start = DateKeys.toDateKey(period.startDate)

@@ -76,16 +76,14 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
               <div className="mt-4 flex flex-wrap justify-end gap-2">
                 <button
                   type="button"
-                  className="btn-ghost !min-h-10 !px-3 !py-2 text-xs"
+                  className="btn-ghost"
                   onClick={() => close(false)}
                 >
                   {t('common.cancel')}
                 </button>
                 <button
                   type="button"
-                  className={`${
-                    opts.danger ? 'btn-soft' : 'btn-primary'
-                  } !min-h-10 !px-3 !py-2 text-xs`}
+                  className={opts.danger ? 'btn-soft' : 'btn-primary'}
                   onClick={() => close(true)}
                 >
                   {opts.confirmLabel ?? t('common.delete')}

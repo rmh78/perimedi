@@ -5,6 +5,7 @@ struct SymptomSheet: View {
     @EnvironmentObject private var app: AppModel
     @EnvironmentObject private var store: Store
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dialogClose) private var dialogClose
 
     let dateKey: String
 
@@ -17,7 +18,10 @@ struct SymptomSheet: View {
     }
 
     var body: some View {
-        DialogChrome(title: app.t("symptom.title"), icon: "ActionSymptom", identifier: A11yID.sheetSymptom, onClose: { dismiss() }) {
+        DialogChrome(title: app.t("symptom.title"), icon: "ActionSymptom", identifier: A11yID.sheetSymptom, onClose: {
+            dialogClose()
+            dismiss()
+        }) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 4) {
                     Text(app.t("symptom.date")).foregroundStyle(Theme.inkSoft)
@@ -25,35 +29,6 @@ struct SymptomSheet: View {
                 }
                 .font(.subheadline)
 
-                SectionLabel(text: app.t("symptom.logged"))
-                if dayNotes.isEmpty {
-                    Text(app.t("symptom.empty")).font(.caption).foregroundStyle(Theme.inkMuted)
-                }
-                ForEach(dayNotes) { note in
-                    HStack(alignment: .top) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(app.t("remark.\(note.kind.rawValue)"))
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(Color(hex: "#6d28d9"))
-                            Text(note.body).font(.subheadline).foregroundStyle(Theme.ink)
-                        }
-                        Spacer()
-                        Button(app.t("common.edit")) {
-                            editing = note
-                            kind = note.kind
-                            bodyText = note.body
-                        }
-                        .buttonStyle(.bordered)
-                        Button(app.t("common.delete")) { store.deleteRemark(id: note.id) }
-                            .buttonStyle(.bordered)
-                    }
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Theme.blush700)
-                    .padding(12)
-                    .background(RoundedRectangle(cornerRadius: 14).stroke(Theme.blush200))
-                }
-
-                Rectangle().fill(Theme.blush100).frame(height: 1)
                 SectionLabel(text: editing == nil ? app.t("symptom.addSection") : app.t("symptom.saveEdit"))
                 FieldLabel(text: app.t("symptom.type"))
                 SoftField {
@@ -69,19 +44,68 @@ struct SymptomSheet: View {
                 SoftField {
                     TextField(app.t("symptom.placeholder"), text: $bodyText, axis: .vertical)
                         .lineLimit(3...5)
+                        .submitLabel(.done)
                         .accessibilityIdentifier(A11yID.symptomBody)
                 }
 
                 HStack(spacing: 10) {
                     PillButton(
                         title: app.t(editing == nil ? "symptom.saveAdd" : "symptom.saveEdit"),
-                        filled: true,
+                        kind: .primary,
                         identifier: A11yID.symptomSave
                     ) {
                         saveNote()
                     }
-                    PillButton(title: app.t("common.close"), filled: false) { dismiss() }
+                    PillButton(title: app.t("common.close"), kind: .secondary) {
+                        dialogClose()
+                        dismiss()
+                    }
                     Spacer()
+                }
+
+                Rectangle().fill(Theme.blush100).frame(height: 1)
+                SectionLabel(text: app.t("symptom.logged"))
+                if dayNotes.isEmpty {
+                    Text(app.t("symptom.empty")).font(.caption).foregroundStyle(Theme.inkMuted)
+                }
+                VStack(spacing: 0) {
+                    ForEach(Array(dayNotes.enumerated()), id: \.element.id) { index, note in
+                        HStack(spacing: 8) {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(app.t("remark.\(note.kind.rawValue)"))
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(Theme.ink)
+                                    .lineLimit(1)
+                                Text(note.body)
+                                    .font(.caption)
+                                    .foregroundStyle(Theme.inkMuted)
+                                    .lineLimit(2)
+                            }
+                            Spacer(minLength: 4)
+                            IconCircleButton(systemName: "pencil", label: app.t("common.edit")) {
+                                editing = note
+                                kind = note.kind
+                                bodyText = note.body
+                            }
+                            IconCircleButton(systemName: "trash", label: app.t("common.delete"), tint: Theme.blush800) {
+                                app.askConfirm(
+                                    message: app.t("symptom.deleteConfirm"),
+                                    confirmLabel: app.t("common.delete"),
+                                    destructive: true
+                                ) {
+                                    store.deleteRemark(id: note.id)
+                                    if editing?.id == note.id {
+                                        editing = nil
+                                        bodyText = ""
+                                    }
+                                }
+                            }
+                        }
+                        .padding(.vertical, 8)
+                        if index < dayNotes.count - 1 {
+                            Rectangle().fill(Theme.blush100).frame(height: 1)
+                        }
+                    }
                 }
             }
         }

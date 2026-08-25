@@ -7,6 +7,7 @@ import { toDateKey } from '../lib/dates'
 import { useLocale, type MessageKey } from '../i18n'
 import { useConfirm } from '../context/ConfirmContext'
 import { formatLongDateLocalized } from '../i18n'
+import { HistoryIconButton } from './HistoryIconButton'
 
 type Props = {
   open: boolean
@@ -96,54 +97,7 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
         <strong>{formatLongDateLocalized(dateKey, locale)}</strong>
       </p>
 
-      <div className="mb-4 space-y-2">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
-          {t('symptom.logged')}
-        </p>
-        {daySymptoms.length === 0 ? (
-          <p className="rounded-xl bg-slate-50 px-3 py-2 text-xs text-ink-muted ring-1 ring-slate-100">
-            {t('symptom.empty')}
-          </p>
-        ) : (
-          <ul className="overflow-hidden rounded-xl ring-1 ring-blush-100">
-            {daySymptoms.map((s, i) => (
-              <li
-                key={s.id}
-                className={`flex items-start gap-2 px-2.5 py-2 ${
-                  i < daySymptoms.length - 1
-                    ? 'border-b border-blush-100/80'
-                    : ''
-                } ${editingId === s.id ? 'bg-lilac-50/70' : ''}`}
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-violet-800">
-                    {t(`remark.${s.kind}` as MessageKey)}
-                  </p>
-                  <p className="mt-0.5 text-sm text-ink">{s.body}</p>
-                </div>
-                <div className="flex shrink-0 gap-1.5">
-                  <button
-                    type="button"
-                    className="btn-ghost !min-h-9 !px-2.5 !py-1 text-xs"
-                    onClick={() => startEdit(s.id)}
-                  >
-                    {t('common.edit')}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-soft !min-h-9 !px-2.5 !py-1 text-xs"
-                    onClick={() => void onDelete(s.id)}
-                  >
-                    {t('common.delete')}
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <form onSubmit={onSubmit} className="space-y-3 border-t border-blush-100 pt-3">
+      <form onSubmit={onSubmit} className="space-y-3">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
           {editingId ? t('symptom.editSection') : t('symptom.addSection')}
         </p>
@@ -186,6 +140,47 @@ export function DayNoteSheet({ open, dateKey, onClose, onSaved }: Props) {
           )}
         </div>
       </form>
+
+      <div className="mt-4 space-y-2 border-t border-blush-100 pt-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
+          {t('symptom.logged')}
+        </p>
+        {daySymptoms.length === 0 ? (
+          <p className="rounded-xl bg-slate-50 px-3 py-2 text-xs text-ink-muted ring-1 ring-slate-100">
+            {t('symptom.empty')}
+          </p>
+        ) : (
+          <ul className="divide-y divide-blush-100">
+            {daySymptoms.map((s) => (
+              <li
+                key={s.id}
+                className={`flex items-center gap-2 py-2 ${
+                  editingId === s.id ? 'bg-blush-50/80' : ''
+                }`}
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-ink">
+                    {t(`remark.${s.kind}` as MessageKey)}
+                  </p>
+                  <p className="mt-px truncate text-xs text-ink-muted">{s.body}</p>
+                </div>
+                <div className="flex shrink-0 gap-1">
+                  <HistoryIconButton
+                    kind="edit"
+                    label={t('common.edit')}
+                    onClick={() => startEdit(s.id)}
+                  />
+                  <HistoryIconButton
+                    kind="delete"
+                    label={t('common.delete')}
+                    onClick={() => void onDelete(s.id)}
+                  />
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </Sheet>
   )
 }

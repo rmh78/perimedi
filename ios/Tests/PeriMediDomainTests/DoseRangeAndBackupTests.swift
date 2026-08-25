@@ -31,10 +31,10 @@ final class DoseRangeAndBackupTests: XCTestCase {
             selectedDate: "2026-08-07",
             periods: [],
             settings: settings,
-            extraFrom: ["2026-07-26"],
+            extraFrom: ["2026-07-01"],
             extraTo: ["2026-09-05"]
         )
-        XCTAssertEqual(r.from, "2026-07-26")
+        XCTAssertEqual(r.from, "2026-07-01")
         XCTAssertEqual(r.to, "2026-09-05")
     }
 

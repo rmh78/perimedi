@@ -161,6 +161,7 @@ export async function saveCycleSettings(
     averageCycleLength: patch.averageCycleLength ?? current.averageCycleLength,
     averagePeriodLength:
       patch.averagePeriodLength ?? current.averagePeriodLength,
+    tracksPeriods: patch.tracksPeriods ?? current.tracksPeriods,
   })
 }
 
@@ -171,12 +172,14 @@ async function ensureSettings(): Promise<CycleSettings> {
       id: 'default',
       averageCycleLength: existing.averageCycleLength ?? 28,
       averagePeriodLength: existing.averagePeriodLength ?? 5,
+      tracksPeriods: existing.tracksPeriods ?? true,
     }
   }
   return {
     id: 'default',
     averageCycleLength: 28,
     averagePeriodLength: 5,
+    tracksPeriods: true,
   }
 }
 

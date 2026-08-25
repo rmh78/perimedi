@@ -28,6 +28,10 @@ The system SHALL provide a loadable sample dataset that demonstrates a perimenop
 - **WHEN** the user confirms loading sample data
 - **THEN** local data is replaced with the sample set and cycle settings reflect the sample averages
 
+#### Scenario: Sample and clear use a confirm card
+- **WHEN** the user activates load sample or clear data
+- **THEN** an inset cream confirm card appears over a light blur of the app (not a system action sheet), with Cancel and a confirm action
+
 ### Requirement: Clear data
 The system SHALL allow the user to clear local app data and restore default cycle settings.
 

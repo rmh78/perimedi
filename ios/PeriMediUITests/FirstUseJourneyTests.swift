@@ -43,7 +43,7 @@ final class FirstUseJourneyTests: PeriMediUITestCase {
                 name: "Progesterone",
                 dose: "200 mg",
                 form: "Cream",
-                cyclicPreset: "21 days on · 7 days pause",
+                cyclic: true,
                 start: UITestDate.periodStart
             )
             robot.waitFor(id: "cycle.lane.progesterone")

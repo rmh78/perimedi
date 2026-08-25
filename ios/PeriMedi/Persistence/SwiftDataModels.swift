@@ -198,6 +198,7 @@ final class SDCycleSettings {
     var id: String = "default"
     var averageCycleLength: Int = 28
     var averagePeriodLength: Int = 5
+    var tracksPeriods: Bool = true
 
     init() {}
 
@@ -205,7 +206,8 @@ final class SDCycleSettings {
         CycleSettings(
             id: id,
             averageCycleLength: averageCycleLength,
-            averagePeriodLength: averagePeriodLength
+            averagePeriodLength: averagePeriodLength,
+            tracksPeriods: tracksPeriods
         )
     }
 
@@ -213,6 +215,7 @@ final class SDCycleSettings {
         id = s.id
         averageCycleLength = s.averageCycleLength
         averagePeriodLength = s.averagePeriodLength
+        tracksPeriods = s.tracksPeriods
     }
 }
 

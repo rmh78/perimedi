@@ -8,6 +8,10 @@ final class AppModel: ObservableObject {
     @Published var selectedTab: Tab = .cycle
     @Published var launchSheet: String?
     @Published var launchPeriodEditor = false
+    @Published var medSheet: MedSheetState?
+    @Published var showPeriod = false
+    @Published var showSymptom = false
+    @Published var confirm: ConfirmPrompt?
     /// Bumped when Cycle should snap the plot to today (launch / return from background).
     @Published private(set) var todayFocusNonce = 0
 
@@ -36,4 +40,37 @@ final class AppModel: ObservableObject {
     func t(_ key: String, _ vars: [String: String] = [:]) -> String {
         locale.t(key, vars)
     }
+
+    func closeDialog() {
+        medSheet = nil
+        showPeriod = false
+        showSymptom = false
+        launchPeriodEditor = false
+    }
+
+    func askConfirm(
+        message: String,
+        confirmLabel: String,
+        destructive: Bool = true,
+        action: @escaping () -> Void
+    ) {
+        confirm = ConfirmPrompt(
+            message: message,
+            confirmLabel: confirmLabel,
+            destructive: destructive,
+            action: action
+        )
+    }
+
+    func dismissConfirm() {
+        confirm = nil
+    }
+}
+
+struct ConfirmPrompt: Identifiable {
+    let id = UUID()
+    var message: String
+    var confirmLabel: String
+    var destructive: Bool
+    var action: () -> Void
 }

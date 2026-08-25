@@ -12,7 +12,7 @@ struct MoreView: View {
     @State private var exportURL: URL?
     @State private var showShare = false
     @State private var showImporter = false
-    @State private var confirm: ConfirmAction?
+
 
     var body: some View {
         ScrollView {
@@ -24,7 +24,7 @@ struct MoreView: View {
                             ForEach(AppLanguage.allCases) { lang in
                                 PillButton(
                                     title: app.t(lang == .en ? "language.en" : "language.de"),
-                                    filled: locale.language == lang
+                                    kind: locale.language == lang ? .primary : .secondary
                                 ) {
                                     locale.language = lang
                                 }
@@ -53,7 +53,11 @@ struct MoreView: View {
                             body: app.t("more.sampleBody"),
                             label: app.t("more.sampleLabel")
                         ) {
-                            confirm = ConfirmAction(message: app.t("more.sampleConfirm")) {
+                            app.askConfirm(
+                                message: app.t("more.sampleConfirm"),
+                                confirmLabel: app.t("more.sampleLabel"),
+                                destructive: false
+                            ) {
                                 do {
                                     try store.loadSample()
                                     status = app.t("more.sampleLoaded")
@@ -83,7 +87,11 @@ struct MoreView: View {
                         }
                         divider
                         backupRow(title: app.t("more.clearTitle"), body: app.t("more.clearBody"), label: app.t("more.clearLabel"), destructive: true) {
-                            confirm = ConfirmAction(message: app.t("more.clearConfirm")) {
+                            app.askConfirm(
+                                message: app.t("more.clearConfirm"),
+                                confirmLabel: app.t("more.clearLabel"),
+                                destructive: true
+                            ) {
                                 store.clearAll()
                                 status = app.t("more.cleared")
                                 error = nil
@@ -110,18 +118,6 @@ struct MoreView: View {
         .sheet(isPresented: $showShare) {
             if let exportURL { ShareSheet(items: [exportURL]) }
         }
-        .confirmationDialog(app.t("confirm.title"), isPresented: Binding(
-            get: { confirm != nil },
-            set: { if !$0 { confirm = nil } }
-        ), titleVisibility: .visible) {
-            Button(app.t("confirm.title"), role: .destructive) {
-                confirm?.action()
-                confirm = nil
-            }
-            Button(app.t("common.cancel"), role: .cancel) { confirm = nil }
-        } message: {
-            Text(confirm?.message ?? "")
-        }
     }
 
     private var divider: some View {
@@ -143,15 +139,7 @@ struct MoreView: View {
                 Text(body).font(.caption).foregroundStyle(Theme.inkMuted)
             }
             Spacer(minLength: 8)
-            Button(action: action) {
-                Text(label)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(destructive ? Theme.blush700 : Theme.blush700)
-                    .padding(.horizontal, 12)
-                    .frame(minHeight: 34)
-                    .overlay(Capsule().stroke(destructive ? Theme.blush300 : Theme.blush300, lineWidth: 1))
-            }
-            .buttonStyle(.plain)
+            PillButton(title: label, kind: destructive ? .destructive : .secondary, action: action)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -169,11 +157,6 @@ struct MoreView: View {
             self.error = app.t("more.importFailed")
         }
     }
-}
-
-private struct ConfirmAction {
-    var message: String
-    var action: () -> Void
 }
 
 struct ShareSheet: UIViewControllerRepresentable {

@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 @main
 struct PeriMediApp: App {
@@ -8,6 +9,9 @@ struct PeriMediApp: App {
 
     @MainActor
     init() {
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting") {
+            UIView.setAnimationsEnabled(false)
+        }
         let container = PersistenceController.makeContainer()
         self.container = container
         let store = Store(container: container)

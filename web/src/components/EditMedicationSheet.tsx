@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Sheet } from './Sheet'
-import type { Medication, MedForm, Schedule, TherapyPresetId } from '../types'
-import { THERAPY_PRESETS } from '../types'
-import { useLocale, formatLocalized, type MessageKey } from '../i18n'
+import type { Medication, MedForm } from '../types'
+import { useLocale, type MessageKey } from '../i18n'
 import { useConfirm } from '../context/ConfirmContext'
 import {
   deleteMedication,
@@ -10,16 +9,12 @@ import {
   upsertSchedule,
 } from '../db/actions'
 import { useSchedules } from '../hooks/useAppData'
-import {
-  normalizeTherapyCycle,
-  previewTherapyCycle,
-} from '../lib/therapyCycle'
+import { normalizeTherapyCycle } from '../lib/therapyCycle'
 import {
   MED_COLOR_PALETTE,
   MED_FORM_ICON_COLOR,
   resolveMedColor,
 } from '../lib/medColors'
-import { MedFormIcon } from './MedFormIcon'
 import {
   freshScheduleForm,
   scheduleToForm,
@@ -43,7 +38,7 @@ export function EditMedicationSheet({
   onClose,
   onSaved,
 }: Props) {
-  const { t, locale } = useLocale()
+  const { t } = useLocale()
   const confirm = useConfirm()
   const schedules = useSchedules()
   const [name, setName] = useState('')
@@ -109,61 +104,6 @@ export function EditMedicationSheet({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, medication?.id, isNew])
 
-  const draftSchedule: Schedule = useMemo(
-    () => ({
-      id: primaryScheduleId ?? 'draft',
-      medicationId: medId || 'draft',
-      daysOfWeek: schedMode === 'specific_days' ? sched.daysOfWeek : [],
-      timeOfDay: sched.times[0] || '08:00',
-      times: sched.times,
-      doseLabel: undefined,
-      active: true,
-      startDate: sched.startDate || undefined,
-      endDate: sched.endDate || undefined,
-      cycleRule: 'none',
-      therapyCycle:
-        schedMode === 'cyclic'
-          ? {
-              enabled: true,
-              mode:
-                sched.therapyPreset === 'week_slots'
-                  ? 'week_slots'
-                  : 'on_off_days',
-              anchorDate: sched.anchorDate,
-              onDays: sched.onDays,
-              offDays: sched.offDays,
-              slots:
-                sched.therapyPreset === 'week_slots'
-                  ? sched.weekSlots
-                  : undefined,
-            }
-          : undefined,
-    }),
-    [sched, schedMode, medId, primaryScheduleId],
-  )
-
-  const preview = useMemo(
-    () => previewTherapyCycle(draftSchedule, todayKey()),
-    [draftSchedule],
-  )
-
-  function applyTherapyPreset(id: TherapyPresetId) {
-    const p = THERAPY_PRESETS.find((x) => x.id === id)
-    if (!p) return
-    if (id === 'continuous') {
-      setSched((f) => ({ ...f, cyclic: false, therapyPreset: 'continuous' }))
-      return
-    }
-    setSched((f) => ({
-      ...f,
-      cyclic: true,
-      therapyPreset: id,
-      onDays: p.onDays,
-      offDays: p.offDays,
-      weekSlots: p.slots ? p.slots.map((s) => ({ ...s })) : f.weekSlots,
-    }))
-  }
-
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     if (!name.trim() || !doseLabel.trim()) {
@@ -194,16 +134,10 @@ export function EditMedicationSheet({
         isCyclic
           ? {
               enabled: true,
-              mode:
-                sched.therapyPreset === 'week_slots'
-                  ? 'week_slots'
-                  : sched.therapyPreset === 'continuous'
-                    ? 'continuous'
-                    : 'on_off_days',
+              mode: 'on_off_days',
               anchorDate: anchor,
               onDays: sched.onDays,
               offDays: sched.offDays,
-              slots: sched.weekSlots,
             }
           : {
               enabled: false,
@@ -250,15 +184,13 @@ export function EditMedicationSheet({
       open={open}
       title={isNew || !medication ? t('med.addTitle') : t('med.editTitle')}
       icon="/action-icons/med.jpg"
+      iconAccent={color}
       onClose={onClose}
       wide
     >
       <form onSubmit={onSubmit} className="space-y-3 text-sm">
         {/* Medication — dense grid */}
         <section className="space-y-2">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
-            {t('med.sectionMed')}
-          </p>
           <label className="block">
             <span className="mb-0.5 block text-xs font-medium text-ink-soft">
               {t('med.name')}
@@ -309,46 +241,32 @@ export function EditMedicationSheet({
             </label>
           </div>
           <div>
-            <span className="mb-0.5 block text-xs font-medium text-ink-soft">
-              {t('med.color')}
-            </span>
-            <div className="flex items-start gap-2.5 py-1">
-              <span
-                className="mt-0.5 h-9 w-9 shrink-0 overflow-hidden rounded-full"
-                style={{
-                  boxShadow: `0 0 0 4px ${color}`,
-                  background: `${color}33`,
-                }}
-              >
-                <MedFormIcon form={form} fill />
-              </span>
-              {/* Two compact rows so the full palette fits on SE without horizontal scroll */}
-              <div
-                className="grid min-w-0 flex-1 grid-cols-8 gap-x-1.5 gap-y-2 py-0.5"
-                role="group"
-                aria-label={t('med.color')}
-              >
-                {MED_COLOR_PALETTE.map((c) => {
-                  const selected = color.toLowerCase() === c.toLowerCase()
-                  return (
-                    <button
-                      key={c}
-                      type="button"
-                      title={c}
-                      onClick={() => setColor(c)}
-                      className="mx-auto h-5 w-5 rounded-full"
-                      style={{
-                        background: c,
-                        boxShadow: selected
-                          ? `0 0 0 2px #fff, 0 0 0 4px ${c}`
-                          : '0 0 0 1px rgba(0,0,0,0.1)',
-                      }}
-                      aria-label={t('med.colorAria', { color: c })}
-                      aria-pressed={selected}
-                    />
-                  )
-                })}
-              </div>
+            <p className="mb-0.5 text-xs font-medium text-ink-soft">{t('med.color')}</p>
+            <div
+            className="flex min-w-0 gap-1"
+            role="group"
+            aria-label={t('med.color')}
+          >
+            {MED_COLOR_PALETTE.map((c) => {
+              const selected = color.toLowerCase() === c.toLowerCase()
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  title={c}
+                  onClick={() => setColor(c)}
+                  className="h-[18px] min-w-0 flex-1 rounded-full"
+                  style={{
+                    background: c,
+                    boxShadow: selected
+                      ? `0 0 0 2px #fff, 0 0 0 3px ${c}`
+                      : '0 0 0 1px rgba(0,0,0,0.1)',
+                  }}
+                  aria-label={t('med.colorAria', { color: c })}
+                  aria-pressed={selected}
+                />
+              )
+            })}
             </div>
           </div>
         </section>
@@ -359,297 +277,7 @@ export function EditMedicationSheet({
             {t('med.sectionSchedule')}
           </p>
 
-          <div className="flex flex-wrap gap-1 rounded-xl bg-blush-50/50 p-1 ring-1 ring-blush-100">
-            {(
-              [
-                ['every_day', 'sched.everyDay'],
-                ['specific_days', 'sched.specificDays'],
-                ['cyclic', 'sched.cyclic'],
-              ] as const
-            ).map(([mode, labelKey]) => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => {
-                  setSchedMode(mode)
-                  if (mode === 'cyclic') {
-                    setSched((f) => ({
-                      ...f,
-                      daysOfWeek: [],
-                      cyclic: true,
-                      therapyPreset:
-                        f.therapyPreset === 'continuous' ? '21_7' : f.therapyPreset,
-                      onDays: f.onDays || 21,
-                      offDays: f.offDays || 7,
-                    }))
-                  } else if (mode === 'specific_days') {
-                    setSched((f) => ({
-                      ...f,
-                      cyclic: false,
-                      therapyPreset: 'continuous',
-                      daysOfWeek:
-                        f.daysOfWeek.length > 0 ? f.daysOfWeek : [1, 3, 5],
-                    }))
-                  } else {
-                    setSched((f) => ({
-                      ...f,
-                      cyclic: false,
-                      therapyPreset: 'continuous',
-                      daysOfWeek: [],
-                    }))
-                  }
-                }}
-                className={`flex-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold transition ${
-                  schedMode === mode
-                    ? 'bg-blush-600 text-white shadow-sm'
-                    : 'text-ink-soft hover:bg-white/80'
-                }`}
-              >
-                {t(labelKey)}
-              </button>
-            ))}
-          </div>
-
-          {schedMode === 'specific_days' && (
-            <div className="rounded-xl bg-blush-50/50 p-2.5 ring-1 ring-blush-100">
-              <p className="mb-1.5 text-xs font-semibold text-ink">{t('med.days')}</p>
-              <div className="flex flex-wrap gap-1">
-                {([0, 1, 2, 3, 4, 5, 6] as const).map((idx) => {
-                  const label = t(`weekday.${idx}` as MessageKey)
-                  const on = sched.daysOfWeek.includes(idx)
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() =>
-                        setSched((f) => ({
-                          ...f,
-                          daysOfWeek: on
-                            ? f.daysOfWeek.filter((d) => d !== idx)
-                            : [...f.daysOfWeek, idx].sort(),
-                        }))
-                      }
-                      className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                        on
-                          ? 'bg-blush-500 text-white'
-                          : 'bg-white text-ink-soft ring-1 ring-blush-100'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {schedMode === 'cyclic' && (
-            <div className="space-y-2 rounded-xl bg-blush-50/50 p-2.5 ring-1 ring-blush-100">
-              <label className="block">
-                <span className="mb-0.5 block text-xs font-medium text-ink-soft">
-                  {t('med.preset')}
-                </span>
-                <select
-                  className="soft-input !rounded-xl !px-2.5 !py-1.5"
-                  value={sched.therapyPreset}
-                  onChange={(e) =>
-                    applyTherapyPreset(e.target.value as TherapyPresetId)
-                  }
-                >
-                  {THERAPY_PRESETS.filter((p) => p.id !== 'continuous').map(
-                    (p) => (
-                      <option key={p.id} value={p.id}>
-                        {t(`therapy.preset.${p.id}` as MessageKey)}
-                      </option>
-                    ),
-                  )}
-                </select>
-              </label>
-
-              {sched.therapyPreset !== 'week_slots' && (
-                <div className="grid grid-cols-2 gap-2">
-                  <label className="block">
-                    <span className="mb-0.5 block text-xs font-medium text-ink-soft">
-                      {t('med.applyDays')}
-                    </span>
-                    <input
-                      type="number"
-                      min={1}
-                      max={365}
-                      className="soft-input !rounded-xl !px-2.5 !py-1.5"
-                      value={sched.onDays}
-                      onChange={(e) =>
-                        setSched((f) => ({
-                          ...f,
-                          onDays: Number(e.target.value) || 1,
-                          therapyPreset: 'custom_days',
-                        }))
-                      }
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="mb-0.5 block text-xs font-medium text-ink-soft">
-                      {t('med.pauseDays')}
-                    </span>
-                    <input
-                      type="number"
-                      min={0}
-                      max={365}
-                      className="soft-input !rounded-xl !px-2.5 !py-1.5"
-                      value={sched.offDays}
-                      onChange={(e) =>
-                        setSched((f) => ({
-                          ...f,
-                          offDays: Number(e.target.value) || 0,
-                          therapyPreset: 'custom_days',
-                        }))
-                      }
-                    />
-                  </label>
-                </div>
-              )}
-
-              {sched.therapyPreset === 'week_slots' && (
-                <div className="space-y-1.5">
-                  {sched.weekSlots.map((slot, idx) => (
-                    <div
-                      key={idx}
-                      className="grid grid-cols-[auto_1fr] gap-1.5"
-                    >
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setSched((f) => ({
-                            ...f,
-                            weekSlots: f.weekSlots.map((s, i) =>
-                              i === idx ? { ...s, take: !s.take } : s,
-                            ),
-                          }))
-                        }
-                        className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                          slot.take
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-slate-300 text-slate-800'
-                        }`}
-                      >
-                        {slot.take ? t('med.apply') : t('med.pause')}
-                      </button>
-                      <input
-                        className="soft-input !rounded-xl !px-2 !py-1"
-                        placeholder={t('med.dose')}
-                        disabled={!slot.take}
-                        value={slot.doseLabel ?? ''}
-                        onChange={(e) =>
-                          setSched((f) => ({
-                            ...f,
-                            weekSlots: f.weekSlots.map((s, i) =>
-                              i === idx
-                                ? { ...s, doseLabel: e.target.value }
-                                : s,
-                            ),
-                          }))
-                        }
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <label className="block">
-                <span className="mb-0.5 block text-xs font-medium text-ink-soft">
-                  {t('med.cycleStartsOn')}
-                </span>
-                <input
-                  type="date"
-                  className="soft-input !rounded-xl !px-2.5 !py-1.5"
-                  value={sched.anchorDate}
-                  onChange={(e) =>
-                    setSched((f) => ({ ...f, anchorDate: e.target.value }))
-                  }
-                />
-              </label>
-
-              <p className="rounded-lg bg-white/90 px-2 py-1.5 text-[11px] text-ink-soft ring-1 ring-blush-100">
-                <span className="font-semibold text-ink">
-                  {sched.therapyPreset === 'week_slots'
-                    ? t('therapy.preset.week_slots')
-                    : sched.offDays <= 0
-                      ? t('therapy.preview.applyOnly', { on: sched.onDays })
-                      : t('therapy.preview.applyPause', {
-                          on: sched.onDays,
-                          off: sched.offDays,
-                        })}
-                </span>
-                {' · '}
-                {t('therapy.preview.pause', {
-                  date: preview.nextPauseStart
-                    ? formatLocalized(preview.nextPauseStart, 'd MMM yyyy', locale)
-                    : t('common.emDash'),
-                })}
-                {' · '}
-                {t('therapy.preview.apply', {
-                  date: preview.nextApplyStart
-                    ? formatLocalized(preview.nextApplyStart, 'd MMM yyyy', locale)
-                    : t('common.emDash'),
-                })}
-              </p>
-            </div>
-          )}
-
-          <div className="rounded-xl bg-blush-50/50 p-2.5 ring-1 ring-blush-100">
-            <p className="mb-0.5 text-xs font-semibold text-ink">
-              {t('med.takeAt')}
-            </p>
-            <p className="mb-1.5 text-[11px] text-ink-muted">
-              {t('med.takeAtHint')}
-            </p>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {sched.times.map((time, i) => (
-                <div key={i} className="flex items-center gap-1">
-                  <input
-                    type="time"
-                    className="soft-input !w-auto !rounded-lg !px-2 !py-1"
-                    value={time}
-                    onChange={(e) =>
-                      setSched((f) => {
-                        const times = [...f.times]
-                        times[i] = e.target.value
-                        return { ...f, times }
-                      })
-                    }
-                    required
-                    aria-label={t('med.doseTimeAria', { n: i + 1 })}
-                  />
-                  {sched.times.length > 1 && (
-                    <button
-                      type="button"
-                      className="text-[11px] font-semibold text-rose-600"
-                      onClick={() =>
-                        setSched((f) => ({
-                          ...f,
-                          times: f.times.filter((_, j) => j !== i),
-                        }))
-                      }
-                      aria-label={t('med.removeTimeAria', { n: i + 1 })}
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button
-                type="button"
-                className="text-[11px] font-semibold text-blush-700"
-                onClick={() =>
-                  setSched((f) => ({ ...f, times: [...f.times, '12:00'] }))
-                }
-              >
-                {t('med.anotherTime')}
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 rounded-xl bg-blush-50/50 p-2.5 ring-1 ring-blush-100">
+          <div className="grid grid-cols-2 gap-2">
             <label className="block">
               <span className="mb-0.5 block text-xs font-medium text-ink-soft">
                 {t('med.start')}
@@ -684,6 +312,175 @@ export function EditMedicationSheet({
             </label>
           </div>
 
+          <div>
+            <p className="mb-0.5 text-xs font-medium text-ink-soft">{t('med.takeAt')}</p>
+            <div className="flex flex-wrap items-center gap-1.5">
+            {sched.times.map((time, i) => (
+              <div key={i} className="flex items-center gap-1">
+                <input
+                  type="time"
+                  className="soft-input !w-auto !rounded-lg !px-2 !py-1"
+                  value={time}
+                  onChange={(e) =>
+                    setSched((f) => {
+                      const times = [...f.times]
+                      times[i] = e.target.value
+                      return { ...f, times }
+                    })
+                  }
+                  required
+                  aria-label={t('med.doseTimeAria', { n: i + 1 })}
+                />
+                {sched.times.length > 1 && (
+                  <button
+                    type="button"
+                    className="text-[11px] font-semibold text-rose-600"
+                    onClick={() =>
+                      setSched((f) => ({
+                        ...f,
+                        times: f.times.filter((_, j) => j !== i),
+                      }))
+                    }
+                    aria-label={t('med.removeTimeAria', { n: i + 1 })}
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              className="text-sm font-semibold text-blush-700"
+              onClick={() =>
+                setSched((f) => ({ ...f, times: [...f.times, '12:00'] }))
+              }
+              aria-label={t('med.anotherTime')}
+            >
+              +
+            </button>
+            </div>
+          </div>
+
+          <label className="block">
+            <span className="mb-0.5 block text-xs font-medium text-ink-soft">
+              {t('med.scheduleType')}
+            </span>
+            <select
+            className="soft-input !w-auto !rounded-xl !px-2.5 !py-1.5"
+            value={schedMode}
+            onChange={(e) => {
+              const mode = e.target.value as typeof schedMode
+              setSchedMode(mode)
+              if (mode === 'cyclic') {
+                setSched((f) => ({
+                  ...f,
+                  daysOfWeek: [],
+                  cyclic: true,
+                  therapyPreset: 'custom_days',
+                  onDays: f.onDays || 21,
+                  offDays: f.offDays || 7,
+                  anchorDate: f.anchorDate || f.startDate,
+                }))
+              } else if (mode === 'specific_days') {
+                setSched((f) => ({
+                  ...f,
+                  cyclic: false,
+                  therapyPreset: 'continuous',
+                  daysOfWeek:
+                    f.daysOfWeek.length > 0 ? f.daysOfWeek : [1, 3, 5],
+                }))
+              } else {
+                setSched((f) => ({
+                  ...f,
+                  cyclic: false,
+                  therapyPreset: 'continuous',
+                  daysOfWeek: [],
+                }))
+              }
+            }}
+          >
+            <option value="every_day">{t('sched.everyDay')}</option>
+            <option value="specific_days">{t('sched.specificDays')}</option>
+            <option value="cyclic">{t('sched.cyclic')}</option>
+            </select>
+          </label>
+
+          {schedMode === 'specific_days' && (
+            <div>
+              <p className="mb-0.5 text-xs font-medium text-ink-soft">{t('med.days')}</p>
+              <div className="flex flex-wrap gap-1">
+                {([0, 1, 2, 3, 4, 5, 6] as const).map((idx) => {
+                  const label = t(`weekday.${idx}` as MessageKey)
+                  const on = sched.daysOfWeek.includes(idx)
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() =>
+                        setSched((f) => ({
+                          ...f,
+                          daysOfWeek: on
+                            ? f.daysOfWeek.filter((d) => d !== idx)
+                            : [...f.daysOfWeek, idx].sort(),
+                        }))
+                      }
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                        on
+                          ? 'bg-blush-500 text-white'
+                          : 'bg-white text-ink-soft ring-1 ring-blush-100'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {schedMode === 'cyclic' && (
+            <div className="grid grid-cols-2 gap-2">
+              <label className="block">
+                <span className="mb-0.5 block text-xs font-medium text-ink-soft">
+                  {t('med.applyDays')}
+                </span>
+                <input
+                  type="number"
+                  min={1}
+                  max={60}
+                  className="soft-input !rounded-xl !px-2.5 !py-1.5"
+                  value={sched.onDays}
+                  onChange={(e) =>
+                    setSched((f) => ({
+                      ...f,
+                      onDays: Number(e.target.value) || 1,
+                      therapyPreset: 'custom_days',
+                    }))
+                  }
+                />
+              </label>
+              <label className="block">
+                <span className="mb-0.5 block text-xs font-medium text-ink-soft">
+                  {t('med.pauseDays')}
+                </span>
+                <input
+                  type="number"
+                  min={1}
+                  max={60}
+                  className="soft-input !rounded-xl !px-2.5 !py-1.5"
+                  value={sched.offDays}
+                  onChange={(e) =>
+                    setSched((f) => ({
+                      ...f,
+                      offDays: Number(e.target.value) || 1,
+                      therapyPreset: 'custom_days',
+                    }))
+                  }
+                />
+              </label>
+            </div>
+          )}
+
           {!isNew && medSchedules.length > 1 && (
             <p className="text-[11px] text-ink-muted">
               {t('med.multiScheduleNote', { count: medSchedules.length })}
@@ -715,7 +512,7 @@ export function EditMedicationSheet({
           {!isNew && medication && (
             <button
               type="button"
-              className="ml-auto text-xs font-semibold text-rose-700"
+              className="btn-soft ml-auto !min-h-9 !px-3"
               onClick={() => {
                 void confirm({
                   message: t('med.deleteConfirm', { name: medication.name }),

@@ -19,6 +19,18 @@ export function parseDateKey(key: string): Date {
   return startOfDay(parseISO(key))
 }
 
+export function dayOfMonth(dateKey: string): number {
+  return parseDateKey(dateKey).getDate()
+}
+
+export function startOfMonthKey(dateKey: string): string {
+  return format(startOfMonth(parseDateKey(dateKey)), 'yyyy-MM-dd')
+}
+
+export function daysInMonth(dateKey: string): number {
+  return endOfMonth(parseDateKey(dateKey)).getDate()
+}
+
 export function combineDateAndTime(dateKey: string, timeOfDay: string): string {
   const [hh = '08', mm = '00'] = timeOfDay.split(':')
   return `${dateKey}T${hh.padStart(2, '0')}:${mm.padStart(2, '0')}:00`

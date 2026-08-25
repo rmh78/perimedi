@@ -4,10 +4,24 @@ import XCTest
 final class CycleLogicTests: XCTestCase {
     let settings = CycleSettings(averageCycleLength: 28, averagePeriodLength: 5)
 
-    func testWindowStartsAtSelectedDateWhenNoPeriods() {
+    func testWindowStartsAtMonthWhenNoPeriods() {
         let w = CycleLogic.cycleWindowForDate(dateKey: "2026-08-07", periods: [], settings: settings)
-        XCTAssertEqual(w.start, "2026-08-07")
-        XCTAssertGreaterThanOrEqual(w.length, 28)
+        XCTAssertEqual(w.start, "2026-08-01")
+        XCTAssertEqual(w.length, 31)
+        let days = (0..<w.length).map { DateKeys.addDaysKey(w.start, $0) }
+        XCTAssertEqual(days.first, "2026-08-01")
+        XCTAssertTrue(days.contains("2026-08-07"))
+        XCTAssertEqual(days.last, "2026-08-31")
+    }
+
+    func testWindowIgnoresPeriodsWhenTrackingOff() {
+        let off = CycleSettings(averageCycleLength: 28, averagePeriodLength: 5, tracksPeriods: false)
+        let periods = [Period(id: "p1", startDate: "2026-07-10")]
+        let w = CycleLogic.cycleWindowForDate(dateKey: "2026-08-19", periods: periods, settings: off)
+        XCTAssertEqual(w.start, "2026-08-01")
+        XCTAssertEqual(w.length, 31)
+        XCTAssertNil(CycleLogic.getDayCycleInfo(dateKey: "2026-07-10", periods: periods, settings: off).cycleDay)
+        XCTAssertNil(CycleLogic.nextPredictedPeriodStart(periods: periods, settings: off))
     }
 
     func testWindowUsesPeriodStartOnOrBefore() {
