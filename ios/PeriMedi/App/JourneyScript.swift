@@ -82,14 +82,34 @@ enum JourneyScript {
         }
 
         if step >= 11 {
-            store.addRemark(
-                Remark(
-                    id: symptomId,
-                    occurredOn: today,
-                    kind: .cycle,
-                    body: "hot flush",
-                    createdAt: ISO8601DateFormatter().string(from: Date())
-                )
+            store.replaceDayScores(
+                date: today,
+                scores: [
+                    SymptomScore(
+                        id: SymptomId.hot_flash.rawValue,
+                        date: today,
+                        severity: 3,
+                        count: 8,
+                        loggedAt: ISO8601DateFormatter().string(from: Date()),
+                        higherIsWorse: true
+                    ),
+                    SymptomScore(
+                        id: SymptomId.sleep.rawValue,
+                        date: today,
+                        severity: 2,
+                        loggedAt: ISO8601DateFormatter().string(from: Date()),
+                        higherIsWorse: true
+                    ),
+                    SymptomScore(
+                        id: SymptomId.joints.rawValue,
+                        date: today,
+                        severity: 1,
+                        loggedAt: ISO8601DateFormatter().string(from: Date()),
+                        higherIsWorse: true
+                    ),
+                ],
+                note: nil,
+                noteId: nil
             )
         }
 

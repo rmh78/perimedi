@@ -24,6 +24,7 @@ struct CycleView: View {
             schedules: store.schedules,
             doseLogs: store.doseLogs,
             remarks: store.remarks,
+            symptomScores: store.symptomScores,
             periods: store.periods,
             settings: store.settings
         )
@@ -97,34 +98,69 @@ struct CycleView: View {
     private func symptomChips(_ snap: CycleSnapshot) -> some View {
         let info = snap.selectedInfo
         let notes = snap.selectedNotes
+        let scores = snap.selectedScores
         return VStack(alignment: .leading, spacing: 6) {
             if info.isLoggedPeriod {
                 periodChip(app.t("diagram.periodTitle"), predicted: false, identifier: A11yID.chipPeriod)
             } else if info.isPredictedPeriod {
                 periodChip(app.t("diagram.predictedPeriodTitle"), predicted: true)
             }
-            ForEach(notes.prefix(2)) { note in
-                Button {
-                    app.showSymptom = true
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "bolt.fill")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(Theme.symptom)
-                        Text(note.body)
-                            .font(.caption)
-                            .foregroundStyle(Color(hex: "#7a4a00"))
-                            .lineLimit(1)
+            WrappingHStack(spacing: 6, lineSpacing: 6) {
+                ForEach(scores, id: \.rowId) { score in
+                    Button {
+                        app.showSymptom = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(Theme.symptom)
+                            Text(scoreChipText(score))
+                                .font(.caption)
+                                .foregroundStyle(Color(hex: "#7a4a00"))
+                                .lineLimit(1)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(Color(hex: "#fff6e0")))
+                        .overlay(Capsule().stroke(Color(hex: "#f0dc9a"), lineWidth: 1))
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(Capsule().fill(Color(hex: "#fff6e0")))
-                    .overlay(Capsule().stroke(Color(hex: "#f0dc9a"), lineWidth: 1))
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(scoreChipText(score))
+                    .accessibilityIdentifier("cycle.chip.score.\(score.id)")
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(note.body)
+                ForEach(notes.filter { note in
+                    !scores.contains { $0.note == note.body }
+                }) { note in
+                    Button {
+                        app.showSymptom = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(Theme.symptom)
+                            Text(note.body)
+                                .font(.caption)
+                                .foregroundStyle(Color(hex: "#7a4a00"))
+                                .lineLimit(1)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(Color(hex: "#fff6e0")))
+                        .overlay(Capsule().stroke(Color(hex: "#f0dc9a"), lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(note.body)
+                }
             }
         }
+    }
+
+    private func scoreChipText(_ score: SymptomScore) -> String {
+        var text = "\(app.t("symptom.id.\(score.id)")) \(score.severity)"
+        if let count = score.count, score.id == SymptomId.hot_flash.rawValue {
+            text += " · \(count)"
+        }
+        return text
     }
 
     private var medsTitleRow: some View {

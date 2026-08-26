@@ -168,6 +168,43 @@ final class SDRemark {
 }
 
 @Model
+final class SDSymptomScore {
+    var recordId: String = ""
+    var symptomId: String = ""
+    var date: String = ""
+    var severity: Int = 0
+    var count: Int?
+    var note: String?
+    var loggedAt: String = ""
+    var higherIsWorse: Bool = true
+
+    init() {}
+
+    func toDomain() -> SymptomScore {
+        SymptomScore(
+            id: symptomId,
+            date: date,
+            severity: severity,
+            count: count,
+            note: note,
+            loggedAt: loggedAt,
+            higherIsWorse: higherIsWorse
+        )
+    }
+
+    func apply(_ s: SymptomScore) {
+        if recordId.isEmpty { recordId = s.rowId }
+        symptomId = s.id
+        date = s.date
+        severity = s.severity
+        count = s.count
+        note = s.note
+        loggedAt = s.loggedAt
+        higherIsWorse = s.higherIsWorse
+    }
+}
+
+@Model
 final class SDPeriod {
     var id: String = ""
     var startDate: String = ""

@@ -9,6 +9,7 @@ enum PersistenceController {
         SDSchedule.self,
         SDDoseLog.self,
         SDRemark.self,
+        SDSymptomScore.self,
         SDPeriod.self,
         SDCycleSettings.self,
     ])

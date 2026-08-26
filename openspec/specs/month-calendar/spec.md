@@ -36,7 +36,7 @@ The system SHALL show a cycle-day badge (for example D12) on days where a cycle 
 - **THEN** the cell displays a compact cycle-day badge with that number
 
 ### Requirement: Period, symptom, and dose markers
-The system SHALL show period with blood-drop icons (solid logged, lighter predicted), symptom indicators, and dose status dots on applicable days.
+The system SHALL show period with blood-drop icons (solid logged, lighter predicted), symptom indicators with compact score values when logged, and dose status dots on applicable days.
 
 #### Scenario: Period drop
 - **WHEN** a day is a logged or predicted period day

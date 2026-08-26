@@ -70,8 +70,10 @@ final class FirstUseJourneyTests: PeriMediUITestCase {
             XCTAssertEqual(robot.value(of: "cycle.lane.estrogen.status"), "taken")
         }
 
-        XCTContext.runActivity(named: "07 log a hot flush") { _ in
-            robot.addSymptom("hot flush")
+        XCTContext.runActivity(named: "07 log structured symptoms") { _ in
+            robot.addSymptom()
+            robot.waitFor(id: "cycle.chip.score.hot_flash")
+            XCTAssertTrue(robot.value(of: "cycle.chip.score.hot_flash").contains("3"))
         }
 
         XCTContext.runActivity(named: "08 month overview agrees") { _ in

@@ -15,6 +15,7 @@ struct MonthView: View {
             schedules: store.schedules,
             doseLogs: store.doseLogs,
             remarks: store.remarks,
+            symptomScores: store.symptomScores,
             periods: store.periods,
             settings: store.settings
         )
@@ -131,6 +132,12 @@ struct MonthView: View {
                     if hasSymptom {
                         Image(systemName: "bolt.fill").font(.system(size: 7)).foregroundStyle(Theme.symptom)
                     }
+                    if !item.scoreSummary.isEmpty {
+                        Text(item.scoreSummary)
+                            .font(.system(size: 8, weight: .semibold))
+                            .foregroundStyle(Color(hex: "#7a4a00"))
+                            .lineLimit(1)
+                    }
                     ForEach(dayDoses.prefix(3)) { dose in
                         Circle()
                             .fill(dose.status == .taken ? Theme.taken : Theme.pending)
@@ -225,6 +232,7 @@ private struct MonthDayCell: Identifiable {
     let info: DayCycleInfo
     let mark: CycleBoundaryMark?
     let hasSymptom: Bool
+    let scoreSummary: String
     let dayDoses: [PlannedDose]
     let selected: Bool
     let isToday: Bool
@@ -241,6 +249,7 @@ private struct MonthGridModel {
         schedules: [Schedule],
         doseLogs: [DoseLog],
         remarks: [Remark],
+        symptomScores: [SymptomScore] = [],
         periods: [Period],
         settings: CycleSettings
     ) -> MonthGridModel {
@@ -271,16 +280,18 @@ private struct MonthGridModel {
         }
         let lookup = CycleLogic.dayCycleLookup(periods: periods, settings: settings)
         let marks = CycleLogic.cycleBoundaryMarkers(from: from, to: to, periods: periods, settings: settings)
-        let symptomDays = Set(
-            remarks.compactMap { remark -> String? in
-                guard remark.kind == .cycle || remark.kind == .side_effect || remark.kind == .note else {
-                    return nil
-                }
-                return DateKeys.toDateKey(remark.occurredOn)
-            }
-        )
+        var symptomDays = Set(remarks.map { DateKeys.toDateKey($0.occurredOn) })
+        var scoresByDay: [String: [SymptomScore]] = [:]
+        for score in symptomScores {
+            symptomDays.insert(score.date)
+            scoresByDay[score.date, default: []].append(score)
+        }
         let cells = grid.map { date -> MonthDayCell in
             let key = DateKeys.toDateKey(date)
+            let dayScores = scoresByDay[key] ?? []
+            let summary = SymptomId.allCases.compactMap { id in
+                dayScores.first { $0.id == id.rawValue }.map { "\($0.severity)" }
+            }.joined(separator: "·")
             return MonthDayCell(
                 date: date,
                 key: key,
@@ -288,6 +299,7 @@ private struct MonthGridModel {
                 info: lookup.info(dateKey: key),
                 mark: marks[key],
                 hasSymptom: symptomDays.contains(key),
+                scoreSummary: summary,
                 dayDoses: dosesByDay[key] ?? [],
                 selected: key == selectedDate,
                 isToday: key == today

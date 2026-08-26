@@ -6,6 +6,7 @@ import type {
   Period,
   Remark,
   Schedule,
+  SymptomScore,
 } from '../types'
 import { useLiveQuery } from './useLiveQuery'
 
@@ -23,6 +24,10 @@ export function useDoseLogs(): DoseLog[] {
 
 export function useRemarks(): Remark[] {
   return useLiveQuery(() => db.remarks.orderBy('occurredOn').reverse().toArray(), [], []) ?? []
+}
+
+export function useSymptomScores(): SymptomScore[] {
+  return useLiveQuery(() => db.symptomScores.toArray(), [], []) ?? []
 }
 
 export function usePeriods(): Period[] {

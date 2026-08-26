@@ -36,7 +36,7 @@ The system SHALL allow the user to add and edit medications and schedules, log d
 - **THEN** the stored status matches the last choice and both Cycle and Month reflect it
 
 #### Scenario: Log a period and a symptom
-- **WHEN** the user logs a period span and a symptom on a date
+- **WHEN** the user logs a period span and structured symptom scores on a date
 - **THEN** those marks appear on Cycle and Month for that date
 
 ### Requirement: Shared selected date

@@ -60,6 +60,11 @@ enum A11yID {
 
     static let symptomBody = "symptom.body"
     static let symptomSave = "symptom.save"
+    static let symptomCount = "symptom.count.hot_flash"
+
+    static func symptomScore(_ id: String, _ value: Int) -> String {
+        "symptom.score.\(id).\(value)"
+    }
     static let confirmDelete = "confirm.delete"
     static let confirmCancel = "confirm.cancel"
     static let confirmAction = "confirm.action"

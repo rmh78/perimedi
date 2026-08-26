@@ -6,8 +6,10 @@ import type {
   FlowNote,
   MedForm,
   RemarkKind,
+  SymptomScore,
   TherapyCycle,
 } from '../types'
+import { allowsCount, type SymptomId } from '../lib/symptoms'
 import { normalizeTimes } from '../lib/therapyCycle'
 import { createId } from '../lib/id'
 import { plannedForIso } from '../lib/schedule'
@@ -152,6 +154,57 @@ export async function updateRemark(
 
 export async function deleteRemark(id: string): Promise<void> {
   await db.remarks.delete(id)
+}
+
+export async function replaceDayScores(input: {
+  date: string
+  scores: { id: SymptomId; severity: number; count?: number }[]
+  note?: string
+  noteId?: string | null
+}): Promise<void> {
+  const date = toDateKey(input.date)
+  const loggedAt = new Date().toISOString()
+  const note = input.note?.trim() || undefined
+  await db.transaction('rw', db.symptomScores, db.remarks, async () => {
+    await db.symptomScores.where('date').equals(date).delete()
+    const rows: SymptomScore[] = input.scores.map((row) => ({
+      id: row.id,
+      date,
+      severity: Math.min(4, Math.max(0, row.severity)),
+      count:
+        allowsCount(row.id) && row.count != null
+          ? Math.min(99, Math.max(0, row.count))
+          : undefined,
+      note,
+      loggedAt,
+      higherIsWorse: true,
+    }))
+    if (rows.length) await db.symptomScores.bulkAdd(rows)
+    if (note) {
+      if (input.noteId) {
+        await db.remarks.update(input.noteId, { body: note, kind: 'note' })
+      } else {
+        const existing = await db.remarks
+          .where('occurredOn')
+          .equals(date)
+          .filter((r) => r.kind === 'note')
+          .first()
+        if (existing) {
+          await db.remarks.update(existing.id, { body: note })
+        } else {
+          await db.remarks.add({
+            id: createId(),
+            occurredOn: date,
+            kind: 'note',
+            body: note,
+            createdAt: loggedAt,
+          })
+        }
+      }
+    } else if (input.noteId) {
+      await db.remarks.delete(input.noteId)
+    }
+  })
 }
 
 export async function saveCycleSettings(

@@ -1,5 +1,6 @@
 import { parseISO } from 'date-fns'
-import type { Remark } from '../types'
+import type { Remark, SymptomScore } from '../types'
+import type { MessageKey } from '../i18n'
 import { useLocale } from '../i18n'
 import { PagerRow } from './PagerRow'
 import type { DayColumn } from './cycleTypes'
@@ -8,6 +9,7 @@ import { BloodDropIcon } from './CycleMarks'
 type Props = {
   selectedCol: DayColumn | null
   selectedSymptoms: Remark[]
+  selectedScores: SymptomScore[]
   canPagePrev: boolean
   canPageNext: boolean
   onPageDay: (delta: -1 | 1) => void
@@ -18,6 +20,7 @@ type Props = {
 export function CycleDayHeader({
   selectedCol,
   selectedSymptoms,
+  selectedScores,
   canPagePrev,
   canPageNext,
   onPageDay,
@@ -55,7 +58,8 @@ export function CycleDayHeader({
       {selectedCol &&
         (selectedCol.isLoggedPeriod ||
           selectedCol.info?.isPredictedPeriod ||
-          selectedSymptoms.length > 0) && (
+          selectedSymptoms.length > 0 ||
+          selectedScores.length > 0) && (
           <div className="mt-1.5 flex min-w-0 flex-col gap-1">
             <div className="flex flex-wrap items-center gap-1.5">
               {selectedCol.isLoggedPeriod ? (
@@ -70,8 +74,27 @@ export function CycleDayHeader({
                 </span>
               ) : null}
             </div>
-            {selectedSymptoms.length > 0 && (
+            {(selectedScores.length > 0 || selectedSymptoms.length > 0) && (
               <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                {selectedScores.map((s) => {
+                  const label = `${t(`symptom.id.${s.id}` as MessageKey)} ${s.severity}${
+                    s.count != null ? ` · ${s.count}` : ''
+                  }`
+                  return (
+                    <button
+                      key={`${s.date}-${s.id}`}
+                      type="button"
+                      className="inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium leading-none text-amber-900 ring-1 ring-amber-200 transition hover:text-amber-800"
+                      onClick={() => {
+                        if (onAddSymptom && selectedCol.dateKey) {
+                          onAddSymptom(selectedCol.dateKey)
+                        }
+                      }}
+                    >
+                      <span className="min-w-0 truncate leading-none">{label}</span>
+                    </button>
+                  )
+                })}
                 {selectedSymptoms.map((s) => (
                   <button
                     key={s.id}

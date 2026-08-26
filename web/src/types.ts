@@ -183,6 +183,17 @@ export interface Remark {
   createdAt: string
 }
 
+/** Structured 0–4 score. `id` is a stable catalog id, never translated. */
+export interface SymptomScore {
+  id: string
+  date: string
+  severity: number
+  count?: number
+  note?: string
+  loggedAt: string
+  higherIsWorse: boolean
+}
+
 export interface CycleSettings {
   id: 'default'
   averageCycleLength: number
@@ -207,6 +218,7 @@ export interface ExportPayload {
   remarks: Remark[]
   cycleSettings: CycleSettings
   periods: Period[]
+  symptomScores?: SymptomScore[]
 }
 
 export interface DayCycleInfo {

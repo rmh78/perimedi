@@ -7,6 +7,7 @@ struct StoreSnapshot: Equatable {
     var schedules: [Schedule] = []
     var doseLogs: [DoseLog] = []
     var remarks: [Remark] = []
+    var symptomScores: [SymptomScore] = []
     var periods: [Period] = []
     var settings: CycleSettings = .default
 }
@@ -20,6 +21,7 @@ final class Store: ObservableObject {
     var schedules: [Schedule] { snapshot.schedules }
     var doseLogs: [DoseLog] { snapshot.doseLogs }
     var remarks: [Remark] { snapshot.remarks }
+    var symptomScores: [SymptomScore] { snapshot.symptomScores }
     var periods: [Period] { snapshot.periods }
     var settings: CycleSettings { snapshot.settings }
 
@@ -39,6 +41,7 @@ final class Store: ObservableObject {
         next.schedules = (try? context.fetch(FetchDescriptor<SDSchedule>()))?.map { $0.toDomain() } ?? []
         next.doseLogs = (try? context.fetch(FetchDescriptor<SDDoseLog>()))?.map { $0.toDomain() } ?? []
         next.remarks = (try? context.fetch(FetchDescriptor<SDRemark>()))?.map { $0.toDomain() } ?? []
+        next.symptomScores = (try? context.fetch(FetchDescriptor<SDSymptomScore>()))?.map { $0.toDomain() } ?? []
         next.periods = (try? context.fetch(FetchDescriptor<SDPeriod>()))?.map { $0.toDomain() }
             .sorted { $0.startDate > $1.startDate } ?? []
         if let row = try? context.fetch(FetchDescriptor<SDCycleSettings>()).first {
@@ -159,6 +162,63 @@ final class Store: ObservableObject {
         save()
     }
 
+    func replaceDayScores(date: String, scores: [SymptomScore], note: String?, noteId: String?) {
+        let rows = (try? context.fetch(FetchDescriptor<SDSymptomScore>())) ?? []
+        for row in rows where row.date == date {
+            context.delete(row)
+        }
+        let loggedAt = ISO8601DateFormatter().string(from: Date())
+        let trimmed = note?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let dayNote = (trimmed?.isEmpty == false) ? trimmed : nil
+        for raw in scores {
+            var score = SymptomLog.normalized(raw)
+            score.date = date
+            if score.loggedAt.isEmpty { score.loggedAt = loggedAt }
+            score.note = dayNote
+            let row = SDSymptomScore()
+            row.recordId = score.rowId
+            row.apply(score)
+            context.insert(row)
+        }
+        let remarks = (try? context.fetch(FetchDescriptor<SDRemark>())) ?? []
+        if let dayNote {
+            if let id = noteId, let existing = remarks.first(where: { $0.id == id }) {
+                existing.body = dayNote
+                existing.kindRaw = RemarkKind.note.rawValue
+            } else if let existing = remarks.first(where: {
+                DateKeys.toDateKey($0.occurredOn) == date && $0.kindRaw == RemarkKind.note.rawValue
+            }) {
+                existing.body = dayNote
+            } else {
+                let remark = SDRemark()
+                remark.apply(
+                    Remark(
+                        id: createId(),
+                        occurredOn: date,
+                        kind: .note,
+                        body: dayNote,
+                        createdAt: loggedAt
+                    )
+                )
+                context.insert(remark)
+            }
+        } else if let id = noteId {
+            for row in remarks where row.id == id {
+                context.delete(row)
+            }
+        }
+        save()
+    }
+
+    func deleteDayScore(date: String, symptomId: String) {
+        for row in (try? context.fetch(FetchDescriptor<SDSymptomScore>())) ?? []
+            where row.date == date && row.symptomId == symptomId
+        {
+            context.delete(row)
+        }
+        save()
+    }
+
     func saveSettings(_ next: CycleSettings) {
         let row = (try? context.fetch(FetchDescriptor<SDCycleSettings>()))?.first ?? {
             let created = SDCycleSettings()
@@ -201,6 +261,12 @@ final class Store: ObservableObject {
         for item in payload.remarks {
             let row = SDRemark(); row.apply(item); context.insert(row)
         }
+        for item in payload.symptomScores {
+            let row = SDSymptomScore()
+            row.recordId = item.rowId
+            row.apply(SymptomLog.normalized(item))
+            context.insert(row)
+        }
         for item in payload.periods {
             let row = SDPeriod(); row.apply(item); context.insert(row)
         }
@@ -217,7 +283,8 @@ final class Store: ObservableObject {
             doseLogs: doseLogs,
             remarks: remarks,
             cycleSettings: settings,
-            periods: periods
+            periods: periods,
+            symptomScores: symptomScores
         )
     }
 
@@ -235,6 +302,7 @@ final class Store: ObservableObject {
         ((try? context.fetch(FetchDescriptor<SDSchedule>())) ?? []).forEach { context.delete($0) }
         ((try? context.fetch(FetchDescriptor<SDDoseLog>())) ?? []).forEach { context.delete($0) }
         ((try? context.fetch(FetchDescriptor<SDRemark>())) ?? []).forEach { context.delete($0) }
+        ((try? context.fetch(FetchDescriptor<SDSymptomScore>())) ?? []).forEach { context.delete($0) }
         ((try? context.fetch(FetchDescriptor<SDPeriod>())) ?? []).forEach { context.delete($0) }
         ((try? context.fetch(FetchDescriptor<SDCycleSettings>())) ?? []).forEach { context.delete($0) }
         if restoreDefaultSettings {

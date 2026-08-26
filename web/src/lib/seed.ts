@@ -1,6 +1,7 @@
 import { addDays, subDays } from 'date-fns'
 import { db, DEFAULT_CYCLE_SETTINGS, ensureCycleSettings } from '../db/database'
-import type { DoseLog, Medication, Period, Remark, Schedule } from '../types'
+import type { DoseLog, Medication, Period, Remark, Schedule, SymptomScore } from '../types'
+import type { SymptomId } from './symptoms'
 import { createId } from './id'
 import { toDateKey } from './dates'
 import { plannedForIso } from './schedule'
@@ -24,6 +25,7 @@ export async function loadSampleData(): Promise<void> {
       db.doseLogs.clear(),
       db.remarks.clear(),
       db.periods.clear(),
+      db.symptomScores.clear(),
     ])
 
     // Near-typical cycle length with mild peri variation in the sample
@@ -36,7 +38,6 @@ export async function loadSampleData(): Promise<void> {
 
     const today = new Date()
     const now = new Date().toISOString()
-    const todayKey = toDateKey(today)
 
     // --- Periods (non-overlapping; day 1 = first bleed day) ---
     // Inclusive length: end = start + (days − 1)
@@ -305,65 +306,47 @@ export async function loadSampleData(): Promise<void> {
     const remarks: Remark[] = [
       {
         id: createId(),
-        occurredOn: toDateKey(p3Start),
-        kind: 'cycle',
-        body: 'Cramps day 1, milder than last cycle.',
-        createdAt: now,
-      },
-      {
-        id: createId(),
-        occurredOn: toDateKey(addDays(p3Start, 1)),
-        kind: 'cycle',
-        body: 'Joint stiffness in hands in the morning.',
-        createdAt: now,
-      },
-      {
-        id: createId(),
-        occurredOn: toDateKey(subDays(today, 6)),
-        kind: 'note',
-        body: 'Mood dip late afternoon; short walk helped.',
-        createdAt: now,
-      },
-      {
-        id: createId(),
-        medicationId: estradiol.id,
-        occurredOn: toDateKey(subDays(today, 5)),
-        kind: 'side_effect',
-        body: 'Mild breast tenderness; noted for next visit.',
-        createdAt: now,
-      },
-      {
-        id: createId(),
-        medicationId: progesterone.id,
-        occurredOn: toDateKey(subDays(today, 3)),
-        kind: 'side_effect',
-        body: 'Sleepy next morning after progesterone — took earlier at 20:30.',
-        createdAt: now,
-      },
-      {
-        id: createId(),
-        occurredOn: toDateKey(subDays(today, 2)),
-        kind: 'cycle',
-        body: 'Night sweats twice; woke at 3 a.m.',
-        createdAt: now,
-      },
-      {
-        id: createId(),
         occurredOn: toDateKey(subDays(today, 1)),
-        kind: 'cycle',
-        body: 'Hot flush after lunch; lasted ~3 minutes.',
-        createdAt: now,
-      },
-      {
-        id: createId(),
-        occurredOn: todayKey,
-        kind: 'cycle',
-        body: 'Brain fog mid-morning; hard to focus.',
+        kind: 'note',
+        body: 'Walked after lunch; flush settled.',
         createdAt: now,
       },
     ]
 
+    function score(
+      id: SymptomId,
+      daysAgo: number,
+      severity: number,
+      count?: number,
+    ): SymptomScore {
+      return {
+        id,
+        date: toDateKey(subDays(today, daysAgo)),
+        severity,
+        count,
+        loggedAt: now,
+        higherIsWorse: true,
+      }
+    }
+
+    const symptomScores: SymptomScore[] = [
+      score('hot_flash', 0, 3, 8),
+      score('sleep', 0, 2),
+      score('joints', 0, 1),
+      score('hot_flash', 1, 2, 4),
+      score('mood', 1, 2),
+      score('sleep', 2, 3),
+      score('exhaustion', 2, 2),
+      score('hot_flash', 3, 1, 2),
+      score('irritability', 4, 2),
+      score('anxiety', 5, 1),
+      score('joints', 6, 2),
+      score('bladder', 9, 1),
+      score('vaginal_dryness', 9, 2),
+    ]
+
     await db.remarks.bulkAdd(remarks)
+    await db.symptomScores.bulkAdd(symptomScores)
   })
 
   await ensureCycleSettings()
@@ -385,6 +368,7 @@ export async function clearAllData(): Promise<void> {
       db.doseLogs.clear(),
       db.remarks.clear(),
       db.periods.clear(),
+      db.symptomScores.clear(),
     ])
     await db.cycleSettings.put(DEFAULT_CYCLE_SETTINGS)
   })

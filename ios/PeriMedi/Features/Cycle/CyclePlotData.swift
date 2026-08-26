@@ -19,6 +19,7 @@ struct CycleSnapshot: Equatable {
     let lanes: [MedLane]
     let selectedDosesByMed: [String: [PlannedDose]]
     let selectedNotes: [Remark]
+    let selectedScores: [SymptomScore]
     let selectedInfo: DayCycleInfo
     let plotRevision: Int
 
@@ -27,7 +28,8 @@ struct CycleSnapshot: Equatable {
     }
 
     var hasDayBadges: Bool {
-        selectedInfo.isLoggedPeriod || selectedInfo.isPredictedPeriod || !selectedNotes.isEmpty
+        selectedInfo.isLoggedPeriod || selectedInfo.isPredictedPeriod
+            || !selectedNotes.isEmpty || !selectedScores.isEmpty
     }
 
     static func build(
@@ -37,6 +39,7 @@ struct CycleSnapshot: Equatable {
         schedules: [Schedule],
         doseLogs: [DoseLog],
         remarks: [Remark],
+        symptomScores: [SymptomScore] = [],
         periods: [Period],
         settings: CycleSettings
     ) -> CycleSnapshot {
@@ -47,14 +50,12 @@ struct CycleSnapshot: Equatable {
         )
         let days = (0..<window.length).map { DateKeys.addDaysKey(window.start, $0) }
         let lookup = CycleLogic.dayCycleLookup(periods: periods, settings: settings)
-        let symptomDays = Set(
-            remarks.compactMap { remark -> String? in
-                guard remark.kind == .cycle || remark.kind == .side_effect || remark.kind == .note else {
-                    return nil
-                }
-                return DateKeys.toDateKey(remark.occurredOn)
-            }
+        var symptomDays = Set(
+            remarks.map { DateKeys.toDateKey($0.occurredOn) }
         )
+        for score in symptomScores {
+            symptomDays.insert(score.date)
+        }
         let strip = days.enumerated().map { index, day in
             StripDay(
                 dateKey: day,
@@ -85,7 +86,9 @@ struct CycleSnapshot: Equatable {
         }
         let selectedNotes = remarks.filter {
             DateKeys.toDateKey($0.occurredOn) == selectedDate
-                && ($0.kind == .cycle || $0.kind == .side_effect || $0.kind == .note)
+        }
+        let selectedScores = SymptomId.allCases.compactMap { id in
+            symptomScores.first { $0.date == selectedDate && $0.id == id.rawValue }
         }
         let selectedInfo = lookup.info(dateKey: selectedDate)
         var hasher = Hasher()
@@ -98,6 +101,11 @@ struct CycleSnapshot: Equatable {
             hasher.combine(day.info.isLoggedPeriod)
             hasher.combine(day.info.isPredictedPeriod)
             hasher.combine(day.hasSymptom)
+        }
+        for score in selectedScores {
+            hasher.combine(score.id)
+            hasher.combine(score.severity)
+            hasher.combine(score.count)
         }
         for lane in lanes {
             hasher.combine(lane.medicationId)
@@ -124,6 +132,7 @@ struct CycleSnapshot: Equatable {
             lanes: lanes,
             selectedDosesByMed: selectedDosesByMed,
             selectedNotes: selectedNotes,
+            selectedScores: selectedScores,
             selectedInfo: selectedInfo,
             plotRevision: hasher.finalize()
         )

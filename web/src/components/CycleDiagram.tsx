@@ -6,7 +6,7 @@ import {
   useState,
 } from 'react'
 import { addDays, parseISO } from 'date-fns'
-import type { CycleSettings, Period, PlannedDose, Remark } from '../types'
+import type { CycleSettings, Period, PlannedDose, Remark, SymptomScore } from '../types'
 import { cycleWindowForDate, getDayCycleInfo } from '../lib/cycle'
 import { toDateKey } from '../lib/dates'
 import { buildMedLanes } from '../lib/medSegments'
@@ -37,6 +37,7 @@ type Props = {
   settings: CycleSettings
   doses: PlannedDose[]
   remarks?: Remark[]
+  symptomScores?: SymptomScore[]
   selectedDate: string
   onSelectDate: (dateKey: string) => void
   todayKey: string
@@ -62,6 +63,7 @@ export function CycleDiagram({
   settings,
   doses,
   remarks = [],
+  symptomScores = [],
   selectedDate,
   onSelectDate,
   todayKey: today,
@@ -99,6 +101,16 @@ export function CycleDiagram({
     return map
   }, [remarks])
 
+  const scoresByDate = useMemo(() => {
+    const map = new Map<string, SymptomScore[]>()
+    for (const s of symptomScores) {
+      const list = map.get(s.date) ?? []
+      list.push(s)
+      map.set(s.date, list)
+    }
+    return map
+  }, [symptomScores])
+
   const columns: DayColumn[] = useMemo(() => {
     return Array.from({ length: cycleLen }, (_, i) => {
       const cycleDay = i + 1
@@ -109,6 +121,7 @@ export function CycleDiagram({
         ? getDayCycleInfo(dateKey, periods, settings)
         : null
       const symptoms = dateKey ? remarksByDate.get(dateKey) ?? [] : []
+      const scores = dateKey ? scoresByDate.get(dateKey) ?? [] : []
       return {
         cycleDay,
         dateKey,
@@ -118,6 +131,7 @@ export function CycleDiagram({
         isPeriod: Boolean(info?.isLoggedPeriod || info?.isPredictedPeriod),
         isLoggedPeriod: Boolean(info?.isLoggedPeriod),
         symptoms,
+        scores,
       }
     })
   }, [
@@ -128,6 +142,7 @@ export function CycleDiagram({
     today,
     selectedDate,
     remarksByDate,
+    scoresByDate,
   ])
 
   const lanes = useMemo(
@@ -147,6 +162,7 @@ export function CycleDiagram({
   }, [doses, selectedDate])
 
   const selectedSymptoms = selectedCol?.symptoms ?? remarksByDate.get(selectedDate) ?? []
+  const selectedScores = selectedCol?.scores ?? scoresByDate.get(selectedDate) ?? []
 
   const plotMinWidth = Math.max(cycleLen * DAY_MIN_PX, DAY_MIN_PX)
   const chartMinWidth = LABEL_COL_PX + plotMinWidth
@@ -338,6 +354,7 @@ export function CycleDiagram({
       <CycleDayHeader
         selectedCol={selectedCol}
         selectedSymptoms={selectedSymptoms}
+        selectedScores={selectedScores}
         canPagePrev={canPagePrev}
         canPageNext={canPageNext}
         onPageDay={pageDay}

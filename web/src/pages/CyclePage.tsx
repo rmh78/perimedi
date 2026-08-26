@@ -6,6 +6,7 @@ import {
   usePeriods,
   useRemarks,
   useSchedules,
+  useSymptomScores,
 } from '../hooks/useAppData'
 import { expandPlannedDoses } from '../lib/schedule'
 import { doseExpansionRange } from '../lib/doseRange'
@@ -24,6 +25,7 @@ export function CyclePage() {
   const doseLogs = useDoseLogs()
   const periods = usePeriods()
   const remarks = useRemarks()
+  const symptomScores = useSymptomScores()
   const settings = useCycleSettings()
 
   const [medSheet, setMedSheet] = useState<{
@@ -63,6 +65,7 @@ export function CyclePage() {
         settings={settings}
         doses={allDoses}
         remarks={remarks}
+        symptomScores={symptomScores}
         selectedDate={selectedDate}
         onSelectDate={setSelectedDate}
         todayKey={today}

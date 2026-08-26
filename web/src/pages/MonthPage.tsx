@@ -7,6 +7,7 @@ import {
   usePeriods,
   useRemarks,
   useSchedules,
+  useSymptomScores,
 } from '../hooks/useAppData'
 import { cycleBoundaryMarkers, getDayCycleInfo } from '../lib/cycle'
 import { expandPlannedDoses } from '../lib/schedule'
@@ -29,6 +30,7 @@ export function MonthPage() {
   const doseLogs = useDoseLogs()
   const periods = usePeriods()
   const remarks = useRemarks()
+  const symptomScores = useSymptomScores()
   const settings = useCycleSettings()
   const [monthAnchor, setMonthAnchor] = useState(() => new Date())
 
@@ -72,6 +74,16 @@ export function MonthPage() {
     }
     return map
   }, [remarks])
+
+  const scoresByDate = useMemo(() => {
+    const map = new Map<string, typeof symptomScores>()
+    for (const s of symptomScores) {
+      const list = map.get(s.date) ?? []
+      list.push(s)
+      map.set(s.date, list)
+    }
+    return map
+  }, [symptomScores])
 
   const cycleMarks = useMemo(
     () => cycleBoundaryMarkers(monthFrom, monthTo, periods, settings),
@@ -125,6 +137,8 @@ export function MonthPage() {
             const info = getDayCycleInfo(key, periods, settings)
             const dayDoses = allDoses.filter((d) => d.date === key)
             const daySymptoms = symptomsByDate.get(key) ?? []
+            const dayScores = scoresByDate.get(key) ?? []
+            const scoreSummary = dayScores.map((s) => String(s.severity)).join('·')
             const cycleMark = cycleMarks.get(key)
             const isCycleStart = Boolean(cycleMark?.isStart)
             const isCycleEnd = Boolean(cycleMark?.isEnd)
@@ -212,18 +226,24 @@ export function MonthPage() {
                   )}
                 </div>
                 <div className="mt-1.5 flex flex-wrap items-center gap-0.5">
-                  {daySymptoms[0] && (
+                  {(dayScores[0] || daySymptoms[0]) && (
                     <SymptomMarkIcon
-                      kind={daySymptoms[0].kind}
+                      kind={daySymptoms[0]?.kind ?? 'note'}
                       title={
-                        daySymptoms.length > 1
+                        scoreSummary ||
+                        (daySymptoms.length > 1
                           ? t('home.symptomsCount', {
                               count: daySymptoms.length,
                             })
-                          : daySymptoms[0].body
+                          : daySymptoms[0].body)
                       }
                     />
                   )}
+                  {scoreSummary ? (
+                    <span className="text-[9px] font-semibold text-amber-900">
+                      {scoreSummary}
+                    </span>
+                  ) : null}
                   {dayDoses.slice(0, 3).map((d) => (
                     <span
                       key={d.key}

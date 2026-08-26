@@ -4,7 +4,6 @@ import Foundation
 public enum SampleData {
     public static func payload(now: Date = Date()) -> ExportPayload {
         let today = DateKeys.calendar.startOfDay(for: now)
-        let todayKey = DateKeys.toDateKey(today)
         let isoNow = ISO8601DateFormatter().string(from: now)
 
         let p1Start = DateKeys.addDays(today, -64)
@@ -142,24 +141,47 @@ public enum SampleData {
         }
 
         let remarks: [Remark] = [
-            Remark(id: createId(), occurredOn: DateKeys.toDateKey(p3Start), kind: .cycle,
-                   body: "Cramps day 1, milder than last cycle.", createdAt: isoNow),
-            Remark(id: createId(), occurredOn: DateKeys.toDateKey(DateKeys.addDays(p3Start, 1)), kind: .cycle,
-                   body: "Joint stiffness in hands in the morning.", createdAt: isoNow),
-            Remark(id: createId(), occurredOn: DateKeys.toDateKey(DateKeys.addDays(today, -6)), kind: .note,
-                   body: "Mood dip late afternoon; short walk helped.", createdAt: isoNow),
-            Remark(id: createId(), medicationId: estradiol.id,
-                   occurredOn: DateKeys.toDateKey(DateKeys.addDays(today, -5)), kind: .side_effect,
-                   body: "Mild breast tenderness; noted for next visit.", createdAt: isoNow),
-            Remark(id: createId(), medicationId: progesterone.id,
-                   occurredOn: DateKeys.toDateKey(DateKeys.addDays(today, -3)), kind: .side_effect,
-                   body: "Sleepy next morning after progesterone — took earlier at 20:30.", createdAt: isoNow),
-            Remark(id: createId(), occurredOn: DateKeys.toDateKey(DateKeys.addDays(today, -2)), kind: .cycle,
-                   body: "Night sweats twice; woke at 3 a.m.", createdAt: isoNow),
-            Remark(id: createId(), occurredOn: DateKeys.toDateKey(DateKeys.addDays(today, -1)), kind: .cycle,
-                   body: "Hot flush after lunch; lasted ~3 minutes.", createdAt: isoNow),
-            Remark(id: createId(), occurredOn: todayKey, kind: .cycle,
-                   body: "Brain fog mid-morning; hard to focus.", createdAt: isoNow),
+            Remark(
+                id: createId(),
+                occurredOn: DateKeys.toDateKey(DateKeys.addDays(today, -1)),
+                kind: .note,
+                body: "Walked after lunch; flush settled.",
+                createdAt: isoNow
+            ),
+        ]
+
+        func score(
+            _ id: SymptomId,
+            daysAgo: Int,
+            severity: Int,
+            count: Int? = nil,
+            note: String? = nil
+        ) -> SymptomScore {
+            SymptomScore(
+                id: id.rawValue,
+                date: DateKeys.toDateKey(DateKeys.addDays(today, -daysAgo)),
+                severity: severity,
+                count: count,
+                note: note,
+                loggedAt: isoNow,
+                higherIsWorse: true
+            )
+        }
+
+        let symptomScores: [SymptomScore] = [
+            score(.hot_flash, daysAgo: 0, severity: 3, count: 8),
+            score(.sleep, daysAgo: 0, severity: 2),
+            score(.joints, daysAgo: 0, severity: 1),
+            score(.hot_flash, daysAgo: 1, severity: 2, count: 4),
+            score(.mood, daysAgo: 1, severity: 2),
+            score(.sleep, daysAgo: 2, severity: 3),
+            score(.exhaustion, daysAgo: 2, severity: 2),
+            score(.hot_flash, daysAgo: 3, severity: 1, count: 2),
+            score(.irritability, daysAgo: 4, severity: 2),
+            score(.anxiety, daysAgo: 5, severity: 1),
+            score(.joints, daysAgo: 6, severity: 2),
+            score(.bladder, daysAgo: 9, severity: 1),
+            score(.vaginal_dryness, daysAgo: 9, severity: 2),
         ]
 
         return ExportPayload(
@@ -170,7 +192,8 @@ public enum SampleData {
             doseLogs: doseLogs,
             remarks: remarks,
             cycleSettings: CycleSettings(averageCycleLength: 28, averagePeriodLength: 5),
-            periods: periods
+            periods: periods,
+            symptomScores: symptomScores
         )
     }
 

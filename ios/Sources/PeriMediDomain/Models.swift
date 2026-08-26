@@ -307,6 +307,8 @@ public struct ExportPayload: Codable, Equatable, Sendable {
     public var remarks: [Remark]
     public var cycleSettings: CycleSettings
     public var periods: [Period]
+    /// Structured 0–4 scores. Absent in older backups.
+    public var symptomScores: [SymptomScore]
 
     public init(
         version: Int = 1,
@@ -316,7 +318,8 @@ public struct ExportPayload: Codable, Equatable, Sendable {
         doseLogs: [DoseLog],
         remarks: [Remark],
         cycleSettings: CycleSettings,
-        periods: [Period]
+        periods: [Period],
+        symptomScores: [SymptomScore] = []
     ) {
         self.version = version
         self.exportedAt = exportedAt
@@ -326,6 +329,37 @@ public struct ExportPayload: Codable, Equatable, Sendable {
         self.remarks = remarks
         self.cycleSettings = cycleSettings
         self.periods = periods
+        self.symptomScores = symptomScores
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case version, exportedAt, medications, schedules, doseLogs, remarks, cycleSettings, periods, symptomScores
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        version = try c.decode(Int.self, forKey: .version)
+        exportedAt = try c.decode(String.self, forKey: .exportedAt)
+        medications = try c.decodeIfPresent([Medication].self, forKey: .medications) ?? []
+        schedules = try c.decodeIfPresent([Schedule].self, forKey: .schedules) ?? []
+        doseLogs = try c.decodeIfPresent([DoseLog].self, forKey: .doseLogs) ?? []
+        remarks = try c.decodeIfPresent([Remark].self, forKey: .remarks) ?? []
+        cycleSettings = try c.decode(CycleSettings.self, forKey: .cycleSettings)
+        periods = try c.decodeIfPresent([Period].self, forKey: .periods) ?? []
+        symptomScores = try c.decodeIfPresent([SymptomScore].self, forKey: .symptomScores) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(version, forKey: .version)
+        try c.encode(exportedAt, forKey: .exportedAt)
+        try c.encode(medications, forKey: .medications)
+        try c.encode(schedules, forKey: .schedules)
+        try c.encode(doseLogs, forKey: .doseLogs)
+        try c.encode(remarks, forKey: .remarks)
+        try c.encode(cycleSettings, forKey: .cycleSettings)
+        try c.encode(periods, forKey: .periods)
+        try c.encode(symptomScores, forKey: .symptomScores)
     }
 }
 

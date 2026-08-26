@@ -6,6 +6,7 @@ import type {
   Period,
   Remark,
   Schedule,
+  SymptomScore,
 } from '../types'
 
 export class PeriMediDB extends Dexie {
@@ -15,6 +16,7 @@ export class PeriMediDB extends Dexie {
   remarks!: Table<Remark, string>
   cycleSettings!: Table<CycleSettings, string>
   periods!: Table<Period, string>
+  symptomScores!: Table<SymptomScore, [string, string]>
 
   constructor() {
     super('perimedi')
@@ -25,6 +27,9 @@ export class PeriMediDB extends Dexie {
       remarks: 'id, medicationId, occurredOn, kind, createdAt',
       cycleSettings: 'id',
       periods: 'id, startDate, endDate',
+    })
+    this.version(2).stores({
+      symptomScores: '[date+id], date, id',
     })
   }
 }

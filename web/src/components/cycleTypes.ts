@@ -1,4 +1,4 @@
-import type { DayCycleInfo, Remark } from '../types'
+import type { DayCycleInfo, Remark, SymptomScore } from '../types'
 
 export type DayColumn = {
   cycleDay: number
@@ -10,6 +10,7 @@ export type DayColumn = {
   isPeriod: boolean
   isLoggedPeriod: boolean
   symptoms: Remark[]
+  scores: SymptomScore[]
 }
 
 /** Binary adherence for the selected day: taken or not. */

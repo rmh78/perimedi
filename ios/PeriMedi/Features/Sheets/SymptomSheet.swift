@@ -9,11 +9,13 @@ struct SymptomSheet: View {
 
     let dateKey: String
 
-    @State private var bodyText = ""
-    @State private var editing: Remark?
+    @State private var severity: [SymptomId: Int] = [:]
+    @State private var hotCount: Int?
+    @State private var noteText = ""
+    @State private var noteId: String?
 
-    private var dayNotes: [Remark] {
-        store.remarks.filter { DateKeys.toDateKey($0.occurredOn) == dateKey }
+    private var dayScores: [SymptomScore] {
+        store.symptomScores.filter { $0.date == dateKey }
     }
 
     var body: some View {
@@ -28,13 +30,29 @@ struct SymptomSheet: View {
                 }
                 .font(.subheadline)
 
-                SectionLabel(text: editing == nil ? app.t("symptom.addSection") : app.t("symptom.saveEdit"))
+                Text(app.t("symptom.scaleHint"))
+                    .font(.caption)
+                    .foregroundStyle(Theme.inkMuted)
+
+                ForEach(SymptomGroup.allCases, id: \.self) { group in
+                    VStack(alignment: .leading, spacing: 8) {
+                        SectionLabel(text: app.t("symptom.group.\(group.rawValue)"))
+                        VStack(spacing: 0) {
+                            ForEach(Array(group.ids.enumerated()), id: \.element) { index, id in
+                                scoreRow(id)
+                                if index < group.ids.count - 1 {
+                                    Rectangle().fill(Theme.blush100).frame(height: 1)
+                                }
+                            }
+                        }
+                    }
+                }
+
                 VStack(alignment: .leading, spacing: 6) {
-                    FieldLabel(text: app.t("symptom.description"))
+                    FieldLabel(text: app.t("symptom.note"))
                     SoftField {
-                        TextField(app.t("symptom.placeholder"), text: $bodyText, axis: .vertical)
-                            .padding(.vertical, 10)
-                            .lineLimit(3...5)
+                        TextField(app.t("symptom.notePlaceholder"), text: $noteText)
+                            .foregroundStyle(Theme.ink)
                             .submitLabel(.done)
                             .accessibilityIdentifier(A11yID.symptomBody)
                     }
@@ -42,11 +60,11 @@ struct SymptomSheet: View {
 
                 HStack(spacing: 10) {
                     PillButton(
-                        title: app.t(editing == nil ? "symptom.saveAdd" : "symptom.saveEdit"),
+                        title: app.t("symptom.saveEdit"),
                         kind: .primary,
                         identifier: A11yID.symptomSave
                     ) {
-                        saveNote()
+                        saveDay()
                     }
                     PillButton(title: app.t("common.close"), kind: .secondary) {
                         dialogClose()
@@ -54,66 +72,114 @@ struct SymptomSheet: View {
                     }
                     Spacer()
                 }
+            }
+            .onAppear(perform: loadDay)
+        }
+    }
 
-                Rectangle().fill(Theme.blush100).frame(height: 1)
-                SectionLabel(text: app.t("symptom.logged"))
-                if dayNotes.isEmpty {
-                    Text(app.t("symptom.empty")).font(.caption).foregroundStyle(Theme.inkMuted)
-                }
-                VStack(spacing: 0) {
-                    ForEach(Array(dayNotes.enumerated()), id: \.element.id) { index, note in
-                        HStack(spacing: 8) {
-                            Text(note.body)
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(Theme.ink)
-                                .lineLimit(2)
-                            Spacer(minLength: 4)
-                            IconCircleButton(systemName: "pencil", label: app.t("common.edit")) {
-                                editing = note
-                                bodyText = note.body
+    private func scoreRow(_ id: SymptomId) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .center, spacing: 8) {
+                Text(app.t("symptom.id.\(id.rawValue)"))
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(Theme.ink)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                HStack(spacing: 4) {
+                    ForEach(0...4, id: \.self) { value in
+                        let selected = severity[id] == value
+                        Button {
+                            if severity[id] == value {
+                                severity[id] = nil
+                                if id == .hot_flash { hotCount = nil }
+                            } else {
+                                severity[id] = value
                             }
-                            IconCircleButton(systemName: "trash", label: app.t("common.delete"), tint: Theme.blush800) {
-                                app.askConfirm(
-                                    message: app.t("symptom.deleteConfirm"),
-                                    confirmLabel: app.t("common.delete"),
-                                    destructive: true
-                                ) {
-                                    store.deleteRemark(id: note.id)
-                                    if editing?.id == note.id {
-                                        editing = nil
-                                        bodyText = ""
-                                    }
-                                }
-                            }
+                        } label: {
+                            Text("\(value)")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(selected ? .white : Theme.blush700)
+                                .frame(width: 28, height: 28)
+                                .background(Circle().fill(selected ? Theme.blush600 : Theme.blush50))
                         }
-                        .padding(.vertical, 8)
-                        if index < dayNotes.count - 1 {
-                            Rectangle().fill(Theme.blush100).frame(height: 1)
-                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("\(app.t("symptom.id.\(id.rawValue)")) \(value)")
+                        .accessibilityIdentifier(A11yID.symptomScore(id.rawValue, value))
+                        .accessibilityAddTraits(selected ? [.isSelected, .isButton] : .isButton)
                     }
                 }
+            }
+            if id == .hot_flash {
+                HStack {
+                    Text(app.t("symptom.count"))
+                        .font(.caption)
+                        .foregroundStyle(Theme.inkSoft)
+                    Spacer()
+                    Stepper(value: hotCountBinding, in: 0...99) {
+                        Text("\(hotCount ?? 0)")
+                            .font(.subheadline.monospacedDigit())
+                            .foregroundStyle(Theme.ink)
+                            .frame(minWidth: 24, alignment: .trailing)
+                    }
+                    .accessibilityIdentifier(A11yID.symptomCount)
+                    .disabled(severity[.hot_flash] == nil)
+                }
+            }
+        }
+        .padding(.vertical, 8)
+    }
+
+    private var hotCountBinding: Binding<Int> {
+        Binding(
+            get: { hotCount ?? 0 },
+            set: { hotCount = $0 }
+        )
+    }
+
+    private func loadDay() {
+        var next: [SymptomId: Int] = [:]
+        hotCount = nil
+        for score in dayScores {
+            guard let id = SymptomId(rawValue: score.id) else { continue }
+            next[id] = score.severity
+            if id == .hot_flash {
+                hotCount = score.count
+            }
+            if noteText.isEmpty, let n = score.note, !n.isEmpty {
+                noteText = n
+            }
+        }
+        severity = next
+        if let remark = store.remarks.first(where: { DateKeys.toDateKey($0.occurredOn) == dateKey }) {
+            noteId = remark.id
+            if noteText.isEmpty {
+                noteText = remark.body
             }
         }
     }
 
-    private func saveNote() {
-        let text = bodyText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { return }
-        if let editing {
-            store.updateRemark(id: editing.id, kind: nil, body: text)
-        } else {
-            store.addRemark(
-                Remark(
-                    id: createId(),
-                    occurredOn: dateKey,
-                    kind: .note,
-                    body: text,
-                    createdAt: ISO8601DateFormatter().string(from: Date())
+    private func saveDay() {
+        let loggedAt = ISO8601DateFormatter().string(from: Date())
+        var scores: [SymptomScore] = []
+        for id in SymptomId.allCases {
+            guard let value = severity[id] else { continue }
+            var count: Int?
+            if id == .hot_flash, let hotCount {
+                count = hotCount
+            }
+            scores.append(
+                SymptomScore(
+                    id: id.rawValue,
+                    date: dateKey,
+                    severity: value,
+                    count: count,
+                    loggedAt: loggedAt,
+                    higherIsWorse: true
                 )
             )
         }
-        editing = nil
-        bodyText = ""
+        store.replaceDayScores(date: dateKey, scores: scores, note: noteText, noteId: noteId)
+        dialogClose()
+        dismiss()
     }
 
     private func pretty(_ key: String) -> String {

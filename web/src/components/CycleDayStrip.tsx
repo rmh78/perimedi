@@ -44,9 +44,9 @@ export function CycleDayStrip({
                         ? t('diagram.dayN', { day: col.info.cycleDay })
                         : null,
                       col.isLoggedPeriod ? t('diagram.periodTitle') : null,
-                      col.symptoms.length
+                      col.symptoms.length || col.scores.length
                         ? t('home.symptomsCount', {
-                            count: col.symptoms.length,
+                            count: col.symptoms.length + col.scores.length,
                           })
                         : null,
                     ]
@@ -82,15 +82,17 @@ export function CycleDayStrip({
               </div>
               {/* One mark only — narrow day columns overflow with multiple icons */}
               <div className="flex h-2.5 w-full items-center justify-center">
-                {col.symptoms[0] && (
+                {(col.scores[0] || col.symptoms[0]) && (
                   <SymptomMarkIcon
-                    kind={col.symptoms[0].kind}
+                    kind={col.symptoms[0]?.kind ?? 'note'}
                     title={
-                      col.symptoms.length > 1
-                        ? t('home.symptomsCount', {
-                            count: col.symptoms.length,
-                          })
-                        : col.symptoms[0].body
+                      col.scores.length
+                        ? col.scores.map((s) => `${s.id} ${s.severity}`).join(' · ')
+                        : col.symptoms.length > 1
+                          ? t('home.symptomsCount', {
+                              count: col.symptoms.length,
+                            })
+                          : col.symptoms[0].body
                     }
                   />
                 )}

@@ -7,7 +7,7 @@ Keep the current user’s PeriMedi data on the iOS device and restore it for the
 ## Requirements
 
 ### Requirement: On-device store for domain data
-The system SHALL persist medications, schedules, dose logs, remarks, periods, and cycle settings in on-device iOS storage so the data is still present after the user force-quits the app or reboots the Simulator or device.
+The system SHALL persist medications, schedules, dose logs, remarks, symptom scores, periods, and cycle settings in on-device iOS storage so the data is still present after the user force-quits the app or reboots the Simulator or device.
 
 #### Scenario: Restart keeps data
 - **WHEN** the user adds a medication and a period, then force-quits and relaunches the app on the same Simulator
@@ -25,7 +25,7 @@ When iCloud is enabled for the app and the user is signed into the same Apple ID
 
 #### Scenario: Second destination with same Apple ID
 - **WHEN** the user has saved tracking data on one iOS destination with iCloud enabled and later opens the app on a second destination signed into the same Apple ID with iCloud enabled for the app
-- **THEN** the previously saved medications, schedules, dose logs, remarks, periods, and cycle settings become available on the second destination
+- **THEN** the previously saved medications, schedules, dose logs, remarks, symptom scores, periods, and cycle settings become available on the second destination
 
 #### Scenario: Simulator without iCloud sign-in
 - **WHEN** the Simulator is not signed into iCloud
@@ -36,7 +36,7 @@ The system SHALL accept a valid PeriMedi JSON backup (the same payload the web c
 
 #### Scenario: Import web export
 - **WHEN** the user imports a valid version-1 backup produced by the web companion
-- **THEN** medications, schedules, dose logs, remarks, periods, and cycle settings match the backup
+- **THEN** medications, schedules, dose logs, remarks, symptom scores (when present), periods, and cycle settings match the backup
 
 #### Scenario: Reject invalid file
 - **WHEN** the user selects a file that is not a valid PeriMedi backup

@@ -3,13 +3,15 @@ import type { ExportPayload } from '../types'
 
 export async function exportAllData(): Promise<ExportPayload> {
   const settings = await ensureCycleSettings()
-  const [medications, schedules, doseLogs, remarks, periods] = await Promise.all([
-    db.medications.toArray(),
-    db.schedules.toArray(),
-    db.doseLogs.toArray(),
-    db.remarks.toArray(),
-    db.periods.toArray(),
-  ])
+  const [medications, schedules, doseLogs, remarks, periods, symptomScores] =
+    await Promise.all([
+      db.medications.toArray(),
+      db.schedules.toArray(),
+      db.doseLogs.toArray(),
+      db.remarks.toArray(),
+      db.periods.toArray(),
+      db.symptomScores.toArray(),
+    ])
 
   return {
     version: 1,
@@ -20,6 +22,7 @@ export async function exportAllData(): Promise<ExportPayload> {
     remarks,
     cycleSettings: settings,
     periods,
+    symptomScores,
   }
 }
 
@@ -35,6 +38,7 @@ export async function importAllData(payload: ExportPayload): Promise<void> {
       db.doseLogs.clear(),
       db.remarks.clear(),
       db.periods.clear(),
+      db.symptomScores.clear(),
     ])
 
     if (payload.medications?.length) await db.medications.bulkAdd(payload.medications)
@@ -42,6 +46,7 @@ export async function importAllData(payload: ExportPayload): Promise<void> {
     if (payload.doseLogs?.length) await db.doseLogs.bulkAdd(payload.doseLogs)
     if (payload.remarks?.length) await db.remarks.bulkAdd(payload.remarks)
     if (payload.periods?.length) await db.periods.bulkAdd(payload.periods)
+    if (payload.symptomScores?.length) await db.symptomScores.bulkAdd(payload.symptomScores)
     await db.cycleSettings.put(payload.cycleSettings ?? DEFAULT_CYCLE_SETTINGS)
   })
 }
