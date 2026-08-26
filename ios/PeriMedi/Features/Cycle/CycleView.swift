@@ -156,11 +156,11 @@ struct CycleView: View {
     }
 
     private func scoreChipText(_ score: SymptomScore) -> String {
-        var text = "\(app.t("symptom.id.\(score.id)")) \(score.severity)"
-        if let count = score.count, score.id == SymptomId.hot_flash.rawValue {
-            text += " · \(count)"
-        }
-        return text
+        let word = app.t("symptom.level.\(score.id).\(score.severity)")
+        let label = word == "symptom.level.\(score.id).\(score.severity)"
+            ? "\(score.severity)"
+            : word
+        return "\(app.t("symptom.id.\(score.id)")) \(label)"
     }
 
     private var medsTitleRow: some View {

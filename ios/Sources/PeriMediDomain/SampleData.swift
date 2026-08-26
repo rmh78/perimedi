@@ -154,14 +154,12 @@ public enum SampleData {
             _ id: SymptomId,
             daysAgo: Int,
             severity: Int,
-            count: Int? = nil,
             note: String? = nil
         ) -> SymptomScore {
             SymptomScore(
                 id: id.rawValue,
                 date: DateKeys.toDateKey(DateKeys.addDays(today, -daysAgo)),
                 severity: severity,
-                count: count,
                 note: note,
                 loggedAt: isoNow,
                 higherIsWorse: true
@@ -169,14 +167,14 @@ public enum SampleData {
         }
 
         let symptomScores: [SymptomScore] = [
-            score(.hot_flash, daysAgo: 0, severity: 3, count: 8),
+            score(.hot_flash, daysAgo: 0, severity: 3),
             score(.sleep, daysAgo: 0, severity: 2),
             score(.joints, daysAgo: 0, severity: 1),
-            score(.hot_flash, daysAgo: 1, severity: 2, count: 4),
+            score(.hot_flash, daysAgo: 1, severity: 2),
             score(.mood, daysAgo: 1, severity: 2),
             score(.sleep, daysAgo: 2, severity: 3),
             score(.exhaustion, daysAgo: 2, severity: 2),
-            score(.hot_flash, daysAgo: 3, severity: 1, count: 2),
+            score(.hot_flash, daysAgo: 3, severity: 1),
             score(.irritability, daysAgo: 4, severity: 2),
             score(.anxiety, daysAgo: 5, severity: 1),
             score(.joints, daysAgo: 6, severity: 2),

@@ -22,8 +22,6 @@ public enum SymptomId: String, Codable, CaseIterable, Sendable {
         }
     }
 
-    public var allowsCount: Bool { self == .hot_flash }
-
     /// Every catalog id is scored with higher = worse.
     public var higherIsWorse: Bool { true }
 }
@@ -164,7 +162,7 @@ public enum SymptomLog {
         var row = score
         row.severity = clampSeverity(row.severity)
         if let count = row.count {
-            row.count = SymptomId(rawValue: row.id)?.allowsCount == true ? clampCount(count) : nil
+            row.count = clampCount(count)
         }
         if let note = row.note?.trimmingCharacters(in: .whitespacesAndNewlines), !note.isEmpty {
             row.note = note

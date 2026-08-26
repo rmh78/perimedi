@@ -89,7 +89,6 @@ enum JourneyScript {
                         id: SymptomId.hot_flash.rawValue,
                         date: today,
                         severity: 3,
-                        count: 8,
                         loggedAt: ISO8601DateFormatter().string(from: Date()),
                         higherIsWorse: true
                     ),

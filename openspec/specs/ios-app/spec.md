@@ -129,7 +129,7 @@ The medication, period-settings, and symptom editors SHALL use an inset rounded 
 
 #### Scenario: Period and symptom dialogs
 - **WHEN** the user opens period settings or the symptom editor
-- **THEN** each is an inset closable panel (period: settings and add/edit, then history at the bottom; symptoms: the eleven 0–4 rows in Body / Mood / Urogenital groups, optional hot-flush count, optional note, then save)
+- **THEN** each is an inset closable panel (period: settings and add/edit, then history at the bottom; symptoms: the eleven 1–4 rows in Body / Mood / Urogenital groups with words that fit each name, optional note, closed with the header close control)
 
 #### Scenario: Dialog actions are capsule buttons
 - **WHEN** the user sees add, save, or cancel in a medication, period, or symptom dialog

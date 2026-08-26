@@ -73,7 +73,7 @@ final class FirstUseJourneyTests: PeriMediUITestCase {
         XCTContext.runActivity(named: "07 log structured symptoms") { _ in
             robot.addSymptom()
             robot.waitFor(id: "cycle.chip.score.hot_flash")
-            XCTAssertTrue(robot.value(of: "cycle.chip.score.hot_flash").contains("3"))
+            XCTAssertTrue(robot.value(of: "cycle.chip.score.hot_flash").localizedCaseInsensitiveContains("strong"))
         }
 
         XCTContext.runActivity(named: "08 month overview agrees") { _ in

@@ -34,7 +34,7 @@ Archived OpenSpec changes under `openspec/changes/archive/` may mention an old w
 - **Medication** — name, form, default dose, optional color
 - **Schedule** — times; exclusive mode: every day, specific weekdays, or cyclic (apply N / pause M or week slots). Saved without menstrual-alignment UI (`cycleRule: none` in the editor).
 - **Period** — logged bleeds; day 1 of a cycle is the first period day
-- **SymptomScore** — catalog id (`hot_flash`, …), date, severity 0–4, optional count (hot flushes), optional note, loggedAt. Untouched ids are missing, not zero.
+- **SymptomScore** — catalog id (`hot_flash`, …), date, severity 1–4, optional note, loggedAt. Untouched ids are missing (none), not stored as 0.
 - **Remark** — optional day note (and older backup note rows)
 - **DoseLog** — taken / pending (open) per planned dose
 

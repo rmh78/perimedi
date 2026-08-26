@@ -29,16 +29,18 @@ extension EnvironmentValues {
     }
 }
 
-struct DialogChrome<Content: View>: View {
+struct DialogChrome<Content: View, Footer: View>: View {
     var title: String
     var icon: String?
     var iconAccent: Color? = nil
     var identifier: String? = nil
     var onClose: () -> Void
     @ViewBuilder var content: () -> Content
+    @ViewBuilder var footer: () -> Footer
 
     @Environment(\.dialogMaxHeight) private var maxHeight
     @State private var bodyHeight: CGFloat = 360
+    @State private var footerHeight: CGFloat = 0
 
     private let headerHeight: CGFloat = 69
 
@@ -88,8 +90,16 @@ struct DialogChrome<Content: View>: View {
             }
             .scrollBounceBehavior(.basedOnSize)
             .scrollDismissesKeyboard(.interactively)
-            .frame(height: min(bodyHeight, max(80, maxHeight - headerHeight)))
+            .frame(height: min(bodyHeight, max(80, maxHeight - headerHeight - footerHeight)))
             .onPreferenceChange(ContentHeightKey.self) { bodyHeight = $0 }
+
+            footer()
+                .background(
+                    GeometryReader { geo in
+                        Color.clear.onAppear { footerHeight = geo.size.height }
+                            .onChange(of: geo.size.height) { _, h in footerHeight = h }
+                    }
+                )
         }
         .background(Theme.cream)
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
@@ -109,6 +119,25 @@ struct DialogChrome<Content: View>: View {
             from: nil,
             for: nil
         )
+    }
+}
+
+extension DialogChrome where Footer == EmptyView {
+    init(
+        title: String,
+        icon: String? = nil,
+        iconAccent: Color? = nil,
+        identifier: String? = nil,
+        onClose: @escaping () -> Void,
+        @ViewBuilder content: @escaping () -> Content
+    ) {
+        self.title = title
+        self.icon = icon
+        self.iconAccent = iconAccent
+        self.identifier = identifier
+        self.onClose = onClose
+        self.content = content
+        self.footer = { EmptyView() }
     }
 }
 

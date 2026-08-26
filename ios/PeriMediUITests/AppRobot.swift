@@ -264,19 +264,15 @@ struct AppRobot {
 
     func addSymptom(
         hotFlash: Int = 3,
-        count: Int = 8,
         sleep: Int = 2,
         joints: Int = 1
     ) {
         tap("cycle.action.symptom")
         waitFor(id: "sheet.symptom")
         tap("symptom.score.hot_flash.\(hotFlash)")
-        bumpStepper(id: "symptom.count.hot_flash", times: count)
         tap("symptom.score.sleep.\(sleep)")
         tap("symptom.score.joints.\(joints)")
-        dismissKeyboard()
-        reveal("symptom.save")
-        tap("symptom.save")
+        tap("sheet.close")
         waitGone(id: "sheet.symptom", timeout: 3)
     }
 
@@ -285,19 +281,6 @@ struct AppRobot {
         for _ in 0..<6 {
             if element(id).isHittable { return }
             app.swipeUp()
-        }
-    }
-
-    private func bumpStepper(id: String, times: Int) {
-        waitFor(id: id)
-        let stepper = app.steppers[id]
-        let host = element(id)
-        for _ in 0..<times {
-            if stepper.exists {
-                stepper.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)).tap()
-            } else {
-                host.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
-            }
         }
     }
 }

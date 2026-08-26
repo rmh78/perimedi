@@ -16,23 +16,20 @@ final class SymptomLogTests: XCTestCase {
         for id in SymptomId.allCases {
             XCTAssertTrue(id.higherIsWorse)
         }
-        XCTAssertTrue(SymptomId.hot_flash.allowsCount)
-        XCTAssertFalse(SymptomId.sleep.allowsCount)
     }
 
     func testReplaceSameIdSameDay() {
-        let first = row(id: "hot_flash", severity: 2, count: 3)
-        let second = row(id: "hot_flash", severity: 3, count: 8)
+        let first = row(id: "hot_flash", severity: 2)
+        let second = row(id: "hot_flash", severity: 3)
         let sleep = row(id: "sleep", severity: 2)
         let next = SymptomLog.upserting(SymptomLog.upserting([first], incoming: sleep), incoming: second)
         XCTAssertEqual(next.filter { $0.date == day }.count, 2)
         XCTAssertEqual(next.first { $0.id == "hot_flash" }?.severity, 3)
-        XCTAssertEqual(next.first { $0.id == "hot_flash" }?.count, 8)
     }
 
     func testUntouchedIdsAbsentFromDayReplace() {
         let dayScores = [
-            row(id: "hot_flash", severity: 3, count: 8),
+            row(id: "hot_flash", severity: 3),
             row(id: "sleep", severity: 2),
             row(id: "joints", severity: 1),
         ]
@@ -46,7 +43,7 @@ final class SymptomLogTests: XCTestCase {
         XCTAssertEqual(next.first { $0.date == "2026-03-14" }?.id, "mood")
     }
 
-    func testEncodeOmitsMissingCountAndZeroFill() throws {
+    func testEncodeOmitsCountAndUntouchedIds() throws {
         let payload = ExportPayload(
             exportedAt: logged,
             medications: [],
@@ -58,7 +55,7 @@ final class SymptomLogTests: XCTestCase {
             cycleSettings: .default,
             periods: [],
             symptomScores: [
-                row(id: "hot_flash", severity: 3, count: 8),
+                row(id: "hot_flash", severity: 3),
                 row(id: "sleep", severity: 2),
                 row(id: "joints", severity: 1),
             ]
@@ -67,19 +64,24 @@ final class SymptomLogTests: XCTestCase {
         let json = try XCTUnwrap(String(data: data, encoding: .utf8))
         XCTAssertTrue(json.contains("\"id\" : \"hot_flash\""))
         XCTAssertTrue(json.contains("\"severity\" : 3"))
-        XCTAssertTrue(json.contains("\"count\" : 8"))
+        XCTAssertFalse(json.contains("\"count\""))
         XCTAssertTrue(json.contains("\"loggedAt\""))
         XCTAssertTrue(json.contains("\"date\" : \"2026-03-15\""))
         XCTAssertFalse(json.contains("\"id\" : \"mood\""))
-        let sleepBlock = json.components(separatedBy: "\"id\" : \"sleep\"").last ?? ""
-        let sleepObj = sleepBlock.components(separatedBy: "}").first ?? ""
-        XCTAssertFalse(sleepObj.contains("\"count\""))
 
         let decoded = try BackupCodec.decode(data)
         XCTAssertEqual(decoded.symptomScores.count, 3)
-        XCTAssertEqual(decoded.symptomScores.first { $0.id == "hot_flash" }?.count, 8)
-        XCTAssertNil(decoded.symptomScores.first { $0.id == "sleep" }?.count)
+        XCTAssertNil(decoded.symptomScores.first { $0.id == "hot_flash" }?.count)
         XCTAssertEqual(Set(decoded.symptomScores.map(\.id)), ["hot_flash", "sleep", "joints"])
+    }
+
+    func testOldBackupWithCountStillDecodes() throws {
+        let json = """
+        {"version":1,"exportedAt":"t","medications":[],"schedules":[],"doseLogs":[],"remarks":[],"cycleSettings":{"id":"default","averageCycleLength":28,"averagePeriodLength":5},"periods":[],"symptomScores":[{"id":"hot_flash","date":"2026-03-15","severity":3,"count":8,"loggedAt":"t","higherIsWorse":true}]}
+        """
+        let imported = try BackupCodec.decode(Data(json.utf8))
+        XCTAssertEqual(imported.symptomScores.first?.severity, 3)
+        XCTAssertEqual(imported.symptomScores.first?.count, 8)
     }
 
     func testOldBackupWithoutScoresStillDecodes() throws {
@@ -94,7 +96,7 @@ final class SymptomLogTests: XCTestCase {
 
     func testRemarksDoNotChangeMeans() {
         let scores = [
-            row(id: "hot_flash", severity: 3, count: 8),
+            row(id: "hot_flash", severity: 3),
             row(id: "hot_flash", severity: 1, date: "2026-03-14"),
             row(id: "sleep", severity: 2),
         ]
@@ -108,7 +110,7 @@ final class SymptomLogTests: XCTestCase {
         let sample = SampleData.payload(now: DateKeys.parseDateKey("2026-03-15")!)
         let today = sample.symptomScores.filter { $0.date == "2026-03-15" }
         XCTAssertEqual(today.first { $0.id == "hot_flash" }?.severity, 3)
-        XCTAssertEqual(today.first { $0.id == "hot_flash" }?.count, 8)
+        XCTAssertNil(today.first { $0.id == "hot_flash" }?.count)
         XCTAssertEqual(today.first { $0.id == "sleep" }?.severity, 2)
         XCTAssertEqual(today.first { $0.id == "joints" }?.severity, 1)
         XCTAssertNil(today.first { $0.id == "mood" })
@@ -118,14 +120,12 @@ final class SymptomLogTests: XCTestCase {
     private func row(
         id: String,
         severity: Int,
-        count: Int? = nil,
         date: String? = nil
     ) -> SymptomScore {
         SymptomScore(
             id: id,
             date: date ?? day,
             severity: severity,
-            count: count,
             loggedAt: logged,
             higherIsWorse: true
         )
