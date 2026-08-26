@@ -1,6 +1,6 @@
 # PeriMedi iOS
 
-Native SwiftUI companion. Domain logic lives in the `PeriMediDomain` Swift package; the app target adds SwiftData + CloudKit and the Cycle / Month / More UI.
+Native SwiftUI app. Domain logic lives in the `PeriMediDomain` Swift package; the app target adds SwiftData + CloudKit and the Cycle / Month / More UI.
 
 ## Prerequisites
 
@@ -77,6 +77,6 @@ Launch contract used by the suite: `-en -clear -today=2026-03-15 -uiTesting`. `-
 
 - On-device **SwiftData**. Survives force-quit and Simulator reboot.
 - **CloudKit** (`iCloud.app.perimedi.ios`) is configured so the same Apple ID can restore data on another device. If iCloud is unavailable (typical on an unsigned Simulator), the store falls back to local-only and the app stays usable.
-- JSON export/import uses the same `ExportPayload` version 1 as the web companion in `web/`.
+- JSON export/import uses `ExportPayload` version 1.
 
 See [docs/icloud-device-switch.md](docs/icloud-device-switch.md) for the conditional two-destination check.

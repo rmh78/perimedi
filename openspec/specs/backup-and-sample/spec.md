@@ -7,7 +7,7 @@ Let the user back up and restore local data, load a realistic sample dataset, or
 ## Requirements
 
 ### Requirement: Export and import local data
-The system SHALL allow the user to export all app data as a JSON file and import a previously exported backup into the on-device store. Export SHALL produce a shareable or savable file (not only a browser download). Import SHALL accept a valid backup produced by this iOS app or by the web companion.
+The system SHALL allow the user to export all app data as a JSON file and import a previously exported backup into the on-device store. Export SHALL produce a shareable or savable file. Import SHALL accept a valid version-1 PeriMedi JSON backup.
 
 #### Scenario: Export
 - **WHEN** the user exports data
@@ -17,9 +17,9 @@ The system SHALL allow the user to export all app data as a JSON file and import
 - **WHEN** the user imports a valid backup file
 - **THEN** local data is replaced with the imported payload
 
-#### Scenario: Import web companion backup
-- **WHEN** the user imports a valid version-1 JSON backup exported from the web companion
-- **THEN** local iOS data is replaced with that payload
+#### Scenario: Import version-1 backup
+- **WHEN** the user imports a valid version-1 JSON backup
+- **THEN** local data is replaced with that payload
 
 ### Requirement: Sample data
 The system SHALL provide a loadable sample dataset that demonstrates a perimenopause-oriented medication set, non-overlapping periods with ~26–29 day cycles between starts, sample dose logs, and structured symptom scores.

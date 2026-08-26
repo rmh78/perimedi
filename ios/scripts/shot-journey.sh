@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Capture iOS Simulator journey shots matching web/shots/journey-*.png
+# Capture optional iOS Simulator journey shots (seeded store, not the UI-test proof).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 # shellcheck disable=SC1091

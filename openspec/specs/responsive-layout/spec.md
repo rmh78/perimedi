@@ -2,19 +2,19 @@
 
 ## Purpose
 
-Keep PeriMedi’s multi-screen shell and sheets usable from narrow phones through tablets to desktop, with shared touch-friendly controls and intentional overflow only where designed (cycle plot).
+Keep PeriMedi’s multi-screen shell and sheets usable from a narrow iPhone through larger iPhones and iPad, with shared touch-friendly controls and intentional overflow only where designed (cycle plot).
 
 ## Requirements
 
-### Requirement: Fluid layout across phone, tablet, and desktop
-The system SHALL present Cycle, Month, and More in one SPA layout that adapts from a narrow phone viewport (approximately 320 CSS pixels wide) through tablet to desktop widths, without a separate mobile site.
+### Requirement: Fluid layout across iPhone and iPad
+The system SHALL present Cycle, Month, and More in one app layout that adapts from a narrow iPhone (SE-class) through larger iPhones to iPad, without a separate site or size-specific app.
 
 #### Scenario: Narrow phone
-- **WHEN** the user opens the app on a narrow phone viewport
+- **WHEN** the user opens the app on a narrow iPhone
 - **THEN** the active primary screen and bottom navigation remain usable and no primary content is permanently clipped without a way to reach it
 
-#### Scenario: Tablet and desktop
-- **WHEN** the user opens the app on a tablet or desktop viewport
+#### Scenario: Larger iPhone and iPad
+- **WHEN** the user opens the app on a larger iPhone or iPad
 - **THEN** the same screens appear with spacing that uses the wider viewport without page-level horizontal scroll for the shell
 
 ### Requirement: Comfortable primary touch targets

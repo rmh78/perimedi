@@ -27,7 +27,3 @@ The system SHALL run and build without required environment variables or secrets
 #### Scenario: Local development
 - **WHEN** a developer opens the iOS project and runs it on the Simulator with no `.env` file
 - **THEN** the application starts successfully
-
-#### Scenario: Web reference app
-- **WHEN** a developer runs install and dev for the web companion with no `.env` file
-- **THEN** the web application starts successfully

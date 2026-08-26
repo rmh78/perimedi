@@ -53,7 +53,7 @@ final class DoseRangeAndBackupTests: XCTestCase {
         }
     }
 
-    func testRoundTripAndWebFixture() throws {
+    func testRoundTripAndVersion1Fixture() throws {
         let sample = SampleData.payload(now: DateKeys.parseDateKey("2026-08-07")!)
         let data = try BackupCodec.encode(sample)
         let again = try BackupCodec.decode(data)
@@ -62,8 +62,8 @@ final class DoseRangeAndBackupTests: XCTestCase {
         XCTAssertEqual(again.periods.count, 3)
         XCTAssertEqual(again.cycleSettings.averageCycleLength, 28)
 
-        let fixtureURL = Bundle.module.url(forResource: "web-export-v1", withExtension: "json", subdirectory: "Fixtures")
-        XCTAssertNotNil(fixtureURL, "web-export-v1.json fixture must ship with tests")
+        let fixtureURL = Bundle.module.url(forResource: "export-v1", withExtension: "json", subdirectory: "Fixtures")
+        XCTAssertNotNil(fixtureURL, "export-v1.json fixture must ship with tests")
         if let fixtureURL {
             let imported = try BackupCodec.decode(Data(contentsOf: fixtureURL))
             XCTAssertEqual(imported.version, 1)

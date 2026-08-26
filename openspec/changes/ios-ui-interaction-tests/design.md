@@ -2,7 +2,7 @@
 
 See `proposal.md` for motivation and `specs/ios-ui-tests/spec.md` / `specs/ios-app/spec.md` for the contract.
 
-Today: domain XCTest under `ios/Tests` (no Simulator), web Vitest for `web/src/lib`, Playwright `web/scripts/shot-journey.mjs` that clicks then only writes PNGs, and iOS `JourneyScript` + `ios/scripts/shot-journey.sh` that **seed** the store via `-journeyStep=N` and screenshot. The app already honors `-en`, `-clear`, `-loadSample`, `-tabMonth`/`-tabMore`, `-sheet*`, and `-journeyStep`. Almost no `accessibilityIdentifier`s. The Xcode scheme has an empty `Testables` list. `ios/scripts/generate_pbxproj.py` emits the app target only.
+Today: domain XCTest under `ios/Tests` (no Simulator), and iOS `JourneyScript` + `ios/scripts/shot-journey.sh` that **seed** the store via `-journeyStep=N` and screenshot. The app already honors `-en`, `-clear`, `-loadSample`, `-tabMonth`/`-tabMore`, `-sheet*`, and `-journeyStep`. Almost no `accessibilityIdentifier`s. The Xcode scheme has an empty `Testables` list. `ios/scripts/generate_pbxproj.py` emits the app target only.
 
 Marking a dose taken is a tap on the medication lane avatar (`CycleView.medAvatar`); the plot canvas uses `allowsHitTesting(false)`, so tests must not try to tap individual dose cells.
 
@@ -17,7 +17,7 @@ Marking a dose taken is a tap on the medication lane avatar (`CycleView.medAvata
 
 **Non-Goals:**
 
-- Pixel / snapshot-testing oracles, Maestro, ViewInspector, Playwright `expect()` on the web journey, accessibility-tree fixtures.
+- Pixel / snapshot-testing oracles, Maestro, ViewInspector, accessibility-tree fixtures.
 - Changing production VoiceOver copy except where an identifier is added beside an existing label.
 - Replacing `JourneyScript` / `shot-journey.sh` (they stay as optional visual capture).
 

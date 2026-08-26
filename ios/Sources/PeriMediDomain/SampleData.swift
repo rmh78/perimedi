@@ -1,6 +1,6 @@
 import Foundation
 
-/// Fictional perimenopause demo — same sketch as `web/src/lib/seed.ts`.
+/// Fictional perimenopause demo dataset.
 public enum SampleData {
     public static func payload(now: Date = Date()) -> ExportPayload {
         let today = DateKeys.calendar.startOfDay(for: now)

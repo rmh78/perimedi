@@ -2,7 +2,7 @@ import Foundation
 import PeriMediDomain
 
 /// Shared empty-to-tracking journey used for Simulator screenshots.
-/// Step numbers match `web/shots/journey-*.png` / design §2c.
+/// Optional seeded screenshots (`scripts/shot-journey.sh`). Not the UI-test proof.
 @MainActor
 enum JourneyScript {
     static let estrogenId = "journey-estrogen"
@@ -61,7 +61,7 @@ enum JourneyScript {
         }
 
         if step >= 5 && step < 7 {
-            // Match the web form: cyclic 21/7 anchored on period start,
+            // Cyclic 21/7 anchored on period start.
             // schedule start left as today → band Days 9–21.
             upsertProgesterone(store: store, start: today, anchor: start)
         }

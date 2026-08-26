@@ -31,11 +31,11 @@ When iCloud is enabled for the app and the user is signed into the same Apple ID
 - **WHEN** the Simulator is not signed into iCloud
 - **THEN** on-device persistence still works and the app remains usable; device-switch restore is not required until iCloud is available
 
-### Requirement: Import existing web backup
-The system SHALL accept a valid PeriMedi JSON backup (the same payload the web companion exports) and replace local domain data with that payload.
+### Requirement: Import a version-1 JSON backup
+The system SHALL accept a valid PeriMedi version-1 JSON backup and replace local domain data with that payload.
 
-#### Scenario: Import web export
-- **WHEN** the user imports a valid version-1 backup produced by the web companion
+#### Scenario: Import version-1 backup
+- **WHEN** the user imports a valid version-1 backup
 - **THEN** medications, schedules, dose logs, remarks, symptom scores (when present), periods, and cycle settings match the backup
 
 #### Scenario: Reject invalid file

@@ -21,15 +21,11 @@ The system SHALL render modal sheets above page content so they are not clipped 
 - **THEN** the sheet content is fully visible and can be closed
 
 ### Requirement: Production build
-The iOS app SHALL compile and launch on the iOS Simulator from the project’s standard Xcode build. While the web companion remains in the repository, it SHALL still pass TypeScript checking and production bundling via its standard build command.
+The iOS app SHALL compile and launch on the iOS Simulator from the project’s standard Xcode build.
 
 #### Scenario: iOS Simulator build
 - **WHEN** a developer builds and runs the iOS app for the iOS Simulator
 - **THEN** the build succeeds and the app launches to the Cycle screen
-
-#### Scenario: Web companion build
-- **WHEN** a developer runs `npm run build` in the web companion
-- **THEN** the build completes successfully
 
 ### Requirement: Clear, non-duplicative primary actions
 The system SHALL prefer compact UI copy and SHALL avoid duplicate primary actions for the same job when a clear single place exists (for example period and symptom actions on the Cycle header rather than also as a second hero row).
