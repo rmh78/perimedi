@@ -10,8 +10,6 @@ struct SymptomSheet: View {
     let dateKey: String
 
     @State private var severity: [SymptomId: Int] = [:]
-    @State private var noteText = ""
-    @State private var noteId: String?
 
     private var dayScores: [SymptomScore] {
         store.symptomScores.filter { $0.date == dateKey }
@@ -23,59 +21,49 @@ struct SymptomSheet: View {
             dialogClose()
             dismiss()
         }, content: {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 4) {
-                    Text(app.t("symptom.date")).foregroundStyle(Theme.inkSoft)
-                    Text(pretty(dateKey)).fontWeight(.semibold).foregroundStyle(Theme.ink)
-                }
-                .font(.subheadline)
+            VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 4) {
+                        Text(app.t("symptom.date")).foregroundStyle(Theme.inkSoft)
+                        Text(pretty(dateKey)).fontWeight(.semibold).foregroundStyle(Theme.ink)
+                    }
+                    .font(.subheadline)
 
-                Text(app.t("symptom.scaleBlank"))
-                    .font(.caption2)
-                    .foregroundStyle(Theme.inkMuted)
+                    Text(app.t("symptom.scaleBlank"))
+                        .font(.caption2)
+                        .foregroundStyle(Theme.inkMuted)
+                }
 
                 ForEach(SymptomGroup.allCases, id: \.self) { group in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(app.t("symptom.group.\(group.rawValue)"))
-                            .font(.headline)
-                            .foregroundStyle(Theme.ink)
-                        VStack(spacing: 0) {
-                            ForEach(group.ids, id: \.self) { id in
-                                scoreRow(id)
-                            }
+                    Text(app.t("symptom.group.\(group.rawValue)"))
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.ink)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                    VStack(spacing: 5) {
+                        ForEach(group.ids, id: \.self) { id in
+                            scoreRow(id)
                         }
                     }
                 }
 
             }
+            .padding(.bottom, 8)
             .onAppear(perform: loadDay)
-            .onChange(of: noteText) { _, _ in persist(severity) }
-        }, footer: {
-            VStack(alignment: .leading, spacing: 8) {
-                Rectangle().fill(Theme.blush100).frame(height: 1)
-                SoftField {
-                    TextField(app.t("symptom.notePlaceholder"), text: $noteText)
-                        .foregroundStyle(Theme.ink)
-                        .submitLabel(.done)
-                        .accessibilityIdentifier(A11yID.symptomBody)
-                        .accessibilityLabel(app.t("symptom.note"))
-                }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 10)
-            }
         })
     }
 
     private func scoreRow(_ id: SymptomId) -> some View {
         let chosen = severity[id]
-        return HStack(alignment: .center, spacing: 6) {
+        return HStack(alignment: .center, spacing: 8) {
             Text(app.t("symptom.id.\(id.rawValue)"))
-                .font(.subheadline)
+                .font(.footnote)
                 .foregroundStyle(Theme.ink)
-                .lineLimit(2)
-                .minimumScaleFactor(0.8)
-                .frame(width: 78, alignment: .leading)
-            HStack(spacing: 4) {
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+                .truncationMode(.tail)
+                .frame(width: 108, alignment: .leading)
+            HStack(spacing: 5) {
                 ForEach(1...4, id: \.self) { value in
                     let selected = chosen == value
                     let word = app.t("symptom.level.\(id.rawValue).\(value)")
@@ -89,19 +77,19 @@ struct SymptomSheet: View {
                         severity = next
                         persist(next)
                     } label: {
-                        VStack(spacing: 1) {
+                        VStack(spacing: 0) {
                             Text("\(value)")
-                                .font(.caption.weight(.semibold))
+                                .font(.caption2.weight(.semibold))
                             Text(word)
-                                .font(.system(size: 9, weight: selected ? .semibold : .regular))
+                                .font(.system(size: 8, weight: selected ? .semibold : .regular))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
                         }
                         .foregroundStyle(selected ? .white : Theme.blush800)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 36)
+                        .frame(height: 34)
                         .background(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
                                 .fill(selected ? Theme.blush600 : Theme.blush50)
                         )
                     }
@@ -112,7 +100,6 @@ struct SymptomSheet: View {
                 }
             }
         }
-        .padding(.vertical, 4)
     }
 
     private func loadDay() {
@@ -122,17 +109,8 @@ struct SymptomSheet: View {
             if (1...4).contains(score.severity) {
                 next[id] = score.severity
             }
-            if noteText.isEmpty, let n = score.note, !n.isEmpty {
-                noteText = n
-            }
         }
         severity = next
-        if let remark = store.remarks.first(where: { DateKeys.toDateKey($0.occurredOn) == dateKey }) {
-            noteId = remark.id
-            if noteText.isEmpty {
-                noteText = remark.body
-            }
-        }
     }
 
     private func persist(_ map: [SymptomId: Int]) {
@@ -150,10 +128,7 @@ struct SymptomSheet: View {
                 )
             )
         }
-        store.replaceDayScores(date: dateKey, scores: scores, note: noteText, noteId: noteId)
-        if noteId == nil {
-            noteId = store.remarks.first { DateKeys.toDateKey($0.occurredOn) == dateKey }?.id
-        }
+        store.replaceDayScores(date: dateKey, scores: scores, note: nil, noteId: nil)
     }
 
     private func pretty(_ key: String) -> String {

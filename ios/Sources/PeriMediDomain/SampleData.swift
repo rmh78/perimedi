@@ -1,81 +1,83 @@
 import Foundation
 
-/// Fictional perimenopause demo dataset.
+/// Fictional perimenopause demo for a woman about 40 (range 35–45).
+/// Not medical advice — typical HRT + irregular cycles for the UI, not a protocol.
 public enum SampleData {
     public static func payload(now: Date = Date()) -> ExportPayload {
         let today = DateKeys.calendar.startOfDay(for: now)
         let isoNow = ISO8601DateFormatter().string(from: now)
 
-        let p1Start = DateKeys.addDays(today, -64)
-        let p2Start = DateKeys.addDays(today, -36)
-        let p3Start = DateKeys.addDays(today, -9)
+        func key(_ daysAgo: Int) -> String {
+            DateKeys.toDateKey(DateKeys.addDays(today, -daysAgo))
+        }
+        func endKey(startAgo: Int, length: Int) -> String {
+            key(startAgo - (length - 1))
+        }
 
+        // Irregular starts (peri): ~29d, ~33d, ~24d, then current cycle day 18.
         let periods: [Period] = [
             Period(
                 id: createId(),
-                startDate: DateKeys.toDateKey(p1Start),
-                endDate: DateKeys.toDateKey(DateKeys.addDays(p1Start, 5)),
-                flowNote: .heavy,
-                notes: "Heavier than usual; clots day 2–3"
+                startDate: key(103),
+                endDate: endKey(startAgo: 103, length: 5),
+                flowNote: .medium
             ),
             Period(
                 id: createId(),
-                startDate: DateKeys.toDateKey(p2Start),
-                endDate: DateKeys.toDateKey(DateKeys.addDays(p2Start, 4)),
-                flowNote: .medium,
-                notes: "Cycle ~28 days from previous start"
+                startDate: key(74),
+                endDate: endKey(startAgo: 74, length: 7),
+                flowNote: .heavy
             ),
             Period(
                 id: createId(),
-                startDate: DateKeys.toDateKey(p3Start),
-                endDate: DateKeys.toDateKey(DateKeys.addDays(p3Start, 4)),
-                flowNote: .light,
-                notes: "Slightly shorter cycle (~27d); lighter bleed"
+                startDate: key(41),
+                endDate: endKey(startAgo: 41, length: 3),
+                flowNote: .light
+            ),
+            Period(
+                id: createId(),
+                startDate: key(17),
+                endDate: endKey(startAgo: 17, length: 5),
+                flowNote: .medium
             ),
         ]
 
-        let e2Start = DateKeys.toDateKey(DateKeys.addDays(today, -60))
-        let progStart = DateKeys.toDateKey(DateKeys.addDays(p2Start, 14))
+        let hrtStart = key(90)
+        let progAnchor = key(17 - 14)
 
         let estradiol = Medication(
             id: createId(), name: "Estradiol gel", form: .CREAM, doseLabel: "1 pump",
-            instructions: "Apply to clean dry skin in the morning (arms/thighs)",
+            instructions: "Apply to clean dry skin in the morning",
             color: "#9b6fc9", createdAt: isoNow
         )
         let progesterone = Medication(
             id: createId(), name: "Micronized progesterone", form: .PILL, doseLabel: "100 mg",
-            instructions: "At bedtime; 14 days on, then pause (cyclic demo plan)",
+            instructions: "At bedtime; 14 days on, 14 days off",
             color: "#d43d6c", createdAt: isoNow
+        )
+        let vaginalE2 = Medication(
+            id: createId(), name: "Vaginal estradiol", form: .CREAM, doseLabel: "10 mcg",
+            instructions: "Monday and Thursday evenings",
+            color: "#5b8fd9", createdAt: isoNow
         )
         let magnesium = Medication(
             id: createId(), name: "Magnesium glycinate", form: .PILL, doseLabel: "200 mg",
-            instructions: "Evening — may help sleep and muscle tension",
+            instructions: "Evening — sleep and muscle tension",
             color: "#0d9488", createdAt: isoNow
         )
         let vitaminD = Medication(
             id: createId(), name: "Vitamin D3", form: .PILL, doseLabel: "2000 IU",
-            instructions: "With breakfast and a little fat",
+            instructions: "With breakfast",
             color: "#c97b3a", createdAt: isoNow
         )
-        let iron = Medication(
-            id: createId(), name: "Iron bisglycinate", form: .PILL, doseLabel: "25 mg",
-            instructions: "Only on heavier flow days if advised by clinician",
-            color: "#ea580c", createdAt: isoNow
-        )
-        let vaginal = Medication(
-            id: createId(), name: "Vaginal moisturizer", form: .CREAM, doseLabel: "Thin application",
-            instructions: "A few evenings per week",
-            color: "#5b8fd9", createdAt: isoNow
-        )
 
-        let meds = [estradiol, progesterone, magnesium, vitaminD, iron, vaginal]
+        let meds = [estradiol, progesterone, vaginalE2, magnesium, vitaminD]
 
         func sched(
             med: Medication,
             time: String,
             days: [Int] = [],
             start: String,
-            cycleRule: CycleRule = .none,
             therapy: TherapyCycle? = nil,
             doseLabel: String? = nil
         ) -> Schedule {
@@ -88,98 +90,73 @@ public enum SampleData {
                 doseLabel: doseLabel,
                 active: true,
                 startDate: start,
-                cycleRule: cycleRule,
+                cycleRule: .none,
                 therapyCycle: therapy
             )
         }
 
         let schedules: [Schedule] = [
-            sched(med: estradiol, time: "07:30", start: e2Start),
+            sched(med: estradiol, time: "07:30", start: hrtStart),
             sched(
                 med: progesterone,
                 time: "21:00",
-                start: progStart,
+                start: hrtStart,
                 therapy: TherapyCycle(
-                    enabled: true, mode: .on_off_days, anchorDate: progStart, onDays: 14, offDays: 14
+                    enabled: true,
+                    mode: .on_off_days,
+                    anchorDate: progAnchor,
+                    onDays: 14,
+                    offDays: 14
                 ),
                 doseLabel: "100 mg"
             ),
-            sched(med: magnesium, time: "21:30", start: e2Start),
-            sched(med: vitaminD, time: "08:00", start: e2Start),
-            sched(med: iron, time: "12:00", start: DateKeys.toDateKey(p1Start), cycleRule: .period_only),
-            sched(med: vaginal, time: "22:00", days: [1, 3, 5], start: e2Start),
+            sched(med: vaginalE2, time: "21:30", days: [1, 4], start: hrtStart),
+            sched(med: magnesium, time: "21:45", start: hrtStart),
+            sched(med: vitaminD, time: "08:00", start: hrtStart),
         ]
 
         var doseLogs: [DoseLog] = []
         for daysAgo in stride(from: 6, through: 0, by: -1) {
-            let date = DateKeys.toDateKey(DateKeys.addDays(today, -daysAgo))
-            doseLogs.append(log(
-                med: estradiol, schedule: schedules[0], date: date, time: "07:30",
-                taken: !(daysAgo == 4)
-            ))
-            doseLogs.append(log(
-                med: vitaminD, schedule: schedules[3], date: date, time: "08:00",
-                taken: !(daysAgo == 2)
-            ))
-            doseLogs.append(log(
-                med: magnesium, schedule: schedules[2], date: date, time: "21:30",
-                taken: daysAgo != 1
-            ))
-        }
-        for daysAgo in stride(from: 5, through: 0, by: -1) {
-            let date = DateKeys.toDateKey(DateKeys.addDays(today, -daysAgo))
-            doseLogs.append(log(
-                med: progesterone, schedule: schedules[1], date: date, time: "21:00",
-                taken: daysAgo != 3
-            ))
-        }
-        for offset in 0...2 {
-            let date = DateKeys.toDateKey(DateKeys.addDays(p3Start, offset))
-            doseLogs.append(log(
-                med: iron, schedule: schedules[4], date: date, time: "12:00", taken: true
-            ))
+            let date = key(daysAgo)
+            doseLogs.append(log(med: estradiol, schedule: schedules[0], date: date, time: "07:30", taken: daysAgo != 4))
+            doseLogs.append(log(med: vitaminD, schedule: schedules[4], date: date, time: "08:00", taken: daysAgo != 2))
+            doseLogs.append(log(med: magnesium, schedule: schedules[3], date: date, time: "21:45", taken: daysAgo != 1))
+            doseLogs.append(log(med: progesterone, schedule: schedules[1], date: date, time: "21:00", taken: daysAgo != 3))
         }
 
-        let remarks: [Remark] = [
-            Remark(
-                id: createId(),
-                occurredOn: DateKeys.toDateKey(DateKeys.addDays(today, -1)),
-                kind: .note,
-                body: "Walked after lunch; flush settled.",
-                createdAt: isoNow
-            ),
-        ]
-
-        func score(
-            _ id: SymptomId,
-            daysAgo: Int,
-            severity: Int,
-            note: String? = nil
-        ) -> SymptomScore {
+        func score(_ id: SymptomId, daysAgo: Int, severity: Int) -> SymptomScore {
             SymptomScore(
                 id: id.rawValue,
-                date: DateKeys.toDateKey(DateKeys.addDays(today, -daysAgo)),
+                date: key(daysAgo),
                 severity: severity,
-                note: note,
                 loggedAt: isoNow,
                 higherIsWorse: true
             )
         }
 
+        // Cluster around the recent bleed and typical peri nights/days.
         let symptomScores: [SymptomScore] = [
             score(.hot_flash, daysAgo: 0, severity: 3),
-            score(.sleep, daysAgo: 0, severity: 2),
-            score(.joints, daysAgo: 0, severity: 1),
+            score(.sleep, daysAgo: 0, severity: 3),
+            score(.heart, daysAgo: 0, severity: 1),
+            score(.exhaustion, daysAgo: 0, severity: 2),
+            score(.sexual, daysAgo: 0, severity: 2),
+            score(.vaginal_dryness, daysAgo: 0, severity: 2),
             score(.hot_flash, daysAgo: 1, severity: 2),
+            score(.sleep, daysAgo: 1, severity: 2),
             score(.mood, daysAgo: 1, severity: 2),
-            score(.sleep, daysAgo: 2, severity: 3),
-            score(.exhaustion, daysAgo: 2, severity: 2),
-            score(.hot_flash, daysAgo: 3, severity: 1),
-            score(.irritability, daysAgo: 4, severity: 2),
-            score(.anxiety, daysAgo: 5, severity: 1),
-            score(.joints, daysAgo: 6, severity: 2),
-            score(.bladder, daysAgo: 9, severity: 1),
-            score(.vaginal_dryness, daysAgo: 9, severity: 2),
+            score(.joints, daysAgo: 2, severity: 2),
+            score(.irritability, daysAgo: 2, severity: 1),
+            score(.hot_flash, daysAgo: 3, severity: 2),
+            score(.sleep, daysAgo: 4, severity: 3),
+            score(.anxiety, daysAgo: 5, severity: 2),
+            score(.exhaustion, daysAgo: 6, severity: 2),
+            score(.bladder, daysAgo: 8, severity: 1),
+            score(.hot_flash, daysAgo: 12, severity: 3),
+            score(.sleep, daysAgo: 13, severity: 3),
+            score(.mood, daysAgo: 14, severity: 3),
+            score(.joints, daysAgo: 16, severity: 2),
+            score(.hot_flash, daysAgo: 17, severity: 2),
         ]
 
         return ExportPayload(
@@ -188,8 +165,8 @@ public enum SampleData {
             medications: meds,
             schedules: schedules,
             doseLogs: doseLogs,
-            remarks: remarks,
-            cycleSettings: CycleSettings(averageCycleLength: 28, averagePeriodLength: 5),
+            remarks: [],
+            cycleSettings: CycleSettings(averageCycleLength: 30, averagePeriodLength: 5),
             periods: periods,
             symptomScores: symptomScores
         )

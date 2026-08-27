@@ -111,10 +111,23 @@ final class SymptomLogTests: XCTestCase {
         let today = sample.symptomScores.filter { $0.date == "2026-03-15" }
         XCTAssertEqual(today.first { $0.id == "hot_flash" }?.severity, 3)
         XCTAssertNil(today.first { $0.id == "hot_flash" }?.count)
-        XCTAssertEqual(today.first { $0.id == "sleep" }?.severity, 2)
-        XCTAssertEqual(today.first { $0.id == "joints" }?.severity, 1)
+        XCTAssertEqual(today.first { $0.id == "sleep" }?.severity, 3)
+        XCTAssertEqual(today.first { $0.id == "exhaustion" }?.severity, 2)
         XCTAssertNil(today.first { $0.id == "mood" })
-        XCTAssertFalse(sample.remarks.contains { $0.kind == .cycle })
+        XCTAssertTrue(sample.remarks.isEmpty)
+        XCTAssertEqual(sample.medications.map(\.name), [
+            "Estradiol gel",
+            "Micronized progesterone",
+            "Vaginal estradiol",
+            "Magnesium glycinate",
+            "Vitamin D3",
+        ])
+        XCTAssertEqual(sample.periods.count, 4)
+        let starts = sample.periods.map(\.startDate).sorted()
+        for pair in zip(starts, starts.dropFirst()) {
+            XCTAssertGreaterThan(DateKeys.differenceInCalendarDays(fromKey: pair.0, toKey: pair.1), 0)
+        }
+        XCTAssertFalse(sample.schedules.contains { $0.cycleRule != .none })
     }
 
     private func row(

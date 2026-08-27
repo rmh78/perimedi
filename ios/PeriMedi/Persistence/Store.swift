@@ -273,7 +273,9 @@ final class Store: ObservableObject {
         let settingsRow = SDCycleSettings()
         settingsRow.apply(payload.cycleSettings)
         context.insert(settingsRow)
-        save()
+        try context.save()
+        refresh()
+        afterChange?()
     }
 
     func exportPayload() -> ExportPayload {
@@ -289,7 +291,8 @@ final class Store: ObservableObject {
     }
 
     func loadSample() throws {
-        try replaceAll(with: SampleData.payload())
+        let now = DateKeys.parseDateKey(DateKeys.todayKey()) ?? Date()
+        try replaceAll(with: SampleData.payload(now: now))
     }
 
     func clearAll() {

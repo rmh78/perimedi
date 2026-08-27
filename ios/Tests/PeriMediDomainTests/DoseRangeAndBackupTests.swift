@@ -53,14 +53,34 @@ final class DoseRangeAndBackupTests: XCTestCase {
         }
     }
 
+    func testSampleHasDosesOnToday() {
+        let today = "2026-03-15"
+        let sample = SampleData.payload(now: DateKeys.parseDateKey(today)!)
+        let doses = ScheduleLogic.expandPlannedDoses(
+            from: today,
+            to: today,
+            medications: sample.medications,
+            schedules: sample.schedules,
+            doseLogs: sample.doseLogs,
+            periods: sample.periods,
+            settings: sample.cycleSettings
+        )
+        let names = Set(doses.filter { $0.date == today }.map(\.medication.name))
+        XCTAssertTrue(names.contains("Estradiol gel"))
+        XCTAssertTrue(names.contains("Micronized progesterone"))
+        XCTAssertTrue(names.contains("Vitamin D3"))
+        XCTAssertTrue(names.contains("Magnesium glycinate"))
+        XCTAssertEqual(CycleLogic.getCycleDay(dateKey: today, periods: sample.periods), 18)
+    }
+
     func testRoundTripAndVersion1Fixture() throws {
         let sample = SampleData.payload(now: DateKeys.parseDateKey("2026-08-07")!)
         let data = try BackupCodec.encode(sample)
         let again = try BackupCodec.decode(data)
         XCTAssertEqual(again.version, 1)
-        XCTAssertEqual(again.medications.count, 6)
-        XCTAssertEqual(again.periods.count, 3)
-        XCTAssertEqual(again.cycleSettings.averageCycleLength, 28)
+        XCTAssertEqual(again.medications.count, 5)
+        XCTAssertEqual(again.periods.count, 4)
+        XCTAssertEqual(again.cycleSettings.averageCycleLength, 30)
 
         let fixtureURL = Bundle.module.url(forResource: "export-v1", withExtension: "json", subdirectory: "Fixtures")
         XCTAssertNotNil(fixtureURL, "export-v1.json fixture must ship with tests")

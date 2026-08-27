@@ -142,6 +142,7 @@ struct MoreView: View {
                             ) {
                                 do {
                                     try store.loadSample()
+                                    app.goToToday()
                                     status = app.t("more.sampleLoaded")
                                     error = nil
                                 } catch {

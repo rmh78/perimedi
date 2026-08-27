@@ -110,11 +110,18 @@ struct CycleView: View {
                     Button {
                         app.showSymptom = true
                     } label: {
-                        HStack(spacing: 6) {
+                        HStack(spacing: 5) {
                             Image(systemName: "bolt.fill")
                                 .font(.system(size: 10, weight: .bold))
                                 .foregroundStyle(Theme.symptom)
-                            Text(scoreChipText(score))
+                            Text(scoreChipName(score))
+                                .font(.caption)
+                                .foregroundStyle(Color(hex: "#7a4a00"))
+                                .lineLimit(1)
+                            Text("·")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(Color(hex: "#c4a24e"))
+                            Text(scoreChipWord(score))
                                 .font(.caption)
                                 .foregroundStyle(Color(hex: "#7a4a00"))
                                 .lineLimit(1)
@@ -125,7 +132,7 @@ struct CycleView: View {
                         .overlay(Capsule().stroke(Color(hex: "#f0dc9a"), lineWidth: 1))
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(scoreChipText(score))
+                    .accessibilityLabel("\(scoreChipName(score)), \(scoreChipWord(score))")
                     .accessibilityIdentifier("cycle.chip.score.\(score.id)")
                 }
                 ForEach(notes.filter { note in
@@ -155,12 +162,13 @@ struct CycleView: View {
         }
     }
 
-    private func scoreChipText(_ score: SymptomScore) -> String {
+    private func scoreChipName(_ score: SymptomScore) -> String {
+        app.t("symptom.id.\(score.id)")
+    }
+
+    private func scoreChipWord(_ score: SymptomScore) -> String {
         let word = app.t("symptom.level.\(score.id).\(score.severity)")
-        let label = word == "symptom.level.\(score.id).\(score.severity)"
-            ? "\(score.severity)"
-            : word
-        return "\(app.t("symptom.id.\(score.id)")) \(label)"
+        return word == "symptom.level.\(score.id).\(score.severity)" ? "\(score.severity)" : word
     }
 
     private var medsTitleRow: some View {

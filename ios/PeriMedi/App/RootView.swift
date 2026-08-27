@@ -88,6 +88,9 @@ struct RootView: View {
         if args.contains("-en") {
             app.locale.language = .en
         }
+        if args.contains("-de") {
+            app.locale.language = .de
+        }
         if let today = pinnedToday(from: args) {
             DateKeys.pinnedTodayKey = today
             app.selectedDate = today

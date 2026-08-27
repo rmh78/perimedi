@@ -22,11 +22,11 @@ The system SHALL allow the user to export all app data as a JSON file and import
 - **THEN** local data is replaced with that payload
 
 ### Requirement: Sample data
-The system SHALL provide a loadable sample dataset that demonstrates a perimenopause-oriented medication set, non-overlapping periods with ~26–29 day cycles between starts, sample dose logs, and structured symptom scores.
+The system SHALL provide a loadable sample dataset for a typical woman about 40 (35–45) in perimenopause: transdermal estradiol, cyclic micronized progesterone, local vaginal estradiol, common supplements, non-overlapping irregular periods (mixed short and long gaps, mixed flow), recent dose logs, and structured symptom scores. Sample dates SHALL be anchored on the app’s current today so Cycle shows the sample immediately. Loading sample SHALL move the selected day to today.
 
 #### Scenario: Load sample
 - **WHEN** the user confirms loading sample data
-- **THEN** local data is replaced with the sample set and cycle settings reflect the sample averages
+- **THEN** local data is replaced with the sample set, cycle settings reflect the sample averages, the selected day is today, and Cycle shows the sample medications and the current cycle window
 
 #### Scenario: Sample and clear use a confirm card
 - **WHEN** the user activates load sample or clear data
