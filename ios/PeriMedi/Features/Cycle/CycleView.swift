@@ -8,7 +8,8 @@ struct CycleView: View {
     @StateObject private var plotScroll = PlotScrollHandle()
 
     private let dayMin: CGFloat = 22
-    private let labelCol: CGFloat = 156
+    private let labelCol: CGFloat = 166
+    private let labelLeading: CGFloat = 10
     private let stripH: CGFloat = 46
     private let laneH: CGFloat = 44
     private let laneGap: CGFloat = 12
@@ -219,7 +220,8 @@ struct CycleView: View {
                     + (snap.lanes.isEmpty ? 0 : laneBottomPad)
                 HStack(alignment: .top, spacing: 0) {
                     stickyLabels(snap)
-                        .frame(width: labelCol)
+                        .frame(width: labelCol, alignment: .leading)
+                        .clipped()
                         .background(Theme.cream)
                     GeometryReader { geo in
                         let colW = fittedColumnWidth(available: geo.size.width)
@@ -287,6 +289,7 @@ struct CycleView: View {
                     .foregroundStyle(Theme.inkMuted)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .frame(height: stripH, alignment: .center)
 
             ForEach(snap.lanes) { lane in
@@ -313,17 +316,22 @@ struct CycleView: View {
                             Text(statusLabel(for: lane, snap: snap))
                                 .font(.system(size: 10, weight: .semibold))
                                 .foregroundStyle(statusColor(for: lane, snap: snap))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.85)
                                 .accessibilityIdentifier(A11yID.laneStatus(lane.name))
                                 .accessibilityValue(statusValue(for: lane, snap: snap))
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .buttonStyle(.plain)
                     .accessibilityIdentifier(A11yID.laneEdit(lane.name))
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .frame(height: laneH, alignment: .leading)
             }
         }
         .padding(.bottom, snap.lanes.isEmpty ? 0 : laneBottomPad)
+        .padding(.leading, labelLeading)
         .padding(.trailing, 6)
     }
 
@@ -460,25 +468,25 @@ struct CycleView: View {
             if hasDose { return Color(hex: lane.color).opacity(0.6) }
             return Color(hex: "#f0d0da")
         }()
-        return ZStack(alignment: .bottomTrailing) {
-            Image(medFormImage(lane.form))
-                .resizable()
-                .scaledToFill()
-                .frame(width: 40, height: 40)
-                .clipShape(Circle())
-                .padding(3)
-                .background(Circle().fill(ringColor))
-                .opacity(hasDose ? 1 : 0.7)
-            if allTaken {
-                Text("✓")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 20, height: 20)
-                    .background(Circle().fill(Color(hex: lane.color)))
-                    .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                    .offset(x: 2, y: 2)
+        return Image(medFormImage(lane.form))
+            .resizable()
+            .scaledToFill()
+            .frame(width: 40, height: 40)
+            .clipShape(Circle())
+            .padding(3)
+            .background(Circle().fill(ringColor))
+            .opacity(hasDose ? 1 : 0.7)
+            .overlay(alignment: .bottomTrailing) {
+                if allTaken {
+                    Text("✓")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 20, height: 20)
+                        .background(Circle().fill(Color(hex: lane.color)))
+                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                        .offset(x: 2, y: 2)
+                }
             }
-        }
     }
 
     private func toggleLane(_ lane: MedLane, snap: CycleSnapshot) {
