@@ -108,9 +108,25 @@ final class FirstUseJourneyTests: PeriMediUITestCase {
     func testMoreRemindersControls() {
         robot.launch()
         robot.tap("tab.more")
+        robot.waitFor(id: "more.lang.en")
+        robot.waitFor(id: "more.lang.de")
+        robot.tap("more.lang.en")
         robot.waitFor(id: "more.reminders")
         robot.tap("more.reminders")
         robot.waitFor(id: "more.reminderSound")
+        robot.tap("more.reminderSoundPreview")
+        if robot.exists("more.remindersSettings") {
+            /* denied-settings row */
+        }
+        robot.app.swipeUp()
+        robot.waitFor(id: "more.sample")
+        robot.waitFor(id: "more.export")
+        robot.waitFor(id: "more.import")
+        robot.waitFor(id: "more.clear")
+        robot.tap("more.sample")
+        robot.waitFor(id: "confirm.cancel")
+        robot.tap("confirm.cancel")
+        robot.waitGone(id: "confirm.cancel")
     }
 
     /// Springboard banners are unreliable in XCTest. `-remindIn` fires the next

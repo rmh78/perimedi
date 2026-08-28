@@ -17,7 +17,7 @@ The doctor is one command:
 bash ios/scripts/verify.sh
 ```
 
-That sources `ios/env.sh`, checks feature-map IDs, checks feature layout, reports UI-test coverage (advisory), runs domain tests, uninstalls leftover PeriMedi, runs UI tests, and uninstalls again on success. It prefers iPhone 17e, then iPhone 17. Override with `SIM_DEVICE` or `SIM_UDID`.
+That sources `ios/env.sh`, checks feature-map IDs, checks feature layout, fails UI-test coverage if a feature-map surface is uncovered, runs domain tests, uninstalls leftover PeriMedi, runs UI tests, and uninstalls again on success. It prefers iPhone 17e, then iPhone 17. Override with `SIM_DEVICE` or `SIM_UDID`.
 
 Pieces, if you need one step:
 
@@ -49,7 +49,7 @@ Run `bash ios/scripts/verify.sh`. That is the doctor. Do not assemble the steps 
 - It uninstalls leftover `app.perimedi.ios` before UI tests, and again after a pass. Failed tests leave the app so you can inspect.
 - `python3 ios/scripts/check-feature-map.py` must pass. It fails if an `A11yID` is not named in backticks under `features/`. Update the matching feature file in the same commit as the ID or surface change.
 - `python3 ios/scripts/check-feature-layout.py` must pass. Feature sheets live under `Features/Cycle`, `Features/Month`, or `Features/More`. `DialogChrome` stays in `Features/Sheets/`.
-- `python3 ios/scripts/check-ui-coverage.py` is advisory. It reports surfaces the UI tests never drive. Waiting for `tab.more` is not coverage. More is uncovered; backup is blocked until IDs exist. Pass `--fail-uncovered` later, after journeys exist.
+- `python3 ios/scripts/check-ui-coverage.py --fail-uncovered` must pass (the doctor and CI `ids` job pass the flag). It fails when a surface with distinctive IDs is never driven by UI tests. Waiting for `tab.more` is not coverage. More and backup journeys exist (`testMoreRemindersControls`). A bare local run without the flag stays advisory.
 
 ## Drive
 
@@ -58,13 +58,13 @@ Run `bash ios/scripts/verify.sh`. That is the doctor. Do not assemble the steps 
 3. Tap `A11yID` strings through `AppRobot` (`tap`, `waitFor`, `value(of:)`, `exists`).
 4. Assert the observable state listed in that file (lane status, empty-meds value, month-day tokens).
 
-`AppRobot.pick` uses **English visible labels** because tests launch with `-en`. IDs themselves are language-independent.
+`AppRobot.pick` tries the option as an accessibility identifier first, then falls back to a visible label. Tests launch with `-en`. `addMedication` uses `med.mode.everyday` / `med.mode.cyclic`. IDs themselves are language-independent.
 
 ## Evidence
 
 A pass is `verify: ok` from `bash ios/scripts/verify.sh` on a Mac with Xcode. Domain `swift test --package-path ios` alone is not UI proof. CI job `ui` is the same proof on GitHub (17e if the image has it, else iPhone 17). A screenshot of the Simulator after uninstall/reinstall is extra, not a substitute for the doctor.
 
-Existing journeys: `FirstUseJourneyTests.testFirstUseJourney` and `testDoseReminderTaken`.
+Existing journeys: `FirstUseJourneyTests.testFirstUseJourney`, `testMonthPager`, `testMoreRemindersControls`, and `testDoseReminderTaken`.
 
 ## Cleanup
 

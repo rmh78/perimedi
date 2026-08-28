@@ -32,7 +32,7 @@ step "feature layout"
 python3 "$ROOT/ios/scripts/check-feature-layout.py"
 
 step "UI test coverage"
-python3 "$ROOT/ios/scripts/check-ui-coverage.py"
+python3 "$ROOT/ios/scripts/check-ui-coverage.py" --fail-uncovered
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
   fail "domain and UI tests need macOS with Xcode and an iPhone Simulator"
