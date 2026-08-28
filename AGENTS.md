@@ -54,7 +54,7 @@ The doctor is one script. Run it after feature work instead of picking among the
 bash ios/scripts/verify.sh
 ```
 
-It sources `ios/env.sh`, checks feature-map IDs, checks feature layout, checks domain boundary, fails UI-test coverage if a feature-map surface is uncovered, runs domain tests, uninstalls leftover PeriMedi, runs `xcodebuild test`, then uninstalls again on success. It prefers **iPhone 17e**, then **iPhone 17** (GitHub macos-latest always has 17; 17e only on newer runtimes). Override with `SIM_DEVICE` or `SIM_UDID`. It needs macOS + Xcode; anywhere else it still runs the ID, layout, domain-boundary, and coverage checks, then exits.
+It sources `ios/env.sh`, checks feature-map IDs, checks feature layout, checks domain boundary, fails UI-test coverage if a feature-map surface is uncovered, runs domain tests, uninstalls leftover PeriMedi, runs `xcodebuild test`, then uninstalls again on success. It prefers **iPhone 17e**, then **iPhone 17** (GitHub macos-latest always has 17; 17e only on newer runtimes). Override with `SIM_DEVICE` or `SIM_UDID`. It needs macOS + Xcode; anywhere else it still runs the ID, layout, domain-boundary, and coverage checks, then exits. Before it boots the Simulator, it turns Connect Hardware Keyboard off for that UDID so `typeText` hits the software keyboard (the phone path).
 
 CI runs only on `pull_request` (not on push to main). A new commit on a PR cancels the previous `ci` run for that PR. Every PR runs `ids` on Ubuntu (`python3 ios/scripts/check-feature-map.py`, `python3 ios/scripts/check-feature-layout.py`, `python3 ios/scripts/check-domain-boundary.py`, then `python3 ios/scripts/check-ui-coverage.py --fail-uncovered`), `domain` on macOS (`swift test --package-path ios`), and `ui` on macOS (`bash ios/scripts/verify.sh`). A green `ui` job is UI proof. Protect main requires `ids`, `domain`, and `ui`. Coverage is a failing check inside `ids` (and the doctor); do not add a separate Protect main name. On GitHub the doctor skips domain tests (the `domain` job already ran them).
 
@@ -88,7 +88,7 @@ python3 ios/scripts/check-domain-boundary.py
 python3 ios/scripts/check-ui-coverage.py --fail-uncovered
 ```
 
-UI tests are `FirstUseJourneyTests` (`testFirstUseJourney`, `testMonthPager`, `testMoreRemindersControls`) plus a dose-reminder journey (`testDoseReminderTaken`). They launch with `-en -clear -today=2026-03-15` and tap real controls. They never pass `-journeyStep` or `-loadSample`. Watch **iPhone 17e** in Simulator when that device exists (Window → iPhone 17e).
+UI tests are `FirstUseJourneyTests` (`testFirstUseJourney`, `testMonthPager`, `testMoreRemindersControls`) plus a dose-reminder journey (`testDoseReminderTaken`). They launch with `-en -clear -today=2026-03-15` and tap real controls. They type into fields the way a user does (`typeText`). Do not paste, use the clipboard menu, or test-only setters; that makes the journey synthetic. `clearAndType` taps the field, waits until the software keyboard exists, types, then asserts the exact value. They never pass `-journeyStep` or `-loadSample`. Watch **iPhone 17e** in Simulator when that device exists (Window → iPhone 17e).
 
 `JourneyScript` / `ios/scripts/shot-journey.sh` remain optional visual capture (seeded store snapshots). They are not the interaction proof.
 

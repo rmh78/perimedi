@@ -70,7 +70,17 @@ else
 fi
 
 echo "Using $DEVICE_LINE"
-xcrun simctl boot "$UDID" 2>/dev/null || true
+# typeText uses the software keyboard. Simulator Connect Hardware Keyboard
+# eats characters (Apple Forums / FB9148288). The flag is read at boot.
+defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool false
+PLIST="$HOME/Library/Preferences/com.apple.iphonesimulator.plist"
+if [[ -f "$PLIST" ]]; then
+  /usr/libexec/PlistBuddy -c "Set :DevicePreferences:${UDID}:ConnectHardwareKeyboard false" "$PLIST" 2>/dev/null \
+    || /usr/libexec/PlistBuddy -c "Add :DevicePreferences:${UDID}:ConnectHardwareKeyboard bool false" "$PLIST" 2>/dev/null \
+    || true
+fi
+xcrun simctl shutdown "$UDID" 2>/dev/null || true
+xcrun simctl boot "$UDID"
 xcrun simctl bootstatus "$UDID" -b
 
 step "uninstall leftover PeriMedi"

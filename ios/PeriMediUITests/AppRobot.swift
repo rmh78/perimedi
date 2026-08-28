@@ -163,23 +163,37 @@ struct AppRobot {
         return f.date(from: key)
     }
 
+    /// `typeText` needs software-keyboard focus (Apple). The doctor turns
+    /// Simulator hardware keyboard off before boot so this matches a phone.
+    /// Do not paste: that is not how a user types.
     func clearAndType(_ id: String, _ text: String, file: StaticString = #filePath, line: UInt = #line) {
         waitFor(id: id, file: file, line: line)
         let field = element(id)
-        field.tap()
-        let current = ((field.value as? String) ?? "")
-            .replacingOccurrences(of: "YYYY-MM-DD", with: "")
-        if current != text {
-            if !current.isEmpty {
-                field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count + 1))
-            }
-            field.typeText(text)
+
+        func shown() -> String {
+            ((field.value as? String) ?? field.label)
+                .replacingOccurrences(of: "YYYY-MM-DD", with: "")
         }
-        let written = ((field.value as? String) ?? field.label)
-            .replacingOccurrences(of: "YYYY-MM-DD", with: "")
+
+        if !field.isHittable {
+            dismissKeyboard()
+        }
+        field.tap()
         XCTAssertTrue(
-            written == text || written.hasPrefix(text),
-            "\(id) is \(written.debugDescription), wanted \(text)",
+            spin(timeout: 2) { app.keyboards.firstMatch.exists },
+            "keyboard for \(id)",
+            file: file,
+            line: line
+        )
+
+        let current = shown()
+        if !current.isEmpty {
+            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count + 1))
+        }
+        field.typeText(text)
+        XCTAssertTrue(
+            spin(timeout: 2) { shown() == text },
+            "\(id) is \(shown().debugDescription), wanted \(text)",
             file: file,
             line: line
         )
