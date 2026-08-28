@@ -12,7 +12,11 @@ SwiftUI, SwiftData, CloudKit (fallback to local-only), `PeriMediDomain` Swift pa
 
 ```
 ios/                 # Xcode app + PeriMediDomain package
-  PeriMedi/          # SwiftUI app (Cycle / Month / More, sheets, SwiftData)
+  PeriMedi/          # SwiftUI app
+    Features/Cycle   # home + med/period/symptom sheets
+    Features/Month
+    Features/More
+    Features/Sheets  # DialogChrome only
   PeriMediUITests/   # first-use XCUITest journey (empty → tracking)
   Sources/           # domain (cycle, schedule, therapy, backup, seed, symptoms)
   Tests/             # XCTest for domain
@@ -48,9 +52,9 @@ The doctor is one script. Run it after feature work instead of picking among the
 bash ios/scripts/verify.sh
 ```
 
-It sources `ios/env.sh`, checks feature-map IDs, reports UI-test coverage (advisory), runs domain tests, uninstalls leftover PeriMedi, runs `xcodebuild test`, then uninstalls again on success. It prefers **iPhone 17e**, then **iPhone 17** (GitHub macos-latest always has 17; 17e only on newer runtimes). Override with `SIM_DEVICE` or `SIM_UDID`. It needs macOS + Xcode; anywhere else it still runs the ID and coverage checks, then exits.
+It sources `ios/env.sh`, checks feature-map IDs, checks feature layout, reports UI-test coverage (advisory), runs domain tests, uninstalls leftover PeriMedi, runs `xcodebuild test`, then uninstalls again on success. It prefers **iPhone 17e**, then **iPhone 17** (GitHub macos-latest always has 17; 17e only on newer runtimes). Override with `SIM_DEVICE` or `SIM_UDID`. It needs macOS + Xcode; anywhere else it still runs the ID, layout, and coverage checks, then exits.
 
-CI: every PR runs `ids` on Ubuntu (`python3 ios/scripts/check-feature-map.py`, then advisory `python3 ios/scripts/check-ui-coverage.py`), `domain` on macOS (`swift test --package-path ios`), and `ui` on macOS (`bash ios/scripts/verify.sh`). A green `ui` job is UI proof. Do not add `ui` to Protect main until it has gone green once. On GitHub the doctor skips domain tests (the `domain` job already ran them).
+CI: every PR runs `ids` on Ubuntu (`python3 ios/scripts/check-feature-map.py`, `python3 ios/scripts/check-feature-layout.py`, then advisory `python3 ios/scripts/check-ui-coverage.py`), `domain` on macOS (`swift test --package-path ios`), and `ui` on macOS (`bash ios/scripts/verify.sh`). A green `ui` job is UI proof. Protect main requires `ids`, `domain`, and `ui`. On GitHub the doctor skips domain tests (the `domain` job already ran them).
 
 Pieces, if you need one step:
 
@@ -72,6 +76,9 @@ xcodebuild test -project ios/PeriMedi.xcodeproj -scheme PeriMedi \
 # Feature map ID coverage (fails CI)
 python3 ios/scripts/check-feature-map.py
 
+# Feature layout (fails CI)
+python3 ios/scripts/check-feature-layout.py
+
 # Feature map vs UITest coverage (advisory)
 python3 ios/scripts/check-ui-coverage.py
 ```
@@ -89,6 +96,7 @@ Simulator signing does not require a paid team. Add an Apple ID in Xcode → Acc
 - **i18n:** iOS chrome via `LocaleController` + `L10n` (en/de) and `Localizable.xcstrings`. Language control lives in More; preference is `AppStorage` (`perimedi.locale`). Default German if device preferred languages include German. User-entered text is never translated.
 - **Layout review:** run on a narrow iPhone Simulator (iPhone 17e) and screenshot.
 - iOS sheets: `MedicationSheet`, `PeriodSheet`, `SymptomSheet` presented over Cycle.
+- New user-facing Swift goes under `Features/Cycle`, `Features/Month`, or `Features/More`. Do not grow `CycleView.swift`, `L10n.swift`, or `DialogChrome.swift` with new screens. New sheets colocate with the feature they belong to. `Features/Sheets/` is shared chrome only (`DialogChrome.swift`).
 - Sample data: `SampleData.payload()` via More → Backup.
 - JSON backup is `ExportPayload` version 1.
 - Do not commit `ios/DerivedData`, `ios/.build`, or secrets. No `.env` required.
@@ -102,6 +110,7 @@ Simulator signing does not require a paid team. Add an Apple ID in Xcode → Acc
 5. After structural or UI changes: `bash ios/scripts/verify.sh`.
 6. If you skip the doctor and launch by hand: rebuild, **uninstall**, reinstall, and launch on **iPhone 17e** so the Simulator is not showing a leftover install.
 7. Keep the feature map current in the same commit (see Feature map below).
+8. New Swift files go next to the feature (`Features/Cycle`, `Features/Month`, or `Features/More`), not in `CycleView.swift` / `L10n.swift` / `DialogChrome.swift` / `Features/Sheets`.
 
 ## Feature map (for agents)
 
@@ -109,7 +118,7 @@ When driving or checking a screen, read `.grok/skills/verify-perimedi/` first. `
 
 Soft: same commit as the feature, like OpenSpec. A new user-facing surface gets a new file under `.grok/skills/verify-perimedi/features/`. A change to how a user gets there, what visible state proves it worked, or a gotcha updates that file even when no `A11yID` was added (backup has no IDs; the file exists to say so). CI cannot see those.
 
-Hard: `python3 ios/scripts/check-feature-map.py` must pass (the doctor runs it). CI job `ids` runs it on every PR. CI job `domain` runs `swift test --package-path ios` on macOS. CI job `ui` runs the doctor (Simulator XCUITest). Do not add `ui` to Protect main until it has gone green once.
+Hard: `python3 ios/scripts/check-feature-map.py` must pass (the doctor runs it). CI job `ids` runs it on every PR. `python3 ios/scripts/check-feature-layout.py` must also pass; `ids` runs it too. CI job `domain` runs `swift test --package-path ios` on macOS. CI job `ui` runs the doctor (Simulator XCUITest). Protect main requires `ids`, `domain`, and `ui`.
 
 Advisory: `python3 ios/scripts/check-ui-coverage.py` reports feature-map surfaces the UI tests never drive. Waiting for `tab.more` is not coverage. Today More is uncovered and backup is blocked until IDs exist (issue #2). Pass `--fail-uncovered` later, after journeys exist. Do not add this as a required check yet.
 
