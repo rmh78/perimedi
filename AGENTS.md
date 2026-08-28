@@ -84,6 +84,10 @@ Simulator signing does not require a paid team. Add an Apple ID in Xcode → Acc
 5. After structural changes: `swift test --package-path ios` and an iOS Simulator build; if UI behavior changed, also `xcodebuild test` on iPhone 17e.
 6. After any iOS UI change: rebuild, **uninstall**, reinstall, and launch on **iPhone 17e** so the Simulator is not showing a leftover install. Do not leave a stale app on the device.
 
+## Feature map (for agents)
+
+When driving or checking a screen, read `.grok/skills/verify-perimedi/` first. `features/` maps each surface to real `A11yID` strings and `AppRobot`. Do not invent identifiers.
+
 ## OpenSpec
 
 Product behavior is specified under `openspec/specs/<capability>/spec.md`.
