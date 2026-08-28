@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 
 enum UITestDate {
     static let today = "2026-03-15"
@@ -163,22 +164,60 @@ struct AppRobot {
         return f.date(from: key)
     }
 
+    /// Simulator `typeText` can drop characters when XCTest waits on interrupting
+    /// elements (CI: `med.name` became "Es" instead of "Estrogen"). Retry, then paste.
     func clearAndType(_ id: String, _ text: String, file: StaticString = #filePath, line: UInt = #line) {
         waitFor(id: id, file: file, line: line)
         let field = element(id)
-        field.tap()
-        let current = ((field.value as? String) ?? "")
-            .replacingOccurrences(of: "YYYY-MM-DD", with: "")
-        if current != text {
-            if !current.isEmpty {
-                field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count + 1))
-            }
-            field.typeText(text)
+
+        func shown() -> String {
+            ((field.value as? String) ?? field.label)
+                .replacingOccurrences(of: "YYYY-MM-DD", with: "")
         }
-        let written = ((field.value as? String) ?? field.label)
-            .replacingOccurrences(of: "YYYY-MM-DD", with: "")
+
+        func focus() {
+            if !field.isHittable {
+                dismissKeyboard()
+            }
+            field.tap()
+            _ = spin(timeout: 0.6) { app.keyboards.firstMatch.exists }
+        }
+
+        func clear() {
+            let current = shown()
+            guard !current.isEmpty else { return }
+            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count + 1))
+        }
+
+        func paste() {
+            UIPasteboard.general.string = text
+            field.doubleTap()
+            let item = app.menuItems["Paste"]
+            if spin(timeout: 1.5) { item.exists } {
+                item.tap()
+                return
+            }
+            field.press(forDuration: 1.0)
+            if spin(timeout: 1.5) { item.exists } {
+                item.tap()
+            }
+        }
+
+        for attempt in 0..<4 {
+            if shown() == text { break }
+            focus()
+            clear()
+            if attempt >= 2 {
+                paste()
+            } else {
+                field.typeText(text)
+            }
+            if spin(timeout: 1) { shown() == text } { break }
+        }
+
+        let written = shown()
         XCTAssertTrue(
-            written == text || written.hasPrefix(text),
+            written == text,
             "\(id) is \(written.debugDescription), wanted \(text)",
             file: file,
             line: line
