@@ -27,6 +27,7 @@ Cycle → + Med (`cycle.action.med`) for a new one, or a lane's edit control for
 | Mode tokens (defined) | `med.mode.everyday` `med.mode.cyclic` | In `A11yID`. Confirm they are attached before depending on them; `AppRobot` currently picks by label. |
 | Preset | `med.preset` | In `A11yID`. |
 | Start | `med.start` | `AppRobot.setDateKey`. Confirm with `date.done`. |
+| Time chooser done | `time.done` | Same chrome as `date.done`, for take-at times. |
 | Remind | `med.remind` | Toggle on the sheet. |
 | Save | `med.save` | Sheet dismisses. A `cycle.lane.{slug}` appears. |
 | Delete | `med.delete` | Then `confirm.delete` / `confirm.cancel`. |
