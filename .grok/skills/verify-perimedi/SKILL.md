@@ -48,6 +48,7 @@ Run `bash ios/scripts/verify.sh`. That is the doctor. Do not assemble the steps 
 - The script sources `ios/env.sh` (needed when `xcode-select -p` is Command Line Tools).
 - It uninstalls leftover `app.perimedi.ios` on 17e before UI tests, and again after a pass. Failed tests leave the app so you can inspect.
 - `python3 ios/scripts/check-feature-map.py` must pass. It fails if an `A11yID` is not named in backticks under `features/`. Update the matching feature file in the same commit as the ID or surface change.
+- `python3 ios/scripts/check-feature-layout.py` must pass. Feature sheets live under `Features/Cycle`, `Features/Month`, or `Features/More`. `DialogChrome` stays in `Features/Sheets/`.
 - `python3 ios/scripts/check-ui-coverage.py` is advisory. It reports surfaces the UI tests never drive. Waiting for `tab.more` is not coverage. More is uncovered; backup is blocked until IDs exist. Pass `--fail-uncovered` later, after journeys exist.
 
 ## Drive
