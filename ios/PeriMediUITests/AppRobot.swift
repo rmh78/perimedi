@@ -234,7 +234,7 @@ struct AppRobot {
             pick("med.form", form)
         }
         clearAndType("med.dose", dose)
-        pick("med.mode", cyclic ? "Cyclic" : "Every day")
+        pick("med.mode", cyclic ? "med.mode.cyclic" : "med.mode.everyday")
         if let start {
             setDateKey("med.start", start)
         }
@@ -244,6 +244,11 @@ struct AppRobot {
 
     func pick(_ id: String, _ option: String) {
         tap(id)
+        let byId = element(option)
+        if spin(timeout: 1.5) { byId.exists } {
+            byId.tap()
+            return
+        }
         let menuChoice = app.collectionViews.buttons[option]
         if spin(timeout: 1.5) { menuChoice.exists } {
             menuChoice.tap()
