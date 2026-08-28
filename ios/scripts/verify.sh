@@ -31,6 +31,9 @@ python3 "$ROOT/ios/scripts/check-feature-map.py"
 step "feature layout"
 python3 "$ROOT/ios/scripts/check-feature-layout.py"
 
+step "domain boundary"
+python3 "$ROOT/ios/scripts/check-domain-boundary.py"
+
 step "UI test coverage"
 python3 "$ROOT/ios/scripts/check-ui-coverage.py" --fail-uncovered
 
