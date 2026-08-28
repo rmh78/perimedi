@@ -1,0 +1,14 @@
+name: feature-map
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  ids:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Every A11yID is named in the feature map
+        run: python3 ios/scripts/check-feature-map.py
