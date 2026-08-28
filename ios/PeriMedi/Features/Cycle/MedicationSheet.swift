@@ -108,8 +108,10 @@ struct MedicationSheet: View {
                     SoftField {
                         Picker("", selection: $mode) {
                             Text(app.t("sched.everyDay")).tag(Mode.everyDay)
+                                .accessibilityIdentifier(A11yID.medModeEveryday)
                             Text(app.t("sched.specificDays")).tag(Mode.specificDays)
                             Text(app.t("sched.cyclic")).tag(Mode.cyclic)
+                                .accessibilityIdentifier(A11yID.medModeCyclic)
                         }
                         .labelsHidden()
                         .pickerStyle(.menu)
