@@ -86,13 +86,15 @@ Simulator signing does not require a paid team. Add an Apple ID in Xcode → Acc
 4. No menstrual “phase” labels (follicular/luteal etc.).
 5. After structural changes: `swift test --package-path ios` and an iOS Simulator build; if UI behavior changed, also `xcodebuild test` on iPhone 17e.
 6. After any iOS UI change: rebuild, **uninstall**, reinstall, and launch on **iPhone 17e** so the Simulator is not showing a leftover install. Do not leave a stale app on the device.
-7. If you add or change an `A11yID` or a user-facing surface, update `.grok/skills/verify-perimedi/features/` in the same commit (new IDs in backticks). `python3 ios/scripts/check-feature-map.py` must pass.
+7. Keep the feature map current in the same commit (see Feature map below).
 
 ## Feature map (for agents)
 
 When driving or checking a screen, read `.grok/skills/verify-perimedi/` first. `features/` maps each surface to real `A11yID` strings and `AppRobot`. Do not invent identifiers.
 
-CI runs `python3 ios/scripts/check-feature-map.py` on every PR. A new dotted string in `ios/PeriMedi/App/A11yID.swift` that is not named in backticks under `features/` fails the check.
+Soft: same commit as the feature, like OpenSpec. A new user-facing surface gets a new file under `.grok/skills/verify-perimedi/features/`. A change to how a user gets there, what visible state proves it worked, or a gotcha updates that file even when no `A11yID` was added (backup has no IDs; the file exists to say so). CI cannot see those.
+
+Hard: `python3 ios/scripts/check-feature-map.py` must pass. CI runs it on every PR. A new dotted string in `ios/PeriMedi/App/A11yID.swift` that is not named in backticks under `features/` fails the check.
 
 ## OpenSpec
 
