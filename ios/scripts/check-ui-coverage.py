@@ -148,8 +148,9 @@ def main() -> int:
     )
     if uncovered and not args.fail_uncovered:
         print(
-            "uncovered surfaces are advisory until journeys exist "
-            "(More/backup: see issues #2).",
+            "uncovered surfaces fail CI and the doctor "
+            "(pass --fail-uncovered). Add a journey that mentions "
+            "a distinctive A11yID from that feature map.",
             file=sys.stderr,
         )
 
