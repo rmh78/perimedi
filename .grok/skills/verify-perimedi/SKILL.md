@@ -47,7 +47,7 @@ Run `bash ios/scripts/verify.sh`. That is the doctor. Do not assemble the steps 
 - Watch **iPhone 17e** in Simulator when that device exists (Window → iPhone 17e).
 - The script sources `ios/env.sh` (needed when `xcode-select -p` is Command Line Tools).
 - It uninstalls leftover `app.perimedi.ios` before UI tests, and again after a pass. Failed tests leave the app so you can inspect.
-- `python3 ios/scripts/check-feature-map.py` must pass. It fails if an `A11yID` is not named in backticks under `features/`. Update the matching feature file in the same commit as the ID or surface change.
+- `python3 ios/scripts/check-feature-map.py` must pass. It fails if an `A11yID` is not named in backticks under `features/` . Update the matching feature file in the same commit as the ID or surface change.
 - `python3 ios/scripts/check-feature-layout.py` must pass. Feature sheets live under `Features/Cycle`, `Features/Month`, or `Features/More`. `DialogChrome` stays in `Features/Sheets/`.
 - `python3 ios/scripts/check-domain-boundary.py` must pass. Domain owns schedule/cycle/therapy expansion; `Store.setDoseStatus` is the only dose-log writer.
 - `python3 ios/scripts/check-ui-coverage.py --fail-uncovered` must pass (the doctor and CI `ids` job pass the flag). It fails when a surface with distinctive IDs is never driven by UI tests. Waiting for `tab.more` is not coverage. More and backup journeys exist (`testMoreRemindersControls`). A bare local run without the flag stays advisory.
@@ -57,7 +57,8 @@ Run `bash ios/scripts/verify.sh`. That is the doctor. Do not assemble the steps 
 1. Open the matching file under `features/`.
 2. Get there the way a user would (bottom tabs, Cycle action buttons, sheets).
 3. Tap `A11yID` strings through `AppRobot` (`tap`, `waitFor`, `value(of:)`, `exists`).
-4. Assert the observable state listed in that file (lane status, empty-meds value, month-day tokens).
+4. Type into fields the way a user does (`clearAndType` / `typeText`). Do not paste, use the clipboard menu, or test-only setters.
+5. Assert the observable state listed in that file (lane status, empty-meds value, month-day tokens).
 
 `AppRobot.pick` tries the option as an accessibility identifier first, then falls back to a visible label. Tests launch with `-en`. `addMedication` uses `med.mode.everyday` / `med.mode.cyclic`. IDs themselves are language-independent.
 
