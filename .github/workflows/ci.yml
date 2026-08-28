@@ -12,8 +12,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Every A11yID is named in the feature map
         run: python3 ios/scripts/check-feature-map.py
-      - name: Feature map vs UITest coverage (advisory)
-        run: python3 ios/scripts/check-ui-coverage.py
+      - name: Feature map vs UITest coverage
+        run: python3 ios/scripts/check-ui-coverage.py --fail-uncovered
       - name: Feature sheets live under Cycle/Month/More
         run: python3 ios/scripts/check-feature-layout.py
 
