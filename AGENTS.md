@@ -52,9 +52,9 @@ The doctor is one script. Run it after feature work instead of picking among the
 bash ios/scripts/verify.sh
 ```
 
-It sources `ios/env.sh`, checks feature-map IDs, checks feature layout, reports UI-test coverage (advisory), runs domain tests, uninstalls leftover PeriMedi, runs `xcodebuild test`, then uninstalls again on success. It prefers **iPhone 17e**, then **iPhone 17** (GitHub macos-latest always has 17; 17e only on newer runtimes). Override with `SIM_DEVICE` or `SIM_UDID`. It needs macOS + Xcode; anywhere else it still runs the ID, layout, and coverage checks, then exits.
+It sources `ios/env.sh`, checks feature-map IDs, checks feature layout, fails UI-test coverage if a feature-map surface is uncovered, runs domain tests, uninstalls leftover PeriMedi, runs `xcodebuild test`, then uninstalls again on success. It prefers **iPhone 17e**, then **iPhone 17** (GitHub macos-latest always has 17; 17e only on newer runtimes). Override with `SIM_DEVICE` or `SIM_UDID`. It needs macOS + Xcode; anywhere else it still runs the ID, layout, and coverage checks, then exits.
 
-CI: every PR runs `ids` on Ubuntu (`python3 ios/scripts/check-feature-map.py`, `python3 ios/scripts/check-feature-layout.py`, then advisory `python3 ios/scripts/check-ui-coverage.py`), `domain` on macOS (`swift test --package-path ios`), and `ui` on macOS (`bash ios/scripts/verify.sh`). A green `ui` job is UI proof. Protect main requires `ids`, `domain`, and `ui`. On GitHub the doctor skips domain tests (the `domain` job already ran them).
+CI: every PR runs `ids` on Ubuntu (`python3 ios/scripts/check-feature-map.py`, `python3 ios/scripts/check-feature-layout.py`, then `python3 ios/scripts/check-ui-coverage.py --fail-uncovered`), `domain` on macOS (`swift test --package-path ios`), and `ui` on macOS (`bash ios/scripts/verify.sh`). A green `ui` job is UI proof. Protect main requires `ids`, `domain`, and `ui`. Coverage is a failing check inside `ids` (and the doctor); do not add a separate Protect main name. On GitHub the doctor skips domain tests (the `domain` job already ran them).
 
 Pieces, if you need one step:
 
@@ -79,11 +79,11 @@ python3 ios/scripts/check-feature-map.py
 # Feature layout (fails CI)
 python3 ios/scripts/check-feature-layout.py
 
-# Feature map vs UITest coverage (advisory)
-python3 ios/scripts/check-ui-coverage.py
+# Feature map vs UITest coverage (fails CI / doctor with --fail-uncovered)
+python3 ios/scripts/check-ui-coverage.py --fail-uncovered
 ```
 
-UI tests are one first-use journey (`FirstUseJourneyTests`) plus a dose-reminder journey. They launch with `-en -clear -today=2026-03-15` and tap real controls. They never pass `-journeyStep` or `-loadSample`. Watch **iPhone 17e** in Simulator when that device exists (Window → iPhone 17e).
+UI tests are `FirstUseJourneyTests` (`testFirstUseJourney`, `testMonthPager`, `testMoreRemindersControls`) plus a dose-reminder journey (`testDoseReminderTaken`). They launch with `-en -clear -today=2026-03-15` and tap real controls. They never pass `-journeyStep` or `-loadSample`. Watch **iPhone 17e** in Simulator when that device exists (Window → iPhone 17e).
 
 `JourneyScript` / `ios/scripts/shot-journey.sh` remain optional visual capture (seeded store snapshots). They are not the interaction proof.
 
@@ -116,11 +116,11 @@ Simulator signing does not require a paid team. Add an Apple ID in Xcode → Acc
 
 When driving or checking a screen, read `.grok/skills/verify-perimedi/` first. `features/` maps each surface to real `A11yID` strings and `AppRobot`. Do not invent identifiers.
 
-Soft: same commit as the feature, like OpenSpec. A new user-facing surface gets a new file under `.grok/skills/verify-perimedi/features/`. A change to how a user gets there, what visible state proves it worked, or a gotcha updates that file even when no `A11yID` was added (backup has no IDs; the file exists to say so). CI cannot see those.
+Soft: same commit as the feature, like OpenSpec. A new user-facing surface gets a new file under `.grok/skills/verify-perimedi/features/`. A change to how a user gets there, what visible state proves it worked, or a gotcha updates that file even when no `A11yID` was added. CI cannot see those.
 
 Hard: `python3 ios/scripts/check-feature-map.py` must pass (the doctor runs it). CI job `ids` runs it on every PR. `python3 ios/scripts/check-feature-layout.py` must also pass; `ids` runs it too. CI job `domain` runs `swift test --package-path ios` on macOS. CI job `ui` runs the doctor (Simulator XCUITest). Protect main requires `ids`, `domain`, and `ui`.
 
-Advisory: `python3 ios/scripts/check-ui-coverage.py` reports feature-map surfaces the UI tests never drive. Waiting for `tab.more` is not coverage. Today More is uncovered and backup is blocked until IDs exist (issue #2). Pass `--fail-uncovered` later, after journeys exist. Do not add this as a required check yet.
+Coverage is a failing check inside `ids` (and the doctor): `python3 ios/scripts/check-ui-coverage.py --fail-uncovered` fails when a feature-map surface with distinctive IDs is never driven by UI tests. Waiting for `tab.more` is not coverage. More and backup journeys exist (`testMoreRemindersControls`). Do not add coverage as a separate required check. Protect main stays `ids`, `domain`, and `ui`.
 
 ## OpenSpec
 
