@@ -23,16 +23,17 @@ Cycle → + Med (`cycle.action.med`) for a new one, or a lane's edit control for
 | Name | `med.name` | `AppRobot.clearAndType`. |
 | Form | `med.form` | `AppRobot.pick` — first-use uses visible `Cream`. |
 | Dose | `med.dose` | e.g. `1 mg`, `200 mg`. |
-| Mode | `med.mode` | `pick("med.mode", "Cyclic")` or `"Every day"` (**English labels**, tests are `-en`). |
-| Mode tokens (defined) | `med.mode.everyday` `med.mode.cyclic` | In `A11yID`. Confirm they are attached before depending on them; `AppRobot` currently picks by label. |
-| Preset | `med.preset` | In `A11yID`. |
+| Mode | `med.mode` | Picker itself. Options are picked by ID, not English labels. |
+| Mode every day | `med.mode.everyday` | `pick("med.mode", "med.mode.everyday")` via `AppRobot.addMedication` (cyclic: false). |
+| Mode cyclic | `med.mode.cyclic` | `pick("med.mode", "med.mode.cyclic")` via first-use cyclic progesterone. |
+| Preset | `med.preset` | On the `A11yID` enum but **not attached** in the sheet. Do not drive it. |
 | Start | `med.start` | `AppRobot.setDateKey`. Confirm with `date.done`. |
 | Time chooser done | `time.done` | Same chrome as `date.done`, for take-at times. |
 | Remind | `med.remind` | Toggle on the sheet. |
 | Save | `med.save` | Sheet dismisses. A `cycle.lane.{slug}` appears. |
 | Delete | `med.delete` | Then `confirm.delete` / `confirm.cancel`. |
 
-`AppRobot.addMedication(name:dose:form:cyclic:start:)` is the packaged path.
+`AppRobot.addMedication(name:dose:form:cyclic:start:)` is the packaged path. Mode is `med.mode.everyday` or `med.mode.cyclic`. Form pick still uses the visible label (`Cream`).
 
 ## Gotchas
 
@@ -40,3 +41,4 @@ Cycle → + Med (`cycle.action.med`) for a new one, or a lane's edit control for
 - Sheet body scrolls. Rows below the fold are not `isHittable`; `AppRobot` taps by coordinate after dismissing the keyboard.
 - Name slug for the lane is computed from the **name** (`Estrogen` → `cycle.lane.estrogen`).
 - Domain owns schedule expansion (`ios/Sources/PeriMediDomain`). Do not reimplement cycle math in the sheet.
+- `med.preset` is defined on the enum only; the sheet does not attach it.

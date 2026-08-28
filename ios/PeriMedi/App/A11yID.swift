@@ -22,6 +22,8 @@ enum A11yID {
     static let pagerNext = "cycle.pager.next"
     static let pagerToday = "cycle.pager.today"
     static let pagerLabel = "cycle.pager.label"
+    static let monthPagerPrev = "month.pager.prev"
+    static let monthPagerNext = "month.pager.next"
 
     static let actionMed = "cycle.action.med"
     static let actionPeriod = "cycle.action.period"
@@ -63,6 +65,9 @@ enum A11yID {
 
     static func symptomScore(_ id: String, _ value: Int) -> String {
         "symptom.score.\(id).\(value)"
+    }
+    static func chipScore(_ id: String) -> String {
+        "cycle.chip.score.\(id)"
     }
     static let confirmDelete = "confirm.delete"
     static let confirmCancel = "confirm.cancel"
