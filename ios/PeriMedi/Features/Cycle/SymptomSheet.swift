@@ -34,14 +34,14 @@ struct SymptomSheet: View {
                         .foregroundStyle(Theme.inkMuted)
                 }
 
-                ForEach(SymptomGroup.allCases, id: \\.self) { group in
+                ForEach(SymptomGroup.allCases, id: \.self) { group in
                     Text(app.t("symptom.group.\(group.rawValue)"))
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.ink)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
                     VStack(spacing: 5) {
-                        ForEach(group.ids, id: \\.self) { id in
+                        ForEach(group.ids, id: \.self) { id in
                             scoreRow(id)
                         }
                     }
@@ -64,7 +64,7 @@ struct SymptomSheet: View {
                 .truncationMode(.tail)
                 .frame(width: 108, alignment: .leading)
             HStack(spacing: 5) {
-                ForEach(1...4, id: \\.self) { value in
+                ForEach(1...4, id: \.self) { value in
                     let selected = chosen == value
                     let word = app.t("symptom.level.\(id.rawValue).\(value)")
                     Button {
