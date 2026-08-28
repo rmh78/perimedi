@@ -4,6 +4,8 @@ Perimenopause medication companion: track doses, periods, and symptoms.
 
 The **product is a native iOS app** (`ios/`). Data lives in on-device SwiftData, with optional Apple iCloud for the same Apple ID. There is no PeriMedi server, product account, or website.
 
+Read `.grok/gotchas.md` first. It is an agent-owned list of surprises under a 40-line budget. Add a hit, drop a stale line. `python3 ios/scripts/check-gotchas.py` fails if it is missing or over budget (doctor and CI `ids`). Do not add a separate Protect main name.
+
 ## Stack
 
 SwiftUI, SwiftData, CloudKit (fallback to local-only), `PeriMediDomain` Swift package.
@@ -54,9 +56,9 @@ The doctor is one script. Run it after feature work instead of picking among the
 bash ios/scripts/verify.sh
 ```
 
-It sources `ios/env.sh`, checks feature-map IDs, checks feature layout, checks domain boundary, fails UI-test coverage if a feature-map surface is uncovered, runs domain tests, uninstalls leftover PeriMedi, runs `xcodebuild test`, then uninstalls again on success. It prefers **iPhone 17e**, then **iPhone 17** (GitHub macos-latest always has 17; 17e only on newer runtimes). Override with `SIM_DEVICE` or `SIM_UDID`. It needs macOS + Xcode; anywhere else it still runs the ID, layout, domain-boundary, and coverage checks, then exits. Before it boots the Simulator, it turns Connect Hardware Keyboard off for that UDID so `typeText` hits the software keyboard (the phone path).
+It sources `ios/env.sh`, checks the gotchas line budget, checks feature-map IDs, checks feature layout, checks domain boundary, fails UI-test coverage if a feature-map surface is uncovered, runs domain tests, uninstalls leftover PeriMedi, runs `xcodebuild test`, then uninstalls again on success. It prefers **iPhone 17e**, then **iPhone 17** (GitHub macos-latest always has 17; 17e only on newer runtimes). Override with `SIM_DEVICE` or `SIM_UDID`. It needs macOS + Xcode; anywhere else it still runs the ID, layout, domain-boundary, coverage, and gotchas checks, then exits. Before it boots the Simulator, it turns Connect Hardware Keyboard off for that UDID so `typeText` hits the software keyboard (the phone path).
 
-CI runs only on `pull_request` (not on push to main). A new commit on a PR cancels the previous `ci` run for that PR. Every PR runs `ids` on Ubuntu (`python3 ios/scripts/check-feature-map.py`, `python3 ios/scripts/check-feature-layout.py`, `python3 ios/scripts/check-domain-boundary.py`, then `python3 ios/scripts/check-ui-coverage.py --fail-uncovered`), `domain` on macOS (`swift test --package-path ios`), and `ui` on macOS (`bash ios/scripts/verify.sh`). A green `ui` job is UI proof. Protect main requires `ids`, `domain`, and `ui`. Coverage is a failing check inside `ids` (and the doctor); do not add a separate Protect main name. On GitHub the doctor skips domain tests (the `domain` job already ran them).
+CI runs only on `pull_request` (not on push to main). A new commit on a PR cancels the previous `ci` run for that PR. Every PR runs `ids` on Ubuntu (`python3 ios/scripts/check-gotchas.py`, `python3 ios/scripts/check-feature-map.py`, `python3 ios/scripts/check-feature-layout.py`, `python3 ios/scripts/check-domain-boundary.py`, then `python3 ios/scripts/check-ui-coverage.py --fail-uncovered`), `domain` on macOS (`swift test --package-path ios`), and `ui` on macOS (`bash ios/scripts/verify.sh`). A green `ui` job is UI proof. Protect main requires `ids`, `domain`, and `ui`. Coverage and the gotchas budget are failing checks inside `ids` (and the doctor); do not add a separate Protect main name. On GitHub the doctor skips domain tests (the `domain` job already ran them).
 
 Pieces, if you need one step:
 
@@ -74,6 +76,9 @@ xcodebuild -project ios/PeriMedi.xcodeproj -scheme PeriMedi \
 xcodebuild test -project ios/PeriMedi.xcodeproj -scheme PeriMedi \
   -destination 'platform=iOS Simulator,name=iPhone 17e' \
   -derivedDataPath ios/DerivedData CODE_SIGNING_ALLOWED=NO
+
+# Agent gotchas line budget (fails CI)
+python3 ios/scripts/check-gotchas.py
 
 # Feature map ID coverage (fails CI)
 python3 ios/scripts/check-feature-map.py
@@ -123,7 +128,7 @@ When driving or checking a screen, read `.grok/skills/verify-perimedi/` first. `
 
 Soft: same commit as the feature, like OpenSpec. A new user-facing surface gets a new file under `.grok/skills/verify-perimedi/features/`. A change to how a user gets there, what visible state proves it worked, or a gotcha updates that file even when no `A11yID` was added. CI cannot see those.
 
-Hard: `python3 ios/scripts/check-feature-map.py` must pass (the doctor runs it). CI job `ids` runs it on every PR. `python3 ios/scripts/check-feature-layout.py` must also pass; `ids` runs it too. `python3 ios/scripts/check-domain-boundary.py` must pass; `ids` runs it too. CI job `domain` runs `swift test --package-path ios` on macOS. CI job `ui` runs the doctor (Simulator XCUITest). Protect main requires `ids`, `domain`, and `ui`.
+Hard: `python3 ios/scripts/check-feature-map.py` must pass (the doctor runs it). CI job `ids` runs it on every PR. `python3 ios/scripts/check-feature-layout.py` must also pass; `ids` runs it too. `python3 ios/scripts/check-domain-boundary.py` must pass; `ids` runs it too. `python3 ios/scripts/check-gotchas.py` must pass; `ids` runs it too. CI job `domain` runs `swift test --package-path ios` on macOS. CI job `ui` runs the doctor (Simulator XCUITest). Protect main requires `ids`, `domain`, and `ui`.
 
 Coverage is a failing check inside `ids` (and the doctor): `python3 ios/scripts/check-ui-coverage.py --fail-uncovered` fails when a feature-map surface with distinctive IDs is never driven by UI tests. Waiting for `tab.more` is not coverage. More and backup journeys exist (`testMoreRemindersControls`). Do not add coverage as a separate required check. Protect main stays `ids`, `domain`, and `ui`.
 
