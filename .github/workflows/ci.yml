@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Agent gotchas stay under the line budget
+        run: python3 ios/scripts/check-gotchas.py
       - name: Every A11yID is named in the feature map
         run: python3 ios/scripts/check-feature-map.py
       - name: Feature map vs UITest coverage
