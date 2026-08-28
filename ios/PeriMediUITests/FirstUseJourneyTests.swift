@@ -65,6 +65,7 @@ final class FirstUseJourneyTests: PeriMediUITestCase {
                 robot.tap("cycle.pager.prev")
             }
             robot.waitFor(id: "cycle.chip.period")
+            robot.tap("cycle.pager.next")
             robot.tap("cycle.pager.today")
             XCTAssertEqual(robot.value(of: "cycle.pager.label"), onToday)
             XCTAssertEqual(robot.value(of: "cycle.lane.estrogen.status"), "taken")
@@ -88,6 +89,28 @@ final class FirstUseJourneyTests: PeriMediUITestCase {
             robot.waitFor(id: "cycle.lane.progesterone")
             XCTAssertEqual(robot.value(of: "cycle.lane.estrogen.status"), "taken")
         }
+    }
+
+    func testMonthPager() {
+        robot.launch()
+        robot.tap("tab.month")
+        robot.waitFor(id: "month.day.\(UITestDate.today)")
+        XCTAssertTrue(robot.value(of: "month.day.\(UITestDate.today)").contains("selected"))
+        robot.tap("month.pager.next")
+        robot.waitFor(id: "month.day.2026-04-01")
+        robot.tap("month.pager.prev")
+        robot.waitFor(id: "month.day.\(UITestDate.today)")
+        XCTAssertTrue(robot.value(of: "month.day.\(UITestDate.today)").contains("selected"))
+        robot.tap("cycle.pager.today")
+        XCTAssertTrue(robot.value(of: "month.day.\(UITestDate.today)").contains("selected"))
+    }
+
+    func testMoreRemindersControls() {
+        robot.launch()
+        robot.tap("tab.more")
+        robot.waitFor(id: "more.reminders")
+        robot.tap("more.reminders")
+        robot.waitFor(id: "more.reminderSound")
     }
 
     /// Springboard banners are unreliable in XCTest. `-remindIn` fires the next
