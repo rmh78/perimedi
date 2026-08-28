@@ -25,6 +25,9 @@ udid_named() {
   xcrun simctl list devices available | awk -F '[()]' -v n="$name (" 'index($0, n) {print $2; exit}'
 }
 
+step "gotchas"
+python3 "$ROOT/ios/scripts/check-gotchas.py"
+
 step "feature map"
 python3 "$ROOT/ios/scripts/check-feature-map.py"
 
