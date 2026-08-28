@@ -14,3 +14,5 @@ Index of user-facing surfaces. IDs are from `ios/PeriMedi/App/A11yID.swift` unle
 | Backup / sample | [backup.md](backup.md) | More, Backup section (no IDs yet) |
 
 Canonical ID source: `ios/PeriMedi/App/A11yID.swift`. Tests: `ios/PeriMediUITests/`.
+
+`python3 ios/scripts/check-ui-coverage.py` reports which of these surfaces UI tests never drive. Advisory today (does not fail CI). `tab.*` does not count as coverage. Backup is blocked until it has IDs.

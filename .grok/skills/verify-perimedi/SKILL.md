@@ -17,7 +17,7 @@ The doctor is one command:
 bash ios/scripts/verify.sh
 ```
 
-That sources `ios/env.sh`, checks feature-map IDs, runs domain tests, uninstalls leftover PeriMedi on iPhone 17e, runs UI tests, and uninstalls again on success. It refuses iPhone 17.
+That sources `ios/env.sh`, checks feature-map IDs, reports UI-test coverage (advisory), runs domain tests, uninstalls leftover PeriMedi on iPhone 17e, runs UI tests, and uninstalls again on success. It refuses iPhone 17.
 
 Pieces, if you need one step:
 
@@ -48,6 +48,7 @@ Run `bash ios/scripts/verify.sh`. That is the doctor. Do not assemble the steps 
 - The script sources `ios/env.sh` (needed when `xcode-select -p` is Command Line Tools).
 - It uninstalls leftover `app.perimedi.ios` on 17e before UI tests, and again after a pass. Failed tests leave the app so you can inspect.
 - `python3 ios/scripts/check-feature-map.py` must pass. It fails if an `A11yID` is not named in backticks under `features/`. Update the matching feature file in the same commit as the ID or surface change.
+- `python3 ios/scripts/check-ui-coverage.py` is advisory. It reports surfaces the UI tests never drive. Waiting for `tab.more` is not coverage. More is uncovered; backup is blocked until IDs exist. Pass `--fail-uncovered` later, after journeys exist.
 
 ## Drive
 
