@@ -50,6 +50,7 @@ struct MonthView: View {
                 Image(systemName: "chevron.left").font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.blush700).frame(width: 32, height: 32)
             }
             .accessibilityLabel(app.t("month.prevMonth"))
+            .accessibilityIdentifier(A11yID.monthPagerPrev)
             .buttonStyle(.plain)
             Button {
                 monthAnchor = DateKeys.addMonths(monthAnchor, 1)
@@ -57,6 +58,7 @@ struct MonthView: View {
                 Image(systemName: "chevron.right").font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.blush700).frame(width: 32, height: 32)
             }
             .accessibilityLabel(app.t("month.nextMonth"))
+            .accessibilityIdentifier(A11yID.monthPagerNext)
             .buttonStyle(.plain)
             Text(monthTitle)
                 .font(.subheadline.weight(.semibold))
