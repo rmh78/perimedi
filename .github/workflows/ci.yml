@@ -14,6 +14,8 @@ jobs:
         run: python3 ios/scripts/check-feature-map.py
       - name: Feature map vs UITest coverage (advisory)
         run: python3 ios/scripts/check-ui-coverage.py
+      - name: Feature sheets live under Cycle/Month/More
+        run: python3 ios/scripts/check-feature-layout.py
 
   domain:
     runs-on: macos-latest
