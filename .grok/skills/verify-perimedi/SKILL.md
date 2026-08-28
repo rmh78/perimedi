@@ -35,6 +35,7 @@ Frozen test dates in `UITestDate`: today `2026-03-15`, yesterday `2026-03-14`, p
 - Watch **iPhone 17e** in Simulator (Window → iPhone 17e). iPhone 17 is a different device.
 - If `xcode-select -p` is Command Line Tools: `source ios/env.sh` or point it at Xcode.app.
 - After any UI change: rebuild, **uninstall**, reinstall, launch on 17e so the Simulator is not a leftover install.
+- `python3 ios/scripts/check-feature-map.py` must pass. It fails if an `A11yID` is not named in backticks under `features/`. Update the matching feature file in the same commit as the ID or surface change.
 
 ## Drive
 
