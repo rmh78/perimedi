@@ -1,5 +1,4 @@
 import XCTest
-import UIKit
 
 enum UITestDate {
     static let today = "2026-03-15"
@@ -165,7 +164,8 @@ struct AppRobot {
     }
 
     /// Simulator `typeText` can drop characters when XCTest waits on interrupting
-    /// elements (CI: `med.name` became "Es" instead of "Estrogen"). Retry, then paste.
+    /// elements (CI: `med.name` became "Es" instead of "Estrogen"). Retry on the
+    /// same keyboard path. Do not paste: that is not how a user types.
     func clearAndType(_ id: String, _ text: String, file: StaticString = #filePath, line: UInt = #line) {
         waitFor(id: id, file: file, line: line)
         let field = element(id)
@@ -189,29 +189,11 @@ struct AppRobot {
             field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count + 1))
         }
 
-        func paste() {
-            UIPasteboard.general.string = text
-            field.doubleTap()
-            let item = app.menuItems["Paste"]
-            if spin(timeout: 1.5) { item.exists } {
-                item.tap()
-                return
-            }
-            field.press(forDuration: 1.0)
-            if spin(timeout: 1.5) { item.exists } {
-                item.tap()
-            }
-        }
-
-        for attempt in 0..<4 {
+        for _ in 0..<4 {
             if shown() == text { break }
             focus()
             clear()
-            if attempt >= 2 {
-                paste()
-            } else {
-                field.typeText(text)
-            }
+            field.typeText(text)
             if spin(timeout: 1) { shown() == text } { break }
         }
 
