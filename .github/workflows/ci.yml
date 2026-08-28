@@ -22,3 +22,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Domain tests
         run: swift test --package-path ios
+
+  ui:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: UI tests
+        run: bash ios/scripts/verify.sh
