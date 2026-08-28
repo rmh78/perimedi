@@ -7,7 +7,7 @@ description: Use this when driving or checking PeriMedi UI from an agent. Maps e
 
 PeriMedi is a native iOS app. Proof is XCUITest on an iPhone Simulator (local default **iPhone 17e**), not markdown. Identifiers live in `ios/PeriMedi/App/A11yID.swift`. The harness is `ios/PeriMediUITests/AppRobot.swift`. Do not invent IDs.
 
-Read `features/` for the surface you are about to touch. Then drive it.
+Read `.grok/gotchas.md` first (40-line budget of surprises). Then read `features/` for the surface you are about to touch. Then drive it.
 
 ## Launch
 
@@ -17,7 +17,7 @@ The doctor is one command:
 bash ios/scripts/verify.sh
 ```
 
-That sources `ios/env.sh`, checks feature-map IDs, checks feature layout, checks domain boundary, fails UI-test coverage if a feature-map surface is uncovered, runs domain tests, uninstalls leftover PeriMedi, runs UI tests, and uninstalls again on success. It prefers iPhone 17e, then iPhone 17. Override with `SIM_DEVICE` or `SIM_UDID`. Before it boots the Simulator, it turns Connect Hardware Keyboard off for that UDID so `typeText` hits the software keyboard.
+That sources `ios/env.sh`, checks the gotchas line budget, checks feature-map IDs, checks feature layout, checks domain boundary, fails UI-test coverage if a feature-map surface is uncovered, runs domain tests, uninstalls leftover PeriMedi, runs UI tests, and uninstalls again on success. It prefers iPhone 17e, then iPhone 17. Override with `SIM_DEVICE` or `SIM_UDID`. Before it boots the Simulator, it turns Connect Hardware Keyboard off for that UDID so `typeText` hits the software keyboard.
 
 Pieces, if you need one step:
 
@@ -48,6 +48,7 @@ Run `bash ios/scripts/verify.sh`. That is the doctor. Do not assemble the steps 
 - The script sources `ios/env.sh` (needed when `xcode-select -p` is Command Line Tools).
 - It uninstalls leftover `app.perimedi.ios` before UI tests, and again after a pass. Failed tests leave the app so you can inspect.
 - Before boot it turns Simulator Connect Hardware Keyboard off for that UDID. `typeText` needs the software keyboard (the phone path).
+- `python3 ios/scripts/check-gotchas.py` must pass. `.grok/gotchas.md` stays at or under 40 lines. Add a surprise, drop a stale line.
 - `python3 ios/scripts/check-feature-map.py` must pass. It fails if an `A11yID` is not named in backticks under `features/` . Update the matching feature file in the same commit as the ID or surface change.
 - `python3 ios/scripts/check-feature-layout.py` must pass. Feature sheets live under `Features/Cycle`, `Features/Month`, or `Features/More`. `DialogChrome` stays in `Features/Sheets/`.
 - `python3 ios/scripts/check-domain-boundary.py` must pass. Domain owns schedule/cycle/therapy expansion; `Store.setDoseStatus` is the only dose-log writer.
