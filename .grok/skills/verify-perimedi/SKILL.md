@@ -11,6 +11,16 @@ Read `features/` for the surface you are about to touch. Then drive it.
 
 ## Launch
 
+The doctor is one command:
+
+```bash
+bash ios/scripts/verify.sh
+```
+
+That sources `ios/env.sh`, checks feature-map IDs, runs domain tests, uninstalls leftover PeriMedi on iPhone 17e, runs UI tests, and uninstalls again on success. It refuses iPhone 17.
+
+Pieces, if you need one step:
+
 Domain tests (no Simulator):
 
 ```bash
@@ -32,9 +42,11 @@ Frozen test dates in `UITestDate`: today `2026-03-15`, yesterday `2026-03-14`, p
 
 ## Doctor
 
+Run `bash ios/scripts/verify.sh`. That is the doctor. Do not assemble the steps by hand unless you need a single piece.
+
 - Watch **iPhone 17e** in Simulator (Window → iPhone 17e). iPhone 17 is a different device.
-- If `xcode-select -p` is Command Line Tools: `source ios/env.sh` or point it at Xcode.app.
-- After any UI change: rebuild, **uninstall**, reinstall, launch on 17e so the Simulator is not a leftover install.
+- The script sources `ios/env.sh` (needed when `xcode-select -p` is Command Line Tools).
+- It uninstalls leftover `app.perimedi.ios` on 17e before UI tests, and again after a pass. Failed tests leave the app so you can inspect.
 - `python3 ios/scripts/check-feature-map.py` must pass. It fails if an `A11yID` is not named in backticks under `features/`. Update the matching feature file in the same commit as the ID or surface change.
 
 ## Drive
@@ -48,13 +60,13 @@ Frozen test dates in `UITestDate`: today `2026-03-15`, yesterday `2026-03-14`, p
 
 ## Evidence
 
-A pass is a green `xcodebuild test` on iPhone 17e, or a screenshot of the 17e Simulator after uninstall/reinstall. Domain `swift test --package-path ios` is not UI proof.
+A pass is `verify: ok` from `bash ios/scripts/verify.sh` on a Mac with Xcode and iPhone 17e. Domain `swift test --package-path ios` alone is not UI proof. A screenshot of the 17e Simulator after uninstall/reinstall is extra, not a substitute for the doctor.
 
 Existing journeys: `FirstUseJourneyTests.testFirstUseJourney` and `testDoseReminderTaken`.
 
 ## Cleanup
 
-Do not commit `ios/DerivedData`, `ios/.build`, or secrets. Leave the Simulator app uninstalled after UI work if you changed the binary.
+Do not commit `ios/DerivedData`, `ios/.build`, or secrets. The doctor uninstalls the Simulator app after a pass. If you changed the binary without the doctor, uninstall leftover PeriMedi on 17e yourself.
 
 ## Product rails
 

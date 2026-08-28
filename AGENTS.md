@@ -42,6 +42,16 @@ Schedule expansion: `ios/Sources/PeriMediDomain`.
 
 ## Commands
 
+The doctor is one script. Run it after feature work instead of picking among the pieces:
+
+```bash
+bash ios/scripts/verify.sh
+```
+
+It sources `ios/env.sh`, checks feature-map IDs, runs domain tests, uninstalls leftover PeriMedi on **iPhone 17e**, runs `xcodebuild test`, then uninstalls again on success. It refuses iPhone 17. It needs macOS + Xcode; anywhere else it still runs the ID check, then exits.
+
+Pieces, if you need one step:
+
 ```bash
 # Domain tests (no Simulator)
 source ios/env.sh    # if xcode-select still points at Command Line Tools
@@ -65,7 +75,7 @@ UI tests are one first-use journey (`FirstUseJourneyTests`) plus a dose-reminder
 
 `JourneyScript` / `ios/scripts/shot-journey.sh` remain optional visual capture (seeded store snapshots). They are not the interaction proof.
 
-If `xcode-select -p` is Command Line Tools, either `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer` or `source ios/env.sh` (`DEVELOPER_DIR`).
+If `xcode-select -p` is Command Line Tools, either `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer` or `source ios/env.sh` (`DEVELOPER_DIR`). The doctor sources `ios/env.sh` for you.
 
 Simulator signing does not require a paid team. Add an Apple ID in Xcode → Accounts later for device / production CloudKit. See `ios/docs/icloud-device-switch.md`.
 
@@ -84,8 +94,8 @@ Simulator signing does not require a paid team. Add an Apple ID in Xcode → Acc
 2. Keep med lane labels and dose tracks row-aligned on Cycle.
 3. Period UI: label + background only (no duplicate red bar).
 4. No menstrual “phase” labels (follicular/luteal etc.).
-5. After structural changes: `swift test --package-path ios` and an iOS Simulator build; if UI behavior changed, also `xcodebuild test` on iPhone 17e.
-6. After any iOS UI change: rebuild, **uninstall**, reinstall, and launch on **iPhone 17e** so the Simulator is not showing a leftover install. Do not leave a stale app on the device.
+5. After structural or UI changes: `bash ios/scripts/verify.sh`.
+6. If you skip the doctor and launch by hand: rebuild, **uninstall**, reinstall, and launch on **iPhone 17e** so the Simulator is not showing a leftover install.
 7. Keep the feature map current in the same commit (see Feature map below).
 
 ## Feature map (for agents)
@@ -94,7 +104,7 @@ When driving or checking a screen, read `.grok/skills/verify-perimedi/` first. `
 
 Soft: same commit as the feature, like OpenSpec. A new user-facing surface gets a new file under `.grok/skills/verify-perimedi/features/`. A change to how a user gets there, what visible state proves it worked, or a gotcha updates that file even when no `A11yID` was added (backup has no IDs; the file exists to say so). CI cannot see those.
 
-Hard: `python3 ios/scripts/check-feature-map.py` must pass. CI runs it on every PR. A new dotted string in `ios/PeriMedi/App/A11yID.swift` that is not named in backticks under `features/` fails the check.
+Hard: `python3 ios/scripts/check-feature-map.py` must pass (the doctor runs it). CI runs it on every PR. A new dotted string in `ios/PeriMedi/App/A11yID.swift` that is not named in backticks under `features/` fails the check.
 
 ## OpenSpec
 
