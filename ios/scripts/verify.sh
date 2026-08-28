@@ -20,6 +20,9 @@ fail() { printf 'verify: %s\n' "$*" >&2; exit 1; }
 step "feature map"
 python3 "$ROOT/ios/scripts/check-feature-map.py"
 
+step "UI test coverage"
+python3 "$ROOT/ios/scripts/check-ui-coverage.py"
+
 if [[ "$(uname -s)" != "Darwin" ]]; then
   fail "domain and UI tests need macOS with Xcode and an iPhone 17e Simulator"
 fi
