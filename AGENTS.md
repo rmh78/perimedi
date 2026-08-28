@@ -56,6 +56,9 @@ xcodebuild -project ios/PeriMedi.xcodeproj -scheme PeriMedi \
 xcodebuild test -project ios/PeriMedi.xcodeproj -scheme PeriMedi \
   -destination 'platform=iOS Simulator,name=iPhone 17e' \
   -derivedDataPath ios/DerivedData CODE_SIGNING_ALLOWED=NO
+
+# Feature map coverage (no Simulator)
+python3 ios/scripts/check-feature-map.py
 ```
 
 UI tests are one first-use journey (`FirstUseJourneyTests`) plus a dose-reminder journey. They launch with `-en -clear -today=2026-03-15` and tap real controls. They never pass `-journeyStep` or `-loadSample`. Watch **iPhone 17e** in Simulator (Window → iPhone 17e); iPhone 17 is a different device.
@@ -83,10 +86,13 @@ Simulator signing does not require a paid team. Add an Apple ID in Xcode → Acc
 4. No menstrual “phase” labels (follicular/luteal etc.).
 5. After structural changes: `swift test --package-path ios` and an iOS Simulator build; if UI behavior changed, also `xcodebuild test` on iPhone 17e.
 6. After any iOS UI change: rebuild, **uninstall**, reinstall, and launch on **iPhone 17e** so the Simulator is not showing a leftover install. Do not leave a stale app on the device.
+7. If you add or change an `A11yID` or a user-facing surface, update `.grok/skills/verify-perimedi/features/` in the same commit (new IDs in backticks). `python3 ios/scripts/check-feature-map.py` must pass.
 
 ## Feature map (for agents)
 
 When driving or checking a screen, read `.grok/skills/verify-perimedi/` first. `features/` maps each surface to real `A11yID` strings and `AppRobot`. Do not invent identifiers.
+
+CI runs `python3 ios/scripts/check-feature-map.py` on every PR. A new dotted string in `ios/PeriMedi/App/A11yID.swift` that is not named in backticks under `features/` fails the check.
 
 ## OpenSpec
 
