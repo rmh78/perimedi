@@ -20,6 +20,9 @@ fail() { printf 'verify: %s\n' "$*" >&2; exit 1; }
 step "feature map"
 python3 "$ROOT/ios/scripts/check-feature-map.py"
 
+step "feature layout"
+python3 "$ROOT/ios/scripts/check-feature-layout.py"
+
 step "UI test coverage"
 python3 "$ROOT/ios/scripts/check-ui-coverage.py"
 
