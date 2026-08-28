@@ -1,4 +1,4 @@
-name: feature-map
+name: ci
 
 on:
   pull_request:
@@ -12,3 +12,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Every A11yID is named in the feature map
         run: python3 ios/scripts/check-feature-map.py
+
+  domain:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Domain tests
+        run: swift test --package-path ios

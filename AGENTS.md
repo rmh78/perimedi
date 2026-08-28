@@ -50,6 +50,8 @@ bash ios/scripts/verify.sh
 
 It sources `ios/env.sh`, checks feature-map IDs, runs domain tests, uninstalls leftover PeriMedi on **iPhone 17e**, runs `xcodebuild test`, then uninstalls again on success. It refuses iPhone 17. It needs macOS + Xcode; anywhere else it still runs the ID check, then exits.
 
+CI is thinner. Every PR runs `ids` on Ubuntu (`python3 ios/scripts/check-feature-map.py`) and `domain` on macOS (`swift test --package-path ios`). A green PR is not UI proof. After UI changes, run the doctor on a Mac with iPhone 17e.
+
 Pieces, if you need one step:
 
 ```bash
@@ -104,7 +106,7 @@ When driving or checking a screen, read `.grok/skills/verify-perimedi/` first. `
 
 Soft: same commit as the feature, like OpenSpec. A new user-facing surface gets a new file under `.grok/skills/verify-perimedi/features/`. A change to how a user gets there, what visible state proves it worked, or a gotcha updates that file even when no `A11yID` was added (backup has no IDs; the file exists to say so). CI cannot see those.
 
-Hard: `python3 ios/scripts/check-feature-map.py` must pass (the doctor runs it). CI runs it on every PR. A new dotted string in `ios/PeriMedi/App/A11yID.swift` that is not named in backticks under `features/` fails the check.
+Hard: `python3 ios/scripts/check-feature-map.py` must pass (the doctor runs it). CI job `ids` runs it on every PR. CI job `domain` runs `swift test --package-path ios` on macOS. UI tests are not in CI.
 
 ## OpenSpec
 
