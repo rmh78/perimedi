@@ -40,4 +40,5 @@ Open the app, or tap Cycle in the bottom bar. Sheets for med / period / symptom 
 - IDs are language-independent; chrome copy is en/de. Tests launch `-en`.
 - `A11yID.chipScore(_:)` builds `cycle.chip.score.{id}`. Keep the `cycle.chip.score.` literal in this map so check-feature-map still sees it.
 - Tapping a lane toggles dose status. Editing is the separate `.edit` control.
+- Cycle windows and planned doses come from domain (`CycleLogic` / `ScheduleLogic` / `DoseRangeLogic`); taken/not-taken is `Store.setDoseStatus`. Do not reimplement that math in the app.
 - Keep med lane labels and dose tracks row-aligned. Period UI is label + background only (no duplicate red bar). No follicular/luteal labels.
