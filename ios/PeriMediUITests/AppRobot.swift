@@ -163,9 +163,9 @@ struct AppRobot {
         return f.date(from: key)
     }
 
-    /// Simulator `typeText` can drop characters when XCTest waits on interrupting
-    /// elements (CI: `med.name` became "Es" instead of "Estrogen"). Retry on the
-    /// same keyboard path. Do not paste: that is not how a user types.
+    /// `typeText` needs software-keyboard focus (Apple). The doctor turns
+    /// Simulator hardware keyboard off before boot so this matches a phone.
+    /// Do not paste: that is not how a user types.
     func clearAndType(_ id: String, _ text: String, file: StaticString = #filePath, line: UInt = #line) {
         waitFor(id: id, file: file, line: line)
         let field = element(id)
@@ -175,32 +175,25 @@ struct AppRobot {
                 .replacingOccurrences(of: "YYYY-MM-DD", with: "")
         }
 
-        func focus() {
-            if !field.isHittable {
-                dismissKeyboard()
-            }
-            field.tap()
-            _ = spin(timeout: 0.6) { app.keyboards.firstMatch.exists }
+        if !field.isHittable {
+            dismissKeyboard()
         }
+        field.tap()
+        XCTAssertTrue(
+            spin(timeout: 2) { app.keyboards.firstMatch.exists },
+            "keyboard for \(id)",
+            file: file,
+            line: line
+        )
 
-        func clear() {
-            let current = shown()
-            guard !current.isEmpty else { return }
+        let current = shown()
+        if !current.isEmpty {
             field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count + 1))
         }
-
-        for _ in 0..<4 {
-            if shown() == text { break }
-            focus()
-            clear()
-            field.typeText(text)
-            if spin(timeout: 1) { shown() == text } { break }
-        }
-
-        let written = shown()
+        field.typeText(text)
         XCTAssertTrue(
-            written == text,
-            "\(id) is \(written.debugDescription), wanted \(text)",
+            spin(timeout: 2) { shown() == text },
+            "\(id) is \(shown().debugDescription), wanted \(text)",
             file: file,
             line: line
         )
