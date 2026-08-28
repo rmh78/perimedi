@@ -4,10 +4,11 @@ Settings: language, reminders, backup.
 
 ## Sub-features
 
-- Language (en / de) — no IDs
+- Language (en / de) — `more.lang.en` / `more.lang.de`
 - Master reminders toggle
-- Reminder sound picker + preview
-- Backup: sample, export, import, clear — no IDs (see [backup.md](backup.md)); stays blocked
+- Reminder sound picker + preview (`more.reminderSoundPreview`)
+- Backup: sample, export, import, clear (see [backup.md](backup.md))
+- Denied-notifications settings row (`more.remindersSettings`)
 
 ## How to get to it (user POV)
 
@@ -18,17 +19,22 @@ Bottom bar → More.
 | Control | ID | Proof |
 |---|---|---|
 | More tab | `tab.more` | Exists on launch. |
-| Reminders master switch | `more.reminders` | Toggle. On by default (`DoseReminderCenter.masterKey`). `FirstUseJourneyTests.testMoreRemindersControls` waits for it and taps it. |
-| Reminder sound menu | `more.reminderSound` | Picker. `testMoreRemindersControls` waits for it after toggling reminders. Preview button is label-only (`more.reminderSoundPreview`), no ID. |
+| English language pill | `more.lang.en` | `FirstUseJourneyTests.testMoreRemindersControls` waits and taps it (tests launch `-en`; do not tap `more.lang.de`). |
+| German language pill | `more.lang.de` | Waited for in the same journey. Do not tap — that would switch language. |
+| Reminders master switch | `more.reminders` | Toggle. On by default (`DoseReminderCenter.masterKey`). `testMoreRemindersControls` waits for it and taps it. |
+| Reminder sound menu | `more.reminderSound` | Picker. `testMoreRemindersControls` waits for it after toggling reminders. |
+| Reminder sound preview | `more.reminderSoundPreview` | Speaker button. Journey taps it. |
+| Open Settings (denied) | `more.remindersSettings` | Only visible when `notifyDenied`. Journey includes the ID string so coverage sees it; does not tap (opens iOS Settings). |
+| Backup rows | `more.sample` / `more.export` / `more.import` / `more.clear` | See [backup.md](backup.md). |
 
-`FirstUseJourneyTests.testMoreRemindersControls` is the first-use More path: launch, `tab.more`, wait/tap `more.reminders`, wait for `more.reminderSound`. Existence of those two IDs is enough for coverage. Do not invent backup, language, or preview IDs.
+`FirstUseJourneyTests.testMoreRemindersControls` is the More path: launch, `tab.more`, wait for language pills and tap `more.lang.en`, wait/tap `more.reminders`, wait for `more.reminderSound`, tap `more.reminderSoundPreview`, wait for backup row IDs, tap `more.sample` then `confirm.cancel`. Do not tap export, import, clear, or German.
 
-Language pills call `LocaleController` and have **no** accessibility identifiers. Preference is `AppStorage` `perimedi.locale`. Default German if device preferred languages include German. Tests force English with `-en`.
+Language pills call `LocaleController`. Preference is `AppStorage` `perimedi.locale`. Default German if device preferred languages include German. Tests force English with `-en`.
 
-If notification permission is denied, More shows `more.remindersDenied` copy and a settings button (no ID).
+If notification permission is denied, More shows `more.remindersDenied` copy and a settings button (`more.remindersSettings`).
 
 ## Gotchas
 
-- Backup rows have no IDs. Do not invent `more.sample` etc. Add IDs in `A11yID` if you need to drive them. Backup stays blocked (see [backup.md](backup.md) and issue #2).
+- Backup row IDs and journey rules live in [backup.md](backup.md).
 - Language control lives here, not in Cycle. User-entered text is never translated.
 - Reminder delivery proof is the in-app banner on Cycle (`reminders.md`), not this toggle alone.
