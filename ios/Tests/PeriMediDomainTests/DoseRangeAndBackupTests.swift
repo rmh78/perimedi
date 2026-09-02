@@ -81,6 +81,8 @@ final class DoseRangeAndBackupTests: XCTestCase {
         XCTAssertEqual(again.medications.count, 5)
         XCTAssertEqual(again.periods.count, 4)
         XCTAssertEqual(again.cycleSettings.averageCycleLength, 30)
+        XCTAssertEqual(again.medicationChanges.count, 1)
+        XCTAssertEqual(again.medicationChanges.first?.field, .dose)
 
         let fixtureURL = Bundle.module.url(forResource: "export-v1", withExtension: "json", subdirectory: "Fixtures")
         XCTAssertNotNil(fixtureURL, "export-v1.json fixture must ship with tests")

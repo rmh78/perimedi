@@ -10,6 +10,7 @@ Home. Bottom tab. Default after launch.
 - Med lanes (name slug) with status and edit
 - Day strip under the plot
 - Period chip and symptom-score chips on the plot
+- Effect sentence (cycle-to-cycle comparison; missing scores are not 0)
 
 ## How to get to it (user POV)
 
@@ -32,6 +33,7 @@ Open the app, or tap Cycle in the bottom bar. Sheets for med / period / symptom 
 | Lane status | `cycle.lane.{slug}.status` | Tap the lane to mark taken. Values: `taken`, `not-taken`. |
 | Lane edit | `cycle.lane.{slug}.edit` | Opens the medication sheet for that med. |
 | Strip day | `cycle.strip.day.{yyyy-MM-dd}` | Period days include `period` in the value. |
+| Effect sentence | `cycle.effect` | After two logged cycles with overlapping scores: value lists `id:down` / `id:worse`. One cycle: `no-previous`. Tracking off or no cycle: control absent. |
 
 `AppRobot.launch()` waits for `tab.cycle` and `cycle.action.med`.
 

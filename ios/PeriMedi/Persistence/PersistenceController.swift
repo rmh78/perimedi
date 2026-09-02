@@ -12,6 +12,7 @@ enum PersistenceController {
         SDSymptomScore.self,
         SDPeriod.self,
         SDCycleSettings.self,
+        SDMedicationChange.self,
     ])
 
     /// Local SwiftData always works. CloudKit is only enabled when the process

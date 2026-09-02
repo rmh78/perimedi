@@ -22,6 +22,7 @@ struct MedicationSheet: View {
     @State private var startDate = DateKeys.todayKey()
     @State private var endDate = ""
     @State private var remindersEnabled = true
+    @State private var effectiveDate = DateKeys.todayKey()
     @State private var error: String?
 
     enum Mode: String, CaseIterable { case everyDay, specificDays, cyclic }
@@ -127,6 +128,15 @@ struct MedicationSheet: View {
                 }
                 if mode == .cyclic {
                     cyclicBlock
+                }
+
+                if showsSinceDate {
+                    VStack(alignment: .leading, spacing: 6) {
+                        FieldLabel(text: app.t("med.since"))
+                        SoftField {
+                            DateKeyPicker(key: $effectiveDate, identifier: A11yID.medSince)
+                        }
+                    }
                 }
 
                 if let error {
@@ -297,6 +307,7 @@ struct MedicationSheet: View {
 
     private func hydrate() {
         guard let medication else { return }
+        effectiveDate = DateKeys.todayKey()
         name = medication.name
         form = medication.form
         doseLabel = medication.doseLabel
@@ -317,6 +328,61 @@ struct MedicationSheet: View {
         }
     }
 
+    private var showsSinceDate: Bool {
+        !pendingChanges(loggedAt: "").isEmpty
+    }
+
+    private func pendingChanges(loggedAt: String) -> [MedicationChange] {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedDose = doseLabel.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedDose.isEmpty else { return [] }
+        let cleanedTimes = TherapyCycleLogic.normalizeTimes(times, fallback: "08:00")
+        guard !cleanedTimes.isEmpty else { return [] }
+        let medId = medication?.id ?? "new"
+        let med = Medication(
+            id: medId,
+            name: trimmedName.isEmpty ? medId : trimmedName,
+            form: form,
+            doseLabel: trimmedDose,
+            color: color,
+            createdAt: medication?.createdAt ?? "",
+            remindersEnabled: remindersEnabled
+        )
+        return MedicationChangeLog.events(
+            previousMed: medication,
+            newMed: med,
+            previousSchedule: medication.flatMap { existing in
+                store.schedules.first { $0.medicationId == existing.id }
+            },
+            newSchedule: makeSchedule(medicationId: medId, times: cleanedTimes),
+            effectiveDate: effectiveDate,
+            loggedAt: loggedAt
+        )
+    }
+
+    private func makeSchedule(medicationId: String, times cleanedTimes: [String], newId: String = "draft") -> Schedule {
+        var therapy: TherapyCycle?
+        if mode == .cyclic {
+            therapy = TherapyCycleLogic.normalizeTherapyCycle(
+                TherapyCycle(enabled: true, mode: .on_off_days, anchorDate: startDate, onDays: onDays, offDays: offDays),
+                fallbackAnchor: startDate
+            )
+        }
+        let existing = store.schedules.first(where: { $0.medicationId == medicationId })
+        return Schedule(
+            id: existing?.id ?? newId,
+            medicationId: medicationId,
+            daysOfWeek: mode == .specificDays ? daysOfWeek.sorted() : [],
+            timeOfDay: cleanedTimes[0],
+            times: cleanedTimes,
+            active: true,
+            startDate: startDate.isEmpty ? nil : startDate,
+            endDate: endDate.isEmpty ? nil : endDate,
+            cycleRule: .none,
+            therapyCycle: therapy
+        )
+    }
+
     private func save() {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedDose = doseLabel.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -329,41 +395,32 @@ struct MedicationSheet: View {
             error = app.t("med.errorTime")
             return
         }
+        let loggedAt = ISO8601DateFormatter().string(from: Date())
         let med = Medication(
             id: medication?.id ?? createId(),
             name: trimmedName,
             form: form,
             doseLabel: trimmedDose,
             color: color,
-            createdAt: medication?.createdAt ?? ISO8601DateFormatter().string(from: Date()),
+            createdAt: medication?.createdAt ?? loggedAt,
             remindersEnabled: remindersEnabled
+        )
+        let previousSchedule = store.schedules.first(where: { $0.medicationId == med.id })
+        let schedule = makeSchedule(medicationId: med.id, times: cleanedTimes, newId: createId())
+        let changes = MedicationChangeLog.events(
+            previousMed: medication,
+            newMed: med,
+            previousSchedule: previousSchedule,
+            newSchedule: schedule,
+            effectiveDate: effectiveDate,
+            loggedAt: loggedAt
         )
         store.upsertMedication(med)
         if remindersEnabled {
             Task { await DoseReminderCenter.shared.requestAuthorizationIfNeeded() }
         }
-        var therapy: TherapyCycle?
-        if mode == .cyclic {
-            therapy = TherapyCycleLogic.normalizeTherapyCycle(
-                TherapyCycle(enabled: true, mode: .on_off_days, anchorDate: startDate, onDays: onDays, offDays: offDays),
-                fallbackAnchor: startDate
-            )
-        }
-        let existing = store.schedules.first(where: { $0.medicationId == med.id })
-        store.upsertSchedule(
-            Schedule(
-                id: existing?.id ?? createId(),
-                medicationId: med.id,
-                daysOfWeek: mode == .specificDays ? daysOfWeek.sorted() : [],
-                timeOfDay: cleanedTimes[0],
-                times: cleanedTimes,
-                active: true,
-                startDate: startDate.isEmpty ? nil : startDate,
-                endDate: endDate.isEmpty ? nil : endDate,
-                cycleRule: .none,
-                therapyCycle: therapy
-            )
-        )
+        store.upsertSchedule(schedule)
+        store.appendMedicationChanges(changes)
         dialogClose()
         dismiss()
     }

@@ -259,6 +259,44 @@ final class SDCycleSettings {
     }
 }
 
+@Model
+final class SDMedicationChange {
+    var id: String = ""
+    var medicationId: String = ""
+    var nameSnapshot: String = ""
+    var fieldRaw: String = MedicationChangeField.dose.rawValue
+    var previousValue: String = ""
+    var newValue: String = ""
+    var effectiveDate: String = ""
+    var loggedAt: String = ""
+
+    init() {}
+
+    func toDomain() -> MedicationChange {
+        MedicationChange(
+            id: id,
+            medicationId: medicationId,
+            nameSnapshot: nameSnapshot,
+            field: MedicationChangeField(rawValue: fieldRaw) ?? .dose,
+            previousValue: previousValue,
+            newValue: newValue,
+            effectiveDate: effectiveDate,
+            loggedAt: loggedAt
+        )
+    }
+
+    func apply(_ c: MedicationChange) {
+        id = c.id
+        medicationId = c.medicationId
+        nameSnapshot = c.nameSnapshot
+        fieldRaw = c.field.rawValue
+        previousValue = c.previousValue
+        newValue = c.newValue
+        effectiveDate = c.effectiveDate
+        loggedAt = c.loggedAt
+    }
+}
+
 private func stringJSON<T: Encodable>(_ value: T) -> String {
     let data = (try? JSONEncoder().encode(value)) ?? Data("[]".utf8)
     return String(data: data, encoding: .utf8) ?? "[]"

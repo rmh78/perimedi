@@ -30,6 +30,7 @@ enum A11yID {
     static let emptyMeds = "cycle.empty.meds"
     static let intro = "cycle.intro"
     static let chipPeriod = "cycle.chip.period"
+    static let cycleEffect = "cycle.effect"
 
     static let sheetMed = "sheet.med"
     static let sheetPeriod = "sheet.period"
@@ -44,6 +45,7 @@ enum A11yID {
     static let medModeCyclic = "med.mode.cyclic"
     static let medPreset = "med.preset"
     static let medStart = "med.start"
+    static let medSince = "med.since"
     static let medSave = "med.save"
     static let medDelete = "med.delete"
     static let medRemind = "med.remind"

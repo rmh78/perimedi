@@ -10,6 +10,7 @@ struct StoreSnapshot: Equatable {
     var symptomScores: [SymptomScore] = []
     var periods: [Period] = []
     var settings: CycleSettings = .default
+    var medicationChanges: [MedicationChange] = []
 }
 
 @MainActor
@@ -24,6 +25,7 @@ final class Store: ObservableObject {
     var symptomScores: [SymptomScore] { snapshot.symptomScores }
     var periods: [Period] { snapshot.periods }
     var settings: CycleSettings { snapshot.settings }
+    var medicationChanges: [MedicationChange] { snapshot.medicationChanges }
 
     private let context: ModelContext
     var afterChange: (() -> Void)?
@@ -49,6 +51,8 @@ final class Store: ObservableObject {
         } else {
             next.settings = .default
         }
+        next.medicationChanges = (try? context.fetch(FetchDescriptor<SDMedicationChange>()))?.map { $0.toDomain() }
+            .sorted { $0.loggedAt < $1.loggedAt } ?? []
         if next != snapshot {
             snapshot = next
         }
@@ -239,6 +243,16 @@ final class Store: ObservableObject {
         save()
     }
 
+    func appendMedicationChanges(_ changes: [MedicationChange]) {
+        guard !changes.isEmpty else { return }
+        for item in changes {
+            let row = SDMedicationChange()
+            row.apply(item)
+            context.insert(row)
+        }
+        save()
+    }
+
     func deletePeriod(id: String) {
         for row in (try? context.fetch(FetchDescriptor<SDPeriod>())) ?? [] where row.id == id {
             context.delete(row)
@@ -270,6 +284,9 @@ final class Store: ObservableObject {
         for item in payload.periods {
             let row = SDPeriod(); row.apply(item); context.insert(row)
         }
+        for item in payload.medicationChanges {
+            let row = SDMedicationChange(); row.apply(item); context.insert(row)
+        }
         let settingsRow = SDCycleSettings()
         settingsRow.apply(payload.cycleSettings)
         context.insert(settingsRow)
@@ -286,7 +303,8 @@ final class Store: ObservableObject {
             remarks: remarks,
             cycleSettings: settings,
             periods: periods,
-            symptomScores: symptomScores
+            symptomScores: symptomScores,
+            medicationChanges: medicationChanges
         )
     }
 
@@ -307,6 +325,7 @@ final class Store: ObservableObject {
         ((try? context.fetch(FetchDescriptor<SDRemark>())) ?? []).forEach { context.delete($0) }
         ((try? context.fetch(FetchDescriptor<SDSymptomScore>())) ?? []).forEach { context.delete($0) }
         ((try? context.fetch(FetchDescriptor<SDPeriod>())) ?? []).forEach { context.delete($0) }
+        ((try? context.fetch(FetchDescriptor<SDMedicationChange>())) ?? []).forEach { context.delete($0) }
         ((try? context.fetch(FetchDescriptor<SDCycleSettings>())) ?? []).forEach { context.delete($0) }
         if restoreDefaultSettings {
             let row = SDCycleSettings()
