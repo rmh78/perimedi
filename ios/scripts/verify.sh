@@ -37,7 +37,7 @@ udid_named() {
   fi
 }
 
-# The `ids` job already ran these on GitHub.
+# The `ids` and `openspec` jobs already ran these on GitHub.
 if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
   step "feature map"
   python3 "$ROOT/ios/scripts/check-feature-map.py"

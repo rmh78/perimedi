@@ -23,7 +23,12 @@ jobs:
         run: python3 ios/scripts/check-feature-layout.py
       - name: Domain owns math; persistence writes logs
         run: python3 ios/scripts/check-domain-boundary.py
-      - name: OpenSpec change deltas are in main specs
+
+  openspec:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Active OpenSpec change deltas are in main specs
         run: python3 ios/scripts/check-openspec-sync.py
 
   domain:

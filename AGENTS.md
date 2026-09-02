@@ -44,7 +44,7 @@ Archived OpenSpec changes under `openspec/changes/archive/` may mention an old w
 
 Schedule expansion: `ios/Sources/PeriMediDomain`.
 
-Domain owns schedule/cycle/therapy expansion (`ScheduleLogic` / `CycleLogic` / `TherapyCycleLogic` / `DoseRangeLogic`). The UI calls those; it must not reimplement the math. `Store` is the only dose-log writer (`setDoseStatus`). CI `ids` runs `python3 ios/scripts/check-domain-boundary.py`. Protect main is still `ids`, `domain`, and `ui`.
+Domain owns schedule/cycle/therapy expansion (`ScheduleLogic` / `CycleLogic` / `TherapyCycleLogic` / `DoseRangeLogic`). The UI calls those; it must not reimplement the math. `Store` is the only dose-log writer (`setDoseStatus`). CI `ids` runs `python3 ios/scripts/check-domain-boundary.py`. Protect main is `ids`, `openspec`, `domain`, and `ui`.
 
 ## Commands
 
@@ -54,9 +54,9 @@ The doctor is one script. Run it after feature work instead of picking among the
 bash ios/scripts/verify.sh
 ```
 
-It sources `ios/env.sh`, checks feature-map IDs, checks feature layout, checks domain boundary, fails UI-test coverage if a feature-map surface is uncovered, runs domain tests, uninstalls leftover PeriMedi, runs `xcodebuild test`, then uninstalls again on success. It prefers **iPhone 17e**, then **iPhone 17** locally. Override with `SIM_DEVICE`, `SIM_OS` (e.g. `26.5`), or `SIM_UDID`. GitHub Actions pins `macos-26` + Xcode 26.6 and requires iPhone 17e on iOS 26.5 (no fallback). It needs macOS + Xcode; anywhere else it still runs the ID, layout, domain-boundary, and coverage checks, then exits. Before it boots the Simulator, it turns Connect Hardware Keyboard off for that UDID so `typeText` hits the software keyboard (the phone path).
+It sources `ios/env.sh`, checks feature-map IDs, checks feature layout, checks domain boundary, checks OpenSpec sync, fails UI-test coverage if a feature-map surface is uncovered, runs domain tests, uninstalls leftover PeriMedi, runs `xcodebuild test`, then uninstalls again on success. It prefers **iPhone 17e**, then **iPhone 17** locally. Override with `SIM_DEVICE`, `SIM_OS` (e.g. `26.5`), or `SIM_UDID`. GitHub Actions pins `macos-26` + Xcode 26.6 and requires iPhone 17e on iOS 26.5 (no fallback). It needs macOS + Xcode; anywhere else it still runs the ID, layout, domain-boundary, OpenSpec-sync, and coverage checks, then exits. Before it boots the Simulator, it turns Connect Hardware Keyboard off for that UDID so `typeText` hits the software keyboard (the phone path).
 
-CI runs only on `pull_request` (not on push to main). A new commit on a PR cancels the previous `ci` run for that PR. Every PR runs `ids` on Ubuntu (`python3 ios/scripts/check-feature-map.py`, `python3 ios/scripts/check-feature-layout.py`, `python3 ios/scripts/check-domain-boundary.py`, then `python3 ios/scripts/check-ui-coverage.py --fail-uncovered`), `domain` on macOS 26 with Xcode 26.6 (`swift test --package-path ios`), and `ui` on the same pin (`bash ios/scripts/verify.sh`). A green `ui` job is UI proof. Protect main requires `ids`, `domain`, and `ui`. Coverage is a failing check inside `ids` (and the local doctor); do not add a separate Protect main name. On GitHub the doctor skips the Python rails and domain tests (`ids` / `domain` already ran them). A failed `ui` job uploads `ios/DerivedData/PeriMedi.xcresult`.
+CI runs only on `pull_request` (not on push to main). A new commit on a PR cancels the previous `ci` run for that PR. Every PR runs `ids` on Ubuntu (`python3 ios/scripts/check-feature-map.py`, `python3 ios/scripts/check-feature-layout.py`, `python3 ios/scripts/check-domain-boundary.py`, then `python3 ios/scripts/check-ui-coverage.py --fail-uncovered`), `openspec` on Ubuntu (`python3 ios/scripts/check-openspec-sync.py`), `domain` on macOS 26 with Xcode 26.6 (`swift test --package-path ios`), and `ui` on the same pin (`bash ios/scripts/verify.sh`). A green `ui` job is UI proof. Protect main requires `ids`, `openspec`, `domain`, and `ui`. Coverage stays inside `ids`; OpenSpec sync is the `openspec` job. On GitHub the doctor skips the Python rails and domain tests (`ids` / `openspec` / `domain` already ran them). A failed `ui` job uploads `ios/DerivedData/PeriMedi.xcresult`.
 
 Pieces, if you need one step:
 
@@ -83,6 +83,9 @@ python3 ios/scripts/check-feature-layout.py
 
 # Domain owns math; persistence writes logs (fails CI)
 python3 ios/scripts/check-domain-boundary.py
+
+# OpenSpec change deltas in main specs (fails CI)
+python3 ios/scripts/check-openspec-sync.py
 
 # Feature map vs UITest coverage (fails CI / doctor with --fail-uncovered)
 python3 ios/scripts/check-ui-coverage.py --fail-uncovered
@@ -123,9 +126,9 @@ When driving or checking a screen, read `.grok/skills/verify-perimedi/` first. `
 
 Soft: same commit as the feature, like OpenSpec. A new user-facing surface gets a new file under `.grok/skills/verify-perimedi/features/`. A change to how a user gets there, what visible state proves it worked, or a gotcha updates that file even when no `A11yID` was added. CI cannot see those.
 
-Hard: `python3 ios/scripts/check-feature-map.py` must pass (the doctor runs it). CI job `ids` runs it on every PR. `python3 ios/scripts/check-feature-layout.py` must also pass; `ids` runs it too. `python3 ios/scripts/check-domain-boundary.py` must pass; `ids` runs it too. CI job `domain` runs `swift test --package-path ios` on macOS. CI job `ui` runs the doctor (Simulator XCUITest). Protect main requires `ids`, `domain`, and `ui`.
+Hard: `python3 ios/scripts/check-feature-map.py` must pass (the doctor runs it). CI job `ids` runs it on every PR. `python3 ios/scripts/check-feature-layout.py` must also pass; `ids` runs it too. `python3 ios/scripts/check-domain-boundary.py` must pass; `ids` runs it too. CI job `openspec` runs `python3 ios/scripts/check-openspec-sync.py`. CI job `domain` runs `swift test --package-path ios` on macOS. CI job `ui` runs the doctor (Simulator XCUITest). Protect main requires `ids`, `openspec`, `domain`, and `ui`.
 
-Coverage is a failing check inside `ids` (and the doctor): `python3 ios/scripts/check-ui-coverage.py --fail-uncovered` fails when a feature-map surface with distinctive IDs is never driven by UI tests. Waiting for `tab.more` is not coverage. More and backup journeys exist (`testMoreRemindersControls`). Do not add coverage as a separate required check. Protect main stays `ids`, `domain`, and `ui`.
+Coverage is a failing check inside `ids` (and the doctor): `python3 ios/scripts/check-ui-coverage.py --fail-uncovered` fails when a feature-map surface with distinctive IDs is never driven by UI tests. Waiting for `tab.more` is not coverage. More and backup journeys exist (`testMoreRemindersControls`). Do not add coverage as a separate required check. Protect main stays `ids`, `openspec`, `domain`, and `ui`.
 
 ## OpenSpec
 
@@ -137,6 +140,6 @@ Product behavior is specified under `openspec/specs/<capability>/spec.md`.
 2. Spec shape: `## Purpose`, `## Requirements`, `### Requirement: …` (SHALL/MUST), and at least one `#### Scenario:` with WHEN/THEN. Describe observable behavior only — not component or file names.
 3. Ship OpenSpec updates **in the same commit** as the feature/fix when behavior changes. Archive/sync the change in the same PR so `openspec/specs/` has the new requirements.
 4. After editing specs: `openspec validate --specs --strict` when practical.
-5. `python3 ios/scripts/check-openspec-sync.py` must pass. CI job `ids` and the doctor run it. It fails while an active `openspec/changes/<name>/` delta is not yet in `openspec/specs/`.
+5. `python3 ios/scripts/check-openspec-sync.py` must pass. CI job `openspec` and the doctor run it. It fails while an active `openspec/changes/<name>/` delta is not yet in `openspec/specs/`.
 
 Do not invent requirements unrelated to the product or the change.
