@@ -19,13 +19,14 @@
 		55D1DFC048CE1FEFF1137E01 /* CyclePlotData.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAD21DD6855CDFAB8F613EE4 /* CyclePlotData.swift */; };
 		04DBD81113D04F70681CFCFE /* CyclePlotScroll.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7113BE2034510468AFFB3CE7 /* CyclePlotScroll.swift */; };
 		D0B4ABE93A94AFB4D34805AD /* CycleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34CEE44C477C58BF767BCCEE /* CycleView.swift */; };
+		5B1E10ED1C9F72165761D2FB /* EffectLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05D5962B762E6A4AC2B0B56F /* EffectLine.swift */; };
 		25BA13B021161251A8ACBEFB /* MedLaneBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7B9D060F9B8EE53D5D97E4B /* MedLaneBuilder.swift */; };
-		B7A83DBE76859D6EDE7B3D64 /* MonthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E74D1E1A69E41303158AB133 /* MonthView.swift */; };
-		509CD2A2375F2202BAEAB82B /* MoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 827B3968E8F819815BE355EA /* MoreView.swift */; };
-		ACE731121577B9A356303D1A /* DialogChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 957780ADFD525A78BAA2F7CF /* DialogChrome.swift */; };
 		8B56DDB29A84E1A0A6FC24AA /* MedicationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DC74F0FEF1AA56975142C29 /* MedicationSheet.swift */; };
 		82B0E06EB7459090AFC32F62 /* PeriodSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A857E14F53952D2127E73D /* PeriodSheet.swift */; };
 		7BF7FC6BE88015C1B1D0DB03 /* SymptomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54F79B6AF760BC2A2F448BFD /* SymptomSheet.swift */; };
+		B7A83DBE76859D6EDE7B3D64 /* MonthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E74D1E1A69E41303158AB133 /* MonthView.swift */; };
+		509CD2A2375F2202BAEAB82B /* MoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 827B3968E8F819815BE355EA /* MoreView.swift */; };
+		ACE731121577B9A356303D1A /* DialogChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 957780ADFD525A78BAA2F7CF /* DialogChrome.swift */; };
 		9489A223207A7957115CE59C /* PeriMediApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0D9131837546C57FD9CA660 /* PeriMediApp.swift */; };
 		B250661E90C3E1F193AAA0F2 /* PersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B279B8626D85DDE344D5BD /* PersistenceController.swift */; };
 		55530328B1463F9426C1E1C4 /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273071412F3FD8A6AF5E659A /* Store.swift */; };
@@ -58,13 +59,14 @@
 		CAD21DD6855CDFAB8F613EE4 /* Features/Cycle/CyclePlotData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/CyclePlotData.swift; sourceTree = "<group>"; };
 		7113BE2034510468AFFB3CE7 /* Features/Cycle/CyclePlotScroll.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/CyclePlotScroll.swift; sourceTree = "<group>"; };
 		34CEE44C477C58BF767BCCEE /* Features/Cycle/CycleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/CycleView.swift; sourceTree = "<group>"; };
+		05D5962B762E6A4AC2B0B56F /* Features/Cycle/EffectLine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/EffectLine.swift; sourceTree = "<group>"; };
 		F7B9D060F9B8EE53D5D97E4B /* Features/Cycle/MedLaneBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/MedLaneBuilder.swift; sourceTree = "<group>"; };
-		E74D1E1A69E41303158AB133 /* Features/Month/MonthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Month/MonthView.swift; sourceTree = "<group>"; };
-		827B3968E8F819815BE355EA /* Features/More/MoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/More/MoreView.swift; sourceTree = "<group>"; };
-		957780ADFD525A78BAA2F7CF /* Features/Sheets/DialogChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Sheets/DialogChrome.swift; sourceTree = "<group>"; };
 		9DC74F0FEF1AA56975142C29 /* Features/Cycle/MedicationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/MedicationSheet.swift; sourceTree = "<group>"; };
 		74A857E14F53952D2127E73D /* Features/Cycle/PeriodSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/PeriodSheet.swift; sourceTree = "<group>"; };
 		54F79B6AF760BC2A2F448BFD /* Features/Cycle/SymptomSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/SymptomSheet.swift; sourceTree = "<group>"; };
+		E74D1E1A69E41303158AB133 /* Features/Month/MonthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Month/MonthView.swift; sourceTree = "<group>"; };
+		827B3968E8F819815BE355EA /* Features/More/MoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/More/MoreView.swift; sourceTree = "<group>"; };
+		957780ADFD525A78BAA2F7CF /* Features/Sheets/DialogChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Sheets/DialogChrome.swift; sourceTree = "<group>"; };
 		D0D9131837546C57FD9CA660 /* PeriMediApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriMediApp.swift; sourceTree = "<group>"; };
 		C8B279B8626D85DDE344D5BD /* Persistence/PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/PersistenceController.swift; sourceTree = "<group>"; };
 		273071412F3FD8A6AF5E659A /* Persistence/Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/Store.swift; sourceTree = "<group>"; };
@@ -134,13 +136,14 @@
 				CAD21DD6855CDFAB8F613EE4 /* Features/Cycle/CyclePlotData.swift */,
 				7113BE2034510468AFFB3CE7 /* Features/Cycle/CyclePlotScroll.swift */,
 				34CEE44C477C58BF767BCCEE /* Features/Cycle/CycleView.swift */,
+				05D5962B762E6A4AC2B0B56F /* Features/Cycle/EffectLine.swift */,
 				F7B9D060F9B8EE53D5D97E4B /* Features/Cycle/MedLaneBuilder.swift */,
-				E74D1E1A69E41303158AB133 /* Features/Month/MonthView.swift */,
-				827B3968E8F819815BE355EA /* Features/More/MoreView.swift */,
-				957780ADFD525A78BAA2F7CF /* Features/Sheets/DialogChrome.swift */,
 				9DC74F0FEF1AA56975142C29 /* Features/Cycle/MedicationSheet.swift */,
 				74A857E14F53952D2127E73D /* Features/Cycle/PeriodSheet.swift */,
 				54F79B6AF760BC2A2F448BFD /* Features/Cycle/SymptomSheet.swift */,
+				E74D1E1A69E41303158AB133 /* Features/Month/MonthView.swift */,
+				827B3968E8F819815BE355EA /* Features/More/MoreView.swift */,
+				957780ADFD525A78BAA2F7CF /* Features/Sheets/DialogChrome.swift */,
 				D0D9131837546C57FD9CA660 /* PeriMediApp.swift */,
 				C8B279B8626D85DDE344D5BD /* Persistence/PersistenceController.swift */,
 				273071412F3FD8A6AF5E659A /* Persistence/Store.swift */,
@@ -290,13 +293,14 @@
 				55D1DFC048CE1FEFF1137E01 /* CyclePlotData.swift in Sources */,
 				04DBD81113D04F70681CFCFE /* CyclePlotScroll.swift in Sources */,
 				D0B4ABE93A94AFB4D34805AD /* CycleView.swift in Sources */,
+				5B1E10ED1C9F72165761D2FB /* EffectLine.swift in Sources */,
 				25BA13B021161251A8ACBEFB /* MedLaneBuilder.swift in Sources */,
-				B7A83DBE76859D6EDE7B3D64 /* MonthView.swift in Sources */,
-				509CD2A2375F2202BAEAB82B /* MoreView.swift in Sources */,
-				ACE731121577B9A356303D1A /* DialogChrome.swift in Sources */,
 				8B56DDB29A84E1A0A6FC24AA /* MedicationSheet.swift in Sources */,
 				82B0E06EB7459090AFC32F62 /* PeriodSheet.swift in Sources */,
 				7BF7FC6BE88015C1B1D0DB03 /* SymptomSheet.swift in Sources */,
+				B7A83DBE76859D6EDE7B3D64 /* MonthView.swift in Sources */,
+				509CD2A2375F2202BAEAB82B /* MoreView.swift in Sources */,
+				ACE731121577B9A356303D1A /* DialogChrome.swift in Sources */,
 				9489A223207A7957115CE59C /* PeriMediApp.swift in Sources */,
 				B250661E90C3E1F193AAA0F2 /* PersistenceController.swift in Sources */,
 				55530328B1463F9426C1E1C4 /* Store.swift in Sources */,

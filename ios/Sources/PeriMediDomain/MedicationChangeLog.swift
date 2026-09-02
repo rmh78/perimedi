@@ -16,6 +16,20 @@ public enum MedicationChangeLog {
         return "every day @ \(times) | \(range)"
     }
 
+    public static func hasChanges(
+        previousMed: Medication?,
+        newMed: Medication,
+        previousSchedule: Schedule?,
+        newSchedule: Schedule
+    ) -> Bool {
+        !diffs(
+            previousMed: previousMed,
+            newMed: newMed,
+            previousSchedule: previousSchedule,
+            newSchedule: newSchedule
+        ).isEmpty
+    }
+
     public static func events(
         previousMed: Medication?,
         newMed: Medication,
@@ -24,38 +38,41 @@ public enum MedicationChangeLog {
         effectiveDate: String,
         loggedAt: String
     ) -> [MedicationChange] {
-        var out: [MedicationChange] = []
+        diffs(
+            previousMed: previousMed,
+            newMed: newMed,
+            previousSchedule: previousSchedule,
+            newSchedule: newSchedule
+        ).map { field, previousValue, newValue in
+            MedicationChange(
+                id: createId(),
+                medicationId: newMed.id,
+                nameSnapshot: newMed.name,
+                field: field,
+                previousValue: previousValue,
+                newValue: newValue,
+                effectiveDate: DateKeys.toDateKey(effectiveDate),
+                loggedAt: loggedAt
+            )
+        }
+    }
+
+    private static func diffs(
+        previousMed: Medication?,
+        newMed: Medication,
+        previousSchedule: Schedule?,
+        newSchedule: Schedule
+    ) -> [(MedicationChangeField, String, String)] {
+        var out: [(MedicationChangeField, String, String)] = []
         let prevDose = previousMed?.doseLabel.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let nextDose = newMed.doseLabel.trimmingCharacters(in: .whitespacesAndNewlines)
         if prevDose != nextDose {
-            out.append(
-                MedicationChange(
-                    id: createId(),
-                    medicationId: newMed.id,
-                    nameSnapshot: newMed.name,
-                    field: .dose,
-                    previousValue: prevDose,
-                    newValue: nextDose,
-                    effectiveDate: DateKeys.toDateKey(effectiveDate),
-                    loggedAt: loggedAt
-                )
-            )
+            out.append((.dose, prevDose, nextDose))
         }
         let prevSched = previousSchedule.map(snapshot) ?? ""
         let nextSched = snapshot(for: newSchedule)
         if prevSched != nextSched {
-            out.append(
-                MedicationChange(
-                    id: createId(),
-                    medicationId: newMed.id,
-                    nameSnapshot: newMed.name,
-                    field: .schedule,
-                    previousValue: prevSched,
-                    newValue: nextSched,
-                    effectiveDate: DateKeys.toDateKey(effectiveDate),
-                    loggedAt: loggedAt
-                )
-            )
+            out.append((.schedule, prevSched, nextSched))
         }
         return out
     }

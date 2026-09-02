@@ -41,10 +41,11 @@ Archived OpenSpec changes under `openspec/changes/archive/` may mention an old w
 - **SymptomScore** — catalog id (`hot_flash`, …), date, severity 1–4, optional note, loggedAt. Untouched ids are missing (none), not stored as 0.
 - **Remark** — optional day note (and older backup note rows)
 - **DoseLog** — taken / pending (open) per planned dose
+- **MedicationChange** — stored dose/schedule change events (name snapshot, previous/new value, effective date). Survive medication delete. Cleared on wipe/import, not on delete-med.
 
 Schedule expansion: `ios/Sources/PeriMediDomain`.
 
-Domain owns schedule/cycle/therapy expansion (`ScheduleLogic` / `CycleLogic` / `TherapyCycleLogic` / `DoseRangeLogic`). The UI calls those; it must not reimplement the math. `Store` is the only dose-log writer (`setDoseStatus`). CI `ids` runs `python3 ios/scripts/check-domain-boundary.py`. Protect main is `ids`, `openspec`, `domain`, and `ui`.
+Domain owns schedule/cycle/therapy expansion (`ScheduleLogic` / `CycleLogic` / `TherapyCycleLogic` / `DoseRangeLogic`). The UI calls those; it must not reimplement the math. `Store` is the only dose-log writer (`setDoseStatus`). CI `ids` runs `python3 ios/scripts/check-domain-boundary.py`. Protect main should require `ids`, `openspec`, `domain`, and `ui`. The GitHub ruleset still has `ids`, `domain`, and `ui` only until `openspec` is added.
 
 ## Commands
 
@@ -56,7 +57,7 @@ bash ios/scripts/verify.sh
 
 It sources `ios/env.sh`, checks feature-map IDs, checks feature layout, checks domain boundary, checks OpenSpec sync, fails UI-test coverage if a feature-map surface is uncovered, runs domain tests, uninstalls leftover PeriMedi, runs `xcodebuild test`, then uninstalls again on success. It prefers **iPhone 17e**, then **iPhone 17** locally. Override with `SIM_DEVICE`, `SIM_OS` (e.g. `26.5`), or `SIM_UDID`. GitHub Actions pins `macos-26` + Xcode 26.6 and requires iPhone 17e on iOS 26.5 (no fallback). It needs macOS + Xcode; anywhere else it still runs the ID, layout, domain-boundary, OpenSpec-sync, and coverage checks, then exits. Before it boots the Simulator, it turns Connect Hardware Keyboard off for that UDID so `typeText` hits the software keyboard (the phone path).
 
-CI runs only on `pull_request` (not on push to main). A new commit on a PR cancels the previous `ci` run for that PR. Every PR runs `ids` on Ubuntu (`python3 ios/scripts/check-feature-map.py`, `python3 ios/scripts/check-feature-layout.py`, `python3 ios/scripts/check-domain-boundary.py`, then `python3 ios/scripts/check-ui-coverage.py --fail-uncovered`), `openspec` on Ubuntu (`python3 ios/scripts/check-openspec-sync.py`), `domain` on macOS 26 with Xcode 26.6 (`swift test --package-path ios`), and `ui` on the same pin (`bash ios/scripts/verify.sh`). A green `ui` job is UI proof. Protect main requires `ids`, `openspec`, `domain`, and `ui`. Coverage stays inside `ids`; OpenSpec sync is the `openspec` job. On GitHub the doctor skips the Python rails and domain tests (`ids` / `openspec` / `domain` already ran them). A failed `ui` job uploads `ios/DerivedData/PeriMedi.xcresult`.
+CI runs only on `pull_request` (not on push to main). A new commit on a PR cancels the previous `ci` run for that PR. Every PR runs `ids` on Ubuntu (`python3 ios/scripts/check-feature-map.py`, `python3 ios/scripts/check-feature-layout.py`, `python3 ios/scripts/check-domain-boundary.py`, then `python3 ios/scripts/check-ui-coverage.py --fail-uncovered`), `openspec` on Ubuntu (`python3 ios/scripts/check-openspec-sync.py`), `domain` on macOS 26 with Xcode 26.6 (`swift test --package-path ios`), and `ui` on the same pin (`bash ios/scripts/verify.sh`). A green `ui` job is UI proof. Protect main should require `ids`, `openspec`, `domain`, and `ui` (add `openspec` to the GitHub ruleset; it is not required there yet). Coverage stays inside `ids`; OpenSpec sync is the `openspec` job. On GitHub the doctor skips the Python rails and domain tests (`ids` / `openspec` / `domain` already ran them). A failed `ui` job uploads `ios/DerivedData/PeriMedi.xcresult`.
 
 Pieces, if you need one step:
 
@@ -126,9 +127,9 @@ When driving or checking a screen, read `.grok/skills/verify-perimedi/` first. `
 
 Soft: same commit as the feature, like OpenSpec. A new user-facing surface gets a new file under `.grok/skills/verify-perimedi/features/`. A change to how a user gets there, what visible state proves it worked, or a gotcha updates that file even when no `A11yID` was added. CI cannot see those.
 
-Hard: `python3 ios/scripts/check-feature-map.py` must pass (the doctor runs it). CI job `ids` runs it on every PR. `python3 ios/scripts/check-feature-layout.py` must also pass; `ids` runs it too. `python3 ios/scripts/check-domain-boundary.py` must pass; `ids` runs it too. CI job `openspec` runs `python3 ios/scripts/check-openspec-sync.py`. CI job `domain` runs `swift test --package-path ios` on macOS. CI job `ui` runs the doctor (Simulator XCUITest). Protect main requires `ids`, `openspec`, `domain`, and `ui`.
+Hard: `python3 ios/scripts/check-feature-map.py` must pass (the doctor runs it). CI job `ids` runs it on every PR. `python3 ios/scripts/check-feature-layout.py` must also pass; `ids` runs it too. `python3 ios/scripts/check-domain-boundary.py` must pass; `ids` runs it too. CI job `openspec` runs `python3 ios/scripts/check-openspec-sync.py`. CI job `domain` runs `swift test --package-path ios` on macOS. CI job `ui` runs the doctor (Simulator XCUITest). Protect main should require `ids`, `openspec`, `domain`, and `ui` (add `openspec` to the GitHub ruleset).
 
-Coverage is a failing check inside `ids` (and the doctor): `python3 ios/scripts/check-ui-coverage.py --fail-uncovered` fails when a feature-map surface with distinctive IDs is never driven by UI tests. Waiting for `tab.more` is not coverage. More and backup journeys exist (`testMoreRemindersControls`). Do not add coverage as a separate required check. Protect main stays `ids`, `openspec`, `domain`, and `ui`.
+Coverage is a failing check inside `ids` (and the doctor): `python3 ios/scripts/check-ui-coverage.py --fail-uncovered` fails when a feature-map surface with distinctive IDs is never driven by UI tests. Waiting for `tab.more` is not coverage. More and backup journeys exist (`testMoreRemindersControls`). Do not add coverage as a separate required check. Protect main should stay `ids`, `openspec`, `domain`, and `ui` once `openspec` is on the GitHub ruleset.
 
 ## OpenSpec
 

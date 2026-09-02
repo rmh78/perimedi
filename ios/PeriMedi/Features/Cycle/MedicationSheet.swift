@@ -331,15 +331,21 @@ struct MedicationSheet: View {
     }
 
     private var showsSinceDate: Bool {
-        !pendingChanges(loggedAt: "").isEmpty
+        guard let draft = changeDraft() else { return false }
+        return MedicationChangeLog.hasChanges(
+            previousMed: medication,
+            newMed: draft.med,
+            previousSchedule: draft.previousSchedule,
+            newSchedule: draft.schedule
+        )
     }
 
-    private func pendingChanges(loggedAt: String) -> [MedicationChange] {
+    private func changeDraft() -> (med: Medication, schedule: Schedule, previousSchedule: Schedule?)? {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedDose = doseLabel.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedDose.isEmpty else { return [] }
+        guard !trimmedDose.isEmpty else { return nil }
         let cleanedTimes = TherapyCycleLogic.normalizeTimes(times, fallback: "08:00")
-        guard !cleanedTimes.isEmpty else { return [] }
+        guard !cleanedTimes.isEmpty else { return nil }
         let medId = medication?.id ?? "new"
         let med = Medication(
             id: medId,
@@ -350,15 +356,13 @@ struct MedicationSheet: View {
             createdAt: medication?.createdAt ?? "",
             remindersEnabled: remindersEnabled
         )
-        return MedicationChangeLog.events(
-            previousMed: medication,
-            newMed: med,
-            previousSchedule: medication.flatMap { existing in
-                store.schedules.first { $0.medicationId == existing.id }
-            },
-            newSchedule: makeSchedule(medicationId: medId, times: cleanedTimes),
-            effectiveDate: effectiveDate,
-            loggedAt: loggedAt
+        let previousSchedule = medication.flatMap { existing in
+            store.schedules.first { $0.medicationId == existing.id }
+        }
+        return (
+            med,
+            makeSchedule(medicationId: medId, times: cleanedTimes),
+            previousSchedule
         )
     }
 

@@ -97,6 +97,7 @@ final class Store: ObservableObject {
         for row in (try? context.fetch(FetchDescriptor<SDRemark>())) ?? [] where row.medicationId == id {
             row.medicationId = nil
         }
+        // Keep SDMedicationChange rows: name snapshot is Effect context after the med is gone.
         save()
     }
 

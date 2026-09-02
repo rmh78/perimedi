@@ -40,6 +40,7 @@ Open the app, or tap Cycle in the bottom bar. Sheets for med / period / symptom 
 ## Gotchas
 
 - IDs are language-independent; chrome copy is en/de. Tests launch `-en`.
+- First-use only asserts `cycle.effect` absent on empty home and `no-previous` after one period. Two-cycle `id:down` / `id:worse` values are domain tests (`EffectLogicTests`); UI tests do not load sample.
 - `A11yID.chipScore(_:)` builds `cycle.chip.score.{id}`. Keep the `cycle.chip.score.` literal in this map so check-feature-map still sees it.
 - Tapping a lane toggles dose status. Editing is the separate `.edit` control.
 - Cycle windows and planned doses come from domain (`CycleLogic` / `ScheduleLogic` / `DoseRangeLogic`); taken/not-taken is `Store.setDoseStatus`. Do not reimplement that math in the app.

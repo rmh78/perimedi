@@ -65,3 +65,7 @@ When the user saves a medication and the default dose label or the primary sched
 #### Scenario: New medication
 - **WHEN** the user saves a new medication with a default dose
 - **THEN** a dose change event is stored with an empty previous value and the new dose
+
+#### Scenario: Delete medication keeps change history
+- **WHEN** the user deletes a medication that has stored dose or schedule changes
+- **THEN** those change events remain (name snapshot still available) until clear or import replaces the store

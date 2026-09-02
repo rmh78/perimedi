@@ -85,6 +85,26 @@ final class MedicationChangeLogTests: XCTestCase {
         XCTAssertEqual(second[0].newValue, "1 pump")
     }
 
+    func testHasChangesDoesNotDependOnEvents() {
+        let sched = schedule()
+        XCTAssertTrue(
+            MedicationChangeLog.hasChanges(
+                previousMed: med("1 pump"),
+                newMed: med("2 pumps"),
+                previousSchedule: sched,
+                newSchedule: sched
+            )
+        )
+        XCTAssertFalse(
+            MedicationChangeLog.hasChanges(
+                previousMed: med("1 pump"),
+                newMed: med("1 pump"),
+                previousSchedule: sched,
+                newSchedule: sched
+            )
+        )
+    }
+
     func testUnchangedSaveWritesNothing() {
         let sched = schedule()
         let events = MedicationChangeLog.events(
