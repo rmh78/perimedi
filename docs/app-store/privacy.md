@@ -29,7 +29,7 @@ On your iPhone (SwiftData), the app may store:
 
 If iCloud is available for the same Apple ID, the app may sync that data through Apple iCloud / CloudKit so another of your devices can see it. Apple processes that sync under Apple’s terms. PeriMedi does not operate a separate cloud.
 
-Second-device restore is still being hardened. Do not rely on iCloud as your only backup. Use More → Backup → Export.
+Use More → Backup → Export if you want a copy you control.
 
 ## Export
 
