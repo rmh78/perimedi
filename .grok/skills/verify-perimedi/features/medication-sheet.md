@@ -28,7 +28,7 @@ Cycle → + Med (`cycle.action.med`) for a new one, or a lane's edit control for
 | Mode tokens (defined) | `med.mode.everyday` `med.mode.cyclic` | In `A11yID`. Confirm they are attached before depending on them; `AppRobot` currently picks by label. |
 | Preset | `med.preset` | In `A11yID`. |
 | Start | `med.start` | `AppRobot.setDateKey`. Confirm with `date.done`. |
-| Since (effective date) | `med.since` | Present when dose or schedule differs from the stored med (including a new med with a dose). Default today. |
+| Since (effective date) | `med.since` | Present when dose or schedule differs from the stored med (including a new med with a dose). `AppRobot.addMedication` waits for it after typing dose. |
 | Time chooser done | `time.done` | Same chrome as `date.done`, for take-at times. |
 | Remind | `med.remind` | Toggle on the sheet. |
 | Save | `med.save` | Sheet dismisses. A `cycle.lane.{slug}` appears. |

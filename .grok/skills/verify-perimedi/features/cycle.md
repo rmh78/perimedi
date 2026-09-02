@@ -33,7 +33,7 @@ Open the app, or tap Cycle in the bottom bar. Sheets for med / period / symptom 
 | Lane status | `cycle.lane.{slug}.status` | Tap the lane to mark taken. Values: `taken`, `not-taken`. |
 | Lane edit | `cycle.lane.{slug}.edit` | Opens the medication sheet for that med. |
 | Strip day | `cycle.strip.day.{yyyy-MM-dd}` | Period days include `period` in the value. |
-| Effect sentence | `cycle.effect` | After two logged cycles with overlapping scores: value lists `id:down` / `id:worse`. One cycle: `no-previous`. Tracking off or no cycle: control absent. |
+| Effect sentence | `cycle.effect` | After two logged cycles with overlapping scores: value lists `id:down` / `id:worse`. First-use after one period: `no-previous`. Empty home (no cycle): absent. |
 
 `AppRobot.launch()` waits for `tab.cycle` and `cycle.action.med`.
 
