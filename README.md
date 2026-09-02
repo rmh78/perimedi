@@ -47,7 +47,10 @@ Behavior is defined as capability specs in `openspec/specs/<capability>/spec.md`
 ```bash
 openspec list --specs
 openspec validate --specs --strict
+python3 ios/scripts/check-openspec-sync.py
 ```
+
+CI job `ids` fails if an active `openspec/changes/<name>/` delta is not yet in `openspec/specs/`. Archive/sync the change in the same PR as the feature.
 
 ## Privacy
 

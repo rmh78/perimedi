@@ -135,7 +135,8 @@ Product behavior is specified under `openspec/specs/<capability>/spec.md`.
 
 1. For behavior changes: update the relevant main specs, **or** open an OpenSpec **change** with delta specs and archive/sync when the change completes.
 2. Spec shape: `## Purpose`, `## Requirements`, `### Requirement: …` (SHALL/MUST), and at least one `#### Scenario:` with WHEN/THEN. Describe observable behavior only — not component or file names.
-3. Ship OpenSpec updates **in the same commit** as the feature/fix when behavior changes.
+3. Ship OpenSpec updates **in the same commit** as the feature/fix when behavior changes. Archive/sync the change in the same PR so `openspec/specs/` has the new requirements.
 4. After editing specs: `openspec validate --specs --strict` when practical.
+5. `python3 ios/scripts/check-openspec-sync.py` must pass. CI job `ids` and the doctor run it. It fails while an active `openspec/changes/<name>/` delta is not yet in `openspec/specs/`.
 
 Do not invent requirements unrelated to the product or the change.
