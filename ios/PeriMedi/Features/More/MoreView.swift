@@ -28,7 +28,8 @@ struct MoreView: View {
                             ForEach(AppLanguage.allCases) { lang in
                                 PillButton(
                                     title: app.t(lang == .en ? "language.en" : "language.de"),
-                                    kind: locale.language == lang ? .primary : .secondary
+                                    kind: locale.language == lang ? .primary : .secondary,
+                                    identifier: lang == .en ? A11yID.moreLangEn : A11yID.moreLangDe
                                 ) {
                                     locale.language = lang
                                 }
@@ -86,13 +87,14 @@ struct MoreView: View {
                                 }
                                 .buttonStyle(.plain)
                                 .accessibilityLabel(app.t("more.reminderSoundPreview"))
+                                .accessibilityIdentifier(A11yID.moreReminderSoundPreview)
                             }
                         }
                         if remindersOn, notifyDenied {
                             Text(app.t("more.remindersDenied"))
                                 .font(.caption)
                                 .foregroundStyle(Theme.blush700)
-                            PillButton(title: app.t("more.remindersSettings"), kind: .secondary) {
+                            PillButton(title: app.t("more.remindersSettings"), kind: .secondary, identifier: A11yID.moreRemindersSettings) {
                                 if let url = URL(string: UIApplication.openSettingsURLString) {
                                     UIApplication.shared.open(url)
                                 }
@@ -133,7 +135,8 @@ struct MoreView: View {
                         backupRow(
                             title: app.t("more.sampleTitle"),
                             body: app.t("more.sampleBody"),
-                            label: app.t("more.sampleLabel")
+                            label: app.t("more.sampleLabel"),
+                            identifier: A11yID.moreSample
                         ) {
                             app.askConfirm(
                                 message: app.t("more.sampleConfirm"),
@@ -151,7 +154,7 @@ struct MoreView: View {
                             }
                         }
                         divider
-                        backupRow(title: app.t("more.exportTitle"), body: app.t("more.exportBody"), label: app.t("more.exportLabel")) {
+                        backupRow(title: app.t("more.exportTitle"), body: app.t("more.exportBody"), label: app.t("more.exportLabel"), identifier: A11yID.moreExport) {
                             do {
                                 let data = try BackupCodec.encode(store.exportPayload())
                                 let url = FileManager.default.temporaryDirectory.appendingPathComponent("perimedi-backup.json")
@@ -165,11 +168,11 @@ struct MoreView: View {
                             }
                         }
                         divider
-                        backupRow(title: app.t("more.importTitle"), body: app.t("more.importBody"), label: app.t("more.importLabel")) {
+                        backupRow(title: app.t("more.importTitle"), body: app.t("more.importBody"), label: app.t("more.importLabel"), identifier: A11yID.moreImport) {
                             showImporter = true
                         }
                         divider
-                        backupRow(title: app.t("more.clearTitle"), body: app.t("more.clearBody"), label: app.t("more.clearLabel"), destructive: true) {
+                        backupRow(title: app.t("more.clearTitle"), body: app.t("more.clearBody"), label: app.t("more.clearLabel"), identifier: A11yID.moreClear, destructive: true) {
                             app.askConfirm(
                                 message: app.t("more.clearConfirm"),
                                 confirmLabel: app.t("more.clearLabel"),
@@ -218,14 +221,14 @@ struct MoreView: View {
             .tracking(0.8)
     }
 
-    private func backupRow(title: String, body: String, label: String, destructive: Bool = false, action: @escaping () -> Void) -> some View {
+    private func backupRow(title: String, body: String, label: String, identifier: String, destructive: Bool = false, action: @escaping () -> Void) -> some View {
         HStack(alignment: .center, spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
                 Text(body).font(.caption).foregroundStyle(Theme.inkMuted)
             }
             Spacer(minLength: 8)
-            PillButton(title: label, kind: destructive ? .destructive : .secondary, action: action)
+            PillButton(title: label, kind: destructive ? .destructive : .secondary, identifier: identifier, action: action)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)

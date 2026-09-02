@@ -5,8 +5,8 @@ Calendar overview of the same store Cycle shows.
 ## Sub-features
 
 - Month grid of days
-- Today button (shared ID with Cycle)
-- Prev / next month chevrons (labels only, no IDs)
+- Today button (shared ID with Cycle: `cycle.pager.today`)
+- Prev / next month chevrons (`month.pager.prev` / `month.pager.next`)
 - Day tokens: selected, period, taken, symptom
 
 ## How to get to it (user POV)
@@ -19,9 +19,11 @@ Bottom bar → Month.
 |---|---|---|
 | Month tab | `tab.month` | Tab exists on launch. |
 | A day cell | `month.day.{yyyy-MM-dd}` | First-use today (`2026-03-15`) value contains `selected`. Period start contains `period`. A taken+symptom day contains `taken` and `symptom`. |
-| Today | `cycle.pager.today` | **Same ID as Cycle.** On Month it jumps the month anchor to today and selects today. |
+| Today | `cycle.pager.today` | **Same ID as Cycle (documented choice).** On Month it jumps the month anchor to today and selects today. Do not add a Month-only today ID. |
+| Prev month | `month.pager.prev` | `testMonthPager` pages back to the month that contains today. |
+| Next month | `month.pager.next` | `testMonthPager` pages from March 2026 to April (`month.day.2026-04-01`). |
 
-Prev/next month buttons use `accessibilityLabel` from `month.prevMonth` / `month.nextMonth` (localized). They have **no** `A11yID`. Prefer `month.day.{dateKey}` plus Today, or extend `A11yID` if you need to page months in tests.
+`testMonthPager` launches, opens Month, asserts today is selected, taps `month.pager.next`, waits for `month.day.2026-04-01`, taps `month.pager.prev`, asserts today selected again, then taps the shared `cycle.pager.today` and re-asserts.
 
 ## Gotchas
 

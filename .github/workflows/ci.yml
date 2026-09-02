@@ -2,23 +2,58 @@ name: ci
 
 on:
   pull_request:
-  push:
-    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   ids:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Every A11yID is named in the feature map
         run: python3 ios/scripts/check-feature-map.py
-      - name: Feature map vs UITest coverage (advisory)
-        run: python3 ios/scripts/check-ui-coverage.py
+      - name: Feature map vs UITest coverage
+        run: python3 ios/scripts/check-ui-coverage.py --fail-uncovered
+      - name: Feature sheets live under Cycle/Month/More
+        run: python3 ios/scripts/check-feature-layout.py
+      - name: Domain owns math; persistence writes logs
+        run: python3 ios/scripts/check-domain-boundary.py
 
   domain:
-    runs-on: macos-latest
+    runs-on: macos-26
     timeout-minutes: 20
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Domain tests
         run: swift test --package-path ios
+
+  ui:
+    runs-on: macos-26
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      actions: write
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      SIM_DEVICE: iPhone 17e
+      SIM_OS: "26.5"
+      STRICT_SIM: "1"
+    steps:
+      - uses: actions/checkout@v5
+      - name: UI tests
+        run: bash ios/scripts/verify.sh
+      - name: Upload xcresult on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-xcresult
+          path: ios/DerivedData/PeriMedi.xcresult
+          if-no-files-found: warn
+          retention-days: 14

@@ -205,7 +205,7 @@ struct CycleView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("\(scoreChipName(score)), \(scoreChipWord(score))")
-                    .accessibilityIdentifier("cycle.chip.score.\(score.id)")
+                    .accessibilityIdentifier(A11yID.chipScore(score.id))
                 }
                 ForEach(notes.filter { note in
                     !scores.contains { $0.note == note.body }
