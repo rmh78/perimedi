@@ -24,6 +24,13 @@ jobs:
       - name: Domain owns math; persistence writes logs
         run: python3 ios/scripts/check-domain-boundary.py
 
+  openspec:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Active OpenSpec change deltas are in main specs
+        run: python3 ios/scripts/check-openspec-sync.py
+
   domain:
     runs-on: macos-26
     timeout-minutes: 20

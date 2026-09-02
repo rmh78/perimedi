@@ -144,7 +144,7 @@ The medication, period-settings, and symptom editors SHALL use an inset rounded 
 - **THEN** the screen behind the panel is a light transparent blur of the app (the Cycle screen remains faintly recognizable), the panel is only as tall as its content (up to a maximum), and there is no solid gray rounded sheet behind it
 
 ### Requirement: Empty-to-tracking journey
-The iOS app SHALL support a first-use empty-to-tracking journey. Instrumented UI tests from a cleared store SHALL be the proof that a user can perform those steps.
+The iOS app SHALL support a first-use empty-to-tracking journey: start empty, log a recent period, add mixed medications, mark a dose taken, look back through the week and return to today, add a symptom, and confirm Month agrees. Instrumented UI-element verification from a cleared store SHALL be the proof that a user can perform those steps.
 
 #### Scenario: Empty start
 - **WHEN** the user opens Cycle with no medications and no periods
@@ -169,3 +169,7 @@ The iOS app SHALL support a first-use empty-to-tracking journey. Instrumented UI
 #### Scenario: Mark taken
 - **WHEN** the user marks a planned dose taken on the selected day
 - **THEN** the lane status shows taken and remains taken after leaving Cycle and returning
+
+#### Scenario: Instrumented journey from empty
+- **WHEN** an instrumented suite starts from a cleared store and drives the journey through the real controls
+- **THEN** each step’s outcome is present as UI elements and values, including Month after the last Cycle step

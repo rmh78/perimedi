@@ -37,7 +37,7 @@ udid_named() {
   fi
 }
 
-# The `ids` job already ran these on GitHub.
+# The `ids` and `openspec` jobs already ran these on GitHub.
 if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
   step "feature map"
   python3 "$ROOT/ios/scripts/check-feature-map.py"
@@ -47,6 +47,9 @@ if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
 
   step "domain boundary"
   python3 "$ROOT/ios/scripts/check-domain-boundary.py"
+
+  step "OpenSpec sync"
+  python3 "$ROOT/ios/scripts/check-openspec-sync.py"
 
   step "UI test coverage"
   python3 "$ROOT/ios/scripts/check-ui-coverage.py" --fail-uncovered

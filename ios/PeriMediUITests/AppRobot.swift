@@ -248,6 +248,7 @@ struct AppRobot {
             pick("med.form", form)
         }
         clearAndType("med.dose", dose)
+        waitFor(id: "med.since")
         pick("med.mode", cyclic ? "med.mode.cyclic" : "med.mode.everyday")
         if let start {
             setDateKey("med.start", start)

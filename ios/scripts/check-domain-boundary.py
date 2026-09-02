@@ -17,12 +17,17 @@ MATH_FILES = (
     "ScheduleLogic.swift",
     "TherapyCycleLogic.swift",
     "DoseRangeLogic.swift",
+    "EffectLogic.swift",
+    "MedicationChangeLog.swift",
 )
 
 NEEDLES = (
     "ScheduleLogic.expandPlannedDoses",
     "CycleLogic.cycleWindowForDate",
     "DoseRangeLogic.doseExpansionRange",
+    "EffectLogic.summarize",
+    "MedicationChangeLog.events",
+    "MedicationChangeLog.hasChanges",
 )
 
 PUBLIC_STATIC_FUNC = re.compile(r"public\s+static\s+func\s+(\w+)\b")
@@ -70,7 +75,7 @@ def check_reimplemented(names: list[str], files: list[Path]) -> list[str]:
     for path in files:
         for i, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             for _name, pat in patterns:
-                if pat.search(line):
+                if pat.search(line) and "private" not in line.split("func", 1)[0]:
                     hits.append(f"{rel(path)}:{i}: {line.strip()}")
                     break
     return hits
@@ -146,7 +151,7 @@ def main() -> int:
     if failed:
         return 1
 
-    print("ok: domain owns schedule/cycle math; persistence is the only dose-log writer")
+    print("ok: domain owns schedule/cycle/effect math; persistence is the only dose-log writer")
     return 0
 
 

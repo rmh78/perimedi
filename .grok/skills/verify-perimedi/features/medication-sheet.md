@@ -7,6 +7,7 @@ Create or edit a medication and its schedule. Presented over Cycle.
 - Name, form, default dose, color
 - Start (required) and optional end
 - Remind toggle
+- Optional Since date when default dose or primary schedule actually changed
 - Schedule mode: every day / specific days / cyclic
 - Save / delete (delete confirms)
 
@@ -28,6 +29,7 @@ Cycle → + Med (`cycle.action.med`) for a new one, or a lane's edit control for
 | Mode cyclic | `med.mode.cyclic` | `pick("med.mode", "med.mode.cyclic")` via first-use cyclic progesterone. |
 | Preset | `med.preset` | On the `A11yID` enum but **not attached** in the sheet. Do not drive it. |
 | Start | `med.start` | `AppRobot.setDateKey`. Confirm with `date.done`. |
+| Since (effective date) | `med.since` | Present when dose or schedule differs from the stored med (including a new med with a dose). `AppRobot.addMedication` waits for it after typing dose. |
 | Time chooser done | `time.done` | Same chrome as `date.done`, for take-at times. |
 | Remind | `med.remind` | Toggle on the sheet. |
 | Save | `med.save` | Sheet dismisses. A `cycle.lane.{slug}` appears. |

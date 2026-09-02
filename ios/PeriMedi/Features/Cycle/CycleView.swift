@@ -34,6 +34,7 @@ struct CycleView: View {
                 GlassCard {
                     VStack(alignment: .leading, spacing: 10) {
                         pager(snap)
+                        EffectLine()
                         medsTitleRow
                         miniLegend
                         chart(snap)

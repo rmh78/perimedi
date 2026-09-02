@@ -157,6 +157,26 @@ public enum SampleData {
             score(.mood, daysAgo: 14, severity: 3),
             score(.joints, daysAgo: 16, severity: 2),
             score(.hot_flash, daysAgo: 17, severity: 2),
+            // Previous cycle (days 1–18 of the cycle that started 41 days ago).
+            score(.hot_flash, daysAgo: 41, severity: 4),
+            score(.hot_flash, daysAgo: 35, severity: 4),
+            score(.hot_flash, daysAgo: 28, severity: 3),
+            score(.sleep, daysAgo: 40, severity: 1),
+            score(.sleep, daysAgo: 32, severity: 1),
+            score(.sleep, daysAgo: 25, severity: 2),
+        ]
+
+        let medicationChanges = [
+            MedicationChange(
+                id: createId(),
+                medicationId: estradiol.id,
+                nameSnapshot: estradiol.name,
+                field: .dose,
+                previousValue: "0.5 pump",
+                newValue: estradiol.doseLabel,
+                effectiveDate: key(10),
+                loggedAt: isoNow
+            ),
         ]
 
         return ExportPayload(
@@ -168,7 +188,8 @@ public enum SampleData {
             remarks: [],
             cycleSettings: CycleSettings(averageCycleLength: 30, averagePeriodLength: 5),
             periods: periods,
-            symptomScores: symptomScores
+            symptomScores: symptomScores,
+            medicationChanges: medicationChanges
         )
     }
 

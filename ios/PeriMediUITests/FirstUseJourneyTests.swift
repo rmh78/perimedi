@@ -19,6 +19,7 @@ final class FirstUseJourneyTests: PeriMediUITestCase {
             XCTAssertTrue(robot.value(of: "cycle.empty.meds").contains("need-med"))
             robot.waitFor(id: "cycle.intro")
             XCTAssertFalse(robot.exists("cycle.lane.estrogen"))
+            XCTAssertFalse(robot.exists("cycle.effect"))
         }
 
         XCTContext.runActivity(named: "02 log last period") { _ in
@@ -29,6 +30,8 @@ final class FirstUseJourneyTests: PeriMediUITestCase {
             robot.waitFor(id: "cycle.empty.meds")
             XCTAssertEqual(robot.value(of: "cycle.empty.meds"), "need-med")
             XCTAssertFalse(robot.exists("cycle.intro"))
+            robot.waitFor(id: "cycle.effect")
+            XCTAssertEqual(robot.value(of: "cycle.effect"), "no-previous")
         }
 
         XCTContext.runActivity(named: "03 add everyday estrogen") { _ in

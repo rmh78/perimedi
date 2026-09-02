@@ -298,6 +298,43 @@ public struct Period: Codable, Equatable, Identifiable, Sendable {
     }
 }
 
+public enum MedicationChangeField: String, Codable, Sendable {
+    case dose
+    case schedule
+}
+
+/// Recorded when a medication save actually changes default dose or primary schedule.
+public struct MedicationChange: Codable, Equatable, Identifiable, Sendable {
+    public var id: String
+    public var medicationId: String
+    public var nameSnapshot: String
+    public var field: MedicationChangeField
+    public var previousValue: String
+    public var newValue: String
+    public var effectiveDate: String
+    public var loggedAt: String
+
+    public init(
+        id: String,
+        medicationId: String,
+        nameSnapshot: String,
+        field: MedicationChangeField,
+        previousValue: String,
+        newValue: String,
+        effectiveDate: String,
+        loggedAt: String
+    ) {
+        self.id = id
+        self.medicationId = medicationId
+        self.nameSnapshot = nameSnapshot
+        self.field = field
+        self.previousValue = previousValue
+        self.newValue = newValue
+        self.effectiveDate = effectiveDate
+        self.loggedAt = loggedAt
+    }
+}
+
 public struct ExportPayload: Codable, Equatable, Sendable {
     public var version: Int
     public var exportedAt: String
@@ -309,6 +346,8 @@ public struct ExportPayload: Codable, Equatable, Sendable {
     public var periods: [Period]
     /// Structured 0–4 scores. Absent in older backups.
     public var symptomScores: [SymptomScore]
+    /// Dose/schedule change events. Absent in older backups.
+    public var medicationChanges: [MedicationChange]
 
     public init(
         version: Int = 1,
@@ -319,7 +358,8 @@ public struct ExportPayload: Codable, Equatable, Sendable {
         remarks: [Remark],
         cycleSettings: CycleSettings,
         periods: [Period],
-        symptomScores: [SymptomScore] = []
+        symptomScores: [SymptomScore] = [],
+        medicationChanges: [MedicationChange] = []
     ) {
         self.version = version
         self.exportedAt = exportedAt
@@ -330,10 +370,11 @@ public struct ExportPayload: Codable, Equatable, Sendable {
         self.cycleSettings = cycleSettings
         self.periods = periods
         self.symptomScores = symptomScores
+        self.medicationChanges = medicationChanges
     }
 
     enum CodingKeys: String, CodingKey {
-        case version, exportedAt, medications, schedules, doseLogs, remarks, cycleSettings, periods, symptomScores
+        case version, exportedAt, medications, schedules, doseLogs, remarks, cycleSettings, periods, symptomScores, medicationChanges
     }
 
     public init(from decoder: Decoder) throws {
@@ -347,6 +388,7 @@ public struct ExportPayload: Codable, Equatable, Sendable {
         cycleSettings = try c.decode(CycleSettings.self, forKey: .cycleSettings)
         periods = try c.decodeIfPresent([Period].self, forKey: .periods) ?? []
         symptomScores = try c.decodeIfPresent([SymptomScore].self, forKey: .symptomScores) ?? []
+        medicationChanges = try c.decodeIfPresent([MedicationChange].self, forKey: .medicationChanges) ?? []
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -360,6 +402,7 @@ public struct ExportPayload: Codable, Equatable, Sendable {
         try c.encode(cycleSettings, forKey: .cycleSettings)
         try c.encode(periods, forKey: .periods)
         try c.encode(symptomScores, forKey: .symptomScores)
+        try c.encode(medicationChanges, forKey: .medicationChanges)
     }
 }
 
