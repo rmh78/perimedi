@@ -27,3 +27,14 @@ The system SHALL run and build without required environment variables or secrets
 #### Scenario: Local development
 - **WHEN** a developer opens the iOS project and runs it on the Simulator with no `.env` file
 - **THEN** the application starts successfully
+
+### Requirement: In-app privacy policy
+The system SHALL provide a Privacy Policy control on More that opens the published privacy policy URL in the system browser. The control and its label SHALL be available in English and German. The privacy policy copy SHALL NOT claim diagnosis, treatment, or HRT titration, and SHALL NOT promise second-device iCloud sync as a guaranteed product feature beyond what the published policy states.
+
+#### Scenario: Open privacy policy from More
+- **WHEN** the user activates Privacy Policy on More
+- **THEN** the published privacy policy page opens in the system browser
+
+#### Scenario: Localized label
+- **WHEN** the active language is German
+- **THEN** the Privacy Policy control label is in German
