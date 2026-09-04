@@ -27,6 +27,10 @@ When iCloud is enabled for the app and the user is signed into the same Apple ID
 - **WHEN** the user has saved tracking data on one iOS destination with iCloud enabled and later opens the app on a second destination signed into the same Apple ID with iCloud enabled for the app
 - **THEN** the previously saved medications, schedules, dose logs, remarks, symptom scores, periods, and cycle settings become available on the second destination
 
+#### Scenario: Second destination already running
+- **WHEN** the user has saved tracking data on one iOS destination with iCloud enabled and a second destination signed into the same Apple ID is already running or returns to the foreground, with iCloud enabled for the app
+- **THEN** those medications, schedules, dose logs, remarks, symptom scores, periods, and cycle settings become available on the second destination without a local write on that destination
+
 #### Scenario: Simulator without iCloud sign-in
 - **WHEN** the Simulator is not signed into iCloud
 - **THEN** on-device persistence still works and the app remains usable; device-switch restore is not required until iCloud is available
@@ -41,6 +45,13 @@ The system SHALL accept a valid PeriMedi version-1 JSON backup and replace local
 #### Scenario: Reject invalid file
 - **WHEN** the user selects a file that is not a valid PeriMedi backup
 - **THEN** existing local data is left unchanged and the user is told the import failed
+
+### Requirement: Failed local save leaves stored data unchanged
+The system SHALL leave already-persisted domain data unchanged when a local write cannot be stored, SHALL NOT show tracking data that was not saved, and SHALL tell the user that the save failed.
+
+#### Scenario: Local save failure
+- **WHEN** a local write cannot be stored
+- **THEN** Cycle and Month still show the last successfully stored data and the user is told the save failed
 
 ### Requirement: Offline after first launch
 The system SHALL allow core tracking (viewing and updating already-local data) without a network connection after the app has launched at least once with a local store.

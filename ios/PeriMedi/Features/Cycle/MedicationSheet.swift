@@ -163,9 +163,13 @@ struct MedicationSheet: View {
                                 confirmLabel: app.t("common.delete"),
                                 destructive: true
                             ) {
-                                store.deleteMedication(id: medication.id)
-                                dialogClose()
-                                dismiss()
+                                do {
+                                    try store.deleteMedication(id: medication.id)
+                                    dialogClose()
+                                    dismiss()
+                                } catch {
+                                    self.error = app.t("persist.saveFailed")
+                                }
                             }
                         }
                     }
@@ -421,13 +425,17 @@ struct MedicationSheet: View {
             effectiveDate: effectiveDate,
             loggedAt: loggedAt
         )
-        store.upsertMedication(med)
-        if remindersEnabled {
-            Task { await DoseReminderCenter.shared.requestAuthorizationIfNeeded() }
+        do {
+            try store.upsertMedication(med)
+            if remindersEnabled {
+                Task { await DoseReminderCenter.shared.requestAuthorizationIfNeeded() }
+            }
+            try store.upsertSchedule(schedule)
+            try store.appendMedicationChanges(changes)
+            dialogClose()
+            dismiss()
+        } catch {
+            self.error = app.t("persist.saveFailed")
         }
-        store.upsertSchedule(schedule)
-        store.appendMedicationChanges(changes)
-        dialogClose()
-        dismiss()
     }
 }

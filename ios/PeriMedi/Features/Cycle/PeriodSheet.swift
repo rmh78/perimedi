@@ -94,7 +94,7 @@ struct PeriodSheet: View {
                                         confirmLabel: app.t("common.delete"),
                                         destructive: true
                                     ) {
-                                        store.deletePeriod(id: period.id)
+                                        try? store.deletePeriod(id: period.id)
                                     }
                                 }
                             }
@@ -163,17 +163,21 @@ struct PeriodSheet: View {
             }
             HStack(spacing: 10) {
                 PillButton(title: app.t(editing == nil ? "period.addPeriod" : "period.saveChanges"), kind: .primary, identifier: A11yID.periodSave) {
-                    store.upsertPeriod(
-                        Period(
-                            id: editing?.id ?? createId(),
-                            startDate: DateKeys.toDateKey(start),
-                            endDate: end.isEmpty ? nil : DateKeys.toDateKey(end),
-                            flowNote: flow,
-                            notes: editing?.notes
+                    do {
+                        try store.upsertPeriod(
+                            Period(
+                                id: editing?.id ?? createId(),
+                                startDate: DateKeys.toDateKey(start),
+                                endDate: end.isEmpty ? nil : DateKeys.toDateKey(end),
+                                flowNote: flow,
+                                notes: editing?.notes
+                            )
                         )
-                    )
-                    showEditor = false
-                    editing = nil
+                        showEditor = false
+                        editing = nil
+                    } catch {
+                        // lastError is published for RootView
+                    }
                 }
                 PillButton(title: app.t("common.cancel"), kind: .secondary) {
                     showEditor = false
@@ -209,7 +213,7 @@ struct PeriodSheet: View {
     }
 
     private func persistSettings(tracks: Bool) {
-        store.saveSettings(CycleSettings(
+        try? store.saveSettings(CycleSettings(
             averageCycleLength: cycleLen,
             averagePeriodLength: periodLen,
             tracksPeriods: tracks

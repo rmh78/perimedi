@@ -60,8 +60,22 @@ struct RootView: View {
             }
             UIAccessibility.post(notification: .layoutChanged, argument: nil)
         }
+        .overlay(alignment: .top) {
+            if let persistError = store.lastError {
+                Text(app.t(persistError == .saveFailed ? "persist.saveFailed" : "persist.refreshFailed"))
+                    .font(.caption)
+                    .foregroundStyle(Theme.blush700)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity)
+                    .background(Theme.cream.opacity(0.96))
+                    .onTapGesture { store.dismissError() }
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             app.focusTodayAfterForeground()
+            store.refresh()
             DoseReminderCenter.shared.refresh()
         }
         .onChange(of: app.locale.language) { _, _ in
@@ -96,7 +110,7 @@ struct RootView: View {
             app.selectedDate = today
         }
         if args.contains("-clear") {
-            store.clearAll()
+            try? store.clearAll()
         }
         if args.contains("-loadSample") {
             try? store.loadSample()

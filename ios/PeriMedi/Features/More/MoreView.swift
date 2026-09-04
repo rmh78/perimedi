@@ -148,6 +148,8 @@ struct MoreView: View {
                                     app.goToToday()
                                     status = app.t("more.sampleLoaded")
                                     error = nil
+                                } catch is PersistenceError {
+                                    self.error = app.t("persist.saveFailed")
                                 } catch {
                                     self.error = app.t("more.importFailed")
                                 }
@@ -178,9 +180,13 @@ struct MoreView: View {
                                 confirmLabel: app.t("more.clearLabel"),
                                 destructive: true
                             ) {
-                                store.clearAll()
-                                status = app.t("more.cleared")
-                                error = nil
+                                do {
+                                    try store.clearAll()
+                                    status = app.t("more.cleared")
+                                    error = nil
+                                } catch {
+                                    self.error = app.t("persist.saveFailed")
+                                }
                             }
                         }
                     }
@@ -255,6 +261,8 @@ struct MoreView: View {
             try store.replaceAll(with: payload)
             status = app.t("more.importDone")
             error = nil
+        } catch is PersistenceError {
+            self.error = app.t("persist.saveFailed")
         } catch {
             self.error = app.t("more.importFailed")
         }

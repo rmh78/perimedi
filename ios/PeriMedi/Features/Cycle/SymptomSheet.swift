@@ -128,7 +128,7 @@ struct SymptomSheet: View {
                 )
             )
         }
-        store.replaceDayScores(date: dateKey, scores: scores, note: nil, noteId: nil)
+        try? store.replaceDayScores(date: dateKey, scores: scores, note: nil, noteId: nil)
     }
 
     private func pretty(_ key: String) -> String {
