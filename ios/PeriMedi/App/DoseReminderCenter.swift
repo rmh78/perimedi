@@ -384,7 +384,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
                 && DateKeys.toDateKey(log.plannedFor) == date
                 && timeFromPlanned(log.plannedFor) == time
         }?.id
-        store.setDoseStatus(
+        try? store.setDoseStatus(
             medicationId: medicationId,
             scheduleId: scheduleId,
             date: date,

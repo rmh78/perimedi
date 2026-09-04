@@ -29,7 +29,7 @@ enum JourneyScript {
     }
 
     static func apply(store: Store, step: Int, today: String = DateKeys.todayKey()) -> Snapshot {
-        store.clearAll()
+        try? store.clearAll()
         let start = periodStart(today: today)
         var snapshot = Snapshot(
             selectedDate: today,
@@ -46,7 +46,7 @@ enum JourneyScript {
         }
 
         if step >= 3 {
-            store.upsertPeriod(
+            try? store.upsertPeriod(
                 Period(
                     id: periodId,
                     startDate: start,
@@ -71,7 +71,7 @@ enum JourneyScript {
         }
 
         if step >= 10 {
-            store.setDoseStatus(
+            try? store.setDoseStatus(
                 medicationId: estrogenId,
                 scheduleId: estrogenScheduleId,
                 date: today,
@@ -82,7 +82,7 @@ enum JourneyScript {
         }
 
         if step >= 11 {
-            store.replaceDayScores(
+            try? store.replaceDayScores(
                 date: today,
                 scores: [
                     SymptomScore(
@@ -120,7 +120,7 @@ enum JourneyScript {
     }
 
     private static func upsertEstrogen(store: Store, dose: String, start: String) {
-        store.upsertMedication(
+        try? store.upsertMedication(
             Medication(
                 id: estrogenId,
                 name: "Estrogen",
@@ -130,7 +130,7 @@ enum JourneyScript {
                 createdAt: ISO8601DateFormatter().string(from: Date())
             )
         )
-        store.upsertSchedule(
+        try? store.upsertSchedule(
             Schedule(
                 id: estrogenScheduleId,
                 medicationId: estrogenId,
@@ -145,7 +145,7 @@ enum JourneyScript {
     }
 
     private static func upsertProgesterone(store: Store, start: String, anchor: String) {
-        store.upsertMedication(
+        try? store.upsertMedication(
             Medication(
                 id: progesteroneId,
                 name: "Progesterone",
@@ -155,7 +155,7 @@ enum JourneyScript {
                 createdAt: ISO8601DateFormatter().string(from: Date())
             )
         )
-        store.upsertSchedule(
+        try? store.upsertSchedule(
             Schedule(
                 id: progesteroneScheduleId,
                 medicationId: progesteroneId,

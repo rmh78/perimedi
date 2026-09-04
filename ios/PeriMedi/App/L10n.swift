@@ -293,6 +293,8 @@ enum L10n {
         "more.clearLabel": "Clear all",
         "more.clearConfirm": "Delete all PeriMedi data on this device?",
         "more.cleared": "Cleared.",
+        "persist.saveFailed": "Couldn’t save. Your last stored data is unchanged.",
+        "persist.refreshFailed": "Couldn’t refresh. Showing the last loaded data.",
     ]
 
     static let de: [String: String] = [
@@ -539,5 +541,7 @@ enum L10n {
         "more.clearLabel": "Alles löschen",
         "more.clearConfirm": "Alle PeriMedi-Daten auf diesem Gerät löschen?",
         "more.cleared": "Gelöscht.",
+        "persist.saveFailed": "Speichern fehlgeschlagen. Die zuletzt gespeicherten Daten sind unverändert.",
+        "persist.refreshFailed": "Aktualisieren fehlgeschlagen. Es werden die zuletzt geladenen Daten angezeigt.",
     ]
 }

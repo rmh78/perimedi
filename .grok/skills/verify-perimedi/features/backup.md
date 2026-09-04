@@ -30,4 +30,5 @@ UI tests never pass `-loadSample`. Sample load is a user action on More, not a l
 
 - Clear and sample-load confirm. Destructive / wipes store. Tests cancel, never confirm.
 - Import/export go through the system document/share sheets (no PeriMedi IDs).
-- Domain codec: `ios/Sources/PeriMediDomain` (`ExportPayload` v1). Persistence is the only writer of logs.
+- Invalid backup: existing data is left unchanged and More shows `more.importFailed`. A failed local save/import write shows `persist.saveFailed` and does not publish a snapshot that disagrees with disk.
+- Domain codec: `ios/Sources/PeriMediDomain` (`ExportPayload` v1). Persistence is the only writer of logs. iCloud device-switch is `Store.refresh()` on remote import and foreground; JSON export is the fallback when iCloud is off.

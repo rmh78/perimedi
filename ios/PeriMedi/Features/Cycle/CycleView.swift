@@ -496,7 +496,7 @@ struct CycleView: View {
         let allTaken = selectedDoses.allSatisfy { $0.status == .taken }
         let next: DoseStatus = allTaken ? .pending : .taken
         for slot in selectedDoses {
-            store.setDoseStatus(
+            try? store.setDoseStatus(
                 medicationId: lane.medicationId,
                 scheduleId: slot.schedule.id,
                 date: slot.date,
