@@ -33,6 +33,8 @@
 		085CBEE1AE5E4CA5F3E586D2 /* SwiftDataModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E752EEE4852DFA70749080 /* SwiftDataModels.swift */; };
 		FB90684E69A6C96ED866993E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E9DCABA0F941C89A68E28B8A /* Assets.xcassets */; };
 		415FB8DAD912F1C8A212C22F /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 98AD7DC53BBE76EDDE8D2D49 /* Localizable.xcstrings */; };
+		D317D8AA58269D6EFBF7B675 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = EED13F982945208C9FC6A0DC /* InfoPlist.xcstrings */; };
+		B397C018A17BFBF166508EA2 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5DDA5CC6F789DD9514150A1D /* PrivacyInfo.xcprivacy */; };
 		9A0984188720DF949837D929 /* PeriMediDomain in Frameworks */ = {isa = PBXBuildFile; productRef = C81CD5F22406E4B780AC870D /* PeriMediDomain */; };
 		EECBAEF4AD57AF7707C45321 /* ReminderChime.caf in Resources */ = {isa = PBXBuildFile; fileRef = B1A6A2553ACC7D112DD0BFBA /* ReminderChime.caf */; };
 		64125C6868394BDC68482E52 /* ReminderDrop.caf in Resources */ = {isa = PBXBuildFile; fileRef = 97D2A202B1D02AB51BD678E2 /* ReminderDrop.caf */; };
@@ -45,6 +47,8 @@
 		595C479D7AC91F29089D5228 /* PeriMedi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PeriMedi.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E9DCABA0F941C89A68E28B8A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Resources/Assets.xcassets; sourceTree = "<group>"; };
 		98AD7DC53BBE76EDDE8D2D49 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Resources/Localizable.xcstrings; sourceTree = "<group>"; };
+		EED13F982945208C9FC6A0DC /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Resources/InfoPlist.xcstrings; sourceTree = "<group>"; };
+		5DDA5CC6F789DD9514150A1D /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Resources/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		1915255412EEC1C3CD565CF7 /* PeriMedi.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Resources/PeriMedi.entitlements; sourceTree = "<group>"; };
 		990E084BF113A332AB37F063 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Resources/Info.plist; sourceTree = "<group>"; };
 		38D8400E9D4C7C7981FD8809 /* App/A11yID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/A11yID.swift; sourceTree = "<group>"; };
@@ -122,6 +126,8 @@
 			children = (
 				E9DCABA0F941C89A68E28B8A /* Assets.xcassets */,
 				98AD7DC53BBE76EDDE8D2D49 /* Localizable.xcstrings */,
+				EED13F982945208C9FC6A0DC /* InfoPlist.xcstrings */,
+				5DDA5CC6F789DD9514150A1D /* PrivacyInfo.xcprivacy */,
 				1915255412EEC1C3CD565CF7 /* PeriMedi.entitlements */,
 				990E084BF113A332AB37F063 /* Info.plist */,
 				38D8400E9D4C7C7981FD8809 /* App/A11yID.swift */,
@@ -261,6 +267,8 @@
 			files = (
 				FB90684E69A6C96ED866993E /* Assets.xcassets in Resources */,
 				415FB8DAD912F1C8A212C22F /* Localizable.xcstrings in Resources */,
+				D317D8AA58269D6EFBF7B675 /* InfoPlist.xcstrings in Resources */,
+				B397C018A17BFBF166508EA2 /* PrivacyInfo.xcprivacy in Resources */,
 				EECBAEF4AD57AF7707C45321 /* ReminderChime.caf in Resources */,
 				64125C6868394BDC68482E52 /* ReminderDrop.caf in Resources */,
 				F261E760DC0163A9DB08475B /* ReminderPulse.caf in Resources */,
@@ -368,6 +376,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = PeriMedi/Resources/PeriMedi.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -393,6 +402,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = PeriMedi/Resources/PeriMedi.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
