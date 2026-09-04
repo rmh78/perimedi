@@ -19,6 +19,7 @@ ios/shots/
 
 # Xcode / iOS
 ios/DerivedData
+ios/DerivedData-signed
 ios/.build
 ios/.swiftpm
 xcuserdata/

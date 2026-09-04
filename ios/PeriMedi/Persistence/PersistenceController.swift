@@ -45,12 +45,34 @@ enum PersistenceController {
         }
     }
 
+    /// Device builds put the container in `embedded.mobileprovision`. Simulator
+    /// signed builds usually have no provision; CloudKit is entitled when the
+    /// process entitlements include our container. Unsigned
+    /// `CODE_SIGNING_ALLOWED=NO` builds do not get those keys — asking SwiftData
+    /// for CloudKit without them SIGTRAPs.
     private static func hasCloudKitEntitlement() -> Bool {
+        if provisionContainsCloudKit() { return true }
+        return processEntitlementsContainCloudKit()
+    }
+
+    private static func provisionContainsCloudKit() -> Bool {
         guard
             let url = Bundle.main.url(forResource: "embedded", withExtension: "mobileprovision"),
             let data = try? Data(contentsOf: url),
             let raw = String(data: data, encoding: .isoLatin1)
         else { return false }
         return raw.contains(cloudContainer)
+    }
+
+    private static func processEntitlementsContainCloudKit() -> Bool {
+        guard
+            let url = Bundle.main.executableURL,
+            let data = try? Data(contentsOf: url),
+            let raw = String(data: data, encoding: .isoLatin1)
+        else { return false }
+        // Key comes only from entitlements, not from the Swift container constant
+        // (that string lives in the debug dylib / linked code).
+        return raw.contains("com.apple.developer.icloud-container-identifiers")
+            && raw.contains(cloudContainer)
     }
 }
