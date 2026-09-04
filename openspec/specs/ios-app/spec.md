@@ -94,11 +94,11 @@ The Month screen SHALL use these regions: month title with previous / Today / ne
 - **THEN** the pager, legend, seven-column grid, cycle-day badges, and period/symptom/taken marks are visible and the selected day is outlined
 
 ### Requirement: More layout
-The More screen SHALL present a Language block (English and German as selectable pills), a Reminders block with a master switch for dose reminders and a sound picker, and a Backup block whose rows (sample, export, import, clear) each have a trailing action.
+The More screen SHALL present a Language block (English and German as selectable pills), a Reminders block with a master switch for dose reminders and a sound picker, a Backup block whose rows (sample, export, import, clear) each have a trailing action, and a Privacy Policy control that opens the published privacy policy in the system browser.
 
 #### Scenario: More sections
 - **WHEN** the user opens More
-- **THEN** language pills appear first, then the reminders switch, then backup rows, and each backup action sits on the trailing side of its row
+- **THEN** language pills appear first, then the reminders switch, then backup rows, then a Privacy Policy control, and each backup action sits on the trailing side of its row
 
 ### Requirement: Dialog layout
 The medication, period-settings, and symptom editors SHALL use an inset rounded panel over the current screen (not a full-bleed gray system form as the primary look), a header with title and a dedicated close control, and grouped fields. The medication dialog SHALL NOT repeat a second medication heading under the title. The medication color palette SHALL be a single row of swatches with no horizontal scrolling. Take times SHALL sit on a compact row with the Take at label and SHALL wrap onto additional rows when they no longer fit, without shrinking a time chip so its digits stack. Field order under the schedule heading SHALL be start and end dates, then take times, then a labeled Type dropdown (every day, specific days, cyclic) that is only as wide as its selected label. Mode-specific extras SHALL appear only after that dropdown: weekday chips for specific days, and apply/pause day counts for cyclic (no cyclic preset list).
