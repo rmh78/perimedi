@@ -187,6 +187,19 @@ struct MoreView: View {
                     .padding(.bottom, 8)
                 }
 
+                Button {
+                    if let url = URL(string: "https://rmh78.github.io/perimedi/app-store/privacy") {
+                        UIApplication.shared.open(url)
+                    }
+                } label: {
+                    Text(app.t("more.privacyPolicy"))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Theme.blush700)
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier(A11yID.morePrivacyPolicy)
+                .padding(.horizontal, 6)
+
                 Text(app.t("more.disclaimer"))
                     .font(.caption2)
                     .foregroundStyle(Theme.inkMuted)
