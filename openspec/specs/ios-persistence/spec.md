@@ -35,6 +35,14 @@ When iCloud is enabled for the app and the user is signed into the same Apple ID
 - **WHEN** the Simulator is not signed into iCloud
 - **THEN** on-device persistence still works and the app remains usable; device-switch restore is not required until iCloud is available
 
+#### Scenario: Unsigned CI does not prove already-running follow
+- **WHEN** unsigned Simulator CI (`CODE_SIGNING_ALLOWED=NO` / green `ui`) runs
+- **THEN** that result proves local persistence only; it MUST NOT be treated as proof that an already-running second destination followed CloudKit imports
+
+#### Scenario: Two Simulators on one Mac may need relaunch
+- **WHEN** two Simulators on the same Mac are signed into the same Apple ID and destination B is already running while A saves new data
+- **THEN** CloudKit live import into that already-running Simulator process MAY be delayed or unreliable; the proven verification path is to force-quit and reopen B (or return from background only after import has landed on disk). JSON export remains the fallback when iCloud restore fails
+
 ### Requirement: Import a version-1 JSON backup
 The system SHALL accept a valid PeriMedi version-1 JSON backup and replace local domain data with that payload.
 
