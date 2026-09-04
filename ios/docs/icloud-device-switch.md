@@ -8,10 +8,12 @@ PeriMedi stores domain data in SwiftData. When an Apple ID is signed in and the 
 
 - After a **local** save, `Store` writes with `#Predicate` / fetch-by-id, then `refresh()`es the snapshot once.
 - When **CloudKit** is on, `Store` also observes Core Data remote-change and CloudKit import events (`NSPersistentStoreRemoteChange`, `NSPersistentCloudKitContainer` import/setup) and `refresh()`es after a short debounce.
-- Returning to the foreground (`willEnterForeground`) `refresh()`es `Store` as well as dose reminders. Destination B does not need a local write to show data that arrived from A. Remote-change observers cover the case where B stays in the foreground.
+- Returning to the foreground (`willEnterForeground`) `refresh()`es `Store` as well as dose reminders. Destination B does not need a local write to show data that arrived from A. Remote-change observers cover the case where B stays in the foreground **after CloudKit has landed rows on disk**.
 - `DoseReminderCenter` still uses `store.afterChange`; that callback runs when a refresh actually changes the snapshot, including remote imports.
 
 One published `StoreSnapshot` means one SwiftUI invalidation per refresh.
+
+Green `ui` / unsigned `verify.sh` only proves the local store path. They do **not** prove already-running CloudKit follow.
 
 ## Simulator without iCloud
 
@@ -43,10 +45,12 @@ Schedule fields `daysOfWeekJSON`, `timesJSON`, `therapyJSON`, and `weekPatternJS
 
 1. Add a paid Apple ID in Xcode → Settings → Accounts (paid team already enrolled; a free Personal Team cannot enable iCloud).
 2. In the [CloudKit Dashboard](https://icloud.developer.apple.com/) (paid team), create container `iCloud.app.perimedi.ios` if it is not auto-created.
-3. Sign **two** destinations into the **same Apple ID** (two Simulators, or Simulator + iPhone) and enable iCloud for PeriMedi if prompted.
+3. Sign **two** destinations into the **same Apple ID** (two Simulators, or Simulator + iPhone) and enable iCloud for PeriMedi if prompted. Sign into iCloud **before** the first PeriMedi launch on each destination when possible.
 4. On destination A: load sample data (or add a uniquely named medication).
 5. Wait for a sync (seconds to a few minutes; toggle Airplane Mode off).
-6. On destination B — **already running, returning from background, or freshly launched** — the same medications, schedules, dose logs, remarks, symptom scores, periods, and cycle settings should appear without a local write on B.
+6. On destination B — already running, returning from background, or freshly launched — the same medications, schedules, dose logs, remarks, symptom scores, periods, and cycle settings should appear without a local write on B.
+
+**Simulator caveat (two Sims on one Mac):** Store observers are in place, but CloudKit live import into an **already-running** Simulator process is unreliable within a few minutes. If B looks stale, **force-quit and reopen B** (proven path: cold relaunch often shows A’s data in seconds). Returning from background only helps after CloudKit has already written rows on disk. Prefer a real second device when proving live follow.
 
 If step 6 fails, keep using JSON export from A and import on B. That path is specified independently of iCloud. Invalid import files leave existing data unchanged.
 
