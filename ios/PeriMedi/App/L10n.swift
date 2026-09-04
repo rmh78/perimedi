@@ -1,1 +1,1 @@
-PLACEHOLDER_WILL_FAIL
+@file:///workspace/final_l10n.txt
