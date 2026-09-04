@@ -317,7 +317,6 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         content.body = body
         content.sound = ReminderSound.current.notificationSound
         content.categoryIdentifier = Self.categoryId
-        content.interruptionLevel = .timeSensitive
         content.userInfo = info
         let comps = Calendar.current.dateComponents(
             [.year, .month, .day, .hour, .minute],

@@ -40,6 +40,8 @@ def main() -> None:
         "pkg_prod": hid("pkg_prod"),
         "assets": hid("file_assets"),
         "strings": hid("file_strings"),
+        "infoplist_strings": hid("file_infoplist_strings"),
+        "privacy": hid("file_privacy"),
         "entitlements": hid("file_entitlements"),
         "info": hid("file_info"),
         "ui_target": hid("ui_target"),
@@ -82,6 +84,12 @@ def main() -> None:
         f"\t\t{ids['strings']} /* Localizable.xcstrings */ = {{isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = \"<group>\"; }};"
     )
     file_refs.append(
+        f"\t\t{ids['infoplist_strings']} /* InfoPlist.xcstrings */ = {{isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = \"<group>\"; }};"
+    )
+    file_refs.append(
+        f"\t\t{ids['privacy']} /* PrivacyInfo.xcprivacy */ = {{isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = \"<group>\"; }};"
+    )
+    file_refs.append(
         f"\t\t{ids['entitlements']} /* PeriMedi.entitlements */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PeriMedi.entitlements; sourceTree = \"<group>\"; }};"
     )
     file_refs.append(
@@ -90,6 +98,8 @@ def main() -> None:
 
     assets_build = hid("build:assets")
     strings_build = hid("build:strings")
+    infoplist_strings_build = hid("build:infoplist_strings")
+    privacy_build = hid("build:privacy")
     pkg_build = hid("build:pkg")
     build_files.append(
         f"\t\t{assets_build} /* Assets.xcassets in Resources */ = {{isa = PBXBuildFile; fileRef = {ids['assets']} /* Assets.xcassets */; }};"
@@ -98,10 +108,31 @@ def main() -> None:
         f"\t\t{strings_build} /* Localizable.xcstrings in Resources */ = {{isa = PBXBuildFile; fileRef = {ids['strings']} /* Localizable.xcstrings */; }};"
     )
     build_files.append(
+        f"\t\t{infoplist_strings_build} /* InfoPlist.xcstrings in Resources */ = {{isa = PBXBuildFile; fileRef = {ids['infoplist_strings']} /* InfoPlist.xcstrings */; }};"
+    )
+    build_files.append(
+        f"\t\t{privacy_build} /* PrivacyInfo.xcprivacy in Resources */ = {{isa = PBXBuildFile; fileRef = {ids['privacy']} /* PrivacyInfo.xcprivacy */; }};"
+    )
+    build_files.append(
         f"\t\t{pkg_build} /* PeriMediDomain in Frameworks */ = {{isa = PBXBuildFile; productRef = {ids['pkg_prod']} /* PeriMediDomain */; }};"
     )
     resource_builds.append(f"\t\t\t\t{assets_build} /* Assets.xcassets in Resources */,")
     resource_builds.append(f"\t\t\t\t{strings_build} /* Localizable.xcstrings in Resources */,")
+    resource_builds.append(f"\t\t\t\t{infoplist_strings_build} /* InfoPlist.xcstrings in Resources */,")
+    resource_builds.append(f"\t\t\t\t{privacy_build} /* PrivacyInfo.xcprivacy in Resources */,")
+    # Ensure every Resources/*.xcprivacy is copied into the app target.
+    for privacy_file in sorted((APP / "Resources").glob("*.xcprivacy")):
+        if privacy_file.name != "PrivacyInfo.xcprivacy":
+            key = hid(f"privacy:{privacy_file.name}")
+            bkey = hid(f"build-privacy:{privacy_file.name}")
+            file_refs.append(
+                f"\t\t{key} /* {privacy_file.name} */ = {{isa = PBXFileReference; lastKnownFileType = text.xml; path = {privacy_file.name}; sourceTree = \"<group>\"; }};"
+            )
+            build_files.append(
+                f"\t\t{bkey} /* {privacy_file.name} in Resources */ = {{isa = PBXBuildFile; fileRef = {key} /* {privacy_file.name} */; }};"
+            )
+            resource_builds.append(f"\t\t\t\t{bkey} /* {privacy_file.name} in Resources */,")
+            ids[f"privacy:{privacy_file.name}"] = key
 
     sound_children = []
     for caf in sorted((APP / "Resources").glob("*.caf")):
@@ -134,6 +165,8 @@ def main() -> None:
 			children = (
 				{ids['assets']} /* Assets.xcassets */,
 				{ids['strings']} /* Localizable.xcstrings */,
+				{ids['infoplist_strings']} /* InfoPlist.xcstrings */,
+				{ids['privacy']} /* PrivacyInfo.xcprivacy */,
 				{ids['entitlements']} /* PeriMedi.entitlements */,
 				{ids['info']} /* Info.plist */,{sound_child_block}
 			);
@@ -179,6 +212,8 @@ def main() -> None:
     flat_children = [
         f"{ids['assets']} /* Assets.xcassets */,",
         f"{ids['strings']} /* Localizable.xcstrings */,",
+        f"{ids['infoplist_strings']} /* InfoPlist.xcstrings */,",
+        f"{ids['privacy']} /* PrivacyInfo.xcprivacy */,",
         f"{ids['entitlements']} /* PeriMedi.entitlements */,",
         f"{ids['info']} /* Info.plist */,",
     ]
@@ -186,6 +221,8 @@ def main() -> None:
         f"\t\t{ids['product']} /* PeriMedi.app */ = {{isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PeriMedi.app; sourceTree = BUILT_PRODUCTS_DIR; }};",
         f"\t\t{ids['assets']} /* Assets.xcassets */ = {{isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Resources/Assets.xcassets; sourceTree = \"<group>\"; }};",
         f"\t\t{ids['strings']} /* Localizable.xcstrings */ = {{isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Resources/Localizable.xcstrings; sourceTree = \"<group>\"; }};",
+        f"\t\t{ids['infoplist_strings']} /* InfoPlist.xcstrings */ = {{isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Resources/InfoPlist.xcstrings; sourceTree = \"<group>\"; }};",
+        f"\t\t{ids['privacy']} /* PrivacyInfo.xcprivacy */ = {{isa = PBXFileReference; lastKnownFileType = text.xml; path = Resources/PrivacyInfo.xcprivacy; sourceTree = \"<group>\"; }};",
         f"\t\t{ids['entitlements']} /* PeriMedi.entitlements */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Resources/PeriMedi.entitlements; sourceTree = \"<group>\"; }};",
         f"\t\t{ids['info']} /* Info.plist */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Resources/Info.plist; sourceTree = \"<group>\"; }};",
     ]
@@ -202,6 +239,15 @@ def main() -> None:
             f"\t\t{key} /* {caf.name} */ = {{isa = PBXFileReference; lastKnownFileType = file; path = Resources/{caf.name}; sourceTree = \"<group>\"; }};"
         )
         flat_children.append(f"{key} /* {caf.name} */,")
+
+    for privacy_file in sorted((APP / "Resources").glob("*.xcprivacy")):
+        if privacy_file.name == "PrivacyInfo.xcprivacy":
+            continue
+        key = ids[f"privacy:{privacy_file.name}"]
+        file_refs_flat.append(
+            f"\t\t{key} /* {privacy_file.name} */ = {{isa = PBXFileReference; lastKnownFileType = text.xml; path = Resources/{privacy_file.name}; sourceTree = \"<group>\"; }};"
+        )
+        flat_children.append(f"{key} /* {privacy_file.name} */,")
 
     ui_swift = sorted(p.relative_to(UITESTS) for p in UITESTS.rglob("*.swift")) if UITESTS.exists() else []
     ui_file_refs = [
@@ -477,6 +523,7 @@ def main() -> None:
 			isa = XCBuildConfiguration;
 			buildSettings = {{
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = PeriMedi/Resources/PeriMedi.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -502,6 +549,7 @@ def main() -> None:
 			isa = XCBuildConfiguration;
 			buildSettings = {{
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = PeriMedi/Resources/PeriMedi.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;

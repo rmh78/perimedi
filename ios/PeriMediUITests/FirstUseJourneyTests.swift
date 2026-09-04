@@ -122,6 +122,7 @@ final class FirstUseJourneyTests: PeriMediUITestCase {
             /* denied-settings row */
         }
         robot.app.swipeUp()
+        robot.waitFor(id: "more.privacyPolicy")
         robot.waitFor(id: "more.sample")
         robot.waitFor(id: "more.export")
         robot.waitFor(id: "more.import")

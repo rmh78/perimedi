@@ -57,6 +57,7 @@ enum A11yID {
     static let moreLangDe = "more.lang.de"
     static let moreReminderSoundPreview = "more.reminderSoundPreview"
     static let moreRemindersSettings = "more.remindersSettings"
+    static let morePrivacyPolicy = "more.privacyPolicy"
     static let moreSample = "more.sample"
     static let moreExport = "more.export"
     static let moreImport = "more.import"

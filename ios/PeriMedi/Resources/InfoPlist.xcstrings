@@ -1,0 +1,22 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSUserNotificationsUsageDescription" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PeriMedi sendet lokale Erinnerungen zu deinen geplanten Einnahmezeiten."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PeriMedi sends local reminders at your planned medication take times."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}
