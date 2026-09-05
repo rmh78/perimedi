@@ -3,85 +3,45 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		9B2A1CBE5335FC2AF1A76F49 /* A11yID.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38D8400E9D4C7C7981FD8809 /* A11yID.swift */; };
-		6647B957C0BCE26BFBFC83FE /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27927D1388C59A5DC763B302 /* AppModel.swift */; };
-		C4A6E28BDBA0E7D677A45D63 /* BrandHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02C8E06858619EFA7A9CF5B8 /* BrandHeader.swift */; };
-		39368F4521F7B1A7222A0D33 /* DoseReminderCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DA6E7123B912E3568EE99F3 /* DoseReminderCenter.swift */; };
-		BF53B48278F04C9E0D853E4B /* JourneyScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DF21C04AEC701EA053DEA60 /* JourneyScript.swift */; };
-		19C6CE31FB2D8E537B1BDCB3 /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0170DD6474294BDF742BBD67 /* L10n.swift */; };
-		3E6C5F04B632AF3A7952591F /* PillTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2018F6AE188112D3CC12E9F6 /* PillTabBar.swift */; };
-		6E5ADF97B74568D5E0C965A2 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA409AFF0FC77AF938B953A7 /* RootView.swift */; };
-		CE616C6B4D5D2068A1642076 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9145F1283898D08989291CB4 /* Theme.swift */; };
-		55D1DFC048CE1FEFF1137E01 /* CyclePlotData.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAD21DD6855CDFAB8F613EE4 /* CyclePlotData.swift */; };
-		04DBD81113D04F70681CFCFE /* CyclePlotScroll.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7113BE2034510468AFFB3CE7 /* CyclePlotScroll.swift */; };
-		D0B4ABE93A94AFB4D34805AD /* CycleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34CEE44C477C58BF767BCCEE /* CycleView.swift */; };
-		5B1E10ED1C9F72165761D2FB /* EffectLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05D5962B762E6A4AC2B0B56F /* EffectLine.swift */; };
-		25BA13B021161251A8ACBEFB /* MedLaneBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7B9D060F9B8EE53D5D97E4B /* MedLaneBuilder.swift */; };
-		8B56DDB29A84E1A0A6FC24AA /* MedicationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DC74F0FEF1AA56975142C29 /* MedicationSheet.swift */; };
-		82B0E06EB7459090AFC32F62 /* PeriodSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A857E14F53952D2127E73D /* PeriodSheet.swift */; };
-		7BF7FC6BE88015C1B1D0DB03 /* SymptomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54F79B6AF760BC2A2F448BFD /* SymptomSheet.swift */; };
-		B7A83DBE76859D6EDE7B3D64 /* MonthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E74D1E1A69E41303158AB133 /* MonthView.swift */; };
-		509CD2A2375F2202BAEAB82B /* MoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 827B3968E8F819815BE355EA /* MoreView.swift */; };
-		ACE731121577B9A356303D1A /* DialogChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 957780ADFD525A78BAA2F7CF /* DialogChrome.swift */; };
-		9489A223207A7957115CE59C /* PeriMediApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0D9131837546C57FD9CA660 /* PeriMediApp.swift */; };
-		B250661E90C3E1F193AAA0F2 /* PersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B279B8626D85DDE344D5BD /* PersistenceController.swift */; };
-		55530328B1463F9426C1E1C4 /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273071412F3FD8A6AF5E659A /* Store.swift */; };
-		085CBEE1AE5E4CA5F3E586D2 /* SwiftDataModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E752EEE4852DFA70749080 /* SwiftDataModels.swift */; };
-		FB90684E69A6C96ED866993E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E9DCABA0F941C89A68E28B8A /* Assets.xcassets */; };
-		415FB8DAD912F1C8A212C22F /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 98AD7DC53BBE76EDDE8D2D49 /* Localizable.xcstrings */; };
-		D317D8AA58269D6EFBF7B675 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = EED13F982945208C9FC6A0DC /* InfoPlist.xcstrings */; };
-		B397C018A17BFBF166508EA2 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5DDA5CC6F789DD9514150A1D /* PrivacyInfo.xcprivacy */; };
-		9A0984188720DF949837D929 /* PeriMediDomain in Frameworks */ = {isa = PBXBuildFile; productRef = C81CD5F22406E4B780AC870D /* PeriMediDomain */; };
-		EECBAEF4AD57AF7707C45321 /* ReminderChime.caf in Resources */ = {isa = PBXBuildFile; fileRef = B1A6A2553ACC7D112DD0BFBA /* ReminderChime.caf */; };
-		64125C6868394BDC68482E52 /* ReminderDrop.caf in Resources */ = {isa = PBXBuildFile; fileRef = 97D2A202B1D02AB51BD678E2 /* ReminderDrop.caf */; };
-		F261E760DC0163A9DB08475B /* ReminderPulse.caf in Resources */ = {isa = PBXBuildFile; fileRef = FDA84AAE569584D90954F2AC /* ReminderPulse.caf */; };
-		834CC77C763103E8F47C99A4 /* AppRobot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08D40AD4E25A24C58A69F41E /* AppRobot.swift */; };
+		04DBD81113D04F70681CFCFE /* Features/Cycle/CyclePlotScroll.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7113BE2034510468AFFB3CE7 /* Features/Cycle/CyclePlotScroll.swift */; };
+		085CBEE1AE5E4CA5F3E586D2 /* Persistence/SwiftDataModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E752EEE4852DFA70749080 /* Persistence/SwiftDataModels.swift */; };
+		19C6CE31FB2D8E537B1BDCB3 /* App/L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0170DD6474294BDF742BBD67 /* App/L10n.swift */; };
+		25BA13B021161251A8ACBEFB /* Features/Cycle/MedLaneBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7B9D060F9B8EE53D5D97E4B /* Features/Cycle/MedLaneBuilder.swift */; };
 		34F0D2545DEE97A3154A4D90 /* FirstUseJourneyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59821C676F8E7BF086EEB7C2 /* FirstUseJourneyTests.swift */; };
+		39368F4521F7B1A7222A0D33 /* App/DoseReminderCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DA6E7123B912E3568EE99F3 /* App/DoseReminderCenter.swift */; };
+		3E6C5F04B632AF3A7952591F /* App/PillTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2018F6AE188112D3CC12E9F6 /* App/PillTabBar.swift */; };
+		415FB8DAD912F1C8A212C22F /* Resources/Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 98AD7DC53BBE76EDDE8D2D49 /* Resources/Localizable.xcstrings */; };
+		509CD2A2375F2202BAEAB82B /* Features/More/MoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 827B3968E8F819815BE355EA /* Features/More/MoreView.swift */; };
+		55530328B1463F9426C1E1C4 /* Persistence/Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = 273071412F3FD8A6AF5E659A /* Persistence/Store.swift */; };
+		55D1DFC048CE1FEFF1137E01 /* Features/Cycle/CyclePlotData.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAD21DD6855CDFAB8F613EE4 /* Features/Cycle/CyclePlotData.swift */; };
+		5B1E10ED1C9F72165761D2FB /* Features/Cycle/EffectLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05D5962B762E6A4AC2B0B56F /* Features/Cycle/EffectLine.swift */; };
+		64125C6868394BDC68482E52 /* Resources/ReminderDrop.caf in Resources */ = {isa = PBXBuildFile; fileRef = 97D2A202B1D02AB51BD678E2 /* Resources/ReminderDrop.caf */; };
+		6647B957C0BCE26BFBFC83FE /* App/AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27927D1388C59A5DC763B302 /* App/AppModel.swift */; };
+		6E5ADF97B74568D5E0C965A2 /* App/RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA409AFF0FC77AF938B953A7 /* App/RootView.swift */; };
+		7BF7FC6BE88015C1B1D0DB03 /* Features/Cycle/SymptomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54F79B6AF760BC2A2F448BFD /* Features/Cycle/SymptomSheet.swift */; };
+		82B0E06EB7459090AFC32F62 /* Features/Cycle/PeriodSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A857E14F53952D2127E73D /* Features/Cycle/PeriodSheet.swift */; };
+		834CC77C763103E8F47C99A4 /* AppRobot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08D40AD4E25A24C58A69F41E /* AppRobot.swift */; };
+		8B56DDB29A84E1A0A6FC24AA /* Features/Cycle/MedicationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DC74F0FEF1AA56975142C29 /* Features/Cycle/MedicationSheet.swift */; };
+		9489A223207A7957115CE59C /* PeriMediApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0D9131837546C57FD9CA660 /* PeriMediApp.swift */; };
+		9A0984188720DF949837D929 /* PeriMediDomain in Frameworks */ = {isa = PBXBuildFile; productRef = C81CD5F22406E4B780AC870D /* PeriMediDomain */; };
+		9B2A1CBE5335FC2AF1A76F49 /* App/A11yID.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38D8400E9D4C7C7981FD8809 /* App/A11yID.swift */; };
+		ACE731121577B9A356303D1A /* Features/Sheets/DialogChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 957780ADFD525A78BAA2F7CF /* Features/Sheets/DialogChrome.swift */; };
+		B250661E90C3E1F193AAA0F2 /* Persistence/PersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B279B8626D85DDE344D5BD /* Persistence/PersistenceController.swift */; };
+		B397C018A17BFBF166508EA2 /* Resources/PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5DDA5CC6F789DD9514150A1D /* Resources/PrivacyInfo.xcprivacy */; };
+		B7A83DBE76859D6EDE7B3D64 /* Features/Month/MonthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E74D1E1A69E41303158AB133 /* Features/Month/MonthView.swift */; };
+		BF53B48278F04C9E0D853E4B /* App/JourneyScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DF21C04AEC701EA053DEA60 /* App/JourneyScript.swift */; };
+		C4A6E28BDBA0E7D677A45D63 /* App/BrandHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02C8E06858619EFA7A9CF5B8 /* App/BrandHeader.swift */; };
+		CE616C6B4D5D2068A1642076 /* App/Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9145F1283898D08989291CB4 /* App/Theme.swift */; };
+		D0B4ABE93A94AFB4D34805AD /* Features/Cycle/CycleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34CEE44C477C58BF767BCCEE /* Features/Cycle/CycleView.swift */; };
+		D317D8AA58269D6EFBF7B675 /* Resources/InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = EED13F982945208C9FC6A0DC /* Resources/InfoPlist.xcstrings */; };
+		EECBAEF4AD57AF7707C45321 /* Resources/ReminderChime.caf in Resources */ = {isa = PBXBuildFile; fileRef = B1A6A2553ACC7D112DD0BFBA /* Resources/ReminderChime.caf */; };
+		F261E760DC0163A9DB08475B /* Resources/ReminderPulse.caf in Resources */ = {isa = PBXBuildFile; fileRef = FDA84AAE569584D90954F2AC /* Resources/ReminderPulse.caf */; };
+		FB90684E69A6C96ED866993E /* Resources/Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E9DCABA0F941C89A68E28B8A /* Resources/Assets.xcassets */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXFileReference section */
-		595C479D7AC91F29089D5228 /* PeriMedi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PeriMedi.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		E9DCABA0F941C89A68E28B8A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Resources/Assets.xcassets; sourceTree = "<group>"; };
-		98AD7DC53BBE76EDDE8D2D49 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Resources/Localizable.xcstrings; sourceTree = "<group>"; };
-		EED13F982945208C9FC6A0DC /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Resources/InfoPlist.xcstrings; sourceTree = "<group>"; };
-		5DDA5CC6F789DD9514150A1D /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Resources/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		1915255412EEC1C3CD565CF7 /* PeriMedi.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Resources/PeriMedi.entitlements; sourceTree = "<group>"; };
-		990E084BF113A332AB37F063 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Resources/Info.plist; sourceTree = "<group>"; };
-		38D8400E9D4C7C7981FD8809 /* App/A11yID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/A11yID.swift; sourceTree = "<group>"; };
-		27927D1388C59A5DC763B302 /* App/AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/AppModel.swift; sourceTree = "<group>"; };
-		02C8E06858619EFA7A9CF5B8 /* App/BrandHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/BrandHeader.swift; sourceTree = "<group>"; };
-		5DA6E7123B912E3568EE99F3 /* App/DoseReminderCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/DoseReminderCenter.swift; sourceTree = "<group>"; };
-		2DF21C04AEC701EA053DEA60 /* App/JourneyScript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/JourneyScript.swift; sourceTree = "<group>"; };
-		0170DD6474294BDF742BBD67 /* App/L10n.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/L10n.swift; sourceTree = "<group>"; };
-		2018F6AE188112D3CC12E9F6 /* App/PillTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/PillTabBar.swift; sourceTree = "<group>"; };
-		CA409AFF0FC77AF938B953A7 /* App/RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/RootView.swift; sourceTree = "<group>"; };
-		9145F1283898D08989291CB4 /* App/Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/Theme.swift; sourceTree = "<group>"; };
-		CAD21DD6855CDFAB8F613EE4 /* Features/Cycle/CyclePlotData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/CyclePlotData.swift; sourceTree = "<group>"; };
-		7113BE2034510468AFFB3CE7 /* Features/Cycle/CyclePlotScroll.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/CyclePlotScroll.swift; sourceTree = "<group>"; };
-		34CEE44C477C58BF767BCCEE /* Features/Cycle/CycleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/CycleView.swift; sourceTree = "<group>"; };
-		05D5962B762E6A4AC2B0B56F /* Features/Cycle/EffectLine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/EffectLine.swift; sourceTree = "<group>"; };
-		F7B9D060F9B8EE53D5D97E4B /* Features/Cycle/MedLaneBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/MedLaneBuilder.swift; sourceTree = "<group>"; };
-		9DC74F0FEF1AA56975142C29 /* Features/Cycle/MedicationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/MedicationSheet.swift; sourceTree = "<group>"; };
-		74A857E14F53952D2127E73D /* Features/Cycle/PeriodSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/PeriodSheet.swift; sourceTree = "<group>"; };
-		54F79B6AF760BC2A2F448BFD /* Features/Cycle/SymptomSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/SymptomSheet.swift; sourceTree = "<group>"; };
-		E74D1E1A69E41303158AB133 /* Features/Month/MonthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Month/MonthView.swift; sourceTree = "<group>"; };
-		827B3968E8F819815BE355EA /* Features/More/MoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/More/MoreView.swift; sourceTree = "<group>"; };
-		957780ADFD525A78BAA2F7CF /* Features/Sheets/DialogChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Sheets/DialogChrome.swift; sourceTree = "<group>"; };
-		D0D9131837546C57FD9CA660 /* PeriMediApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriMediApp.swift; sourceTree = "<group>"; };
-		C8B279B8626D85DDE344D5BD /* Persistence/PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/PersistenceController.swift; sourceTree = "<group>"; };
-		273071412F3FD8A6AF5E659A /* Persistence/Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/Store.swift; sourceTree = "<group>"; };
-		F3E752EEE4852DFA70749080 /* Persistence/SwiftDataModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/SwiftDataModels.swift; sourceTree = "<group>"; };
-		B1A6A2553ACC7D112DD0BFBA /* ReminderChime.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Resources/ReminderChime.caf; sourceTree = "<group>"; };
-		97D2A202B1D02AB51BD678E2 /* ReminderDrop.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Resources/ReminderDrop.caf; sourceTree = "<group>"; };
-		FDA84AAE569584D90954F2AC /* ReminderPulse.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Resources/ReminderPulse.caf; sourceTree = "<group>"; };
-		75902C37BB4D4EC5B0F09F3C /* PeriMediUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PeriMediUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		08D40AD4E25A24C58A69F41E /* AppRobot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRobot.swift; sourceTree = "<group>"; };
-		59821C676F8E7BF086EEB7C2 /* FirstUseJourneyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstUseJourneyTests.swift; sourceTree = "<group>"; };
-/* End PBXFileReference section */
 
 /* Begin PBXContainerItemProxy section */
 		08FE7D5FD43F955EE30EE1E9 /* PBXContainerItemProxy */ = {
@@ -93,7 +53,54 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXFileReference section */
+		0170DD6474294BDF742BBD67 /* App/L10n.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/L10n.swift; sourceTree = "<group>"; };
+		02C8E06858619EFA7A9CF5B8 /* App/BrandHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/BrandHeader.swift; sourceTree = "<group>"; };
+		05D5962B762E6A4AC2B0B56F /* Features/Cycle/EffectLine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/EffectLine.swift; sourceTree = "<group>"; };
+		08D40AD4E25A24C58A69F41E /* AppRobot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRobot.swift; sourceTree = "<group>"; };
+		1915255412EEC1C3CD565CF7 /* Resources/PeriMedi.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Resources/PeriMedi.entitlements; sourceTree = "<group>"; };
+		2018F6AE188112D3CC12E9F6 /* App/PillTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/PillTabBar.swift; sourceTree = "<group>"; };
+		273071412F3FD8A6AF5E659A /* Persistence/Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/Store.swift; sourceTree = "<group>"; };
+		27927D1388C59A5DC763B302 /* App/AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/AppModel.swift; sourceTree = "<group>"; };
+		2DF21C04AEC701EA053DEA60 /* App/JourneyScript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/JourneyScript.swift; sourceTree = "<group>"; };
+		34CEE44C477C58BF767BCCEE /* Features/Cycle/CycleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/CycleView.swift; sourceTree = "<group>"; };
+		38D8400E9D4C7C7981FD8809 /* App/A11yID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/A11yID.swift; sourceTree = "<group>"; };
+		54F79B6AF760BC2A2F448BFD /* Features/Cycle/SymptomSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/SymptomSheet.swift; sourceTree = "<group>"; };
+		595C479D7AC91F29089D5228 /* PeriMedi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PeriMedi.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		59821C676F8E7BF086EEB7C2 /* FirstUseJourneyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstUseJourneyTests.swift; sourceTree = "<group>"; };
+		5DA6E7123B912E3568EE99F3 /* App/DoseReminderCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/DoseReminderCenter.swift; sourceTree = "<group>"; };
+		5DDA5CC6F789DD9514150A1D /* Resources/PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Resources/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		7113BE2034510468AFFB3CE7 /* Features/Cycle/CyclePlotScroll.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/CyclePlotScroll.swift; sourceTree = "<group>"; };
+		74A857E14F53952D2127E73D /* Features/Cycle/PeriodSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/PeriodSheet.swift; sourceTree = "<group>"; };
+		75902C37BB4D4EC5B0F09F3C /* PeriMediUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PeriMediUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		827B3968E8F819815BE355EA /* Features/More/MoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/More/MoreView.swift; sourceTree = "<group>"; };
+		9145F1283898D08989291CB4 /* App/Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/Theme.swift; sourceTree = "<group>"; };
+		957780ADFD525A78BAA2F7CF /* Features/Sheets/DialogChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Sheets/DialogChrome.swift; sourceTree = "<group>"; };
+		97D2A202B1D02AB51BD678E2 /* Resources/ReminderDrop.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Resources/ReminderDrop.caf; sourceTree = "<group>"; };
+		98AD7DC53BBE76EDDE8D2D49 /* Resources/Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Resources/Localizable.xcstrings; sourceTree = "<group>"; };
+		990E084BF113A332AB37F063 /* Resources/Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Resources/Info.plist; sourceTree = "<group>"; };
+		9DC74F0FEF1AA56975142C29 /* Features/Cycle/MedicationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/MedicationSheet.swift; sourceTree = "<group>"; };
+		B1A6A2553ACC7D112DD0BFBA /* Resources/ReminderChime.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Resources/ReminderChime.caf; sourceTree = "<group>"; };
+		C8B279B8626D85DDE344D5BD /* Persistence/PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/PersistenceController.swift; sourceTree = "<group>"; };
+		CA409AFF0FC77AF938B953A7 /* App/RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/RootView.swift; sourceTree = "<group>"; };
+		CAD21DD6855CDFAB8F613EE4 /* Features/Cycle/CyclePlotData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/CyclePlotData.swift; sourceTree = "<group>"; };
+		D0D9131837546C57FD9CA660 /* PeriMediApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriMediApp.swift; sourceTree = "<group>"; };
+		E74D1E1A69E41303158AB133 /* Features/Month/MonthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Month/MonthView.swift; sourceTree = "<group>"; };
+		E9DCABA0F941C89A68E28B8A /* Resources/Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Resources/Assets.xcassets; sourceTree = "<group>"; };
+		EED13F982945208C9FC6A0DC /* Resources/InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Resources/InfoPlist.xcstrings; sourceTree = "<group>"; };
+		F3E752EEE4852DFA70749080 /* Persistence/SwiftDataModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/SwiftDataModels.swift; sourceTree = "<group>"; };
+		F7B9D060F9B8EE53D5D97E4B /* Features/Cycle/MedLaneBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/MedLaneBuilder.swift; sourceTree = "<group>"; };
+		FDA84AAE569584D90954F2AC /* Resources/ReminderPulse.caf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Resources/ReminderPulse.caf; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
 /* Begin PBXFrameworksBuildPhase section */
+		2A59628A6B6643F3E1FE8671 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E941DA8187B32B086A8E8098 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -102,34 +109,18 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		2A59628A6B6643F3E1FE8671 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		BDE88D77EBDC01774960BE71 = {
-			isa = PBXGroup;
-			children = (
-				4B48653AF5A0B20C6ED00351 /* PeriMedi */,
-				88189ACCA3913C501CCC3799 /* PeriMediUITests */,
-				4FDE57E4B72FFCEE306CEB0F /* Products */,
-			);
-			sourceTree = "<group>";
-		};
 		4B48653AF5A0B20C6ED00351 /* PeriMedi */ = {
 			isa = PBXGroup;
 			children = (
-				E9DCABA0F941C89A68E28B8A /* Assets.xcassets */,
-				98AD7DC53BBE76EDDE8D2D49 /* Localizable.xcstrings */,
-				EED13F982945208C9FC6A0DC /* InfoPlist.xcstrings */,
-				5DDA5CC6F789DD9514150A1D /* PrivacyInfo.xcprivacy */,
-				1915255412EEC1C3CD565CF7 /* PeriMedi.entitlements */,
-				990E084BF113A332AB37F063 /* Info.plist */,
+				E9DCABA0F941C89A68E28B8A /* Resources/Assets.xcassets */,
+				98AD7DC53BBE76EDDE8D2D49 /* Resources/Localizable.xcstrings */,
+				EED13F982945208C9FC6A0DC /* Resources/InfoPlist.xcstrings */,
+				5DDA5CC6F789DD9514150A1D /* Resources/PrivacyInfo.xcprivacy */,
+				1915255412EEC1C3CD565CF7 /* Resources/PeriMedi.entitlements */,
+				990E084BF113A332AB37F063 /* Resources/Info.plist */,
 				38D8400E9D4C7C7981FD8809 /* App/A11yID.swift */,
 				27927D1388C59A5DC763B302 /* App/AppModel.swift */,
 				02C8E06858619EFA7A9CF5B8 /* App/BrandHeader.swift */,
@@ -154,9 +145,9 @@
 				C8B279B8626D85DDE344D5BD /* Persistence/PersistenceController.swift */,
 				273071412F3FD8A6AF5E659A /* Persistence/Store.swift */,
 				F3E752EEE4852DFA70749080 /* Persistence/SwiftDataModels.swift */,
-				B1A6A2553ACC7D112DD0BFBA /* ReminderChime.caf */,
-				97D2A202B1D02AB51BD678E2 /* ReminderDrop.caf */,
-				FDA84AAE569584D90954F2AC /* ReminderPulse.caf */,
+				B1A6A2553ACC7D112DD0BFBA /* Resources/ReminderChime.caf */,
+				97D2A202B1D02AB51BD678E2 /* Resources/ReminderDrop.caf */,
+				FDA84AAE569584D90954F2AC /* Resources/ReminderPulse.caf */,
 			);
 			path = PeriMedi;
 			sourceTree = "<group>";
@@ -170,13 +161,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		A024F06580C79B7582C3806A /* Resources */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = Resources;
-			sourceTree = "<group>";
-		};
 		88189ACCA3913C501CCC3799 /* PeriMediUITests */ = {
 			isa = PBXGroup;
 			children = (
@@ -186,9 +170,36 @@
 			path = PeriMediUITests;
 			sourceTree = "<group>";
 		};
+		BDE88D77EBDC01774960BE71 = {
+			isa = PBXGroup;
+			children = (
+				4B48653AF5A0B20C6ED00351 /* PeriMedi */,
+				88189ACCA3913C501CCC3799 /* PeriMediUITests */,
+				4FDE57E4B72FFCEE306CEB0F /* Products */,
+			);
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		5B5330F45E919B349BFE3A6A /* PeriMediUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CB185E638BD357D831E02CEF /* Build configuration list for PBXNativeTarget "PeriMediUITests" */;
+			buildPhases = (
+				A6FBA9B2EF64CFD988878D0D /* Sources */,
+				2A59628A6B6643F3E1FE8671 /* Frameworks */,
+				6A76B0B35624E5E8575959F5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				717BF424341A197C5D416AED /* PBXTargetDependency */,
+			);
+			name = PeriMediUITests;
+			productName = PeriMediUITests;
+			productReference = 75902C37BB4D4EC5B0F09F3C /* PeriMediUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		CCD1BDFE40AA20836710EC01 /* PeriMedi */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = FB1F54659DEE0710C6C03466 /* Build configuration list for PBXNativeTarget "PeriMedi" */;
@@ -208,24 +219,6 @@
 			productName = PeriMedi;
 			productReference = 595C479D7AC91F29089D5228 /* PeriMedi.app */;
 			productType = "com.apple.product-type.application";
-		};
-		5B5330F45E919B349BFE3A6A /* PeriMediUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = CB185E638BD357D831E02CEF /* Build configuration list for PBXNativeTarget "PeriMediUITests" */;
-			buildPhases = (
-				A6FBA9B2EF64CFD988878D0D /* Sources */,
-				2A59628A6B6643F3E1FE8671 /* Frameworks */,
-				6A76B0B35624E5E8575959F5 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				717BF424341A197C5D416AED /* PBXTargetDependency */,
-			);
-			name = PeriMediUITests;
-			productName = PeriMediUITests;
-			productReference = 75902C37BB4D4EC5B0F09F3C /* PeriMediUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
 
@@ -261,24 +254,24 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		C5926192950FAB508AE8C163 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				FB90684E69A6C96ED866993E /* Assets.xcassets in Resources */,
-				415FB8DAD912F1C8A212C22F /* Localizable.xcstrings in Resources */,
-				D317D8AA58269D6EFBF7B675 /* InfoPlist.xcstrings in Resources */,
-				B397C018A17BFBF166508EA2 /* PrivacyInfo.xcprivacy in Resources */,
-				EECBAEF4AD57AF7707C45321 /* ReminderChime.caf in Resources */,
-				64125C6868394BDC68482E52 /* ReminderDrop.caf in Resources */,
-				F261E760DC0163A9DB08475B /* ReminderPulse.caf in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		6A76B0B35624E5E8575959F5 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C5926192950FAB508AE8C163 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FB90684E69A6C96ED866993E /* Resources/Assets.xcassets in Resources */,
+				415FB8DAD912F1C8A212C22F /* Resources/Localizable.xcstrings in Resources */,
+				D317D8AA58269D6EFBF7B675 /* Resources/InfoPlist.xcstrings in Resources */,
+				B397C018A17BFBF166508EA2 /* Resources/PrivacyInfo.xcprivacy in Resources */,
+				EECBAEF4AD57AF7707C45321 /* Resources/ReminderChime.caf in Resources */,
+				64125C6868394BDC68482E52 /* Resources/ReminderDrop.caf in Resources */,
+				F261E760DC0163A9DB08475B /* Resources/ReminderPulse.caf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -289,30 +282,30 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9B2A1CBE5335FC2AF1A76F49 /* A11yID.swift in Sources */,
-				6647B957C0BCE26BFBFC83FE /* AppModel.swift in Sources */,
-				C4A6E28BDBA0E7D677A45D63 /* BrandHeader.swift in Sources */,
-				39368F4521F7B1A7222A0D33 /* DoseReminderCenter.swift in Sources */,
-				BF53B48278F04C9E0D853E4B /* JourneyScript.swift in Sources */,
-				19C6CE31FB2D8E537B1BDCB3 /* L10n.swift in Sources */,
-				3E6C5F04B632AF3A7952591F /* PillTabBar.swift in Sources */,
-				6E5ADF97B74568D5E0C965A2 /* RootView.swift in Sources */,
-				CE616C6B4D5D2068A1642076 /* Theme.swift in Sources */,
-				55D1DFC048CE1FEFF1137E01 /* CyclePlotData.swift in Sources */,
-				04DBD81113D04F70681CFCFE /* CyclePlotScroll.swift in Sources */,
-				D0B4ABE93A94AFB4D34805AD /* CycleView.swift in Sources */,
-				5B1E10ED1C9F72165761D2FB /* EffectLine.swift in Sources */,
-				25BA13B021161251A8ACBEFB /* MedLaneBuilder.swift in Sources */,
-				8B56DDB29A84E1A0A6FC24AA /* MedicationSheet.swift in Sources */,
-				82B0E06EB7459090AFC32F62 /* PeriodSheet.swift in Sources */,
-				7BF7FC6BE88015C1B1D0DB03 /* SymptomSheet.swift in Sources */,
-				B7A83DBE76859D6EDE7B3D64 /* MonthView.swift in Sources */,
-				509CD2A2375F2202BAEAB82B /* MoreView.swift in Sources */,
-				ACE731121577B9A356303D1A /* DialogChrome.swift in Sources */,
+				9B2A1CBE5335FC2AF1A76F49 /* App/A11yID.swift in Sources */,
+				6647B957C0BCE26BFBFC83FE /* App/AppModel.swift in Sources */,
+				C4A6E28BDBA0E7D677A45D63 /* App/BrandHeader.swift in Sources */,
+				39368F4521F7B1A7222A0D33 /* App/DoseReminderCenter.swift in Sources */,
+				BF53B48278F04C9E0D853E4B /* App/JourneyScript.swift in Sources */,
+				19C6CE31FB2D8E537B1BDCB3 /* App/L10n.swift in Sources */,
+				3E6C5F04B632AF3A7952591F /* App/PillTabBar.swift in Sources */,
+				6E5ADF97B74568D5E0C965A2 /* App/RootView.swift in Sources */,
+				CE616C6B4D5D2068A1642076 /* App/Theme.swift in Sources */,
+				55D1DFC048CE1FEFF1137E01 /* Features/Cycle/CyclePlotData.swift in Sources */,
+				04DBD81113D04F70681CFCFE /* Features/Cycle/CyclePlotScroll.swift in Sources */,
+				D0B4ABE93A94AFB4D34805AD /* Features/Cycle/CycleView.swift in Sources */,
+				5B1E10ED1C9F72165761D2FB /* Features/Cycle/EffectLine.swift in Sources */,
+				25BA13B021161251A8ACBEFB /* Features/Cycle/MedLaneBuilder.swift in Sources */,
+				8B56DDB29A84E1A0A6FC24AA /* Features/Cycle/MedicationSheet.swift in Sources */,
+				82B0E06EB7459090AFC32F62 /* Features/Cycle/PeriodSheet.swift in Sources */,
+				7BF7FC6BE88015C1B1D0DB03 /* Features/Cycle/SymptomSheet.swift in Sources */,
+				B7A83DBE76859D6EDE7B3D64 /* Features/Month/MonthView.swift in Sources */,
+				509CD2A2375F2202BAEAB82B /* Features/More/MoreView.swift in Sources */,
+				ACE731121577B9A356303D1A /* Features/Sheets/DialogChrome.swift in Sources */,
 				9489A223207A7957115CE59C /* PeriMediApp.swift in Sources */,
-				B250661E90C3E1F193AAA0F2 /* PersistenceController.swift in Sources */,
-				55530328B1463F9426C1E1C4 /* Store.swift in Sources */,
-				085CBEE1AE5E4CA5F3E586D2 /* SwiftDataModels.swift in Sources */,
+				B250661E90C3E1F193AAA0F2 /* Persistence/PersistenceController.swift in Sources */,
+				55530328B1463F9426C1E1C4 /* Persistence/Store.swift in Sources */,
+				085CBEE1AE5E4CA5F3E586D2 /* Persistence/SwiftDataModels.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -336,6 +329,35 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		3CE888AAFF1B8F44F68AECB5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = PeriMedi/Resources/PeriMedi.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7H4A6PWSPS;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = PeriMedi/Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.perimedi.ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
 		450951E7B3806B5445670F4E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -356,47 +378,29 @@
 			};
 			name = Debug;
 		};
-		F7BBBFB52B8BC99183A44494 /* Release */ = {
+		512F1E850726823F6EAADB34 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_STYLE = Manual;
+				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				SDKROOT = iphoneos;
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_VERSION = 5.0;
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
-		3CE888AAFF1B8F44F68AECB5 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = PeriMedi/Resources/PeriMedi.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 7H4A6PWSPS;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = PeriMedi/Resources/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = app.perimedi.ios;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = app.perimedi.ios.uitests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = PeriMedi;
+				USES_XCTRUNNER = YES;
 			};
-			name = Debug;
+			name = Release;
 		};
 		6EBE38A2484C0DDE3DABC0C5 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -410,7 +414,10 @@
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = PeriMedi/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.perimedi.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -432,7 +439,11 @@
 				CODE_SIGN_STYLE = Manual;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = app.perimedi.ios.uitests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -444,34 +455,30 @@
 			};
 			name = Debug;
 		};
-		512F1E850726823F6EAADB34 /* Release */ = {
+		F7BBBFB52B8BC99183A44494 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_STYLE = Manual;
-				GENERATE_INFOPLIST_FILE = YES;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = app.perimedi.ios.uitests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
-				TEST_TARGET_NAME = PeriMedi;
-				USES_XCTRUNNER = YES;
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		FFD9230DD9EB4153279DD4D9 /* Build configuration list for PBXProject "PeriMedi" */ = {
+		CB185E638BD357D831E02CEF /* Build configuration list for PBXNativeTarget "PeriMediUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				450951E7B3806B5445670F4E /* Debug */,
-				F7BBBFB52B8BC99183A44494 /* Release */,
+				B7CD0AACEC561F492E33AB2B /* Debug */,
+				512F1E850726823F6EAADB34 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -485,11 +492,11 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		CB185E638BD357D831E02CEF /* Build configuration list for PBXNativeTarget "PeriMediUITests" */ = {
+		FFD9230DD9EB4153279DD4D9 /* Build configuration list for PBXProject "PeriMedi" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				B7CD0AACEC561F492E33AB2B /* Debug */,
-				512F1E850726823F6EAADB34 /* Release */,
+				450951E7B3806B5445670F4E /* Debug */,
+				F7BBBFB52B8BC99183A44494 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

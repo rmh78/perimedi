@@ -282,7 +282,7 @@ def main() -> None:
 	archiveVersion = 1;
 	classes = {{
 	}};
-	objectVersion = 56;
+	objectVersion = 60;
 	objects = {{
 
 /* Begin PBXBuildFile section */
