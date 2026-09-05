@@ -487,8 +487,11 @@ struct ReminderCard: View {
     var body: some View {
         DialogBackdrop(onClose: { app.pendingReminder = nil }) {
             VStack(alignment: .leading, spacing: 12) {
-                Text(reminder.medicationName)
+                Text(app.t("reminder.title"))
                     .font(.title3.weight(.semibold))
+                    .foregroundStyle(Theme.ink)
+                Text(reminder.medicationName)
+                    .font(.subheadline.weight(.medium))
                     .foregroundStyle(Theme.ink)
                 Text(app.t("reminder.body", ["dose": reminder.doseLabel, "time": reminder.timeOfDay]))
                     .font(.subheadline)

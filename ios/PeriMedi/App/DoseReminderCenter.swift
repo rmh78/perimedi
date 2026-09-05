@@ -186,8 +186,9 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         for slot in slots {
             guard let request = makeRequest(
                 id: slot.id,
-                title: slot.medicationName,
-                body: body(for: slot),
+                medicationName: slot.medicationName,
+                doseLabel: slot.doseLabel,
+                timeOfDay: slot.timeOfDay,
                 fireAt: slot.fireAt,
                 info: userInfo(for: slot)
             ) else { continue }
@@ -208,8 +209,9 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         soon.fireAt = Date().addingTimeInterval(TimeInterval(max(1, delay)))
         if let request = makeRequest(
             id: soon.id,
-            title: soon.medicationName,
-            body: body(for: soon),
+            medicationName: soon.medicationName,
+            doseLabel: soon.doseLabel,
+            timeOfDay: soon.timeOfDay,
             fireAt: soon.fireAt,
             info: userInfo(for: soon)
         ) {
@@ -284,47 +286,75 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             )
             if let request = makeRequest(
                 id: id,
-                title: reminder.medicationName,
-                body: app?.t("reminder.body", ["dose": reminder.doseLabel, "time": reminder.timeOfDay])
-                    ?? "\(reminder.doseLabel) · \(reminder.timeOfDay)",
+                medicationName: reminder.medicationName,
+                doseLabel: reminder.doseLabel,
+                timeOfDay: reminder.timeOfDay,
                 fireAt: fireAt,
-                info: [
-                    "medicationId": reminder.medicationId,
-                    "scheduleId": reminder.scheduleId,
-                    "date": reminder.date,
-                    "timeOfDay": reminder.timeOfDay,
-                ]
+                info: userInfo(
+                    medicationId: reminder.medicationId,
+                    scheduleId: reminder.scheduleId,
+                    date: reminder.date,
+                    timeOfDay: reminder.timeOfDay,
+                    medicationName: reminder.medicationName,
+                    doseLabel: reminder.doseLabel
+                )
             ) {
                 try? await UNUserNotificationCenter.current().add(request)
             }
         }
     }
 
-    private func body(for slot: ReminderSlot) -> String {
-        app?.t("reminder.body", ["dose": slot.doseLabel, "time": slot.timeOfDay])
-            ?? "\(slot.doseLabel) · \(slot.timeOfDay)"
+    private func reminderTitle() -> String {
+        app?.t("reminder.title") ?? "Time for your dose"
+    }
+
+    private func reminderBody(dose: String, time: String) -> String {
+        app?.t("reminder.body", ["dose": dose, "time": time])
+            ?? "Take \(dose) · planned \(time). Tap Taken when you’ve taken it."
     }
 
     private func userInfo(for slot: ReminderSlot) -> [AnyHashable: Any] {
+        userInfo(
+            medicationId: slot.medicationId,
+            scheduleId: slot.scheduleId,
+            date: slot.date,
+            timeOfDay: slot.timeOfDay,
+            medicationName: slot.medicationName,
+            doseLabel: slot.doseLabel
+        )
+    }
+
+    private func userInfo(
+        medicationId: String,
+        scheduleId: String,
+        date: String,
+        timeOfDay: String,
+        medicationName: String,
+        doseLabel: String
+    ) -> [AnyHashable: Any] {
         [
-            "medicationId": slot.medicationId,
-            "scheduleId": slot.scheduleId,
-            "date": slot.date,
-            "timeOfDay": slot.timeOfDay,
+            "medicationId": medicationId,
+            "scheduleId": scheduleId,
+            "date": date,
+            "timeOfDay": timeOfDay,
+            "medicationName": medicationName,
+            "doseLabel": doseLabel,
         ]
     }
 
     private func makeRequest(
         id: String,
-        title: String,
-        body: String,
+        medicationName: String,
+        doseLabel: String,
+        timeOfDay: String,
         fireAt: Date,
         info: [AnyHashable: Any]
     ) -> UNNotificationRequest? {
         guard let kind = ReminderLogic.triggerKind(fireAt: fireAt) else { return nil }
         let content = UNMutableNotificationContent()
-        content.title = title
-        content.body = body
+        content.title = reminderTitle()
+        content.subtitle = medicationName
+        content.body = reminderBody(dose: doseLabel, time: timeOfDay)
         content.sound = notificationSound
         content.categoryIdentifier = Self.categoryId
         content.userInfo = info
@@ -443,10 +473,17 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         let date = info["date"] as? String ?? ""
         let time = info["timeOfDay"] as? String ?? ""
         let id = ReminderSlot.snoozeId(scheduleId: scheduleId, date: date, timeOfDay: time)
+        let medicationName = (info["medicationName"] as? String).flatMap { $0.isEmpty ? nil : $0 }
+            ?? {
+                let subtitle = notification.request.content.subtitle
+                return subtitle.isEmpty ? notification.request.content.title : subtitle
+            }()
+        let doseLabel = info["doseLabel"] as? String ?? ""
         if let request = makeRequest(
             id: id,
-            title: notification.request.content.title,
-            body: notification.request.content.body,
+            medicationName: medicationName,
+            doseLabel: doseLabel,
+            timeOfDay: time,
             fireAt: fireAt,
             info: info
         ) {

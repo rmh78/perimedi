@@ -30,7 +30,7 @@ The system SHALL schedule an on-device reminder for each future pending planned 
 - **THEN** pending dose reminders are cleared
 
 ### Requirement: Notification content and actions
-The system SHALL present a reminder whose title is the medication name and whose body includes the dose label and take time. The reminder SHALL offer Taken and Snooze actions. Taken SHALL record that planned slot as taken. Snooze SHALL schedule one follow-up reminder about ten minutes later for the same slot. Activating the reminder (not an action) SHALL open Cycle on that slot’s date.
+The system SHALL present a reminder whose title is a dose prompt, whose subtitle is the medication name, and whose body names the dose label and planned take time and tells the user to choose Taken after taking it. English title SHALL be “Time for your dose”; German title SHALL be “Zeit für deine Dosis”. English body SHALL be “Take {dose} · planned {time}. Tap Taken when you’ve taken it.”; German body SHALL be “Nimm {dose} · geplant {time}. Tippe auf Genommen, wenn erledigt.” The in-app reminder banner SHALL use the same title, medication name, and body. The reminder SHALL offer Taken (first) and Snooze actions. Taken SHALL record that planned slot as taken. Snooze SHALL schedule one follow-up reminder about ten minutes later for the same slot. Activating the reminder (not an action) SHALL open Cycle on that slot’s date.
 
 #### Scenario: Taken from the banner
 - **WHEN** a reminder fires and the user chooses Taken
@@ -43,6 +43,10 @@ The system SHALL present a reminder whose title is the medication name and whose
 #### Scenario: Open the day
 - **WHEN** the user activates the reminder banner
 - **THEN** Cycle is shown for that slot’s date
+
+#### Scenario: Notification copy
+- **WHEN** a reminder fires for a medication named Estreva with dose 0.5 mg at 08:00 and the app language is English
+- **THEN** the reminder title is “Time for your dose”, the subtitle is Estreva, and the body is “Take 0.5 mg · planned 08:00. Tap Taken when you’ve taken it.”
 
 ### Requirement: Reminder sound
 The system SHALL let the user choose the reminder sound in More from a small list: the system default notification sound, or one of the short tones bundled with the app. The chosen sound SHALL be used for later reminders on this device. The system SHALL allow the user to preview a bundled tone before it is due.
