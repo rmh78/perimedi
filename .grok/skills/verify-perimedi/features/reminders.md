@@ -29,3 +29,4 @@ Launch extra: `-remindIn=4` fires the next pending slot in-process (see `FirstUs
 - Springboard banners are unreliable in XCTest. Use `-remindIn`, not a real notification.
 - Taken on the banner uses the same path as the notification action.
 - Master switch off on More means no banner, even if `med.remind` is on.
+- Fresh install with master on asks for notification permission. `-uiTesting` skips that prompt so CI is not blocked. After the user allows, dose notifications are rebuilt with an explicit time zone (calendar components without a zone can be dropped on device).

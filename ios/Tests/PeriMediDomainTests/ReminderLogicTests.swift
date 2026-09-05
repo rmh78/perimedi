@@ -113,6 +113,116 @@ final class ReminderLogicTests: XCTestCase {
         XCTAssertEqual(slots.first?.timeOfDay, "08:00")
     }
 
+    func testPermissionAskedOnFreshInstallWhenMasterOn() {
+        XCTAssertTrue(
+            ReminderPermissionPolicy.shouldRequestAuthorization(
+                masterEnabled: true,
+                status: .notDetermined,
+                uiTesting: false
+            )
+        )
+    }
+
+    func testPermissionNotAskedDuringUITests() {
+        XCTAssertFalse(
+            ReminderPermissionPolicy.shouldRequestAuthorization(
+                masterEnabled: true,
+                status: .notDetermined,
+                uiTesting: true
+            )
+        )
+    }
+
+    func testPermissionNotAskedAgainAfterDeny() {
+        XCTAssertFalse(
+            ReminderPermissionPolicy.shouldRequestAuthorization(
+                masterEnabled: true,
+                status: .denied,
+                uiTesting: false
+            )
+        )
+    }
+
+    func testDoesNotScheduleUntilAuthorized() {
+        XCTAssertFalse(
+            ReminderPermissionPolicy.shouldScheduleDoseReminders(
+                masterEnabled: true,
+                status: .notDetermined
+            )
+        )
+        XCTAssertFalse(
+            ReminderPermissionPolicy.shouldScheduleDoseReminders(
+                masterEnabled: true,
+                status: .denied
+            )
+        )
+        XCTAssertTrue(
+            ReminderPermissionPolicy.shouldScheduleDoseReminders(
+                masterEnabled: true,
+                status: .authorized
+            )
+        )
+        XCTAssertFalse(
+            ReminderPermissionPolicy.shouldScheduleDoseReminders(
+                masterEnabled: false,
+                status: .authorized
+            )
+        )
+    }
+
+    func testFireComponentsUseExplicitTimeZoneAndStayInTheFuture() {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(identifier: "Europe/Berlin")!
+        var parts = DateComponents()
+        parts.calendar = cal
+        parts.timeZone = cal.timeZone
+        parts.year = 2026
+        parts.month = 9
+        parts.day = 5
+        parts.hour = 8
+        parts.minute = 0
+        parts.second = 0
+        let fireAt = cal.date(from: parts)!
+        let now = fireAt.addingTimeInterval(-3600)
+        let comps = ReminderFireComponents.from(fireAt: fireAt, now: now, calendar: cal)
+        XCTAssertEqual(comps?.hour, 8)
+        XCTAssertEqual(comps?.minute, 0)
+        XCTAssertEqual(comps?.timeZoneIdentifier, "Europe/Berlin")
+        let roundTrip = comps.flatMap { $0.dateComponents.date }
+        XCTAssertEqual(roundTrip.map { cal.component(.hour, from: $0) }, 8)
+        XCTAssertEqual(roundTrip.map { cal.component(.minute, from: $0) }, 0)
+        XCTAssertNil(ReminderFireComponents.from(fireAt: fireAt, now: fireAt.addingTimeInterval(1), calendar: cal))
+        XCTAssertEqual(
+            ReminderLogic.triggerKind(fireAt: fireAt, now: now, calendar: cal),
+            .calendar(comps!)
+        )
+        XCTAssertEqual(
+            ReminderLogic.triggerKind(fireAt: now.addingTimeInterval(30), now: now, calendar: cal),
+            .timeInterval(30)
+        )
+        XCTAssertNil(ReminderLogic.triggerKind(fireAt: now.addingTimeInterval(-1), now: now, calendar: cal))
+    }
+
+    func testSampleHasUpcomingReminders() {
+        DateKeys.pinnedTodayKey = "2026-03-15"
+        defer { DateKeys.pinnedTodayKey = nil }
+        let day = DateKeys.parseDateKey("2026-03-15")!
+        let payload = SampleData.payload(now: day)
+        let now = DateKeys.date(dateKey: "2026-03-15", timeOfDay: "07:00")!
+        let slots = ReminderLogic.upcoming(
+            now: now,
+            medications: payload.medications,
+            schedules: payload.schedules,
+            doseLogs: payload.doseLogs,
+            periods: payload.periods,
+            settings: payload.cycleSettings
+        )
+        XCTAssertFalse(slots.isEmpty)
+        XCTAssertTrue(slots.contains { $0.medicationName == "Estradiol gel" })
+        XCTAssertTrue(slots.allSatisfy { $0.fireAt > now })
+        XCTAssertTrue(payload.medications.allSatisfy(\.remindersEnabled))
+    }
+
     func testOldBackupDefaultsRemindersOn() throws {
         let json = """
         {"version":1,"exportedAt":"t","medications":[{"id":"m","name":"E","form":"PILL","doseLabel":"1","createdAt":"t"}],"schedules":[],"doseLogs":[],"remarks":[],"cycleSettings":{"id":"default","averageCycleLength":28,"averagePeriodLength":5},"periods":[]}

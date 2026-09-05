@@ -69,6 +69,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             self?.refresh()
         }
         refresh()
+        Task { await requestAuthorizationIfNeeded() }
     }
 
     func registerCategories() {
@@ -92,9 +93,13 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
     }
 
     func requestAuthorizationIfNeeded() async {
-        guard !uiTesting else { return }
         let settings = await UNUserNotificationCenter.current().notificationSettings()
-        guard settings.authorizationStatus == .notDetermined else { return }
+        let status = ReminderAuthStatus(settings.authorizationStatus)
+        guard ReminderPermissionPolicy.shouldRequestAuthorization(
+            masterEnabled: masterEnabled,
+            status: status,
+            uiTesting: uiTesting
+        ) else { return }
         _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])
         refresh()
     }
@@ -155,12 +160,13 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         }
 
         let settings = await center.notificationSettings()
-        guard settings.authorizationStatus == .authorized
-            || settings.authorizationStatus == .provisional
-            || settings.authorizationStatus == .ephemeral
-        else {
-            let doseIds = pending.filter { $0.identifier.hasPrefix("dose.") }.map(\.identifier)
-            center.removePendingNotificationRequests(withIdentifiers: doseIds)
+        let status = ReminderAuthStatus(settings.authorizationStatus)
+        let ours = pending.filter { $0.identifier.hasPrefix("dose.") || $0.identifier.hasPrefix("snooze.") }
+        guard ReminderPermissionPolicy.shouldScheduleDoseReminders(
+            masterEnabled: true,
+            status: status
+        ) else {
+            center.removePendingNotificationRequests(withIdentifiers: ours.filter { $0.identifier.hasPrefix("dose.") }.map(\.identifier))
             return
         }
 
@@ -172,18 +178,19 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             periods: store.periods,
             settings: store.settings
         )
-        let desired = Set(slots.map(\.id))
-        let existingDose = Set(pending.filter { $0.identifier.hasPrefix("dose.") }.map(\.identifier))
-        center.removePendingNotificationRequests(withIdentifiers: Array(existingDose.subtracting(desired)))
+        // Rebuild every dose request so a broken trigger (no time zone) is not kept.
+        center.removePendingNotificationRequests(
+            withIdentifiers: ours.filter { $0.identifier.hasPrefix("dose.") }.map(\.identifier)
+        )
 
-        for slot in slots where !existingDose.contains(slot.id) {
-            let request = makeRequest(
+        for slot in slots {
+            guard let request = makeRequest(
                 id: slot.id,
                 title: slot.medicationName,
                 body: body(for: slot),
                 fireAt: slot.fireAt,
                 info: userInfo(for: slot)
-            )
+            ) else { continue }
             try? await center.add(request)
         }
     }
@@ -199,14 +206,15 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         ).first else { return }
         var soon = slot
         soon.fireAt = Date().addingTimeInterval(TimeInterval(max(1, delay)))
-        let request = makeRequest(
+        if let request = makeRequest(
             id: soon.id,
             title: soon.medicationName,
             body: body(for: soon),
             fireAt: soon.fireAt,
             info: userInfo(for: soon)
-        )
-        try? await UNUserNotificationCenter.current().add(request)
+        ) {
+            try? await UNUserNotificationCenter.current().add(request)
+        }
         presentAfterDelay(soon, delay: delay)
     }
 
@@ -274,7 +282,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
                 date: reminder.date,
                 timeOfDay: reminder.timeOfDay
             )
-            let request = makeRequest(
+            if let request = makeRequest(
                 id: id,
                 title: reminder.medicationName,
                 body: app?.t("reminder.body", ["dose": reminder.doseLabel, "time": reminder.timeOfDay])
@@ -286,8 +294,9 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
                     "date": reminder.date,
                     "timeOfDay": reminder.timeOfDay,
                 ]
-            )
-            try? await UNUserNotificationCenter.current().add(request)
+            ) {
+                try? await UNUserNotificationCenter.current().add(request)
+            }
         }
     }
 
@@ -311,25 +320,43 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         body: String,
         fireAt: Date,
         info: [AnyHashable: Any]
-    ) -> UNNotificationRequest {
+    ) -> UNNotificationRequest? {
+        guard let kind = ReminderLogic.triggerKind(fireAt: fireAt) else { return nil }
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
-        content.sound = ReminderSound.current.notificationSound
+        content.sound = notificationSound
         content.categoryIdentifier = Self.categoryId
         content.userInfo = info
-        let comps = Calendar.current.dateComponents(
-            [.year, .month, .day, .hour, .minute],
-            from: fireAt
-        )
         let trigger: UNNotificationTrigger
-        let interval = fireAt.timeIntervalSinceNow
-        if interval > 0, interval < 90 {
-            trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, interval), repeats: false)
-        } else {
-            trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
+        switch kind {
+        case .timeInterval(let interval):
+            trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)
+        case .calendar(let comps):
+            let calendarTrigger = UNCalendarNotificationTrigger(
+                dateMatching: comps.dateComponents,
+                repeats: false
+            )
+            if let next = calendarTrigger.nextTriggerDate(), next.timeIntervalSinceNow > 0 {
+                trigger = calendarTrigger
+            } else {
+                let remaining = fireAt.timeIntervalSinceNow
+                guard remaining > 0 else { return nil }
+                trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, remaining), repeats: false)
+            }
         }
         return UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+    }
+
+    private var notificationSound: UNNotificationSound {
+        let sound = ReminderSound.current
+        if let fileName = sound.fileName {
+            let stem = (fileName as NSString).deletingPathExtension
+            if Bundle.main.url(forResource: stem, withExtension: "caf") != nil {
+                return sound.notificationSound
+            }
+        }
+        return .default
     }
 
     nonisolated func userNotificationCenter(
@@ -416,13 +443,27 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         let date = info["date"] as? String ?? ""
         let time = info["timeOfDay"] as? String ?? ""
         let id = ReminderSlot.snoozeId(scheduleId: scheduleId, date: date, timeOfDay: time)
-        let request = makeRequest(
+        if let request = makeRequest(
             id: id,
             title: notification.request.content.title,
             body: notification.request.content.body,
             fireAt: fireAt,
             info: info
-        )
-        try? await UNUserNotificationCenter.current().add(request)
+        ) {
+            try? await UNUserNotificationCenter.current().add(request)
+        }
+    }
+}
+
+extension ReminderAuthStatus {
+    init(_ status: UNAuthorizationStatus) {
+        switch status {
+        case .notDetermined: self = .notDetermined
+        case .denied: self = .denied
+        case .authorized: self = .authorized
+        case .provisional: self = .provisional
+        case .ephemeral: self = .ephemeral
+        @unknown default: self = .denied
+        }
     }
 }
