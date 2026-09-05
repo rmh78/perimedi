@@ -56,7 +56,11 @@ The system SHALL let the user choose the reminder sound in More from a small lis
 - **THEN** that tone plays immediately without logging a dose
 
 ### Requirement: Permission
-The system SHALL ask for notification permission when the user turns reminders on (master switch or saving a medication with reminders enabled) and permission has not yet been decided. The system SHALL NOT repeatedly prompt after the user denies. When permission is denied and the master switch is on, More SHALL explain that reminders need notification access in iOS Settings. Instrumented UI tests SHALL NOT present the system permission dialog. They MAY fire the next pending reminder through a test launch flag and mark it Taken on a reminder card without asserting the system banner.
+The system SHALL ask for notification permission on first launch when the master reminders switch is on (the default) and permission has not yet been decided, and again when the user turns reminders on (master switch or saving a medication with reminders enabled) if permission is still undecided. The system SHALL NOT repeatedly prompt after the user denies. When permission is denied and the master switch is on, More SHALL explain that reminders need notification access in iOS Settings. Instrumented UI tests SHALL NOT present the system permission dialog. They MAY fire the next pending reminder through a test launch flag and mark it Taken on a reminder card without asserting the system banner.
+
+#### Scenario: Fresh install
+- **WHEN** the user launches the app for the first time with reminders on and the system has not yet asked
+- **THEN** the system permission prompt is shown
 
 #### Scenario: First enable
 - **WHEN** the user turns reminders on and the system has not yet asked

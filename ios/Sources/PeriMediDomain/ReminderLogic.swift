@@ -39,10 +39,133 @@ public struct ReminderSlot: Equatable, Sendable, Identifiable {
     }
 }
 
+/// Device notification permission, without importing UserNotifications into domain.
+public enum ReminderAuthStatus: String, Equatable, Sendable {
+    case notDetermined
+    case denied
+    case authorized
+    case provisional
+    case ephemeral
+}
+
+public enum ReminderPermissionPolicy {
+    /// Ask once while reminders are on and iOS has not decided. Never from UI tests.
+    public static func shouldRequestAuthorization(
+        masterEnabled: Bool,
+        status: ReminderAuthStatus,
+        uiTesting: Bool
+    ) -> Bool {
+        !uiTesting && masterEnabled && status == .notDetermined
+    }
+
+    public static func shouldScheduleDoseReminders(
+        masterEnabled: Bool,
+        status: ReminderAuthStatus
+    ) -> Bool {
+        guard masterEnabled else { return false }
+        switch status {
+        case .authorized, .provisional, .ephemeral: return true
+        case .notDetermined, .denied: return false
+        }
+    }
+}
+
+/// Calendar pieces for a local notification, with an explicit time zone so
+/// TestFlight/device alarms are not interpreted as GMT.
+public struct ReminderFireComponents: Equatable, Sendable {
+    public var year: Int
+    public var month: Int
+    public var day: Int
+    public var hour: Int
+    public var minute: Int
+    public var second: Int
+    public var timeZoneIdentifier: String
+
+    public init(
+        year: Int,
+        month: Int,
+        day: Int,
+        hour: Int,
+        minute: Int,
+        second: Int,
+        timeZoneIdentifier: String
+    ) {
+        self.year = year
+        self.month = month
+        self.day = day
+        self.hour = hour
+        self.minute = minute
+        self.second = second
+        self.timeZoneIdentifier = timeZoneIdentifier
+    }
+
+    public static func from(
+        fireAt: Date,
+        now: Date = Date(),
+        calendar: Calendar = .current
+    ) -> ReminderFireComponents? {
+        guard fireAt > now else { return nil }
+        var cal = calendar
+        let tz = calendar.timeZone
+        cal.timeZone = tz
+        let c = cal.dateComponents([.year, .month, .day, .hour, .minute, .second], from: fireAt)
+        guard
+            let year = c.year,
+            let month = c.month,
+            let day = c.day,
+            let hour = c.hour,
+            let minute = c.minute
+        else { return nil }
+        return ReminderFireComponents(
+            year: year,
+            month: month,
+            day: day,
+            hour: hour,
+            minute: minute,
+            second: c.second ?? 0,
+            timeZoneIdentifier: tz.identifier
+        )
+    }
+
+    public var dateComponents: DateComponents {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(identifier: timeZoneIdentifier) ?? .current
+        var c = DateComponents()
+        c.calendar = cal
+        c.timeZone = cal.timeZone
+        c.year = year
+        c.month = month
+        c.day = day
+        c.hour = hour
+        c.minute = minute
+        c.second = second
+        return c
+    }
+}
+
+public enum ReminderTriggerKind: Equatable, Sendable {
+    case timeInterval(TimeInterval)
+    case calendar(ReminderFireComponents)
+}
+
 public enum ReminderLogic {
     public static let horizonDays = 14
     public static let maxPending = 60
     public static let snoozeMinutes = 10
+
+    /// How to fire a local notification so it is not dropped as “already past”
+    /// (calendar components without a time zone can be read as GMT on device).
+    public static func triggerKind(fireAt: Date, now: Date = Date(), calendar: Calendar = .current) -> ReminderTriggerKind? {
+        let remaining = fireAt.timeIntervalSince(now)
+        guard remaining > 0 else { return nil }
+        if remaining < 90 {
+            return .timeInterval(max(1, remaining))
+        }
+        guard let comps = ReminderFireComponents.from(fireAt: fireAt, now: now, calendar: calendar) else {
+            return nil
+        }
+        return .calendar(comps)
+    }
 
     public static func upcoming(
         now: Date,
