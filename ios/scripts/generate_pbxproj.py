@@ -69,9 +69,9 @@ def main() -> None:
             f"\t\t{key} /* {rel.name} */ = {{isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = {rel.name}; sourceTree = \"<group>\"; }};"
         )
         build_files.append(
-            f"\t\t{bkey} /* {rel.name} in Sources */ = {{isa = PBXBuildFile; fileRef = {key} /* {rel.name} */; }};"
+            f"\t\t{bkey} /* {rel.as_posix()} in Sources */ = {{isa = PBXBuildFile; fileRef = {key} /* {rel.as_posix()} */; }};"
         )
-        source_builds.append(f"\t\t\t\t{bkey} /* {rel.name} in Sources */,")
+        source_builds.append(f"\t\t\t\t{bkey} /* {rel.as_posix()} in Sources */,")
         ids[f"ref:{rel}"] = key
 
     file_refs.append(
@@ -248,6 +248,17 @@ def main() -> None:
             f"\t\t{key} /* {privacy_file.name} */ = {{isa = PBXFileReference; lastKnownFileType = text.xml; path = Resources/{privacy_file.name}; sourceTree = \"<group>\"; }};"
         )
         flat_children.append(f"{key} /* {privacy_file.name} */,")
+
+    launch_ref = hid("file_launch_storyboard")
+    launch_build = hid("build:launch_storyboard")
+    file_refs_flat.append(
+        f"\t\t{launch_ref} /* LaunchScreen.storyboard */ = {{isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Resources/LaunchScreen.storyboard; sourceTree = \"<group>\"; }};"
+    )
+    flat_children.append(f"{launch_ref} /* LaunchScreen.storyboard */,")
+    build_files.append(
+        f"\t\t{launch_build} /* LaunchScreen.storyboard in Resources */ = {{isa = PBXBuildFile; fileRef = {launch_ref} /* LaunchScreen.storyboard */; }};"
+    )
+    resource_builds.append(f"\t\t\t\t{launch_build} /* LaunchScreen.storyboard in Resources */,")
 
     ui_swift = sorted(p.relative_to(UITESTS) for p in UITESTS.rglob("*.swift")) if UITESTS.exists() else []
     ui_file_refs = [

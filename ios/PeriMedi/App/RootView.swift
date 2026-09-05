@@ -6,6 +6,8 @@ struct RootView: View {
     @EnvironmentObject private var app: AppModel
     @EnvironmentObject private var store: Store
     @Environment(\.accessibilityLanguage) private var a11yLang
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var launchBeatVisible = LaunchBeat.shouldPlay
 
     var body: some View {
         VStack(spacing: 0) {
@@ -52,6 +54,12 @@ struct RootView: View {
         }
         .environment(\.locale, app.locale.language.locale)
         .id(app.locale.language)
+        .overlay {
+            if launchBeatVisible {
+                LaunchBrandOverlay()
+                    .transition(.opacity)
+            }
+        }
         .onAppear {
             applyLaunchFlags()
             DoseReminderCenter.shared.attach(store: store, app: app)
@@ -59,6 +67,7 @@ struct RootView: View {
                 DoseReminderCenter.shared.clearAll()
             }
             UIAccessibility.post(notification: .layoutChanged, argument: nil)
+            dismissLaunchBeatIfNeeded()
         }
         .overlay(alignment: .top) {
             if let persistError = store.lastError {
@@ -92,6 +101,20 @@ struct RootView: View {
             .allowsHitTesting(selected)
             .accessibilityHidden(!selected)
             .zIndex(selected ? 1 : 0)
+    }
+
+    private func dismissLaunchBeatIfNeeded() {
+        guard launchBeatVisible else { return }
+        if reduceMotion {
+            launchBeatVisible = false
+            return
+        }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(80))
+            withAnimation(.easeOut(duration: 0.45)) {
+                launchBeatVisible = false
+            }
+        }
     }
 
     private func applyLaunchFlags() {

@@ -41,6 +41,7 @@
 		EECBAEF4AD57AF7707C45321 /* Resources/ReminderChime.caf in Resources */ = {isa = PBXBuildFile; fileRef = B1A6A2553ACC7D112DD0BFBA /* Resources/ReminderChime.caf */; };
 		F261E760DC0163A9DB08475B /* Resources/ReminderPulse.caf in Resources */ = {isa = PBXBuildFile; fileRef = FDA84AAE569584D90954F2AC /* Resources/ReminderPulse.caf */; };
 		FB90684E69A6C96ED866993E /* Resources/Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E9DCABA0F941C89A68E28B8A /* Resources/Assets.xcassets */; };
+		E79FBA041C0F1558F7DE9745 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 899403094A6D8C99A71E12B9 /* LaunchScreen.storyboard */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -87,6 +88,7 @@
 		D0D9131837546C57FD9CA660 /* PeriMediApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriMediApp.swift; sourceTree = "<group>"; };
 		E74D1E1A69E41303158AB133 /* Features/Month/MonthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Month/MonthView.swift; sourceTree = "<group>"; };
 		E9DCABA0F941C89A68E28B8A /* Resources/Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Resources/Assets.xcassets; sourceTree = "<group>"; };
+		899403094A6D8C99A71E12B9 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Resources/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		EED13F982945208C9FC6A0DC /* Resources/InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Resources/InfoPlist.xcstrings; sourceTree = "<group>"; };
 		F3E752EEE4852DFA70749080 /* Persistence/SwiftDataModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/SwiftDataModels.swift; sourceTree = "<group>"; };
 		F7B9D060F9B8EE53D5D97E4B /* Features/Cycle/MedLaneBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/MedLaneBuilder.swift; sourceTree = "<group>"; };
@@ -121,6 +123,7 @@
 				5DDA5CC6F789DD9514150A1D /* Resources/PrivacyInfo.xcprivacy */,
 				1915255412EEC1C3CD565CF7 /* Resources/PeriMedi.entitlements */,
 				990E084BF113A332AB37F063 /* Resources/Info.plist */,
+				899403094A6D8C99A71E12B9 /* LaunchScreen.storyboard */,
 				38D8400E9D4C7C7981FD8809 /* App/A11yID.swift */,
 				27927D1388C59A5DC763B302 /* App/AppModel.swift */,
 				02C8E06858619EFA7A9CF5B8 /* App/BrandHeader.swift */,
@@ -266,6 +269,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FB90684E69A6C96ED866993E /* Resources/Assets.xcassets in Resources */,
+				E79FBA041C0F1558F7DE9745 /* LaunchScreen.storyboard in Resources */,
 				415FB8DAD912F1C8A212C22F /* Resources/Localizable.xcstrings in Resources */,
 				D317D8AA58269D6EFBF7B675 /* Resources/InfoPlist.xcstrings in Resources */,
 				B397C018A17BFBF166508EA2 /* Resources/PrivacyInfo.xcprivacy in Resources */,
