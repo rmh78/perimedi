@@ -17,7 +17,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var todayFocusNonce = 0
 
     enum Tab: Hashable {
-        case cycle, month, more
+        case cycle, trends, month, more
     }
 
     let store: Store

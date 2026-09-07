@@ -21,7 +21,7 @@ def main() -> int:
             file=sys.stderr,
         )
         print(
-            "Move feature sheets under Features/Cycle, Features/Month, or Features/More:",
+            "Move feature sheets under Features/Cycle, Features/Trends, Features/Month, or Features/More:",
             file=sys.stderr,
         )
         for name in extra:

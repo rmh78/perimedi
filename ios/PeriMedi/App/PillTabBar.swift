@@ -6,6 +6,7 @@ struct PillTabBar: View {
     var body: some View {
         HStack(spacing: 4) {
             tab(.cycle, icon: "arrow.trianglehead.2.clockwise.rotate.90", key: "nav.cycle")
+            tab(.trends, icon: "chart.xyaxis.line", key: "nav.trends")
             tab(.month, icon: "calendar", key: "nav.month")
             tab(.more, icon: "ellipsis", key: "nav.more")
         }
@@ -29,6 +30,7 @@ struct PillTabBar: View {
                 Text(app.t(key))
                     .font(.system(size: 11, weight: .semibold))
                     .lineLimit(1)
+                    .minimumScaleFactor(0.75)
             }
             .foregroundStyle(active ? Theme.blush800 : Theme.inkMuted)
             .frame(maxWidth: .infinity)
@@ -46,6 +48,7 @@ struct PillTabBar: View {
     private func tabIdentifier(_ tab: AppModel.Tab) -> String {
         switch tab {
         case .cycle: return A11yID.tabCycle
+        case .trends: return A11yID.tabTrends
         case .month: return A11yID.tabMonth
         case .more: return A11yID.tabMore
         }

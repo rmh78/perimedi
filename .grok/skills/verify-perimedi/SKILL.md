@@ -67,7 +67,7 @@ Run `bash ios/scripts/verify.sh`. That is the doctor. Do not assemble the steps 
 
 A pass is `verify: ok` from `bash ios/scripts/verify.sh` on a Mac with Xcode. Domain `swift test --package-path ios` alone is not UI proof. CI job `ui` is the same proof on GitHub (17e if the image has it, else iPhone 17). A screenshot of the Simulator after uninstall/reinstall is extra, not a substitute for the doctor.
 
-Existing journeys: `FirstUseJourneyTests.testFirstUseJourney`, `testMonthPager`, `testMoreRemindersControls`, and `testDoseReminderTaken`.
+Existing journeys: `FirstUseJourneyTests.testFirstUseJourney`, `testMonthPager`, `testMoreRemindersControls`, `testDoseReminderTaken`, and `SymptomTrendsTests`.
 
 ## Cleanup
 
@@ -75,6 +75,6 @@ Do not commit `ios/DerivedData`, `ios/.build`, or secrets. The doctor uninstalls
 
 ## Product rails
 
-- Bottom nav is Cycle / Month / More. Cycle is home. Edit via sheets, not new full pages.
+- Bottom nav is Cycle / Trends / Month / More. Cycle is home. Edit via sheets, not new full pages.
 - No PeriMedi server. Privacy stays on-device (optional iCloud for the same Apple ID).
 - No menstrual phase labels (follicular/luteal). Period UI is label + background only.

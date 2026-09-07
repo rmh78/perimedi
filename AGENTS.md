@@ -14,6 +14,7 @@ SwiftUI, SwiftData, CloudKit (fallback to local-only), `PeriMediDomain` Swift pa
 ios/                 # Xcode app + PeriMediDomain package
   PeriMedi/          # SwiftUI app
     Features/Cycle   # home + med/period/symptom sheets
+    Features/Trends  # cycle chart of count and intensity
     Features/Month
     Features/More
     Features/Sheets  # DialogChrome only
@@ -28,7 +29,7 @@ Archived OpenSpec changes under `openspec/changes/archive/` may mention an old w
 
 ## Product rules
 
-- **Cycle / Month / More** via bottom nav. Cycle is the default home. Edit meds/schedules/symptoms via sheets, not extra full pages.
+- **Cycle / Trends / Month / More** via bottom nav. Cycle is the default home. Edit meds/schedules/symptoms via sheets, not extra full pages.
 - **Not medical advice** — sample data and UI are a personal demo, not clinical guidance.
 - Keep privacy local: never introduce a PeriMedi server or analytics without explicit user request. Apple iCloud (user’s Apple ID) is the allowed sync path.
 - Prefer clear, short UI copy (+ Med, Cycle settings, + Symptom, Taken / Not taken).
@@ -92,7 +93,7 @@ python3 ios/scripts/check-openspec-sync.py
 python3 ios/scripts/check-ui-coverage.py --fail-uncovered
 ```
 
-UI tests are `FirstUseJourneyTests` (`testFirstUseJourney`, `testMonthPager`, `testMoreRemindersControls`) plus a dose-reminder journey (`testDoseReminderTaken`). They launch with `-en -clear -today=2026-03-15` and tap real controls. They type into fields the way a user does (`typeText`). Do not paste, use the clipboard menu, or test-only setters; that makes the journey synthetic. `clearAndType` taps the field, waits until the software keyboard exists, types, then asserts the exact value. They never pass `-journeyStep` or `-loadSample`. Watch **iPhone 17e** in Simulator when that device exists (Window → iPhone 17e).
+UI tests are `FirstUseJourneyTests` (`testFirstUseJourney`, `testMonthPager`, `testMoreRemindersControls`) plus a dose-reminder journey (`testDoseReminderTaken`) and Trends (`testSymptomTrendsEmpty`, `testSymptomTrendsChart`). They launch with `-en -clear -today=2026-03-15` and tap real controls. They type into fields the way a user does (`typeText`). Do not paste, use the clipboard menu, or test-only setters; that makes the journey synthetic. `clearAndType` taps the field, waits until the software keyboard exists, types, then asserts the exact value. They never pass `-journeyStep` or `-loadSample`. Watch **iPhone 17e** in Simulator when that device exists (Window → iPhone 17e).
 
 `JourneyScript` / `ios/scripts/shot-journey.sh` remain optional visual capture (seeded store snapshots). They are not the interaction proof.
 
@@ -105,7 +106,7 @@ Simulator signing does not require a paid team. Add an Apple ID in Xcode → Acc
 - **i18n:** iOS chrome via `LocaleController` + `L10n` (en/de) and `Localizable.xcstrings`. Language control lives in More; preference is `AppStorage` (`perimedi.locale`). Default German if device preferred languages include German. User-entered text is never translated.
 - **Layout review:** run on a narrow iPhone Simulator (iPhone 17e) and screenshot.
 - iOS sheets: `MedicationSheet`, `PeriodSheet`, `SymptomSheet` presented over Cycle.
-- New user-facing Swift goes under `Features/Cycle`, `Features/Month`, or `Features/More`. Do not grow `CycleView.swift`, `L10n.swift`, or `DialogChrome.swift` with new screens. New sheets colocate with the feature they belong to. `Features/Sheets/` is shared chrome only (`DialogChrome.swift`).
+- New user-facing Swift goes under `Features/Cycle`, `Features/Trends`, `Features/Month`, or `Features/More`. Do not grow `CycleView.swift`, `L10n.swift`, or `DialogChrome.swift` with new screens. New sheets colocate with the feature they belong to. `Features/Sheets/` is shared chrome only (`DialogChrome.swift`).
 - Sample data: `SampleData.payload()` via More → Backup.
 - JSON backup is `ExportPayload` version 1.
 - Do not commit `ios/DerivedData`, `ios/.build`, or secrets. No `.env` required.
@@ -119,7 +120,7 @@ Simulator signing does not require a paid team. Add an Apple ID in Xcode → Acc
 5. After structural or UI changes: `bash ios/scripts/verify.sh`.
 6. If you skip the doctor and launch by hand: rebuild, **uninstall**, reinstall, and launch on **iPhone 17e** so the Simulator is not showing a leftover install.
 7. Keep the feature map current in the same commit (see Feature map below).
-8. New Swift files go next to the feature (`Features/Cycle`, `Features/Month`, or `Features/More`), not in `CycleView.swift` / `L10n.swift` / `DialogChrome.swift` / `Features/Sheets`.
+8. New Swift files go next to the feature (`Features/Cycle`, `Features/Trends`, `Features/Month`, or `Features/More`), not in `CycleView.swift` / `L10n.swift` / `DialogChrome.swift` / `Features/Sheets`.
 
 ## Feature map (for agents)
 

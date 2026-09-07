@@ -5,6 +5,7 @@ Index of user-facing surfaces. IDs are from `ios/PeriMedi/App/A11yID.swift` unle
 | Surface | File | How a user gets there |
 |---|---|---|
 | Cycle (home) | [cycle.md](cycle.md) | Default tab `tab.cycle` |
+| Trends | [trends.md](trends.md) | Bottom tab `tab.trends` (not on Cycle) |
 | Month | [month.md](month.md) | `tab.month` |
 | More | [more.md](more.md) | `tab.more` |
 | Medication sheet | [medication-sheet.md](medication-sheet.md) | Cycle `cycle.action.med`, or a lane edit |

@@ -457,6 +457,10 @@ final class Store: ObservableObject {
         try replaceAll(with: SampleData.payload(now: now))
     }
 
+    func loadTrendsFixture() throws {
+        try replaceAll(with: TrendsFixture.payload())
+    }
+
     func clearAll() throws {
         try commitWrite {
             try wipeDomain(restoreDefaultSettings: true)

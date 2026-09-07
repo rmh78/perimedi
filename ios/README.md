@@ -1,6 +1,6 @@
 # PeriMedi iOS
 
-Native SwiftUI app. Domain logic lives in the `PeriMediDomain` Swift package; the app target adds SwiftData + CloudKit and the Cycle / Month / More UI.
+Native SwiftUI app. Domain logic lives in the `PeriMediDomain` Swift package; the app target adds SwiftData + CloudKit and the Cycle / Trends / Month / More UI.
 
 ## Prerequisites
 
@@ -69,7 +69,7 @@ xcodebuild test \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-Launch contract used by the suite: `-en -clear -today=2026-03-15 -uiTesting`. `-uiTesting` turns off UIView animations so XCTest is not blocked on springs. The reminder test also passes `-remindIn=4` so the next pending slot appears as a tappable in-app card (system banners are not asserted). Do not pass `-journeyStep` or `-loadSample` for these tests.
+Launch contract used by the suite: `-en -clear -today=2026-03-15 -uiTesting`. `-uiTesting` turns off UIView animations so XCTest is not blocked on springs. The reminder test also passes `-remindIn=4` so the next pending slot appears as a tappable in-app card (system banners are not asserted). Trends chart proof may pass `-fixture=trends` and `-tabTrends` (dummy multi-cycle scores; not sample data). Do not pass `-journeyStep` or `-loadSample` for these tests.
 
 `JourneyScript` and `scripts/shot-journey.sh` only seed the store and take screenshots for visual review. They are not the interaction proof.
 

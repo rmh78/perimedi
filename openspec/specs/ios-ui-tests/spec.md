@@ -7,11 +7,11 @@ Prove that a person can actually perform PeriMedi’s empty-to-tracking journey 
 ## Requirements
 
 ### Requirement: Primary controls have stable identifiers
-Primary Cycle, Month, More, sheet, lane, and dose-status controls SHALL expose a language-independent accessibility identifier so automation can find them without relying on English or German chrome. VoiceOver labels SHALL remain the localized (or user-entered) text.
+Primary Cycle, Trends, Month, More, sheet, lane, and dose-status controls SHALL expose a language-independent accessibility identifier so automation can find them without relying on English or German chrome. VoiceOver labels SHALL remain the localized (or user-entered) text.
 
 #### Scenario: Tabs and Cycle actions are findable in English
 - **WHEN** the app is launched with English chrome and a cleared store
-- **THEN** Cycle, Month, and More destinations, the day pager (previous, next, Today, current-day label), and the Cycle actions to add a medication, open cycle settings, and add a symptom are each uniquely identifiable without reading the visible title string
+- **THEN** Cycle, Trends, Month, and More destinations, the day pager (previous, next, Today, current-day label), and the Cycle actions to add a medication, open cycle settings, and add a symptom are each uniquely identifiable without reading the visible title string
 
 #### Scenario: Identifiers stay stable in German
 - **WHEN** the active language is German

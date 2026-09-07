@@ -55,7 +55,7 @@ The system SHALL keep Cycle, Month, More, and sheets usable on an iPhone-class S
 
 #### Scenario: Notch and home indicator chrome
 - **WHEN** the user opens Cycle on a device with a status-bar island and a home indicator
-- **THEN** the header’s background fills the status-bar band without covering the island or status icons, the wordmark and header art sit below the island, and Cycle / Month / More sit on the bottom edge just above the home indicator
+- **THEN** the header’s background fills the status-bar band without covering the island or status icons, the wordmark and header art sit below the island, and Cycle / Trends / Month / More sit on the bottom edge just above the home indicator
 
 #### Scenario: Keyboard over a dialog
 - **WHEN** the user types in a dialog field on an iPhone
@@ -69,11 +69,11 @@ The system SHALL provide English and German product chrome on iOS and SHALL keep
 - **THEN** primary actions, navigation labels, and sheet titles are in German and user-entered medication names stay as typed
 
 ### Requirement: Visual family
-The system SHALL present Cycle, Month, and More with a blush/peach background, the brand header photograph with the PeriMedi wordmark, rounded card surfaces, and a pill-style bottom navigation. The system SHALL NOT use stock system-gray chrome as the primary look. The header artwork SHALL include the portrait and the drop/pill atmosphere as part of the banner.
+The system SHALL present Cycle, Trends, Month, and More with a blush/peach background, the brand header photograph with the PeriMedi wordmark, rounded card surfaces, and a pill-style bottom navigation. The system SHALL NOT use stock system-gray chrome as the primary look. The header artwork SHALL include the portrait and the drop/pill atmosphere as part of the banner.
 
 #### Scenario: Cycle chrome
 - **WHEN** the user opens Cycle
-- **THEN** the PeriMedi wordmark in the brand header, blush/peach surfaces, rounded cards, and pill-style Cycle / Month / More navigation are visible
+- **THEN** the PeriMedi wordmark in the brand header, blush/peach surfaces, rounded cards, and pill-style Cycle / Trends / Month / More navigation are visible
 
 #### Scenario: Header uses the brand photograph
 - **WHEN** the user views the brand header
