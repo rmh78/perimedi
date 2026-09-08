@@ -37,11 +37,6 @@ struct TrendsView: View {
         ScrollView {
             GlassCard {
                 VStack(alignment: .leading, spacing: 14) {
-                    catalogPicker(selectedIds: selectedIds, ranked: chart?.defaultIds ?? [])
-                    Rectangle()
-                        .fill(Theme.blush200.opacity(0.9))
-                        .frame(height: 1)
-                        .padding(.vertical, 2)
                     switch result.kind {
                     case .hidden, .needCycles:
                         emptyCopy("need-cycles", key: "trends.needCycles")
@@ -50,6 +45,11 @@ struct TrendsView: View {
                     case .chart(let chart):
                         chartBody(chart)
                     }
+                    Rectangle()
+                        .fill(Theme.blush200.opacity(0.9))
+                        .frame(height: 1)
+                        .padding(.vertical, 2)
+                    catalogPicker(selectedIds: selectedIds, ranked: chart?.defaultIds ?? [])
                     Text(containerValue(result))
                         .font(.caption2)
                         .foregroundStyle(.clear)
