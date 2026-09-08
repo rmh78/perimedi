@@ -51,8 +51,12 @@ For each selected catalog symptom id, the system SHALL encode **Y as count** of 
 - **WHEN** only one logged cycle has scores for a selected symptom
 - **THEN** Trends shows that one point and does not draw a trend line yet
 
-### Requirement: Default three series, all catalog ids visible
-The system SHALL draw at most three symptom series. The default series SHALL be the three catalog ids logged on the most days in the visible span (not the highest mean). Trends SHALL show every catalog symptom, grouped the same way as the symptom log, each marked selected or not. The user SHALL be able to select or deselect a symptom. Selecting a fourth SHALL replace the selected series with the fewest scored days so at most three remain.
+#### Scenario: Axis and size are labeled
+- **WHEN** Trends draws a chart
+- **THEN** the Y axis is labeled as days scored and a short key says a bigger dot means stronger on those days
+
+### Requirement: Default three series, catalog above the chart
+The system SHALL draw at most three symptom series. The default series SHALL be the three catalog ids logged on the most days in the visible span (not the highest mean). When a chart can be drawn, Trends SHALL show, in this order: short copy that symptoms must be selected to appear on the chart, a separator line, every catalog symptom grouped the same way as the symptom log (each marked selected or not), a separator line, then the chart. The user SHALL be able to select or deselect a symptom. Selecting a fourth SHALL replace the selected series with the fewest scored days so at most three remain. Empty states SHALL hide the intro copy and the catalog.
 
 #### Scenario: Defaults follow day count
 - **WHEN** four ids have scores in the visible span and their day counts differ
@@ -62,9 +66,13 @@ The system SHALL draw at most three symptom series. The default series SHALL be 
 - **WHEN** three series are selected and the user selects a catalog id that is not among them
 - **THEN** that id becomes selected, the previously selected series with the fewest scored days becomes not selected, and at most three series remain
 
-#### Scenario: Grouped catalog is always on screen
-- **WHEN** the user opens Trends
-- **THEN** every catalog symptom is visible under its group title, without a separate pin control to reveal the list
+#### Scenario: Intro, catalog, then chart
+- **WHEN** Trends can draw a chart
+- **THEN** short copy tells the user to select symptoms for the chart, grouped catalog symptoms sit below that copy, the chart sits below the catalog, and a separator line sits between those three blocks
+
+#### Scenario: Empty hides selection
+- **WHEN** Trends cannot draw a chart
+- **THEN** the intro copy and catalog are not shown
 
 ### Requirement: Tap shows cycle numbers
 Activating a dot SHALL show that symptom’s name, the cycle’s date range, the day count, and the mean intensity as numbers. Copy SHALL be English and German according to the active language.

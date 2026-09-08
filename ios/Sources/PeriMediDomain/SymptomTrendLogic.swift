@@ -28,17 +28,20 @@ public struct SymptomTrendSeries: Equatable, Sendable {
 
 public struct CycleChangeTick: Equatable, Sendable {
     public var cycleStart: String
+    public var effectiveDate: String
     public var nameSnapshot: String
     public var newValue: String
     public var field: MedicationChangeField
 
     public init(
         cycleStart: String,
+        effectiveDate: String,
         nameSnapshot: String,
         newValue: String,
         field: MedicationChangeField
     ) {
         self.cycleStart = cycleStart
+        self.effectiveDate = effectiveDate
         self.nameSnapshot = nameSnapshot
         self.newValue = newValue
         self.field = field
@@ -241,6 +244,7 @@ public enum SymptomTrendLogic {
             out.append(
                 CycleChangeTick(
                     cycleStart: cycle.start,
+                    effectiveDate: DateKeys.toDateKey(chosen.effectiveDate),
                     nameSnapshot: chosen.nameSnapshot,
                     newValue: chosen.newValue,
                     field: chosen.field

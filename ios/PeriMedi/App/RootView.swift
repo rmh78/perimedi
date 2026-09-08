@@ -143,7 +143,9 @@ struct RootView: View {
         if args.contains("-loadSample") {
             try? store.loadSample()
         }
-        if args.contains("-fixture=trends") {
+        if args.contains("-fixture=trends-noscores") {
+            try? store.loadTrendsNoScoresFixture()
+        } else if args.contains("-fixture=trends") {
             try? store.loadTrendsFixture()
         }
         if let step = journeyStep(from: args) {

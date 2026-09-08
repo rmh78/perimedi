@@ -10,9 +10,17 @@ final class SymptomTrendsTests: PeriMediUITestCase {
         XCTAssertEqual(robot.value(of: "trends.status"), "need-cycles")
         robot.waitFor(id: "trends.empty")
         XCTAssertEqual(robot.value(of: "trends.empty"), "need-cycles")
-        robot.waitFor(id: "trends.group.body")
-        robot.waitFor(id: "trends.series.hot_flash")
-        XCTAssertEqual(robot.value(of: "trends.series.hot_flash"), "off")
+        XCTAssertFalse(robot.exists("trends.series.hot_flash"))
+        XCTAssertFalse(robot.exists("trends.intro"))
+    }
+
+    func testSymptomTrendsNoScores() {
+        robot.launch(extra: ["-fixture=trends-noscores", "-tabTrends"])
+        robot.waitFor(id: "trends.screen")
+        XCTAssertEqual(robot.value(of: "trends.status"), "no-scores")
+        XCTAssertEqual(robot.value(of: "trends.empty"), "no-scores")
+        XCTAssertFalse(robot.exists("trends.series.hot_flash"))
+        XCTAssertFalse(robot.exists("trends.intro"))
     }
 
     func testSymptomTrendsChart() {
@@ -20,7 +28,11 @@ final class SymptomTrendsTests: PeriMediUITestCase {
 
         XCTContext.runActivity(named: "default three series") { _ in
             robot.waitFor(id: "trends.screen")
+            robot.waitFor(id: "trends.intro")
             robot.waitFor(id: "trends.plot")
+            robot.waitFor(id: "trends.axis")
+            XCTAssertEqual(robot.value(of: "trends.axis"), "days-scored")
+            robot.waitFor(id: "trends.sizeKey")
             robot.waitFor(id: "trends.status")
             XCTAssertEqual(robot.value(of: "trends.status"), "ids:hot_flash,sleep,mood")
             robot.waitFor(id: "trends.group.body")

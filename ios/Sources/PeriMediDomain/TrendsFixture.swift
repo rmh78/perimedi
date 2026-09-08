@@ -62,6 +62,24 @@ public enum TrendsFixture {
         )
     }
 
+    public static func noScoresPayload() -> ExportPayload {
+        ExportPayload(
+            version: 1,
+            exportedAt: "t",
+            medications: [],
+            schedules: [],
+            doseLogs: [],
+            remarks: [],
+            cycleSettings: CycleSettings(averageCycleLength: 28, averagePeriodLength: 5),
+            periods: [
+                Period(id: "p-a", startDate: cycleA, endDate: "2026-01-08"),
+                Period(id: "p-b", startDate: cycleB, endDate: "2026-02-05"),
+            ],
+            symptomScores: [],
+            medicationChanges: []
+        )
+    }
+
     private static func days(
         _ start: String,
         count: Int,

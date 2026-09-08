@@ -43,13 +43,16 @@ struct TrendsView: View {
                     case .noScores:
                         emptyCopy("no-scores", key: "trends.noScores")
                     case .chart(let chart):
+                        Text(app.t("trends.intro"))
+                            .font(.caption)
+                            .foregroundStyle(Theme.inkSoft)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .accessibilityIdentifier(A11yID.trendsIntro)
+                        sectionRule
+                        catalogPicker(selectedIds: selectedIds, ranked: chart.defaultIds)
+                        sectionRule
                         chartBody(chart)
                     }
-                    Rectangle()
-                        .fill(Theme.blush200.opacity(0.9))
-                        .frame(height: 1)
-                        .padding(.vertical, 2)
-                    catalogPicker(selectedIds: selectedIds, ranked: chart?.defaultIds ?? [])
                     Text(containerValue(result))
                         .font(.caption2)
                         .foregroundStyle(.clear)
@@ -69,6 +72,13 @@ struct TrendsView: View {
         .scrollIndicators(.hidden)
     }
 
+    private var sectionRule: some View {
+        Rectangle()
+            .fill(Theme.blush100)
+            .frame(height: 1)
+            .padding(.vertical, 2)
+    }
+
     private func emptyCopy(_ value: String, key: String) -> some View {
         Text(app.t(key))
             .font(.caption)
@@ -80,11 +90,28 @@ struct TrendsView: View {
 
     private func chartBody(_ chart: SymptomTrendChart) -> some View {
         VStack(alignment: .leading, spacing: 8) {
+            Text(app.t("trends.axis"))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Theme.inkSoft)
+                .accessibilityIdentifier(A11yID.trendsAxis)
+                .accessibilityValue("days-scored")
             plot(chart)
+            Text(app.t("trends.sizeKey"))
+                .font(.caption2)
+                .foregroundStyle(Theme.inkMuted)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier(A11yID.trendsSizeKey)
             if let selected {
                 detail(selected)
             }
             ticks(chart)
+        }
+        .onAppear {
+            guard ProcessInfo.processInfo.arguments.contains("-trendsTap") else { return }
+            guard let series = chart.series.first,
+                  let point = series.points.last
+            else { return }
+            selected = SelectedDot(id: series.id, point: point, colorIndex: 0)
         }
     }
 
@@ -163,15 +190,16 @@ struct TrendsView: View {
         let yMax = max(1, chart.series.flatMap(\.points).map(\.dayCount).max() ?? 1)
         let n = max(chart.cycles.count, 1)
         return GeometryReader { geo in
-            let yAxisW: CGFloat = 24
-            let pad: CGFloat = 12
+            let yAxisW: CGFloat = 28
+            let pad: CGFloat = 16
+            let trailPad: CGFloat = 32
             let available = max(40, geo.size.width - yAxisW)
             let innerW: CGFloat = {
-                if n <= 1 { return max(8, available - 2 * pad) }
-                let fitStep = max(8, available - 2 * pad) / CGFloat(n - 1)
+                if n <= 1 { return max(8, available - pad - trailPad) }
+                let fitStep = max(8, available - pad - trailPad) / CGFloat(n - 1)
                 return max(72, fitStep) * CGFloat(n - 1)
             }()
-            let contentW = innerW + 2 * pad
+            let contentW = innerW + pad + trailPad
             let plot = CGRect(x: pad, y: 10, width: innerW, height: max(8, geo.size.height - 36))
             let xs = xPositions(cycles: chart.cycles, in: plot)
             HStack(alignment: .top, spacing: 0) {
@@ -303,19 +331,22 @@ struct TrendsView: View {
     }
 
     private func ticks(_ chart: SymptomTrendChart) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             ForEach(chart.ticks, id: \.cycleStart) { tick in
-                Text(app.t("trends.tick", [
+                let key = tick.field == .dose ? "trends.tick.dose" : "trends.tick.schedule"
+                Text(app.t(key, [
                     "name": tick.nameSnapshot,
                     "value": tick.newValue,
-                    "date": shortDate(tick.cycleStart),
+                    "date": tickDate(tick.effectiveDate),
                 ]))
-                .font(.caption2)
+                .font(.caption)
                 .foregroundStyle(Theme.inkMuted)
+                .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier(A11yID.trendsTick(tick.cycleStart))
                 .accessibilityValue("\(tick.nameSnapshot):\(tick.newValue)")
             }
         }
+        .padding(.top, 4)
     }
 
     private func containerValue(_ result: SymptomTrendResult) -> String {
@@ -393,6 +424,14 @@ struct TrendsView: View {
     }
 
     private func shortDate(_ key: String) -> String {
+        guard let date = DateKeys.parseDateKey(key) else { return key }
+        let f = DateFormatter()
+        f.locale = app.locale.language.locale
+        f.setLocalizedDateFormatFromTemplate("d MMM")
+        return f.string(from: date)
+    }
+
+    private func tickDate(_ key: String) -> String {
         guard let date = DateKeys.parseDateKey(key) else { return key }
         let f = DateFormatter()
         f.locale = app.locale.language.locale

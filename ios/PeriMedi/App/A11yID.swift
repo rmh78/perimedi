@@ -37,8 +37,11 @@ enum A11yID {
     static let trendsScreen = "trends.screen"
     static let trendsStatus = "trends.status"
     static let trendsEmpty = "trends.empty"
+    static let trendsIntro = "trends.intro"
     static let trendsDetail = "trends.detail"
     static let trendsPlot = "trends.plot"
+    static let trendsAxis = "trends.axis"
+    static let trendsSizeKey = "trends.sizeKey"
 
     static let sheetMed = "sheet.med"
     static let sheetPeriod = "sheet.period"

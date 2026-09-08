@@ -461,6 +461,10 @@ final class Store: ObservableObject {
         try replaceAll(with: TrendsFixture.payload())
     }
 
+    func loadTrendsNoScoresFixture() throws {
+        try replaceAll(with: TrendsFixture.noScoresPayload())
+    }
+
     func clearAll() throws {
         try commitWrite {
             try wipeDomain(restoreDefaultSettings: true)
