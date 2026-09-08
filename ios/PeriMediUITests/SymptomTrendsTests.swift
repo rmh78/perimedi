@@ -20,6 +20,7 @@ final class SymptomTrendsTests: PeriMediUITestCase {
 
         XCTContext.runActivity(named: "default three series") { _ in
             robot.waitFor(id: "trends.screen")
+            robot.waitFor(id: "trends.plot")
             robot.waitFor(id: "trends.status")
             XCTAssertEqual(robot.value(of: "trends.status"), "ids:hot_flash,sleep,mood")
             robot.waitFor(id: "trends.group.body")
@@ -58,6 +59,7 @@ final class SymptomTrendsTests: PeriMediUITestCase {
             robot.tap("trends.dot.hot_flash.2026-01-04")
             robot.waitFor(id: "trends.detail")
             let detail = robot.value(of: "trends.detail")
+            XCTAssertTrue(detail.contains("id:hot_flash"), detail)
             XCTAssertTrue(detail.contains("cycle:2026-01-04"), detail)
             XCTAssertTrue(detail.contains("count:8"), detail)
             XCTAssertTrue(detail.contains("mean:1"), detail)

@@ -19,7 +19,8 @@ UI tests that need several cycles of scores launch with `-fixture=trends` (not `
 | Group title | `trends.group.{id}` | `A11yID.trendsGroup(_:)` → `trends.group.{id}`. Body / mood / urogenital (`trends.group.body`, `trends.group.mood`, `trends.group.urogenital`) are always on screen. |
 | Series chip | `trends.series.{id}` | `A11yID.trendsSeries(_:)` → `trends.series.{id}`. All catalog ids exist. Fixture defaults: `hot_flash`, `mood`, `sleep` value `on`; `anxiety` value `off`. Selecting `anxiety` turns it `on` and `sleep` `off`. |
 | Dot | `trends.dot.{id}.{cycleStart}` | `A11yID.trendsDot(_:_:)` → `trends.dot.{id}.{cycleStart}`. Fixture `hot_flash` on `2026-01-04`: value contains `count:8` and `mean:1`. On `2026-02-01`: `count:2` and `mean:4`. Sleep on `2026-01-04` does not exist (gap, not a zero). |
-| Detail | `trends.detail` | After tapping a dot: value contains `cycle:`, `count:`, and `mean:`. |
+| Detail | `trends.detail` | After tapping a hot-flash dot: value contains `id:hot_flash`, `cycle:`, `count:`, and `mean:`. |
+| Plot | `trends.plot` | Horizontal scroller for cycle points. Latest cycles are in view first; pan left for older ones when they do not fit. |
 | Dose tick | `trends.tick.{cycleStart}` | `A11yID.trendsTick(_:)` → `trends.tick.{cycleStart}`. Fixture: `trends.tick.2026-02-01` value contains `Estrogel` and `2 pumps`. |
 
 ## Gotchas
@@ -29,5 +30,7 @@ UI tests that need several cycles of scores launch with `-fixture=trends` (not `
 - Default three are the ids with the most scored days in the visible span. Selecting a fourth replaces the lowest of those three. Max three selected.
 - Copy is EN/DE via L10n. Tab label is Trends / Verlauf. Group titles reuse `symptom.group.*`. No “you should…”, no HRT recommendation. No redundant on-screen “Trends” title that only repeats the tab.
 - `-uiTesting` skips launch animation so the screen is tappable immediately.
+- Sample data has four scored cycles. Trends only plots cycles that have scores; empty period history is not enough.
+- If more cycles are shown than fit, pan the plot horizontally (`trends.plot`). It opens on the most recent cycles.
 - Domain math is `SymptomTrendLogic.summarize` / `CycleLogic.loggedCycleWindows`. Do not reimplement cycle bounds in the view.
 - Do not embed this chart in `CycleView`.

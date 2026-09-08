@@ -180,4 +180,19 @@ final class SymptomTrendLogicTests: XCTestCase {
         let chart = chart(selectedIds: ["hot_flash", "mood", "sleep", "joints"])
         XCTAssertLessThanOrEqual(chart?.series.count ?? 99, 3)
     }
+
+    func testSampleHasAtLeastFourScoredCycles() {
+        let sample = SampleData.payload(now: DateKeys.parseDateKey(today)!)
+        let result = SymptomTrendLogic.summarize(
+            today: today,
+            periods: sample.periods,
+            settings: sample.cycleSettings,
+            scores: sample.symptomScores,
+            changes: sample.medicationChanges
+        )
+        guard case .chart(let chart) = result.kind else {
+            return XCTFail("expected chart, got \(result.kind)")
+        }
+        XCTAssertGreaterThanOrEqual(chart.cycles.count, 4)
+    }
 }

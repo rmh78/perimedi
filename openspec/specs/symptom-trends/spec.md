@@ -18,7 +18,7 @@ The system SHALL present Trends as a primary bottom-navigation destination, not 
 - **THEN** the Trends chart is not embedded on that screen
 
 ### Requirement: Cycle-aligned chart windows
-The system SHALL plot one point per **logged cycle**. A cycle SHALL be the first day of a logged period through the day before the next logged period start (the same windows as Effect). Predicted period starts SHALL NOT define chart cycles. The X-axis SHALL be those cycles, labeled by period-start date. The chart SHALL show the last several logged cycles that have any symptom scores (about six is enough; more if they fit). The current cycle SHALL end on today when no later logged period start exists.
+The system SHALL plot one point per **logged cycle**. A cycle SHALL be the first day of a logged period through the day before the next logged period start (the same windows as Effect). Predicted period starts SHALL NOT define chart cycles. The X-axis SHALL be those cycles, labeled by period-start date. The chart SHALL show the last several logged cycles that have any symptom scores (about six is enough; more if they fit). When those cycles do not fit the chart width, the plot SHALL scroll horizontally and keep the most recent cycles in view first. The current cycle SHALL end on today when no later logged period start exists.
 
 #### Scenario: Same cycle bounds as Effect
 - **WHEN** logged periods start on 1 February and 1 March and today is 15 March
@@ -27,6 +27,10 @@ The system SHALL plot one point per **logged cycle**. A cycle SHALL be the first
 #### Scenario: Predicted starts are not cycles
 - **WHEN** a predicted period start falls between two logged period starts
 - **THEN** that predicted start does not split or label a Trends cycle
+
+#### Scenario: Extra cycles scroll
+- **WHEN** more scored cycles are visible than fit the chart width
+- **THEN** the user can pan the plot horizontally and the latest cycles are in view until they pan back
 
 ### Requirement: Count on Y, mean intensity as size
 For each selected catalog symptom id, the system SHALL encode **Y as count** of days scored for that id in that cycle and **dot size as the mean intensity** (1–4) of those scores. Mean SHALL be used, not the raw sum of scores. Missing days and missing ids SHALL NOT be treated as 0. If that id has no scores in a cycle, the system SHALL omit the dot (a gap) and SHALL NOT plot a zero. For `hot_flash`, count SHALL be days scored until a separate episode log exists; the system SHALL NOT invent episode counts from 1–4 severity scores. A thin line SHALL connect consecutive dots of the same series and SHALL break across a gap. A single cycle SHALL show one point and no trend line.
@@ -63,11 +67,11 @@ The system SHALL draw at most three symptom series. The default series SHALL be 
 - **THEN** every catalog symptom is visible under its group title, without a separate pin control to reveal the list
 
 ### Requirement: Tap shows cycle numbers
-Activating a dot SHALL show that cycle’s date range, the day count, and the mean intensity as numbers. Copy SHALL be English and German according to the active language.
+Activating a dot SHALL show that symptom’s name, the cycle’s date range, the day count, and the mean intensity as numbers. Copy SHALL be English and German according to the active language.
 
 #### Scenario: Tap a point
 - **WHEN** the user activates a plotted point
-- **THEN** Trends shows the cycle start and end dates, the count of days scored, and the mean intensity for that series and cycle
+- **THEN** Trends shows which symptom the point belongs to, the cycle start and end dates, the count of days scored, and the mean intensity for that series and cycle
 
 ### Requirement: Dose-change ticks are context only
 When a stored dose or schedule change has an effective date in a visible cycle, the system SHALL mark that cycle with the medication name snapshot and the new value. That mark SHALL NOT claim the change caused a symptom difference and SHALL NOT advise a treatment change.

@@ -10,6 +10,7 @@ struct TrendsView: View {
     private struct SelectedDot: Equatable {
         var id: String
         var point: SymptomTrendPoint
+        var colorIndex: Int
     }
 
     private static let seriesColors: [Color] = [
@@ -35,8 +36,12 @@ struct TrendsView: View {
         let selectedIds = storedIds ?? chart?.defaultIds ?? []
         ScrollView {
             GlassCard {
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 14) {
                     catalogPicker(selectedIds: selectedIds, ranked: chart?.defaultIds ?? [])
+                    Rectangle()
+                        .fill(Theme.blush200.opacity(0.9))
+                        .frame(height: 1)
+                        .padding(.vertical, 2)
                     switch result.kind {
                     case .hidden, .needCycles:
                         emptyCopy("need-cycles", key: "trends.needCycles")
@@ -84,13 +89,15 @@ struct TrendsView: View {
     }
 
     private func catalogPicker(selectedIds: [String], ranked: [String]) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             ForEach(SymptomGroup.allCases, id: \.self) { group in
                 Text(app.t("symptom.group.\(group.rawValue)"))
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(Theme.inkMuted)
                     .textCase(.uppercase)
                     .tracking(0.6)
+                    .frame(maxWidth: .infinity)
+                    .multilineTextAlignment(.center)
                     .accessibilityIdentifier(A11yID.trendsGroup(group.rawValue))
                 WrappingHStack(spacing: 6, lineSpacing: 6) {
                     ForEach(group.ids, id: \.self) { id in
@@ -154,88 +161,145 @@ struct TrendsView: View {
 
     private func plot(_ chart: SymptomTrendChart) -> some View {
         let yMax = max(1, chart.series.flatMap(\.points).map(\.dayCount).max() ?? 1)
+        let n = max(chart.cycles.count, 1)
         return GeometryReader { geo in
-            let plot = CGRect(x: 26, y: 10, width: max(8, geo.size.width - 34), height: max(8, geo.size.height - 36))
+            let yAxisW: CGFloat = 24
+            let pad: CGFloat = 12
+            let available = max(40, geo.size.width - yAxisW)
+            let innerW: CGFloat = {
+                if n <= 1 { return max(8, available - 2 * pad) }
+                let fitStep = max(8, available - 2 * pad) / CGFloat(n - 1)
+                return max(72, fitStep) * CGFloat(n - 1)
+            }()
+            let contentW = innerW + 2 * pad
+            let plot = CGRect(x: pad, y: 10, width: innerW, height: max(8, geo.size.height - 36))
             let xs = xPositions(cycles: chart.cycles, in: plot)
-            ZStack(alignment: .topLeading) {
-                Canvas { ctx, _ in
-                    drawAxes(ctx, plot: plot, yMax: yMax)
-                    for (index, series) in chart.series.enumerated() {
-                        let color = Self.seriesColors[index % Self.seriesColors.count]
-                        for segment in lineSegments(series, cycles: chart.cycles) where segment.count >= 2 {
-                            var path = Path()
-                            for (i, point) in segment.enumerated() {
-                                guard let x = xs[point.cycleStart] else { continue }
-                                let y = yPos(point.dayCount, yMax: yMax, plot: plot)
-                                if i == 0 {
-                                    path.move(to: CGPoint(x: x, y: y))
-                                } else {
-                                    path.addLine(to: CGPoint(x: x, y: y))
-                                }
-                            }
-                            ctx.stroke(path, with: .color(color.opacity(0.7)), lineWidth: 1.2)
-                        }
+            HStack(alignment: .top, spacing: 0) {
+                yAxis(yMax: yMax, plot: plot)
+                    .frame(width: yAxisW, height: geo.size.height)
+                ScrollViewReader { proxy in
+                    ScrollView(.horizontal, showsIndicators: contentW > available + 1) {
+                        plotBoard(chart, yMax: yMax, plot: plot, xs: xs)
+                            .frame(width: contentW, height: geo.size.height)
+                            .id("trends-plot-trail")
                     }
-                }
-                ForEach(Array(chart.series.enumerated()), id: \.element.id) { index, series in
-                    ForEach(series.points, id: \.cycleStart) { point in
-                        if let x = xs[point.cycleStart] {
-                            let y = yPos(point.dayCount, yMax: yMax, plot: plot)
-                            let d = dotDiameter(point.meanIntensity)
-                            let color = Self.seriesColors[index % Self.seriesColors.count]
-                            Button {
-                                selected = SelectedDot(id: series.id, point: point)
-                            } label: {
-                                Circle()
-                                    .fill(color)
-                                    .frame(width: d, height: d)
-                                    .overlay {
-                                        if self.selected?.id == series.id,
-                                           self.selected?.point.cycleStart == point.cycleStart {
-                                            Circle().stroke(Theme.ink, lineWidth: 1.2)
-                                        }
-                                    }
-                            }
-                            .buttonStyle(.plain)
-                            .position(x: x, y: y)
-                            .accessibilityLabel(app.t("symptom.id.\(series.id)"))
-                            .accessibilityIdentifier(A11yID.trendsDot(series.id, point.cycleStart))
-                            .accessibilityValue(
-                                "count:\(point.dayCount),mean:\(formatMean(point.meanIntensity))"
-                            )
+                    .accessibilityIdentifier(A11yID.trendsPlot)
+                    .onAppear {
+                        if contentW > available + 1 {
+                            proxy.scrollTo("trends-plot-trail", anchor: .trailing)
                         }
-                    }
-                }
-                ForEach(chart.cycles, id: \.start) { cycle in
-                    if let x = xs[cycle.start] {
-                        Text(shortDate(cycle.start))
-                            .font(.system(size: 9))
-                            .foregroundStyle(Theme.inkMuted)
-                            .position(x: x, y: plot.maxY + 12)
                     }
                 }
             }
         }
-        .frame(height: 168)
+        .frame(height: 176)
         .accessibilityElement(children: .contain)
+    }
+
+    private func yAxis(yMax: Int, plot: CGRect) -> some View {
+        ZStack {
+            ForEach([0, yMax], id: \.self) { value in
+                Text("\(value)")
+                    .font(.system(size: 9))
+                    .foregroundStyle(Theme.inkMuted)
+                    .position(x: 12, y: yPos(value, yMax: yMax, plot: plot))
+            }
+        }
+    }
+
+    private func plotBoard(
+        _ chart: SymptomTrendChart,
+        yMax: Int,
+        plot: CGRect,
+        xs: [String: CGFloat]
+    ) -> some View {
+        ZStack(alignment: .topLeading) {
+            Canvas { ctx, _ in
+                drawAxes(ctx, plot: plot)
+                for (index, series) in chart.series.enumerated() {
+                    let color = Self.seriesColors[index % Self.seriesColors.count]
+                    for segment in lineSegments(series, cycles: chart.cycles) where segment.count >= 2 {
+                        var path = Path()
+                        for (i, point) in segment.enumerated() {
+                            guard let x = xs[point.cycleStart] else { continue }
+                            let y = yPos(point.dayCount, yMax: yMax, plot: plot)
+                            if i == 0 {
+                                path.move(to: CGPoint(x: x, y: y))
+                            } else {
+                                path.addLine(to: CGPoint(x: x, y: y))
+                            }
+                        }
+                        ctx.stroke(path, with: .color(color.opacity(0.7)), lineWidth: 1.2)
+                    }
+                }
+            }
+            ForEach(Array(chart.series.enumerated()), id: \.element.id) { index, series in
+                ForEach(series.points, id: \.cycleStart) { point in
+                    if let x = xs[point.cycleStart] {
+                        let y = yPos(point.dayCount, yMax: yMax, plot: plot)
+                        let d = dotDiameter(point.meanIntensity)
+                        let color = Self.seriesColors[index % Self.seriesColors.count]
+                        Button {
+                            selected = SelectedDot(id: series.id, point: point, colorIndex: index)
+                        } label: {
+                            Circle()
+                                .fill(color)
+                                .frame(width: d, height: d)
+                                .overlay {
+                                    if self.selected?.id == series.id,
+                                       self.selected?.point.cycleStart == point.cycleStart {
+                                        Circle().stroke(Theme.ink, lineWidth: 1.2)
+                                    }
+                                }
+                        }
+                        .buttonStyle(.plain)
+                        .position(x: x, y: y)
+                        .accessibilityLabel(app.t("symptom.id.\(series.id)"))
+                        .accessibilityIdentifier(A11yID.trendsDot(series.id, point.cycleStart))
+                        .accessibilityValue(
+                            "count:\(point.dayCount),mean:\(formatMean(point.meanIntensity))"
+                        )
+                    }
+                }
+            }
+            ForEach(chart.cycles, id: \.start) { cycle in
+                if let x = xs[cycle.start] {
+                    Text(shortDate(cycle.start))
+                        .font(.system(size: 9))
+                        .foregroundStyle(Theme.inkMuted)
+                        .position(x: x, y: plot.maxY + 12)
+                }
+            }
+        }
     }
 
     private func detail(_ selected: SelectedDot) -> some View {
         let point = selected.point
+        let name = app.t("symptom.id.\(selected.id)")
+        let color = Self.seriesColors[selected.colorIndex % Self.seriesColors.count]
         let text = app.t("trends.detail", [
+            "name": name,
             "start": pretty(point.cycleStart),
             "end": pretty(point.cycleEnd),
             "count": "\(point.dayCount)",
             "mean": formatMean(point.meanIntensity),
         ])
-        return Text(text)
-            .font(.caption)
-            .foregroundStyle(Theme.inkSoft)
-            .fixedSize(horizontal: false, vertical: true)
-            .accessibilityIdentifier(A11yID.trendsDetail)
-            .accessibilityValue(
-                "cycle:\(point.cycleStart),count:\(point.dayCount),mean:\(formatMean(point.meanIntensity))"
-            )
+        return HStack(alignment: .top, spacing: 6) {
+            Circle()
+                .fill(color)
+                .frame(width: 8, height: 8)
+                .padding(.top, 4)
+            Text(text)
+                .font(.caption)
+                .foregroundStyle(Theme.inkSoft)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(text)
+        .accessibilityIdentifier(A11yID.trendsDetail)
+        .accessibilityValue(
+            "id:\(selected.id),cycle:\(point.cycleStart),count:\(point.dayCount),mean:\(formatMean(point.meanIntensity))"
+        )
     }
 
     private func ticks(_ chart: SymptomTrendChart) -> some View {
@@ -304,20 +368,12 @@ struct TrendsView: View {
         return out
     }
 
-    private func drawAxes(_ ctx: GraphicsContext, plot: CGRect, yMax: Int) {
+    private func drawAxes(_ ctx: GraphicsContext, plot: CGRect) {
         var axis = Path()
         axis.move(to: CGPoint(x: plot.minX, y: plot.minY))
         axis.addLine(to: CGPoint(x: plot.minX, y: plot.maxY))
         axis.addLine(to: CGPoint(x: plot.maxX, y: plot.maxY))
         ctx.stroke(axis, with: .color(Theme.inkMuted.opacity(0.35)), lineWidth: 0.8)
-        let labels = [0, yMax]
-        for value in labels {
-            let y = yPos(value, yMax: yMax, plot: plot)
-            let text = Text("\(value)")
-                .font(.system(size: 9))
-                .foregroundColor(Theme.inkMuted)
-            ctx.draw(text, at: CGPoint(x: plot.minX - 12, y: y), anchor: .center)
-        }
     }
 
     private func formatMean(_ value: Double) -> String {
