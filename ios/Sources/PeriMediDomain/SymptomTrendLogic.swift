@@ -89,7 +89,7 @@ public enum SymptomTrendLogic {
         settings: CycleSettings,
         scores: [SymptomScore],
         changes: [MedicationChange],
-        pinnedId: String? = nil
+        selectedIds: [String]? = nil
     ) -> SymptomTrendResult {
         guard settings.tracksPeriods else {
             return SymptomTrendResult(kind: .hidden)
@@ -124,12 +124,14 @@ public enum SymptomTrendLogic {
             }
         let defaultIds = Array(ranked.prefix(maxSeries))
 
-        var selected = Array(defaultIds)
-        if let pin = pinnedId, SymptomLog.isCatalogId(pin), !selected.contains(pin) {
-            if selected.count == maxSeries {
-                selected.removeLast()
+        var selected: [String]
+        if let selectedIds {
+            selected = selectedIds.filter { SymptomLog.isCatalogId($0) }
+            if selected.count > maxSeries {
+                selected = Array(selected.prefix(maxSeries))
             }
-            selected.append(pin)
+        } else {
+            selected = Array(defaultIds)
         }
         selected.sort { catalogIndex($0) < catalogIndex($1) }
 
@@ -150,6 +152,31 @@ public enum SymptomTrendLogic {
                 )
             )
         )
+    }
+
+    /// Toggle a catalog id in the current selection. At most `maxSeries` stay
+    /// selected; a new pick replaces the least-logged of the current set.
+    public static func toggling(_ id: String, in current: [String], ranked: [String]) -> [String] {
+        guard SymptomLog.isCatalogId(id) else { return current }
+        var next = current.filter { SymptomLog.isCatalogId($0) }
+        if let index = next.firstIndex(of: id) {
+            next.remove(at: index)
+            return next
+        }
+        if next.count >= maxSeries {
+            let drop = next.max { a, b in
+                rank(a, in: ranked) < rank(b, in: ranked)
+            }
+            if let drop {
+                next.removeAll { $0 == drop }
+            }
+        }
+        next.append(id)
+        return next
+    }
+
+    private static func rank(_ id: String, in ranked: [String]) -> Int {
+        ranked.firstIndex(of: id) ?? ranked.count
     }
 
     private static func inCycle(_ score: SymptomScore, _ cycle: LoggedCycle) -> Bool {

@@ -138,6 +138,7 @@ struct RootView: View {
         if args.contains("-clear") {
             try? store.clearAll()
             UserDefaults.standard.removeObject(forKey: "perimedi.trends.pin")
+            UserDefaults.standard.removeObject(forKey: "perimedi.trends.selected")
         }
         if args.contains("-loadSample") {
             try? store.loadSample()

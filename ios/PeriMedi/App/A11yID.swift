@@ -37,7 +37,6 @@ enum A11yID {
     static let trendsScreen = "trends.screen"
     static let trendsStatus = "trends.status"
     static let trendsEmpty = "trends.empty"
-    static let trendsPin = "trends.pin"
     static let trendsDetail = "trends.detail"
 
     static let sheetMed = "sheet.med"
@@ -92,8 +91,8 @@ enum A11yID {
     static func trendsDot(_ id: String, _ cycleStart: String) -> String {
         "trends.dot.\(id).\(cycleStart)"
     }
-    static func trendsPinOption(_ id: String) -> String {
-        "trends.pin.option.\(id)"
+    static func trendsGroup(_ id: String) -> String {
+        "trends.group.\(id)"
     }
     static func trendsTick(_ cycleStart: String) -> String {
         "trends.tick.\(cycleStart)"

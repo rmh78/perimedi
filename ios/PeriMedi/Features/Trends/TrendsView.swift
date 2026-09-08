@@ -4,8 +4,7 @@ import PeriMediDomain
 struct TrendsView: View {
     @EnvironmentObject private var app: AppModel
     @EnvironmentObject private var store: Store
-    @AppStorage("perimedi.trends.pin") private var pinnedId = ""
-    @State private var showPin = false
+    @AppStorage("perimedi.trends.selected") private var selectedStorage = ""
     @State private var selected: SelectedDot?
 
     private struct SelectedDot: Equatable {
@@ -20,18 +19,24 @@ struct TrendsView: View {
     ]
 
     var body: some View {
+        let storedIds = parseStored()
         let result = SymptomTrendLogic.summarize(
             today: DateKeys.todayKey(),
             periods: store.periods,
             settings: store.settings,
             scores: store.symptomScores,
             changes: store.medicationChanges,
-            pinnedId: pinnedId.isEmpty ? nil : pinnedId
+            selectedIds: storedIds
         )
+        let chart: SymptomTrendChart? = {
+            if case .chart(let chart) = result.kind { return chart }
+            return nil
+        }()
+        let selectedIds = storedIds ?? chart?.defaultIds ?? []
         ScrollView {
             GlassCard {
                 VStack(alignment: .leading, spacing: 10) {
-                    header
+                    catalogPicker(selectedIds: selectedIds, ranked: chart?.defaultIds ?? [])
                     switch result.kind {
                     case .hidden, .needCycles:
                         emptyCopy("need-cycles", key: "trends.needCycles")
@@ -59,21 +64,6 @@ struct TrendsView: View {
         .scrollIndicators(.hidden)
     }
 
-    private var header: some View {
-        HStack(alignment: .center) {
-            Spacer(minLength: 0)
-            Button {
-                showPin.toggle()
-            } label: {
-                Text(app.t("trends.pin"))
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Theme.blush700)
-            }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier(A11yID.trendsPin)
-        }
-    }
-
     private func emptyCopy(_ value: String, key: String) -> some View {
         Text(app.t(key))
             .font(.caption)
@@ -85,10 +75,6 @@ struct TrendsView: View {
 
     private func chartBody(_ chart: SymptomTrendChart) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            legend(chart)
-            if showPin {
-                pinPicker()
-            }
             plot(chart)
             if let selected {
                 detail(selected)
@@ -97,46 +83,73 @@ struct TrendsView: View {
         }
     }
 
-    private func legend(_ chart: SymptomTrendChart) -> some View {
-        WrappingHStack(spacing: 8, lineSpacing: 6) {
-            ForEach(Array(chart.series.enumerated()), id: \.element.id) { index, series in
-                HStack(spacing: 4) {
-                    Circle()
-                        .fill(Self.seriesColors[index % Self.seriesColors.count])
-                        .frame(width: 8, height: 8)
-                    Text(app.t("symptom.id.\(series.id)"))
-                        .font(.system(size: 11))
-                        .foregroundStyle(Theme.inkMuted)
-                        .lineLimit(1)
+    private func catalogPicker(selectedIds: [String], ranked: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(SymptomGroup.allCases, id: \.self) { group in
+                Text(app.t("symptom.group.\(group.rawValue)"))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Theme.inkMuted)
+                    .textCase(.uppercase)
+                    .tracking(0.6)
+                    .accessibilityIdentifier(A11yID.trendsGroup(group.rawValue))
+                WrappingHStack(spacing: 6, lineSpacing: 6) {
+                    ForEach(group.ids, id: \.self) { id in
+                        seriesChip(id, selectedIds: selectedIds, ranked: ranked)
+                    }
                 }
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel(app.t("symptom.id.\(series.id)"))
-                .accessibilityIdentifier(A11yID.trendsSeries(series.id))
-                .accessibilityValue("shown")
             }
         }
     }
 
-    private func pinPicker() -> some View {
-        WrappingHStack(spacing: 6, lineSpacing: 6) {
-            ForEach(SymptomId.allCases, id: \.self) { id in
-                let selectedPin = pinnedId == id.rawValue
-                Button {
-                    pinnedId = selectedPin ? "" : id.rawValue
-                    self.selected = nil
-                } label: {
-                    Text(app.t("symptom.id.\(id.rawValue)"))
-                        .font(.caption)
-                        .foregroundStyle(selectedPin ? Theme.blush700 : Theme.inkSoft)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Capsule().fill(selectedPin ? Theme.blush100 : Theme.blush50))
+    private func seriesChip(
+        _ id: SymptomId,
+        selectedIds: [String],
+        ranked: [String]
+    ) -> some View {
+        let on = selectedIds.contains(id.rawValue)
+        let color = seriesColor(for: id.rawValue, selectedIds: selectedIds)
+        return Button {
+            let next = SymptomTrendLogic.toggling(id.rawValue, in: selectedIds, ranked: ranked)
+            writeStored(next)
+            selected = nil
+        } label: {
+            HStack(spacing: 4) {
+                if on {
+                    Circle()
+                        .fill(color)
+                        .frame(width: 8, height: 8)
                 }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier(A11yID.trendsPinOption(id.rawValue))
-                .accessibilityValue(selectedPin ? "on" : "off")
+                Text(app.t("symptom.id.\(id.rawValue)"))
+                    .font(.caption)
+                    .foregroundStyle(on ? Theme.ink : Theme.inkSoft)
+                    .lineLimit(1)
             }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Capsule().fill(on ? color.opacity(0.16) : Theme.blush50))
+            .overlay(Capsule().stroke(on ? color.opacity(0.45) : Color.clear, lineWidth: 1))
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel(app.t("symptom.id.\(id.rawValue)"))
+        .accessibilityIdentifier(A11yID.trendsSeries(id.rawValue))
+        .accessibilityValue(on ? "on" : "off")
+    }
+
+    private func seriesColor(for id: String, selectedIds: [String]) -> Color {
+        let ordered = SymptomId.allCases.map(\.rawValue).filter { selectedIds.contains($0) }
+        let index = ordered.firstIndex(of: id) ?? 0
+        return Self.seriesColors[index % Self.seriesColors.count]
+    }
+
+    private func parseStored() -> [String]? {
+        let raw = selectedStorage.trimmingCharacters(in: .whitespacesAndNewlines)
+        if raw.isEmpty { return nil }
+        if raw == "-" { return [] }
+        return raw.split(separator: ",").map(String.init)
+    }
+
+    private func writeStored(_ ids: [String]) {
+        selectedStorage = ids.isEmpty ? "-" : ids.joined(separator: ",")
     }
 
     private func plot(_ chart: SymptomTrendChart) -> some View {

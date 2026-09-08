@@ -10,6 +10,9 @@ final class SymptomTrendsTests: PeriMediUITestCase {
         XCTAssertEqual(robot.value(of: "trends.status"), "need-cycles")
         robot.waitFor(id: "trends.empty")
         XCTAssertEqual(robot.value(of: "trends.empty"), "need-cycles")
+        robot.waitFor(id: "trends.group.body")
+        robot.waitFor(id: "trends.series.hot_flash")
+        XCTAssertEqual(robot.value(of: "trends.series.hot_flash"), "off")
     }
 
     func testSymptomTrendsChart() {
@@ -19,10 +22,17 @@ final class SymptomTrendsTests: PeriMediUITestCase {
             robot.waitFor(id: "trends.screen")
             robot.waitFor(id: "trends.status")
             XCTAssertEqual(robot.value(of: "trends.status"), "ids:hot_flash,sleep,mood")
+            robot.waitFor(id: "trends.group.body")
+            robot.waitFor(id: "trends.group.mood")
+            robot.waitFor(id: "trends.group.urogenital")
             robot.waitFor(id: "trends.series.hot_flash")
             robot.waitFor(id: "trends.series.mood")
             robot.waitFor(id: "trends.series.sleep")
-            XCTAssertFalse(robot.exists("trends.series.anxiety"))
+            robot.waitFor(id: "trends.series.anxiety")
+            XCTAssertEqual(robot.value(of: "trends.series.hot_flash"), "on")
+            XCTAssertEqual(robot.value(of: "trends.series.sleep"), "on")
+            XCTAssertEqual(robot.value(of: "trends.series.mood"), "on")
+            XCTAssertEqual(robot.value(of: "trends.series.anxiety"), "off")
         }
 
         XCTContext.runActivity(named: "Y is days scored, size is mean") { _ in
@@ -60,13 +70,11 @@ final class SymptomTrendsTests: PeriMediUITestCase {
             XCTAssertTrue(tick.contains("2 pumps"), tick)
         }
 
-        XCTContext.runActivity(named: "pin replaces a series") { _ in
-            robot.tap("trends.pin")
-            robot.waitFor(id: "trends.pin.option.anxiety")
-            robot.tap("trends.pin.option.anxiety")
+        XCTContext.runActivity(named: "select replaces a series") { _ in
+            robot.tap("trends.series.anxiety")
             XCTAssertEqual(robot.value(of: "trends.status"), "ids:hot_flash,mood,anxiety")
-            robot.waitFor(id: "trends.series.anxiety")
-            XCTAssertFalse(robot.exists("trends.series.sleep"))
+            XCTAssertEqual(robot.value(of: "trends.series.anxiety"), "on")
+            XCTAssertEqual(robot.value(of: "trends.series.sleep"), "off")
         }
     }
 }

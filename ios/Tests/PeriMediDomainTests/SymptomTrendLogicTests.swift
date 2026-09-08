@@ -9,7 +9,7 @@ final class SymptomTrendLogicTests: XCTestCase {
         periods: [Period]? = nil,
         scores: [SymptomScore]? = nil,
         changes: [MedicationChange]? = nil,
-        pinnedId: String? = nil,
+        selectedIds: [String]? = nil,
         settings: CycleSettings? = nil
     ) -> SymptomTrendChart? {
         let payload = TrendsFixture.payload()
@@ -19,7 +19,7 @@ final class SymptomTrendLogicTests: XCTestCase {
             settings: settings ?? self.settings,
             scores: scores ?? payload.symptomScores,
             changes: changes ?? payload.medicationChanges,
-            pinnedId: pinnedId
+            selectedIds: selectedIds
         )
         guard case .chart(let chart) = result.kind else { return nil }
         return chart
@@ -118,16 +118,29 @@ final class SymptomTrendLogicTests: XCTestCase {
         XCTAssertFalse(chart?.series.contains { $0.id == "anxiety" } ?? true)
     }
 
-    func testPinReplacesLowestDefaultSeries() {
-        let chart = chart(pinnedId: "anxiety")
+    func testExplicitSelectionReplacesDefaults() {
+        let chart = chart(selectedIds: ["hot_flash", "mood", "anxiety"])
         XCTAssertEqual(chart?.defaultIds, ["hot_flash", "mood", "sleep"])
         XCTAssertEqual(chart?.series.map(\.id), ["hot_flash", "mood", "anxiety"])
         XCTAssertFalse(chart?.series.contains { $0.id == "sleep" } ?? true)
     }
 
-    func testPinAlreadyInDefaultKeepsThree() {
-        let chart = chart(pinnedId: "sleep")
-        XCTAssertEqual(chart?.series.map(\.id), ["hot_flash", "sleep", "mood"])
+    func testToggleSelectsAndDeselects() {
+        let ranked = ["hot_flash", "mood", "sleep"]
+        XCTAssertEqual(
+            SymptomTrendLogic.toggling("sleep", in: ranked, ranked: ranked),
+            ["hot_flash", "mood"]
+        )
+        XCTAssertEqual(
+            SymptomTrendLogic.toggling("anxiety", in: ranked, ranked: ranked),
+            ["hot_flash", "mood", "anxiety"]
+        )
+    }
+
+    func testEmptyExplicitSelectionDrawsNoSeries() {
+        let chart = chart(selectedIds: [])
+        XCTAssertEqual(chart?.series, [])
+        XCTAssertEqual(chart?.defaultIds, ["hot_flash", "mood", "sleep"])
     }
 
     func testOneCycleHasAPointAndNoSecondDot() {
@@ -164,7 +177,7 @@ final class SymptomTrendLogicTests: XCTestCase {
     }
 
     func testMaxThreeSeries() {
-        let chart = chart(pinnedId: "joints")
+        let chart = chart(selectedIds: ["hot_flash", "mood", "sleep", "joints"])
         XCTAssertLessThanOrEqual(chart?.series.count ?? 99, 3)
     }
 }
