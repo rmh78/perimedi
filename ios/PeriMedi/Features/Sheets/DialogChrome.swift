@@ -40,13 +40,12 @@ struct DialogChrome<Content: View, Footer: View>: View {
 
     @Environment(\.dialogMaxHeight) private var maxHeight
     @State private var bodyHeight: CGFloat = 360
+    @State private var headerHeight: CGFloat = 69
     @State private var footerHeight: CGFloat = 0
-
-    private let headerHeight: CGFloat = 69
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 10) {
+            HStack(alignment: .center, spacing: 10) {
                 if let icon {
                     Image(icon)
                         .resizable()
@@ -59,7 +58,11 @@ struct DialogChrome<Content: View, Footer: View>: View {
                 Text(title)
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(Theme.ink)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .layoutPriority(1)
                     .a11y(identifier)
                     .onTapGesture(perform: resignKeyboard)
                 Spacer(minLength: 8)
@@ -76,6 +79,12 @@ struct DialogChrome<Content: View, Footer: View>: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
+            .background(
+                GeometryReader { geo in
+                    Color.clear.onAppear { headerHeight = geo.size.height }
+                        .onChange(of: geo.size.height) { _, h in headerHeight = h }
+                }
+            )
 
             Rectangle().fill(Theme.blush100).frame(height: 1)
 
@@ -90,7 +99,7 @@ struct DialogChrome<Content: View, Footer: View>: View {
             }
             .scrollBounceBehavior(.basedOnSize)
             .scrollDismissesKeyboard(.interactively)
-            .frame(height: min(bodyHeight, max(80, maxHeight - headerHeight - footerHeight)))
+            .frame(height: min(bodyHeight, max(80, maxHeight - headerHeight - 1 - footerHeight)))
             .onPreferenceChange(ContentHeightKey.self) { bodyHeight = $0 }
 
             footer()
