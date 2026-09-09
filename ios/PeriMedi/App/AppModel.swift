@@ -11,13 +11,14 @@ final class AppModel: ObservableObject {
     @Published var medSheet: MedSheetState?
     @Published var showPeriod = false
     @Published var showSymptom = false
+    @Published var showTrendsPicker = false
     @Published var confirm: ConfirmPrompt?
     @Published var pendingReminder: PendingReminder?
     /// Bumped when Cycle should snap the plot to today (launch / return from background).
     @Published private(set) var todayFocusNonce = 0
 
     enum Tab: Hashable {
-        case cycle, month, more
+        case cycle, trends, month, more
     }
 
     let store: Store
@@ -46,6 +47,7 @@ final class AppModel: ObservableObject {
         medSheet = nil
         showPeriod = false
         showSymptom = false
+        showTrendsPicker = false
         launchPeriodEditor = false
     }
 

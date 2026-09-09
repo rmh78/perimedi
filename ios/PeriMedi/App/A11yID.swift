@@ -15,6 +15,7 @@ extension View {
 /// Language-independent accessibility identifiers. UI tests use the same string literals.
 enum A11yID {
     static let tabCycle = "tab.cycle"
+    static let tabTrends = "tab.trends"
     static let tabMonth = "tab.month"
     static let tabMore = "tab.more"
 
@@ -33,10 +34,22 @@ enum A11yID {
     static let intro = "cycle.intro"
     static let chipPeriod = "cycle.chip.period"
     static let cycleEffect = "cycle.effect"
+    static let trendsScreen = "trends.screen"
+    static let trendsStatus = "trends.status"
+    static let trendsEmpty = "trends.empty"
+    static let trendsIntro = "trends.intro"
+    static let trendsDetail = "trends.detail"
+    static let trendsPlot = "trends.plot"
+    static let trendsAxis = "trends.axis"
+    static let trendsSizeKey = "trends.sizeKey"
+    static let trendsChange = "trends.change"
+    static let trendsDone = "trends.done"
+    static let trendsTickCopy = "trends.tickCopy"
 
     static let sheetMed = "sheet.med"
     static let sheetPeriod = "sheet.period"
     static let sheetSymptom = "sheet.symptom"
+    static let sheetTrends = "sheet.trends"
     static let sheetClose = "sheet.close"
 
     static let medName = "med.name"
@@ -79,6 +92,18 @@ enum A11yID {
     }
     static func chipScore(_ id: String) -> String {
         "cycle.chip.score.\(id)"
+    }
+    static func trendsSeries(_ id: String) -> String {
+        "trends.series.\(id)"
+    }
+    static func trendsDot(_ id: String, _ cycleStart: String) -> String {
+        "trends.dot.\(id).\(cycleStart)"
+    }
+    static func trendsGroup(_ id: String) -> String {
+        "trends.group.\(id)"
+    }
+    static func trendsTick(_ cycleStart: String) -> String {
+        "trends.tick.\(cycleStart)"
     }
     static let confirmDelete = "confirm.delete"
     static let confirmCancel = "confirm.cancel"

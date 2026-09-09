@@ -1,5 +1,15 @@
 import Foundation
 
+public struct LoggedCycle: Equatable, Sendable {
+    public var start: String
+    public var end: String
+
+    public init(start: String, end: String) {
+        self.start = start
+        self.end = end
+    }
+}
+
 public enum CycleLogic {
     public static func periodCoversDate(
         _ period: Period,
@@ -44,6 +54,25 @@ public enum CycleLogic {
         }
         let start = DateKeys.startOfMonthKey(dateKey)
         return (start, DateKeys.daysInMonth(dateKey))
+    }
+
+    /// Logged period-start windows: each start through the day before the next
+    /// start, last window through `today`. Predicted starts are ignored.
+    public static func loggedCycleWindows(periods: [Period], today: String) -> [LoggedCycle] {
+        let today = DateKeys.toDateKey(today)
+        let starts = Array(Set(periods.map { DateKeys.toDateKey($0.startDate) }))
+            .filter { $0 <= today }
+            .sorted()
+        guard !starts.isEmpty else { return [] }
+        return starts.enumerated().map { index, start in
+            let end: String
+            if index + 1 < starts.count {
+                end = DateKeys.addDaysKey(starts[index + 1], -1)
+            } else {
+                end = today
+            }
+            return LoggedCycle(start: start, end: end)
+        }
     }
 
     public static func getCycleDay(dateKey: String, periods: [Period]) -> Int? {

@@ -9,6 +9,7 @@ final class FirstUseJourneyTests: PeriMediUITestCase {
 
         XCTContext.runActivity(named: "01 empty home") { _ in
             robot.waitFor(id: "tab.cycle")
+            robot.waitFor(id: "tab.trends")
             robot.waitFor(id: "tab.month")
             robot.waitFor(id: "tab.more")
             robot.waitFor(id: "cycle.action.med")

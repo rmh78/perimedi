@@ -15,6 +15,9 @@ struct RootView: View {
                 .zIndex(0)
             ZStack {
                 tabPane(CycleView(), tab: .cycle)
+                if app.selectedTab == .trends {
+                    TrendsView()
+                }
                 if app.selectedTab == .month {
                     MonthView()
                 }
@@ -30,7 +33,7 @@ struct RootView: View {
         .background(Theme.pageBackground)
         .ignoresSafeArea(edges: [.top, .bottom])
         .overlay {
-            if app.medSheet != nil || app.showPeriod || app.showSymptom {
+            if app.medSheet != nil || app.showPeriod || app.showSymptom || app.showTrendsPicker {
                 DialogBackdrop(onClose: { app.closeDialog() }) {
                     if let state = app.medSheet {
                         MedicationSheet(isNew: state.isNew, medication: state.medication)
@@ -38,6 +41,8 @@ struct RootView: View {
                         PeriodSheet(startInAddEditor: app.launchPeriodEditor)
                     } else if app.showSymptom {
                         SymptomSheet(dateKey: app.selectedDate)
+                    } else if app.showTrendsPicker {
+                        TrendsPickerSheet()
                     }
                 }
             }
@@ -134,9 +139,16 @@ struct RootView: View {
         }
         if args.contains("-clear") {
             try? store.clearAll()
+            UserDefaults.standard.removeObject(forKey: "perimedi.trends.pin")
+            UserDefaults.standard.removeObject(forKey: "perimedi.trends.selected")
         }
         if args.contains("-loadSample") {
             try? store.loadSample()
+        }
+        if args.contains("-fixture=trends-noscores") {
+            try? store.loadTrendsNoScoresFixture()
+        } else if args.contains("-fixture=trends") {
+            try? store.loadTrendsFixture()
         }
         if let step = journeyStep(from: args) {
             let snap = JourneyScript.apply(store: store, step: step)
@@ -145,6 +157,7 @@ struct RootView: View {
             app.launchSheet = snap.launchSheet
             app.launchPeriodEditor = snap.openPeriodEditor
         }
+        if args.contains("-tabTrends") { app.selectedTab = .trends }
         if args.contains("-tabMonth") { app.selectedTab = .month }
         if args.contains("-tabMore") { app.selectedTab = .more }
         if args.contains("-sheetMed") {

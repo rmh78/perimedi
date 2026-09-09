@@ -2,16 +2,20 @@
 
 ## Purpose
 
-Provide a lean multi-screen shell with bottom navigation so the cycle chart, month calendar, and More tools are each a primary destination without one long scrolling page.
+Provide a lean multi-screen shell with bottom navigation so the cycle chart, Trends chart, month calendar, and More tools are each a primary destination without one long scrolling page.
 
 ## Requirements
 
 ### Requirement: Bottom navigation shell
-The system SHALL present a bottom navigation band that switches among Cycle, Month, and More primary screens without requiring a modal as the only way to open those destinations.
+The system SHALL present a bottom navigation band that switches among Cycle, Month, Trends, and More primary screens without requiring a modal as the only way to open those destinations.
 
 #### Scenario: Open the app
 - **WHEN** the user opens the application
 - **THEN** the Cycle screen is shown and the bottom navigation band is available
+
+#### Scenario: Switch to Trends
+- **WHEN** the user activates Trends in the bottom navigation
+- **THEN** the Trends chart screen is shown
 
 #### Scenario: Switch to Month
 - **WHEN** the user activates Month in the bottom navigation
@@ -26,7 +30,7 @@ The system SHALL NOT present a separate Today primary screen in the bottom navig
 
 #### Scenario: Navigation destinations
 - **WHEN** the user views the bottom navigation band
-- **THEN** the destinations are Cycle, Month, and More only
+- **THEN** the destinations are Cycle, Month, Trends, and More only, in that order
 
 ### Requirement: Shared selected date across screens
 The system SHALL keep a shared selected calendar date so choosing a day on Cycle or Month remains the selected date when the user switches tabs.
@@ -43,7 +47,11 @@ The system SHALL provide a control on the Cycle screen that sets the shared sele
 - **THEN** the selected date becomes today and the cycle plot scrolls so today’s day-cell is visible when the plot overflows
 
 ### Requirement: Homogeneous primary cards
-Primary screens Cycle, Month, and More SHALL present content in a glass-style card without redundant page titles that only repeat the bottom-nav label (e.g. no standalone “Month” or “More” heading whose only role is the tab name).
+Primary screens Cycle, Trends, Month, and More SHALL present content in a glass-style card without redundant page titles that only repeat the bottom-nav label (e.g. no standalone “Month”, “Trends”, or “More” heading whose only role is the tab name).
+
+#### Scenario: Trends header
+- **WHEN** the user opens Trends
+- **THEN** the card shows the chart (or empty copy) and pin control without a separate “Trends” or “Verlauf” title that only repeats the tab
 
 #### Scenario: Month header
 - **WHEN** the user opens Month

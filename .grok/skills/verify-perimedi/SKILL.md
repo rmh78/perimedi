@@ -17,7 +17,7 @@ The doctor is one command:
 bash ios/scripts/verify.sh
 ```
 
-That sources `ios/env.sh`, checks feature-map IDs, checks feature layout, checks domain boundary, fails UI-test coverage if a feature-map surface is uncovered, runs domain tests, uninstalls leftover PeriMedi, runs UI tests, and uninstalls again on success. It prefers iPhone 17e, then iPhone 17. Override with `SIM_DEVICE` or `SIM_UDID`. Before it boots the Simulator, it turns Connect Hardware Keyboard off for that UDID so `typeText` hits the software keyboard.
+That sources `ios/env.sh`, checks feature-map IDs, checks feature layout, checks domain boundary, fails UI-test coverage if a feature-map surface is uncovered, runs domain tests, uninstalls leftover PeriMedi, runs UI tests, checks `ios/docs/screens/` files exist (no pixel compare), and uninstalls again on success. It prefers iPhone 17e, then iPhone 17. Override with `SIM_DEVICE` or `SIM_UDID`. Before it boots the Simulator, it turns Connect Hardware Keyboard off for that UDID so `typeText` hits the software keyboard.
 
 Pieces, if you need one step:
 
@@ -36,7 +36,7 @@ xcodebuild test -project ios/PeriMedi.xcodeproj -scheme PeriMedi \
   -derivedDataPath ios/DerivedData CODE_SIGNING_ALLOWED=NO
 ```
 
-`AppRobot.launch()` always uses `-en -clear -today=2026-03-15 -uiTesting`. Never pass `-journeyStep` or `-loadSample`. Dose reminders in-process: `-remindIn=4`.
+`AppRobot.launch()` always uses `-en -clear -today=2026-03-15 -uiTesting`. Never pass `-journeyStep` or `-loadSample` on the journey tests. `ScreenCatalogTests` uses `launchCatalog` (`-loadSample` / `-de`) to write `ios/docs/screens/`. Dose reminders in-process: `-remindIn=4`.
 
 Frozen test dates in `UITestDate`: today `2026-03-15`, yesterday `2026-03-14`, period `2026-03-07`–`2026-03-11`.
 
@@ -52,6 +52,7 @@ Run `bash ios/scripts/verify.sh`. That is the doctor. Do not assemble the steps 
 - `python3 ios/scripts/check-feature-layout.py` must pass. Feature sheets live under `Features/Cycle`, `Features/Month`, or `Features/More`. `DialogChrome` stays in `Features/Sheets/`.
 - `python3 ios/scripts/check-domain-boundary.py` must pass. Domain owns schedule/cycle/therapy expansion; `Store.setDoseStatus` is the only dose-log writer.
 - `python3 ios/scripts/check-ui-coverage.py --fail-uncovered` must pass (the doctor and CI `ids` job pass the flag). It fails when a surface with distinctive IDs is never driven by UI tests. Waiting for `tab.more` is not coverage. More and backup journeys exist (`testMoreRemindersControls`). A bare local run without the flag stays advisory.
+- `python3 ios/scripts/check-screen-catalog.py` must pass. It fails only when an expected `ios/docs/screens/*.png` is missing. Pixel differences do not fail.
 
 ## Drive
 
@@ -65,9 +66,9 @@ Run `bash ios/scripts/verify.sh`. That is the doctor. Do not assemble the steps 
 
 ## Evidence
 
-A pass is `verify: ok` from `bash ios/scripts/verify.sh` on a Mac with Xcode. Domain `swift test --package-path ios` alone is not UI proof. CI job `ui` is the same proof on GitHub (17e if the image has it, else iPhone 17). A screenshot of the Simulator after uninstall/reinstall is extra, not a substitute for the doctor.
+A pass is `verify: ok` from `bash ios/scripts/verify.sh` on a Mac with Xcode. Domain `swift test --package-path ios` alone is not UI proof. CI job `ui` is the same proof on GitHub (17e if the image has it, else iPhone 17). Main-screen PNGs are `ios/docs/screens/` (see `ios/docs/screens.md`). Commit those after UI changes. UX reviews the Files changed image diff. Do not paste screenshot galleries into PR comments.
 
-Existing journeys: `FirstUseJourneyTests.testFirstUseJourney`, `testMonthPager`, `testMoreRemindersControls`, and `testDoseReminderTaken`.
+Existing journeys: `FirstUseJourneyTests.testFirstUseJourney`, `testMonthPager`, `testMoreRemindersControls`, `testDoseReminderTaken`, `SymptomTrendsTests`, and `ScreenCatalogTests`.
 
 ## Cleanup
 
@@ -75,6 +76,6 @@ Do not commit `ios/DerivedData`, `ios/.build`, or secrets. The doctor uninstalls
 
 ## Product rails
 
-- Bottom nav is Cycle / Month / More. Cycle is home. Edit via sheets, not new full pages.
+- Bottom nav is Cycle / Month / Trends / More. Cycle is home. Edit via sheets, not new full pages.
 - No PeriMedi server. Privacy stays on-device (optional iCloud for the same Apple ID).
 - No menstrual phase labels (follicular/luteal). Period UI is label + background only.

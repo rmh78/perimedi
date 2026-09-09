@@ -8,11 +8,11 @@ This is a personal demo, not medical advice.
 
 ## Features
 
-- **Cycle / Month / More** via bottom navigation (Cycle is the home screen)
+- **Cycle / Month / Trends / More** via bottom navigation (Cycle is the home screen)
 - Medications with form, custom colors, default dose, and integrated schedule
 - Schedules: every day, specific weekdays, or cyclic apply/pause — not mixed
 - Mark doses taken / not taken
-- Cycle day plot, period/symptom marks, month calendar
+- Cycle day plot, period/symptom marks, month calendar, Trends (Verlauf) by cycle
 - Structured 0–4 symptom scores (optional day note)
 - **More**: language (EN/DE), dose reminders, and backup (export/import/sample/clear)
 - Cycle settings and period history via a sheet

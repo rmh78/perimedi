@@ -44,7 +44,35 @@ struct AppRobot {
         XCTAssertFalse(app.launchArguments.contains { $0.hasPrefix("-loadSample") })
         app.launch()
         waitFor(id: "tab.cycle")
-        waitFor(id: "cycle.action.med")
+        if extra.contains("-tabTrends") {
+            waitFor(id: "tab.trends")
+            waitFor(id: "trends.screen")
+        } else if extra.contains("-tabMonth") {
+            waitFor(id: "tab.month")
+        } else if extra.contains("-tabMore") {
+            waitFor(id: "tab.more")
+        } else {
+            waitFor(id: "cycle.action.med")
+        }
+    }
+
+    /// Screen catalog only. Allows `-loadSample` and `-de`. Not the journey proof.
+    func launchCatalog(locale: String, extra: [String] = []) {
+        XCTAssertTrue(locale == "en" || locale == "de", "catalog locale \(locale)")
+        XCTAssertFalse(extra.contains { $0.hasPrefix("-journeyStep") })
+        app.launchArguments = ["-\(locale)", "-clear", "-today=\(UITestDate.today)", "-uiTesting"] + extra
+        app.launch()
+        waitFor(id: "tab.cycle")
+        if extra.contains("-tabTrends") {
+            waitFor(id: "tab.trends")
+            waitFor(id: "trends.screen")
+        } else if extra.contains("-tabMonth") {
+            waitFor(id: "tab.month")
+        } else if extra.contains("-tabMore") {
+            waitFor(id: "tab.more")
+        } else {
+            waitFor(id: "cycle.action.med")
+        }
     }
 
     func element(_ id: String) -> XCUIElement {
@@ -62,6 +90,18 @@ struct AppRobot {
             if predicate() { return true }
         }
         return predicate()
+    }
+
+    func scrollTo(_ id: String, timeout: TimeInterval = 6, file: StaticString = #filePath, line: UInt = #line) {
+        for _ in 0..<12 {
+            if element(id).exists { break }
+            app.swipeUp()
+        }
+        waitFor(id: id, timeout: timeout, file: file, line: line)
+        for _ in 0..<8 {
+            if element(id).isHittable { return }
+            app.swipeUp()
+        }
     }
 
     func waitFor(id: String, timeout: TimeInterval = 3, file: StaticString = #filePath, line: UInt = #line) {

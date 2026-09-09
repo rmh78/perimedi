@@ -7,11 +7,11 @@ Prove that a person can actually perform PeriMedi’s empty-to-tracking journey 
 ## Requirements
 
 ### Requirement: Primary controls have stable identifiers
-Primary Cycle, Month, More, sheet, lane, and dose-status controls SHALL expose a language-independent accessibility identifier so automation can find them without relying on English or German chrome. VoiceOver labels SHALL remain the localized (or user-entered) text.
+Primary Cycle, Trends, Month, More, sheet, lane, and dose-status controls SHALL expose a language-independent accessibility identifier so automation can find them without relying on English or German chrome. VoiceOver labels SHALL remain the localized (or user-entered) text.
 
 #### Scenario: Tabs and Cycle actions are findable in English
 - **WHEN** the app is launched with English chrome and a cleared store
-- **THEN** Cycle, Month, and More destinations, the day pager (previous, next, Today, current-day label), and the Cycle actions to add a medication, open cycle settings, and add a symptom are each uniquely identifiable without reading the visible title string
+- **THEN** Cycle, Trends, Month, and More destinations, the day pager (previous, next, Today, current-day label), and the Cycle actions to add a medication, open cycle settings, and add a symptom are each uniquely identifiable without reading the visible title string
 
 #### Scenario: Identifiers stay stable in German
 - **WHEN** the active language is German
@@ -77,3 +77,14 @@ A failed instrumented step SHALL retain a screenshot (or equivalent visual attac
 #### Scenario: Visual drift does not fail the suite
 - **WHEN** type size, spacing, or system chrome differs from a previously captured PNG but the same controls and values are present
 - **THEN** the instrumented suite still passes
+
+### Requirement: Committed catalog of main screens
+The instrumented suite SHALL write a small committed catalog of Simulator pictures of the main destinations: Cycle empty, Cycle with data, Trends empty, Trends with data, Month, and More. English SHALL be included. German SHALL be included where the chrome changes. Verification SHALL fail if an expected catalog picture is missing. Verification SHALL NOT fail because pixels differ from a previous capture. Visual review SHALL use those committed pictures (the pull-request file diff), not a gallery of images pasted into pull-request comments.
+
+#### Scenario: Missing catalog picture fails
+- **WHEN** an expected main-screen catalog picture is not present
+- **THEN** verification fails
+
+#### Scenario: Pixel drift does not fail the catalog
+- **WHEN** a catalog picture differs in pixels from an earlier capture but the file is present
+- **THEN** verification still passes
