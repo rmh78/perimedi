@@ -123,6 +123,8 @@ final class FirstUseJourneyTests: PeriMediUITestCase {
             /* denied-settings row */
         }
         robot.app.swipeUp()
+        robot.scrollTo("more.sharePdf")
+        robot.waitFor(id: "more.sharePdf")
         robot.waitFor(id: "more.privacyPolicy")
         robot.waitFor(id: "more.sample")
         robot.waitFor(id: "more.export")

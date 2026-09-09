@@ -1,12 +1,13 @@
 # More
 
-Settings: language, reminders, backup, privacy policy link.
+Settings: language, reminders, doctor-visit PDF, backup, privacy policy link.
 
 ## Sub-features
 
 - Language (en / de) — `more.lang.en` / `more.lang.de`
 - Master reminders toggle
 - Reminder sound picker + preview (`more.reminderSoundPreview`)
+- Doctor visit PDF (see [doctor-visit.md](doctor-visit.md))
 - Backup: sample, export, import, clear (see [backup.md](backup.md))
 - Denied-notifications settings row (`more.remindersSettings`)
 - Privacy Policy link (`more.privacyPolicy`) → https://rmh78.github.io/perimedi/app-store/privacy
@@ -27,9 +28,10 @@ Bottom bar → More.
 | Reminder sound preview | `more.reminderSoundPreview` | Speaker button. Journey taps it. |
 | Open Settings (denied) | `more.remindersSettings` | Only visible when `notifyDenied`. Journey includes the ID string so coverage sees it; does not tap (opens iOS Settings). |
 | Privacy Policy | `more.privacyPolicy` | Opens the published privacy page in Safari. `testMoreRemindersControls` waits for it; does not tap (leaves the app). |
+| Share visit PDF | `more.sharePdf` | See [doctor-visit.md](doctor-visit.md). |
 | Backup rows | `more.sample` / `more.export` / `more.import` / `more.clear` | See [backup.md](backup.md). |
 
-`FirstUseJourneyTests.testMoreRemindersControls` is the More path: launch, `tab.more`, wait for language pills and tap `more.lang.en`, wait/tap `more.reminders`, wait for `more.reminderSound`, tap `more.reminderSoundPreview`, wait for `more.privacyPolicy`, wait for backup row IDs, tap `more.sample` then `confirm.cancel`. Do not tap export, import, clear, German, or the privacy link.
+`FirstUseJourneyTests.testMoreRemindersControls` is the More path: launch, `tab.more`, wait for language pills and tap `more.lang.en`, wait/tap `more.reminders`, wait for `more.reminderSound`, tap `more.reminderSoundPreview`, wait for `more.privacyPolicy`, wait for `more.sharePdf` and backup row IDs, tap `more.sample` then `confirm.cancel`. Do not tap export, import, clear, German, the privacy link, or Share PDF.
 
 Language pills call `LocaleController`. Preference is `AppStorage` `perimedi.locale`. Default German if device preferred languages include German. Tests force English with `-en`.
 

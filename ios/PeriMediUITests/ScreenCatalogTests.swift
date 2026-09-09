@@ -18,7 +18,8 @@ final class ScreenCatalogTests: PeriMediUITestCase {
             robot.waitFor(id: "month.day.\(UITestDate.today)")
         }
         try shot("more-sample-en", locale: "en", extra: ["-loadSample", "-tabMore"]) {
-            robot.waitFor(id: "more.lang.en")
+            robot.scrollTo("more.sharePdf")
+            robot.waitFor(id: "more.sharePdf")
         }
         try trendsExtras(locale: "en")
         try shot("cycle-empty-de", locale: "de") {
@@ -37,7 +38,8 @@ final class ScreenCatalogTests: PeriMediUITestCase {
             robot.waitFor(id: "month.day.\(UITestDate.today)")
         }
         try shot("more-sample-de", locale: "de", extra: ["-loadSample", "-tabMore"]) {
-            robot.waitFor(id: "more.lang.en")
+            robot.scrollTo("more.sharePdf")
+            robot.waitFor(id: "more.sharePdf")
         }
         try trendsExtras(locale: "de")
 

@@ -59,4 +59,4 @@ Primary screens Cycle, Trends, Month, and More SHALL present content in a glass-
 
 #### Scenario: More header
 - **WHEN** the user opens More
-- **THEN** the card shows Language and Backup sections without a redundant “More” page title
+- **THEN** the card shows Language, Reminders, a visit PDF action, and Backup sections without a redundant “More” page title
