@@ -55,45 +55,45 @@ For each selected catalog symptom id, the system SHALL encode **Y as count** of 
 - **WHEN** Trends draws a chart
 - **THEN** the Y axis is labeled as days scored and a short key says a bigger dot means stronger on those days
 
-### Requirement: Default three series, catalog above the chart
-The system SHALL draw at most three symptom series. The default series SHALL be the three catalog ids logged on the most days in the visible span (not the highest mean). When a chart can be drawn, Trends SHALL show, in this order: short copy that symptoms must be selected to appear on the chart, a separator line, every catalog symptom grouped the same way as the symptom log (each marked selected or not), a separator line, then the chart. The user SHALL be able to select or deselect a symptom. Selecting a fourth SHALL replace the selected series with the fewest scored days so at most three remain. Empty states SHALL hide the intro copy and the catalog.
+### Requirement: Chart first, catalog in a Change sheet
+The system SHALL draw at most three symptom series. The default series SHALL be the three catalog ids logged on the most days in the visible span (not the highest mean). When a chart can be drawn, Trends SHALL show one chart card with nothing between the header and the plot: Y labeled as days scored, X as cycle start dates, then a stacked list of the selected names each with a color dot matching that line, a short size key, and a quiet Change control. The default view SHALL NOT show the full catalog, group titles, or copy that symptoms must be selected. Change SHALL open a sheet titled “Show on chart” (German: “Im Diagramm zeigen”) with every catalog symptom grouped the same way as the symptom log. Selecting a fourth SHALL replace the selected series with the fewest scored days so at most three remain. Done SHALL close the sheet and the chart SHALL update. Empty states SHALL hide Change and the catalog.
 
 #### Scenario: Defaults follow day count
 - **WHEN** four ids have scores in the visible span and their day counts differ
-- **THEN** the three with the most scored days are selected, even if a fourth has a higher mean, and the other catalog ids remain visible as not selected
+- **THEN** the three with the most scored days are selected, even if a fourth has a higher mean
 
 #### Scenario: Select replaces one series
-- **WHEN** three series are selected and the user selects a catalog id that is not among them
+- **WHEN** three series are selected and the user selects a catalog id that is not among them in the Change sheet
 - **THEN** that id becomes selected, the previously selected series with the fewest scored days becomes not selected, and at most three series remain
 
-#### Scenario: Intro, catalog, then chart
+#### Scenario: Default chart has no chip cloud
 - **WHEN** Trends can draw a chart
-- **THEN** short copy tells the user to select symptoms for the chart, grouped catalog symptoms sit below that copy, the chart sits below the catalog, and a separator line sits between those three blocks
+- **THEN** the card shows the plot, the three selected names stacked with matching color dots, a size key, and Change, and does not show group titles or a full catalog
 
 #### Scenario: Empty hides selection
 - **WHEN** Trends cannot draw a chart
-- **THEN** the intro copy and catalog are not shown
+- **THEN** Change and the catalog are not shown
 
 ### Requirement: Tap shows cycle numbers
-Activating a dot SHALL show that symptom’s name, the cycle’s date range, the day count, and the mean intensity as numbers. Copy SHALL be English and German according to the active language.
+Activating a dot SHALL show that symptom’s name, the cycle’s date range, the day count, and the mean intensity as numbers. The user-facing word for that intensity SHALL be “average” in English and “Mittel” in German. Copy SHALL be English and German according to the active language.
 
 #### Scenario: Tap a point
 - **WHEN** the user activates a plotted point
 - **THEN** Trends shows which symptom the point belongs to, the cycle start and end dates, the count of days scored, and the mean intensity for that series and cycle
 
 ### Requirement: Dose-change ticks are context only
-When a stored dose or schedule change has an effective date in a visible cycle, the system SHALL mark that cycle with the medication name snapshot and the new value. That mark SHALL NOT claim the change caused a symptom difference and SHALL NOT advise a treatment change.
+When a stored dose or schedule change has an effective date in a visible cycle, the system SHALL mark that cycle with a small tick on the plot, not a sentence under the chart. Activating the tick SHALL show the medication name snapshot and the new value. That mark SHALL NOT claim the change caused a symptom difference and SHALL NOT advise a treatment change. German copy SHALL use Hub for a pump unit; the medication name may stay as stored.
 
 #### Scenario: Change in a visible cycle
 - **WHEN** a stored dose change for a named medication is effective in a visible cycle
-- **THEN** that cycle is marked with the medication name and new dose and the mark does not claim the dose caused a change in symptoms
+- **THEN** that cycle has a tick on the plot, and activating it shows the medication name and new dose without claiming the dose caused a change in symptoms
 
 #### Scenario: Change outside the visible span
 - **WHEN** the only stored change is effective before the first visible cycle
 - **THEN** Trends does not mark a cycle for that change
 
 ### Requirement: Empty states without medical advice
-The system SHALL show short English and German copy when Trends cannot draw a useful chart. With no logged period history, copy SHALL say that Trends needs at least two logged cycles. With logged cycles but no scores in the visible span, copy SHALL be equivalent to “No symptom scores in these cycles yet.” Trends SHALL NOT recommend changing a dose, starting or stopping HRT, or otherwise give medical advice in the chart or its copy. Period tracking off SHALL keep the Trends destination and show the same need-cycles copy.
+The system SHALL show short English and German copy when Trends cannot draw a useful chart. With no logged period history, copy SHALL say that Trends needs at least two logged cycles. With logged cycles but no scores in the visible span, copy SHALL be equivalent to “No symptom scores in these cycles yet.” (German: “Noch keine Symptomwerte in diesen Zyklen.”) Trends SHALL NOT recommend changing a dose, starting or stopping HRT, or otherwise give medical advice in the chart or its copy. Period tracking off SHALL keep the Trends destination and show the same need-cycles copy.
 
 #### Scenario: No period history
 - **WHEN** no logged period start exists

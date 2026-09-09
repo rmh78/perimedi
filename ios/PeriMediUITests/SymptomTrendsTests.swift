@@ -12,6 +12,7 @@ final class SymptomTrendsTests: PeriMediUITestCase {
         XCTAssertEqual(robot.value(of: "trends.empty"), "need-cycles")
         XCTAssertFalse(robot.exists("trends.series.hot_flash"))
         XCTAssertFalse(robot.exists("trends.intro"))
+        XCTAssertFalse(robot.exists("trends.change"))
     }
 
     func testSymptomTrendsNoScores() {
@@ -21,6 +22,7 @@ final class SymptomTrendsTests: PeriMediUITestCase {
         XCTAssertEqual(robot.value(of: "trends.empty"), "no-scores")
         XCTAssertFalse(robot.exists("trends.series.hot_flash"))
         XCTAssertFalse(robot.exists("trends.intro"))
+        XCTAssertFalse(robot.exists("trends.change"))
     }
 
     func testSymptomTrendsChart() {
@@ -28,24 +30,22 @@ final class SymptomTrendsTests: PeriMediUITestCase {
 
         XCTContext.runActivity(named: "default three series") { _ in
             robot.waitFor(id: "trends.screen")
-            robot.waitFor(id: "trends.intro")
             robot.waitFor(id: "trends.plot")
             robot.waitFor(id: "trends.axis")
             XCTAssertEqual(robot.value(of: "trends.axis"), "days-scored")
             robot.waitFor(id: "trends.sizeKey")
+            robot.waitFor(id: "trends.change")
             robot.waitFor(id: "trends.status")
             XCTAssertEqual(robot.value(of: "trends.status"), "ids:hot_flash,sleep,mood")
-            robot.waitFor(id: "trends.group.body")
-            robot.waitFor(id: "trends.group.mood")
-            robot.waitFor(id: "trends.group.urogenital")
+            XCTAssertFalse(robot.exists("trends.intro"))
+            XCTAssertFalse(robot.exists("trends.group.body"))
             robot.waitFor(id: "trends.series.hot_flash")
             robot.waitFor(id: "trends.series.mood")
             robot.waitFor(id: "trends.series.sleep")
-            robot.waitFor(id: "trends.series.anxiety")
             XCTAssertEqual(robot.value(of: "trends.series.hot_flash"), "on")
             XCTAssertEqual(robot.value(of: "trends.series.sleep"), "on")
             XCTAssertEqual(robot.value(of: "trends.series.mood"), "on")
-            XCTAssertEqual(robot.value(of: "trends.series.anxiety"), "off")
+            XCTAssertFalse(robot.exists("trends.series.anxiety"))
         }
 
         XCTContext.runActivity(named: "Y is days scored, size is mean") { _ in
@@ -82,13 +82,26 @@ final class SymptomTrendsTests: PeriMediUITestCase {
             let tick = robot.value(of: "trends.tick.2026-02-01")
             XCTAssertTrue(tick.contains("Estrogel"), tick)
             XCTAssertTrue(tick.contains("2 pumps"), tick)
+            robot.tap("trends.tick.2026-02-01")
+            robot.waitFor(id: "trends.tickCopy")
         }
 
         XCTContext.runActivity(named: "select replaces a series") { _ in
+            robot.tap("trends.change")
+            robot.waitFor(id: "sheet.trends")
+            robot.waitFor(id: "trends.group.body")
+            robot.waitFor(id: "trends.group.mood")
+            robot.waitFor(id: "trends.group.urogenital")
+            robot.waitFor(id: "trends.series.anxiety")
+            XCTAssertEqual(robot.value(of: "trends.series.anxiety"), "off")
             robot.tap("trends.series.anxiety")
             XCTAssertEqual(robot.value(of: "trends.status"), "ids:hot_flash,mood,anxiety")
             XCTAssertEqual(robot.value(of: "trends.series.anxiety"), "on")
             XCTAssertEqual(robot.value(of: "trends.series.sleep"), "off")
+            robot.tap("trends.done")
+            robot.waitGone(id: "sheet.trends")
+            robot.waitFor(id: "trends.series.anxiety")
+            XCTAssertFalse(robot.exists("trends.series.sleep"))
         }
     }
 }

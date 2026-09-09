@@ -27,6 +27,7 @@
 		B7A83DBE76859D6EDE7B3D64 /* Features/Month/MonthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E74D1E1A69E41303158AB133 /* Features/Month/MonthView.swift */; };
 		509CD2A2375F2202BAEAB82B /* Features/More/MoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 827B3968E8F819815BE355EA /* Features/More/MoreView.swift */; };
 		ACE731121577B9A356303D1A /* Features/Sheets/DialogChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 957780ADFD525A78BAA2F7CF /* Features/Sheets/DialogChrome.swift */; };
+		D638B4AE03469DEC352F0BD9 /* Features/Trends/TrendsPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C59E6BB7692766581BEC15F /* Features/Trends/TrendsPickerSheet.swift */; };
 		38E77B02421D70CA76080DE3 /* Features/Trends/TrendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C47F422F7986B7866E0EC683 /* Features/Trends/TrendsView.swift */; };
 		9489A223207A7957115CE59C /* PeriMediApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0D9131837546C57FD9CA660 /* PeriMediApp.swift */; };
 		B250661E90C3E1F193AAA0F2 /* Persistence/PersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B279B8626D85DDE344D5BD /* Persistence/PersistenceController.swift */; };
@@ -76,6 +77,7 @@
 		E74D1E1A69E41303158AB133 /* Features/Month/MonthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Month/MonthView.swift; sourceTree = "<group>"; };
 		827B3968E8F819815BE355EA /* Features/More/MoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/More/MoreView.swift; sourceTree = "<group>"; };
 		957780ADFD525A78BAA2F7CF /* Features/Sheets/DialogChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Sheets/DialogChrome.swift; sourceTree = "<group>"; };
+		8C59E6BB7692766581BEC15F /* Features/Trends/TrendsPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Trends/TrendsPickerSheet.swift; sourceTree = "<group>"; };
 		C47F422F7986B7866E0EC683 /* Features/Trends/TrendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Trends/TrendsView.swift; sourceTree = "<group>"; };
 		D0D9131837546C57FD9CA660 /* PeriMediApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriMediApp.swift; sourceTree = "<group>"; };
 		C8B279B8626D85DDE344D5BD /* Persistence/PersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence/PersistenceController.swift; sourceTree = "<group>"; };
@@ -160,6 +162,7 @@
 				E74D1E1A69E41303158AB133 /* Features/Month/MonthView.swift */,
 				827B3968E8F819815BE355EA /* Features/More/MoreView.swift */,
 				957780ADFD525A78BAA2F7CF /* Features/Sheets/DialogChrome.swift */,
+				8C59E6BB7692766581BEC15F /* Features/Trends/TrendsPickerSheet.swift */,
 				C47F422F7986B7866E0EC683 /* Features/Trends/TrendsView.swift */,
 				D0D9131837546C57FD9CA660 /* PeriMediApp.swift */,
 				C8B279B8626D85DDE344D5BD /* Persistence/PersistenceController.swift */,
@@ -325,6 +328,7 @@
 				B7A83DBE76859D6EDE7B3D64 /* Features/Month/MonthView.swift in Sources */,
 				509CD2A2375F2202BAEAB82B /* Features/More/MoreView.swift in Sources */,
 				ACE731121577B9A356303D1A /* Features/Sheets/DialogChrome.swift in Sources */,
+				D638B4AE03469DEC352F0BD9 /* Features/Trends/TrendsPickerSheet.swift in Sources */,
 				38E77B02421D70CA76080DE3 /* Features/Trends/TrendsView.swift in Sources */,
 				9489A223207A7957115CE59C /* PeriMediApp.swift in Sources */,
 				B250661E90C3E1F193AAA0F2 /* Persistence/PersistenceController.swift in Sources */,

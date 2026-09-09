@@ -6,6 +6,7 @@ struct TrendsView: View {
     @EnvironmentObject private var store: Store
     @AppStorage("perimedi.trends.selected") private var selectedStorage = ""
     @State private var selected: SelectedDot?
+    @State private var selectedTick: CycleChangeTick?
 
     private struct SelectedDot: Equatable {
         var id: String
@@ -29,11 +30,6 @@ struct TrendsView: View {
             changes: store.medicationChanges,
             selectedIds: storedIds
         )
-        let chart: SymptomTrendChart? = {
-            if case .chart(let chart) = result.kind { return chart }
-            return nil
-        }()
-        let selectedIds = storedIds ?? chart?.defaultIds ?? []
         ScrollView {
             GlassCard {
                 VStack(alignment: .leading, spacing: 14) {
@@ -43,14 +39,6 @@ struct TrendsView: View {
                     case .noScores:
                         emptyCopy("no-scores", key: "trends.noScores")
                     case .chart(let chart):
-                        Text(app.t("trends.intro"))
-                            .font(.caption)
-                            .foregroundStyle(Theme.inkSoft)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .accessibilityIdentifier(A11yID.trendsIntro)
-                        sectionRule
-                        catalogPicker(selectedIds: selectedIds, ranked: chart.defaultIds)
-                        sectionRule
                         chartBody(chart)
                     }
                     Text(containerValue(result))
@@ -72,13 +60,6 @@ struct TrendsView: View {
         .scrollIndicators(.hidden)
     }
 
-    private var sectionRule: some View {
-        Rectangle()
-            .fill(Theme.blush100)
-            .frame(height: 1)
-            .padding(.vertical, 2)
-    }
-
     private func emptyCopy(_ value: String, key: String) -> some View {
         Text(app.t(key))
             .font(.caption)
@@ -89,13 +70,14 @@ struct TrendsView: View {
     }
 
     private func chartBody(_ chart: SymptomTrendChart) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             Text(app.t("trends.axis"))
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(Theme.inkSoft)
                 .accessibilityIdentifier(A11yID.trendsAxis)
                 .accessibilityValue("days-scored")
             plot(chart)
+            legend(chart)
             Text(app.t("trends.sizeKey"))
                 .font(.caption2)
                 .foregroundStyle(Theme.inkMuted)
@@ -104,7 +86,16 @@ struct TrendsView: View {
             if let selected {
                 detail(selected)
             }
-            ticks(chart)
+            if let selectedTick {
+                tickCopy(selectedTick)
+            }
+            Button(app.t("trends.change")) {
+                app.showTrendsPicker = true
+            }
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(Theme.blush700)
+            .buttonStyle(.plain)
+            .accessibilityIdentifier(A11yID.trendsChange)
         }
         .onAppear {
             guard ProcessInfo.processInfo.arguments.contains("-trendsTap") else { return }
@@ -112,67 +103,28 @@ struct TrendsView: View {
                   let point = series.points.last
             else { return }
             selected = SelectedDot(id: series.id, point: point, colorIndex: 0)
+            selectedTick = nil
         }
     }
 
-    private func catalogPicker(selectedIds: [String], ranked: [String]) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            ForEach(SymptomGroup.allCases, id: \.self) { group in
-                Text(app.t("symptom.group.\(group.rawValue)"))
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Theme.inkMuted)
-                    .textCase(.uppercase)
-                    .tracking(0.6)
-                    .frame(maxWidth: .infinity)
-                    .multilineTextAlignment(.center)
-                    .accessibilityIdentifier(A11yID.trendsGroup(group.rawValue))
-                WrappingHStack(spacing: 6, lineSpacing: 6) {
-                    ForEach(group.ids, id: \.self) { id in
-                        seriesChip(id, selectedIds: selectedIds, ranked: ranked)
-                    }
-                }
-            }
-        }
-    }
-
-    private func seriesChip(
-        _ id: SymptomId,
-        selectedIds: [String],
-        ranked: [String]
-    ) -> some View {
-        let on = selectedIds.contains(id.rawValue)
-        let color = seriesColor(for: id.rawValue, selectedIds: selectedIds)
-        return Button {
-            let next = SymptomTrendLogic.toggling(id.rawValue, in: selectedIds, ranked: ranked)
-            writeStored(next)
-            selected = nil
-        } label: {
-            HStack(spacing: 4) {
-                if on {
+    private func legend(_ chart: SymptomTrendChart) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ForEach(Array(chart.series.enumerated()), id: \.element.id) { index, series in
+                let color = Self.seriesColors[index % Self.seriesColors.count]
+                HStack(spacing: 6) {
                     Circle()
                         .fill(color)
                         .frame(width: 8, height: 8)
+                    Text(app.t("symptom.id.\(series.id)"))
+                        .font(.caption)
+                        .foregroundStyle(Theme.ink)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                Text(app.t("symptom.id.\(id.rawValue)"))
-                    .font(.caption)
-                    .foregroundStyle(on ? Theme.ink : Theme.inkSoft)
-                    .lineLimit(1)
+                .accessibilityElement(children: .combine)
+                .accessibilityIdentifier(A11yID.trendsSeries(series.id))
+                .accessibilityValue("on")
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Capsule().fill(on ? color.opacity(0.16) : Theme.blush50))
-            .overlay(Capsule().stroke(on ? color.opacity(0.45) : Color.clear, lineWidth: 1))
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(app.t("symptom.id.\(id.rawValue)"))
-        .accessibilityIdentifier(A11yID.trendsSeries(id.rawValue))
-        .accessibilityValue(on ? "on" : "off")
-    }
-
-    private func seriesColor(for id: String, selectedIds: [String]) -> Color {
-        let ordered = SymptomId.allCases.map(\.rawValue).filter { selectedIds.contains($0) }
-        let index = ordered.firstIndex(of: id) ?? 0
-        return Self.seriesColors[index % Self.seriesColors.count]
     }
 
     private func parseStored() -> [String]? {
@@ -180,10 +132,6 @@ struct TrendsView: View {
         if raw.isEmpty { return nil }
         if raw == "-" { return [] }
         return raw.split(separator: ",").map(String.init)
-    }
-
-    private func writeStored(_ ids: [String]) {
-        selectedStorage = ids.isEmpty ? "-" : ids.joined(separator: ",")
     }
 
     private func plot(_ chart: SymptomTrendChart) -> some View {
@@ -269,6 +217,7 @@ struct TrendsView: View {
                         let color = Self.seriesColors[index % Self.seriesColors.count]
                         Button {
                             selected = SelectedDot(id: series.id, point: point, colorIndex: index)
+                            selectedTick = nil
                         } label: {
                             Circle()
                                 .fill(color)
@@ -288,6 +237,24 @@ struct TrendsView: View {
                             "count:\(point.dayCount),mean:\(formatMean(point.meanIntensity))"
                         )
                     }
+                }
+            }
+            ForEach(chart.ticks, id: \.cycleStart) { tick in
+                if let x = xs[tick.cycleStart] {
+                    let on = selectedTick?.cycleStart == tick.cycleStart
+                    Button {
+                        selectedTick = tick
+                        selected = nil
+                    } label: {
+                        Capsule()
+                            .fill(on ? Theme.ink : Theme.inkMuted)
+                            .frame(width: 3, height: 10)
+                    }
+                    .buttonStyle(.plain)
+                    .position(x: x, y: plot.maxY - 6)
+                    .accessibilityLabel(tick.nameSnapshot)
+                    .accessibilityIdentifier(A11yID.trendsTick(tick.cycleStart))
+                    .accessibilityValue("\(tick.nameSnapshot):\(tick.newValue)")
                 }
             }
             ForEach(chart.cycles, id: \.start) { cycle in
@@ -330,23 +297,27 @@ struct TrendsView: View {
         )
     }
 
-    private func ticks(_ chart: SymptomTrendChart) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            ForEach(chart.ticks, id: \.cycleStart) { tick in
-                let key = tick.field == .dose ? "trends.tick.dose" : "trends.tick.schedule"
-                Text(app.t(key, [
-                    "name": tick.nameSnapshot,
-                    "value": tick.newValue,
-                    "date": tickDate(tick.effectiveDate),
-                ]))
-                .font(.caption)
-                .foregroundStyle(Theme.inkMuted)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityIdentifier(A11yID.trendsTick(tick.cycleStart))
-                .accessibilityValue("\(tick.nameSnapshot):\(tick.newValue)")
-            }
-        }
-        .padding(.top, 4)
+    private func tickCopy(_ tick: CycleChangeTick) -> some View {
+        let key = tick.field == .dose ? "trends.tick.dose" : "trends.tick.schedule"
+        let text = app.t(key, [
+            "name": tick.nameSnapshot,
+            "value": displayDoseValue(tick.newValue),
+            "date": tickDate(tick.effectiveDate),
+        ])
+        return Text(text)
+            .font(.caption)
+            .foregroundStyle(Theme.inkMuted)
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityIdentifier(A11yID.trendsTickCopy)
+            .accessibilityValue("\(tick.nameSnapshot):\(tick.newValue)")
+    }
+
+    private func displayDoseValue(_ value: String) -> String {
+        guard app.locale.language == .de else { return value }
+        var out = value
+        out = out.replacingOccurrences(of: "pumps", with: "Hub", options: .caseInsensitive)
+        out = out.replacingOccurrences(of: "pump", with: "Hub", options: .caseInsensitive)
+        return out
     }
 
     private func containerValue(_ result: SymptomTrendResult) -> String {

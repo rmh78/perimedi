@@ -33,7 +33,7 @@ struct RootView: View {
         .background(Theme.pageBackground)
         .ignoresSafeArea(edges: [.top, .bottom])
         .overlay {
-            if app.medSheet != nil || app.showPeriod || app.showSymptom {
+            if app.medSheet != nil || app.showPeriod || app.showSymptom || app.showTrendsPicker {
                 DialogBackdrop(onClose: { app.closeDialog() }) {
                     if let state = app.medSheet {
                         MedicationSheet(isNew: state.isNew, medication: state.medication)
@@ -41,6 +41,8 @@ struct RootView: View {
                         PeriodSheet(startInAddEditor: app.launchPeriodEditor)
                     } else if app.showSymptom {
                         SymptomSheet(dateKey: app.selectedDate)
+                    } else if app.showTrendsPicker {
+                        TrendsPickerSheet()
                     }
                 }
             }

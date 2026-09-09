@@ -11,6 +11,7 @@ final class AppModel: ObservableObject {
     @Published var medSheet: MedSheetState?
     @Published var showPeriod = false
     @Published var showSymptom = false
+    @Published var showTrendsPicker = false
     @Published var confirm: ConfirmPrompt?
     @Published var pendingReminder: PendingReminder?
     /// Bumped when Cycle should snap the plot to today (launch / return from background).
@@ -46,6 +47,7 @@ final class AppModel: ObservableObject {
         medSheet = nil
         showPeriod = false
         showSymptom = false
+        showTrendsPicker = false
         launchPeriodEditor = false
     }
 
