@@ -96,10 +96,14 @@ The More visit PDF action SHALL expose a language-independent accessibility iden
 - **WHEN** the instrumented More journey opens More
 - **THEN** the visit PDF action is uniquely identifiable without reading the visible title string
 
+#### Scenario: More journey opens preview without the share sheet
+- **WHEN** the instrumented More journey activates the visit PDF action and continues from the range picker
+- **THEN** the in-app preview and its Share control are uniquely identifiable, and the journey does not activate Share
+
 #### Scenario: More catalog includes the visit entry
 - **WHEN** the committed More catalog pictures are written
 - **THEN** the visit PDF entry is on those pictures
 
-#### Scenario: Catalog includes a sample visit PDF page
+#### Scenario: Catalog includes the range picker and in-app preview
 - **WHEN** the committed screen catalog is written
-- **THEN** it includes a picture of a visit PDF generated from sample data, in English and German
+- **THEN** it includes pictures of the cycle picker and the in-app visit PDF preview from sample data, in English and German

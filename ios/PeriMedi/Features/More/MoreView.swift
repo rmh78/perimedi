@@ -138,14 +138,8 @@ struct MoreView: View {
                             label: app.t("more.visitLabel"),
                             identifier: A11yID.moreSharePdf
                         ) {
-                            do {
-                                shareURL = try DoctorVisitShare.file(store: store, app: app)
-                                showShare = true
-                                status = app.t("more.visitDone")
-                                error = nil
-                            } catch {
-                                self.error = app.t("more.visitFailed")
-                            }
+                            app.showVisitRange = true
+                            error = nil
                         }
                     }
                     .padding(.bottom, 8)

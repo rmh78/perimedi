@@ -7,11 +7,26 @@ Give the user an on-device PDF she can share from More before a gynecologist vis
 ## Requirements
 
 ### Requirement: Share visit PDF from More
-The system SHALL provide one action on the More screen that generates a PDF on the device and opens the platform share sheet so the user can send or save it (for example Mail, Files, or Print). The system SHALL NOT add a new primary destination for this action. The system SHALL NOT place this action on Cycle. The PDF SHALL be produced without a PeriMedi account or server.
+The system SHALL provide one action on the More screen that opens a cycle picker, then an in-app preview of the generated PDF. Share SHALL be a control on that preview that opens the platform share sheet (for example Mail, Files, or Print). The user SHALL stay in the app until they choose Share. The system SHALL NOT add a new primary destination for this action. The system SHALL NOT place this action on Cycle. The PDF SHALL be produced without a PeriMedi account or server.
 
-#### Scenario: Share from More
-- **WHEN** the user activates the visit PDF action on More
-- **THEN** a PDF is created on the device and the system share sheet is shown
+#### Scenario: Preview from More
+- **WHEN** the user activates the visit PDF action on More, chooses a range, and continues
+- **THEN** an in-app preview of the PDF is shown and the system share sheet is not shown yet
+
+#### Scenario: Share from the preview
+- **WHEN** the user activates Share on the visit PDF preview
+- **THEN** the system share sheet is shown
+
+### Requirement: Choose historical cycles
+The system SHALL let the user choose which completed cycle (and optionally the completed cycle before it) the PDF covers, including cycles earlier than the latest. When no completed cycle exists, the system SHALL keep the four-week / twelve-week fallback.
+
+#### Scenario: Pick an older completed cycle
+- **WHEN** two or more completed cycles exist and the user selects an earlier one
+- **THEN** the PDF range is that completed cycle (and the previous completed cycle if the user included it)
+
+#### Scenario: Thin history still has a fallback
+- **WHEN** no completed cycle exists and the user continues from the range picker
+- **THEN** the PDF uses the four-week or twelve-week fallback
 
 #### Scenario: Not a new tab
 - **WHEN** the user views the bottom navigation
@@ -52,12 +67,20 @@ The PDF SHALL include: the date it was generated; the date range used; medicatio
 - **THEN** the PDF includes each of those, the generated date, and the disclaimer
 
 #### Scenario: Effect sentence when present
-- **WHEN** Cycle would show an Effect sentence
-- **THEN** that same sentence appears on the PDF
+- **WHEN** Cycle would show an Effect sentence that does not name a stored change outside the PDF range
+- **THEN** that sentence appears on the PDF
 
 #### Scenario: No Effect sentence
 - **WHEN** Cycle would not show an Effect sentence
 - **THEN** the PDF omits an Effect sentence
+
+#### Scenario: Effect names a change outside the range
+- **WHEN** Cycle’s Effect sentence names a stored dose or schedule change whose effective date is outside the PDF range
+- **THEN** the PDF omits that Effect sentence
+
+#### Scenario: In-range change is listed
+- **WHEN** the PDF includes an Effect sentence that names a stored change
+- **THEN** that change is listed under dose and schedule changes as context only, and the PDF does not say there were no changes in the range
 
 #### Scenario: Change is context only
 - **WHEN** a stored dose change falls in the range
@@ -87,4 +110,4 @@ Visit action labels on More and the PDF chrome (headings, range labels, table he
 
 #### Scenario: German PDF
 - **WHEN** the active language is German and the user generates the visit PDF
-- **THEN** headings and the disclaimer are in German and medication names remain as typed
+- **THEN** headings and the disclaimer are in German, medication names remain as typed, and a pump unit is shown as Hub

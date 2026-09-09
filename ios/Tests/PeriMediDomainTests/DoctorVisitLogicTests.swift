@@ -212,6 +212,76 @@ final class DoctorVisitLogicTests: XCTestCase {
         XCTAssertEqual(result.periods.map(\.start), ["2026-02-01"])
     }
 
+    func testOmitsEffectWhenNamedChangeIsOutsideRange() {
+        let scores = [
+            score(.hot_flash, date: "2026-03-06", severity: 2),
+            score(.hot_flash, date: "2026-02-02", severity: 4),
+        ]
+        let result = report(
+            periods: [
+                period("p0", start: "2026-01-01", end: "2026-01-05"),
+                period("p1", start: "2026-02-01", end: "2026-02-05"),
+                period("p2", start: "2026-03-01", end: "2026-03-05"),
+            ],
+            scores: scores,
+            changes: [change(effective: "2026-03-06")]
+        )
+        XCTAssertEqual(result.rangeKind, .completedCycles(2))
+        XCTAssertEqual(result.rangeEnd, "2026-02-28")
+        XCTAssertTrue(result.changes.isEmpty)
+        XCTAssertEqual(result.effect.kind, .hidden)
+    }
+
+    func testKeepsEffectWhenNamedChangeIsInRange() {
+        let scores = [
+            score(.hot_flash, date: "2026-03-06", severity: 2),
+            score(.hot_flash, date: "2026-02-02", severity: 4),
+        ]
+        let result = report(
+            periods: [
+                period("p1", start: "2026-02-01", end: "2026-02-05"),
+                period("p2", start: "2026-03-01"),
+            ],
+            scores: scores,
+            changes: [change(effective: "2026-02-10")]
+        )
+        XCTAssertEqual(result.rangeKind, .completedCycles(1))
+        XCTAssertEqual(result.changes.map(\.effectiveDate), ["2026-02-10"])
+        XCTAssertNotEqual(result.effect.kind, .hidden)
+        XCTAssertEqual(result.effect.context?.effectiveDate, "2026-02-10")
+    }
+
+    func testSelectedHistoricalCycleSetsRange() {
+        let cycles = DoctorVisitLogic.completedCycles(
+            today: today,
+            periods: [
+                period("p0", start: "2026-01-01"),
+                period("p1", start: "2026-02-01"),
+                period("p2", start: "2026-03-01"),
+            ],
+            settings: settings
+        )
+        XCTAssertEqual(cycles.map(\.start), ["2026-01-01", "2026-02-01"])
+        let result = DoctorVisitLogic.report(
+            today: today,
+            medications: [med()],
+            schedules: [sched()],
+            doseLogs: [],
+            periods: [
+                period("p0", start: "2026-01-01"),
+                period("p1", start: "2026-02-01"),
+                period("p2", start: "2026-03-01"),
+            ],
+            settings: settings,
+            scores: [],
+            changes: [],
+            selectedCycles: [cycles[0]]
+        )
+        XCTAssertEqual(result.rangeKind, .completedCycles(1))
+        XCTAssertEqual(result.rangeStart, "2026-01-01")
+        XCTAssertEqual(result.rangeEnd, "2026-01-31")
+    }
+
     func testDummyRangePdfContainsMedsPeriodsSymptomsChangeAndDisclaimer() {
         let logs = ["2026-02-02", "2026-02-03"].map { day in
             DoseLog(

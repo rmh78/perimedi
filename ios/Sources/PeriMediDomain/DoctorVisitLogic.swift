@@ -87,6 +87,20 @@ public enum DoctorVisitLogic {
     public static let fourWeekDays = 28
     public static let twelveWeekDays = 84
 
+    /// Completed cycles only (drops the open window that ends today).
+    public static func completedCycles(
+        today: String,
+        periods: [Period],
+        settings: CycleSettings
+    ) -> [LoggedCycle] {
+        guard settings.tracksPeriods else { return [] }
+        let windows = CycleLogic.loggedCycleWindows(
+            periods: periods,
+            today: DateKeys.toDateKey(today)
+        )
+        return Array(windows.dropLast())
+    }
+
     public static func report(
         today: String,
         medications: [Medication],
@@ -95,10 +109,28 @@ public enum DoctorVisitLogic {
         periods: [Period],
         settings: CycleSettings,
         scores: [SymptomScore],
-        changes: [MedicationChange]
+        changes: [MedicationChange],
+        selectedCycles: [LoggedCycle] = []
     ) -> DoctorVisitReport {
         let today = DateKeys.toDateKey(today)
-        let (from, to, kind) = range(today: today, periods: periods, settings: settings)
+        let from: String
+        let to: String
+        let kind: DoctorVisitRangeKind
+        if !selectedCycles.isEmpty {
+            let ordered = selectedCycles.sorted { $0.start < $1.start }
+            from = ordered[0].start
+            to = ordered[ordered.count - 1].end
+            kind = .completedCycles(ordered.count)
+        } else {
+            (from, to, kind) = range(today: today, periods: periods, settings: settings)
+        }
+        let rawEffect = EffectLogic.summarize(
+            today: today,
+            periods: periods,
+            settings: settings,
+            scores: scores,
+            changes: changes
+        )
         return DoctorVisitReport(
             generatedOn: today,
             rangeStart: from,
@@ -116,14 +148,18 @@ public enum DoctorVisitLogic {
             changes: changesInRange(changes, from: from, to: to),
             periods: periodRows(periods, from: from, to: to, settings: settings),
             symptoms: symptomRows(scores, from: from, to: to),
-            effect: EffectLogic.summarize(
-                today: today,
-                periods: periods,
-                settings: settings,
-                scores: scores,
-                changes: changes
-            )
+            effect: effectInRange(rawEffect, from: from, to: to)
         )
+    }
+
+    /// Drop the Cycle Effect sentence when it names a change outside this PDF range.
+    static func effectInRange(_ effect: EffectResult, from: String, to: String) -> EffectResult {
+        guard let ctx = effect.context else { return effect }
+        let day = DateKeys.toDateKey(ctx.effectiveDate)
+        if day < from || day > to {
+            return EffectResult(kind: .hidden)
+        }
+        return effect
     }
 
     static func range(

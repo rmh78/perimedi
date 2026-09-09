@@ -63,9 +63,7 @@ struct AppRobot {
         app.launchArguments = ["-\(locale)", "-clear", "-today=\(UITestDate.today)", "-uiTesting"] + extra
         app.launch()
         waitFor(id: "tab.cycle")
-        if extra.contains("-catalogVisitPdf") {
-            waitFor(id: "visit.pdf.preview")
-        } else if extra.contains("-tabTrends") {
+        if extra.contains("-tabTrends") {
             waitFor(id: "tab.trends")
             waitFor(id: "trends.screen")
         } else if extra.contains("-tabMonth") {

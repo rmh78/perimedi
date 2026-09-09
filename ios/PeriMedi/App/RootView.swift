@@ -8,7 +8,6 @@ struct RootView: View {
     @Environment(\.accessibilityLanguage) private var a11yLang
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var launchBeatVisible = LaunchBeat.shouldPlay
-    @State private var catalogVisitImage: UIImage?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -34,7 +33,8 @@ struct RootView: View {
         .background(Theme.pageBackground)
         .ignoresSafeArea(edges: [.top, .bottom])
         .overlay {
-            if app.medSheet != nil || app.showPeriod || app.showSymptom || app.showTrendsPicker {
+            if app.medSheet != nil || app.showPeriod || app.showSymptom || app.showTrendsPicker
+                || app.showVisitRange || app.visitPdfURL != nil {
                 DialogBackdrop(onClose: { app.closeDialog() }) {
                     if let state = app.medSheet {
                         MedicationSheet(isNew: state.isNew, medication: state.medication)
@@ -44,6 +44,10 @@ struct RootView: View {
                         SymptomSheet(dateKey: app.selectedDate)
                     } else if app.showTrendsPicker {
                         TrendsPickerSheet()
+                    } else if app.showVisitRange {
+                        DoctorVisitRangeSheet()
+                    } else if let url = app.visitPdfURL {
+                        DoctorVisitPreviewSheet(url: url)
                     }
                 }
             }
@@ -66,16 +70,8 @@ struct RootView: View {
                     .transition(.opacity)
             }
         }
-        .overlay {
-            if let catalogVisitImage {
-                DoctorVisitCatalogPreview(image: catalogVisitImage)
-            }
-        }
         .onAppear {
             applyLaunchFlags()
-            if ProcessInfo.processInfo.arguments.contains("-catalogVisitPdf") {
-                catalogVisitImage = DoctorVisitShare.previewImage(store: store, app: app)
-            }
             DoseReminderCenter.shared.attach(store: store, app: app)
             if ProcessInfo.processInfo.arguments.contains("-clear") {
                 DoseReminderCenter.shared.clearAll()

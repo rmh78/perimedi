@@ -7,7 +7,7 @@ Settings: language, reminders, doctor-visit PDF, backup, privacy policy link.
 - Language (en / de) — `more.lang.en` / `more.lang.de`
 - Master reminders toggle
 - Reminder sound picker + preview (`more.reminderSoundPreview`)
-- Doctor visit PDF (see [doctor-visit.md](doctor-visit.md))
+- Doctor visit PDF — View PDF opens a cycle picker, then an in-app preview (see [doctor-visit.md](doctor-visit.md))
 - Backup: sample, export, import, clear (see [backup.md](backup.md))
 - Denied-notifications settings row (`more.remindersSettings`)
 - Privacy Policy link (`more.privacyPolicy`) → https://rmh78.github.io/perimedi/app-store/privacy
@@ -31,7 +31,7 @@ Bottom bar → More.
 | Share visit PDF | `more.sharePdf` | See [doctor-visit.md](doctor-visit.md). |
 | Backup rows | `more.sample` / `more.export` / `more.import` / `more.clear` | See [backup.md](backup.md). |
 
-`FirstUseJourneyTests.testMoreRemindersControls` is the More path: launch, `tab.more`, wait for language pills and tap `more.lang.en`, wait/tap `more.reminders`, wait for `more.reminderSound`, tap `more.reminderSoundPreview`, wait for `more.privacyPolicy`, wait for `more.sharePdf` and backup row IDs, tap `more.sample` then `confirm.cancel`. Do not tap export, import, clear, German, the privacy link, or Share PDF.
+`FirstUseJourneyTests.testMoreRemindersControls` is the More path: launch, `tab.more`, wait for language pills and tap `more.lang.en`, wait/tap `more.reminders`, wait for `more.reminderSound`, tap `more.reminderSoundPreview`, wait for `more.privacyPolicy`, wait for `more.sharePdf`, tap it through range Continue to the preview, wait `visit.pdf.share`, close, wait for backup row IDs, tap `more.sample` then `confirm.cancel`. Do not tap export, import, clear, German, the privacy link, or the preview Share button.
 
 Language pills call `LocaleController`. Preference is `AppStorage` `perimedi.locale`. Default German if device preferred languages include German. Tests force English with `-en`.
 

@@ -94,7 +94,7 @@ The Month screen SHALL use these regions: month title with previous / Today / ne
 - **THEN** the pager, legend, seven-column grid, cycle-day badges, and period/symptom/taken marks are visible and the selected day is outlined
 
 ### Requirement: More layout
-The More screen SHALL present a Language block (English and German as selectable pills), a Reminders block with a master switch for dose reminders and a sound picker, a Doctor visit block with one action that generates a visit PDF and opens the share sheet, a Backup block whose rows (sample, export, import, clear) each have a trailing action, and a Privacy Policy control that opens the published privacy policy in the system browser.
+The More screen SHALL present a Language block (English and German as selectable pills), a Reminders block with a master switch for dose reminders and a sound picker, a Doctor visit block with one action that opens a cycle picker then an in-app visit PDF preview, a Backup block whose rows (sample, export, import, clear) each have a trailing action, and a Privacy Policy control that opens the published privacy policy in the system browser.
 
 #### Scenario: More sections
 - **WHEN** the user opens More

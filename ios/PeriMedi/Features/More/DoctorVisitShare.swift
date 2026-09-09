@@ -1,12 +1,13 @@
 import Foundation
-import PDFKit
-import SwiftUI
-import UIKit
 import PeriMediDomain
 
 @MainActor
 enum DoctorVisitShare {
-    static func file(store: Store, app: AppModel) throws -> URL {
+    static func file(
+        store: Store,
+        app: AppModel,
+        selectedCycles: [LoggedCycle] = []
+    ) throws -> URL {
         let report = DoctorVisitLogic.report(
             today: DateKeys.todayKey(),
             medications: store.medications,
@@ -15,7 +16,8 @@ enum DoctorVisitShare {
             periods: store.periods,
             settings: store.settings,
             scores: store.symptomScores,
-            changes: store.medicationChanges
+            changes: store.medicationChanges,
+            selectedCycles: selectedCycles
         )
         let page = makePage(report, app: app)
         let data = DoctorVisitPDF.data(page: page)
@@ -23,15 +25,6 @@ enum DoctorVisitShare {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("perimedi-visit.pdf")
         try data.write(to: url, options: .atomic)
         return url
-    }
-
-    static func previewImage(store: Store, app: AppModel) -> UIImage? {
-        guard let url = try? file(store: store, app: app),
-              let data = try? Data(contentsOf: url),
-              let doc = PDFDocument(data: data),
-              let page = doc.page(at: 0)
-        else { return nil }
-        return page.thumbnail(of: CGSize(width: 612, height: 792), for: .mediaBox)
     }
 
     static func makePage(_ report: DoctorVisitReport, app: AppModel) -> DoctorVisitPage {
@@ -48,7 +41,7 @@ enum DoctorVisitShare {
                     : report.medications.map { row in
                         app.t("visit.medLine", [
                             "name": row.name,
-                            "dose": row.doseLabel,
+                            "dose": displayUnit(row.doseLabel, language: app.locale.language),
                             "taken": String(row.taken),
                             "planned": String(row.planned),
                             "percent": String(row.percent),
@@ -66,8 +59,8 @@ enum DoctorVisitShare {
                         return app.t(key, [
                             "date": formatDate(change.effectiveDate, locale: locale),
                             "name": change.nameSnapshot,
-                            "previous": change.previousValue,
-                            "new": change.newValue,
+                            "previous": displayUnit(change.previousValue, language: app.locale.language),
+                            "new": displayUnit(change.newValue, language: app.locale.language),
                         ])
                     }
             )
@@ -132,6 +125,14 @@ enum DoctorVisitShare {
         return app.t(key, ["start": start, "end": end])
     }
 
+    static func displayUnit(_ value: String, language: AppLanguage) -> String {
+        guard language == .de else { return value }
+        var out = value
+        out = out.replacingOccurrences(of: "pumps", with: "Hub", options: .caseInsensitive)
+        out = out.replacingOccurrences(of: "pump", with: "Hub", options: .caseInsensitive)
+        return out
+    }
+
     private static func formatDate(_ key: String, locale: Locale) -> String {
         guard let date = DateKeys.parseDateKey(key) else { return key }
         let formatter = DateFormatter()
@@ -143,21 +144,4 @@ enum DoctorVisitShare {
 
 enum DoctorVisitShareError: Error {
     case empty
-}
-
-/// Catalog-only first page of the sample visit PDF (`-catalogVisitPdf`).
-struct DoctorVisitCatalogPreview: View {
-    var image: UIImage
-
-    var body: some View {
-        ZStack(alignment: .top) {
-            Color.white.ignoresSafeArea()
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFit()
-                .padding(.horizontal, 12)
-                .padding(.top, 8)
-        }
-        .accessibilityIdentifier(A11yID.visitPdfPreview)
-    }
 }
