@@ -607,7 +607,7 @@ enum L10n {
         "visit.disclaimer": "Dieses PDF ist keine Patientenakte und kein medizinischer Rat. Es ist eine persönliche Zusammenfassung aus PeriMedi.",
         "visit.share": "Teilen",
         "visit.range.sheet": "Welche Zyklen?",
-        "visit.range.hint": "Wähl einen abgeschlossenen Zyklus. Du kannst den davor einbeziehen.",
+        "visit.range.hint": "Wähle einen abgeschlossenen Zyklus. Du kannst den davor einbeziehen.",
         "visit.range.previous": "Vorherigen Zyklus einbeziehen",
         "visit.range.continue": "Weiter",
         "visit.range.completed": "Abgeschlossener Zyklus",

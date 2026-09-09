@@ -9,7 +9,7 @@ struct DoctorVisitPreviewSheet: View {
 
     var body: some View {
         DialogChrome(
-            title: app.t("visit.title"),
+            title: app.t("more.visitTitle"),
             identifier: A11yID.visitPdfPreview,
             onClose: { app.closeDialog() }
         ) {
