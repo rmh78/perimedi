@@ -12,6 +12,8 @@ final class AppModel: ObservableObject {
     @Published var showPeriod = false
     @Published var showSymptom = false
     @Published var showTrendsPicker = false
+    @Published var showVisitRange = false
+    @Published var visitPdfURL: URL?
     @Published var confirm: ConfirmPrompt?
     @Published var pendingReminder: PendingReminder?
     /// Bumped when Cycle should snap the plot to today (launch / return from background).
@@ -48,6 +50,8 @@ final class AppModel: ObservableObject {
         showPeriod = false
         showSymptom = false
         showTrendsPicker = false
+        showVisitRange = false
+        visitPdfURL = nil
         launchPeriodEditor = false
     }
 

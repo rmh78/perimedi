@@ -18,7 +18,23 @@ final class ScreenCatalogTests: PeriMediUITestCase {
             robot.waitFor(id: "month.day.\(UITestDate.today)")
         }
         try shot("more-sample-en", locale: "en", extra: ["-loadSample", "-tabMore"]) {
-            robot.waitFor(id: "more.lang.en")
+            robot.scrollTo("more.sharePdf")
+            robot.waitFor(id: "more.sharePdf")
+        }
+        try shot("visit-range-sample-en", locale: "en", extra: ["-loadSample", "-tabMore"]) {
+            robot.scrollTo("more.sharePdf")
+            robot.tap("more.sharePdf")
+            robot.waitFor(id: "visit.range")
+            robot.waitFor(id: "visit.range.cycle.2026-02-02")
+            robot.waitFor(id: "visit.range.previous")
+        }
+        try shot("visit-pdf-sample-en", locale: "en", extra: ["-loadSample", "-tabMore"]) {
+            robot.scrollTo("more.sharePdf")
+            robot.tap("more.sharePdf")
+            robot.waitFor(id: "visit.range.continue")
+            robot.tap("visit.range.continue")
+            robot.waitFor(id: "visit.pdf.preview")
+            robot.waitFor(id: "visit.pdf.share")
         }
         try trendsExtras(locale: "en")
         try shot("cycle-empty-de", locale: "de") {
@@ -37,7 +53,23 @@ final class ScreenCatalogTests: PeriMediUITestCase {
             robot.waitFor(id: "month.day.\(UITestDate.today)")
         }
         try shot("more-sample-de", locale: "de", extra: ["-loadSample", "-tabMore"]) {
-            robot.waitFor(id: "more.lang.en")
+            robot.scrollTo("more.sharePdf")
+            robot.waitFor(id: "more.sharePdf")
+        }
+        try shot("visit-range-sample-de", locale: "de", extra: ["-loadSample", "-tabMore"]) {
+            robot.scrollTo("more.sharePdf")
+            robot.tap("more.sharePdf")
+            robot.waitFor(id: "visit.range")
+            robot.waitFor(id: "visit.range.cycle.2026-02-02")
+            robot.waitFor(id: "visit.range.previous")
+        }
+        try shot("visit-pdf-sample-de", locale: "de", extra: ["-loadSample", "-tabMore"]) {
+            robot.scrollTo("more.sharePdf")
+            robot.tap("more.sharePdf")
+            robot.waitFor(id: "visit.range.continue")
+            robot.tap("visit.range.continue")
+            robot.waitFor(id: "visit.pdf.preview")
+            robot.waitFor(id: "visit.pdf.share")
         }
         try trendsExtras(locale: "de")
 

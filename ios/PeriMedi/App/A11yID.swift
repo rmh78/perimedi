@@ -71,6 +71,15 @@ enum A11yID {
     static let moreReminderSoundPreview = "more.reminderSoundPreview"
     static let moreRemindersSettings = "more.remindersSettings"
     static let morePrivacyPolicy = "more.privacyPolicy"
+    static let moreSharePdf = "more.sharePdf"
+    static let visitRange = "visit.range"
+    static let visitRangeContinue = "visit.range.continue"
+    static let visitRangePrevious = "visit.range.previous"
+    static let visitPdfPreview = "visit.pdf.preview"
+    static let visitPdfShare = "visit.pdf.share"
+    static func visitRangeCycle(_ start: String) -> String {
+        "visit.range.cycle.\(start)"
+    }
     static let moreSample = "more.sample"
     static let moreExport = "more.export"
     static let moreImport = "more.import"

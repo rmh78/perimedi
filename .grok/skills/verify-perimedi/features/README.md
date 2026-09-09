@@ -12,7 +12,8 @@ Index of user-facing surfaces. IDs are from `ios/PeriMedi/App/A11yID.swift` unle
 | Period sheet | [period-sheet.md](period-sheet.md) | Cycle `cycle.action.period` |
 | Symptom sheet | [symptom-sheet.md](symptom-sheet.md) | Cycle `cycle.action.symptom` |
 | Dose reminders | [reminders.md](reminders.md) | In-app banner, or More toggle |
-| Backup / sample | [backup.md](backup.md) | More, Backup section (no IDs yet) |
+| Doctor visit PDF | [doctor-visit.md](doctor-visit.md) | More, Doctor visit → View PDF |
+| Backup / sample | [backup.md](backup.md) | More, Backup section |
 
 Canonical ID source: `ios/PeriMedi/App/A11yID.swift`. Tests: `ios/PeriMediUITests/`. Main-screen PNGs: `ios/docs/screens/` (review Files changed; no PR comment galleries).
 

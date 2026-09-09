@@ -10,7 +10,7 @@ struct MoreView: View {
 
     @State private var status: String?
     @State private var error: String?
-    @State private var exportURL: URL?
+    @State private var shareURL: URL?
     @State private var showShare = false
     @State private var showImporter = false
     @AppStorage(DoseReminderCenter.masterKey) private var remindersOn = true
@@ -128,6 +128,25 @@ struct MoreView: View {
 
                 GlassCard {
                     VStack(alignment: .leading, spacing: 0) {
+                        sectionLabel(app.t("more.visit"))
+                            .padding(.horizontal, 14)
+                            .padding(.top, 14)
+                            .padding(.bottom, 8)
+                        backupRow(
+                            title: app.t("more.visitTitle"),
+                            body: app.t("more.visitBody"),
+                            label: app.t("more.visitLabel"),
+                            identifier: A11yID.moreSharePdf
+                        ) {
+                            app.showVisitRange = true
+                            error = nil
+                        }
+                    }
+                    .padding(.bottom, 8)
+                }
+
+                GlassCard {
+                    VStack(alignment: .leading, spacing: 0) {
                         sectionLabel(app.t("more.tabBackup"))
                             .padding(.horizontal, 14)
                             .padding(.top, 14)
@@ -161,7 +180,7 @@ struct MoreView: View {
                                 let data = try BackupCodec.encode(store.exportPayload())
                                 let url = FileManager.default.temporaryDirectory.appendingPathComponent("perimedi-backup.json")
                                 try data.write(to: url, options: .atomic)
-                                exportURL = url
+                                shareURL = url
                                 showShare = true
                                 status = app.t("more.exportDone")
                                 error = nil
@@ -224,7 +243,7 @@ struct MoreView: View {
             }
         }
         .sheet(isPresented: $showShare) {
-            if let exportURL { ShareSheet(items: [exportURL]) }
+            if let shareURL { ShareSheet(items: [shareURL]) }
         }
     }
 

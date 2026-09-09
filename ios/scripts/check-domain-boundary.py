@@ -20,6 +20,7 @@ MATH_FILES = (
     "EffectLogic.swift",
     "MedicationChangeLog.swift",
     "SymptomTrendLogic.swift",
+    "DoctorVisitLogic.swift",
 )
 
 NEEDLES = (
@@ -30,6 +31,7 @@ NEEDLES = (
     "MedicationChangeLog.events",
     "MedicationChangeLog.hasChanges",
     "SymptomTrendLogic.summarize",
+    "DoctorVisitLogic.report",
 )
 
 PUBLIC_STATIC_FUNC = re.compile(r"public\s+static\s+func\s+(\w+)\b")
@@ -153,7 +155,7 @@ def main() -> int:
     if failed:
         return 1
 
-    print("ok: domain owns schedule/cycle/effect/trends math; persistence is the only dose-log writer")
+    print("ok: domain owns schedule/cycle/effect/trends/visit math; persistence is the only dose-log writer")
     return 0
 
 

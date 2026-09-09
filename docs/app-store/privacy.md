@@ -1,6 +1,6 @@
 # Privacy Policy for PeriMedi
 
-Last updated: 2 September 2026
+Last updated: 9 September 2026
 
 This is a draft for App Store use. It describes how PeriMedi handles data. It is not legal advice.
 
@@ -34,6 +34,8 @@ Use More → Backup → Export if you want a copy you control.
 ## Export
 
 You can export a JSON file from More. You choose where that file goes (Files, Mail, and so on). Once you share it, that copy is outside the app.
+
+You can also share a visit-summary PDF from More. It is generated on your iPhone. You choose where that copy goes. It is not a medical record and not medical advice.
 
 ## Notifications
 
