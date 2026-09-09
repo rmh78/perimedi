@@ -8,7 +8,7 @@ This is a personal demo, not medical advice.
 
 ## Features
 
-- **Cycle / Trends / Month / More** via bottom navigation (Cycle is the home screen)
+- **Cycle / Month / Trends / More** via bottom navigation (Cycle is the home screen)
 - Medications with form, custom colors, default dose, and integrated schedule
 - Schedules: every day, specific weekdays, or cyclic apply/pause — not mixed
 - Mark doses taken / not taken

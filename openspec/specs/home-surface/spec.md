@@ -7,7 +7,7 @@ Provide a lean multi-screen shell with bottom navigation so the cycle chart, Tre
 ## Requirements
 
 ### Requirement: Bottom navigation shell
-The system SHALL present a bottom navigation band that switches among Cycle, Trends, Month, and More primary screens without requiring a modal as the only way to open those destinations.
+The system SHALL present a bottom navigation band that switches among Cycle, Month, Trends, and More primary screens without requiring a modal as the only way to open those destinations.
 
 #### Scenario: Open the app
 - **WHEN** the user opens the application
@@ -30,7 +30,7 @@ The system SHALL NOT present a separate Today primary screen in the bottom navig
 
 #### Scenario: Navigation destinations
 - **WHEN** the user views the bottom navigation band
-- **THEN** the destinations are Cycle, Trends, Month, and More only
+- **THEN** the destinations are Cycle, Month, Trends, and More only, in that order
 
 ### Requirement: Shared selected date across screens
 The system SHALL keep a shared selected calendar date so choosing a day on Cycle or Month remains the selected date when the user switches tabs.

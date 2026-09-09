@@ -20,6 +20,7 @@ final class ScreenCatalogTests: PeriMediUITestCase {
         try shot("more-sample-en", locale: "en", extra: ["-loadSample", "-tabMore"]) {
             robot.waitFor(id: "more.lang.en")
         }
+        try trendsExtras(locale: "en")
         try shot("cycle-empty-de", locale: "de") {
             robot.waitFor(id: "cycle.intro")
         }
@@ -38,6 +39,7 @@ final class ScreenCatalogTests: PeriMediUITestCase {
         try shot("more-sample-de", locale: "de", extra: ["-loadSample", "-tabMore"]) {
             robot.waitFor(id: "more.lang.en")
         }
+        try trendsExtras(locale: "de")
 
         let expected = ScreenCatalog.expectedNames
         XCTAssertFalse(expected.isEmpty, "ios/docs/screens/expected.txt")
@@ -47,6 +49,33 @@ final class ScreenCatalogTests: PeriMediUITestCase {
                 FileManager.default.fileExists(atPath: url.path),
                 "missing catalog \(name) — UI tests should have written it"
             )
+        }
+    }
+
+    private func trendsExtras(locale: String) throws {
+        try shot("trends-sheet-\(locale)", locale: locale, extra: ["-loadSample", "-tabTrends"]) {
+            robot.waitFor(id: "trends.change")
+            robot.tap("trends.change")
+            robot.waitFor(id: "sheet.trends")
+        }
+        try shot(
+            "trends-tap-\(locale)",
+            locale: locale,
+            extra: ["-fixture=trends", "-tabTrends", "-trendsTap"]
+        ) {
+            robot.waitFor(id: "trends.detail")
+        }
+        try shot("trends-tick-\(locale)", locale: locale, extra: ["-fixture=trends", "-tabTrends"]) {
+            robot.waitFor(id: "trends.tick.2026-02-01")
+            robot.tap("trends.tick.2026-02-01")
+            robot.waitFor(id: "trends.tickCopy")
+        }
+        try shot(
+            "trends-noscores-\(locale)",
+            locale: locale,
+            extra: ["-fixture=trends-noscores", "-tabTrends"]
+        ) {
+            robot.waitFor(id: "trends.empty")
         }
     }
 

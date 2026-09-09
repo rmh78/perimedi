@@ -1,6 +1,6 @@
 # Trends (Verlauf)
 
-Fourth bottom tab: Cycle · Trends · Month · More. Own screen under `Features/Trends/`, not a card on Cycle. One point per logged cycle: Y is days scored, dot size is mean intensity 1–4. German tab label **Verlauf**. Spec id `symptom-trends`. Chart first; catalog lives in a Change sheet (`Show on chart` / `Im Diagramm zeigen`).
+Third bottom tab: Cycle · Month · Trends · More. Own screen under `Features/Trends/`, not a card on Cycle. One point per logged cycle: Y is days scored, dot size is mean intensity 1–4. German tab label **Verlauf**. Spec id `symptom-trends`. Chart first; catalog lives in a Change sheet (`Show on chart` / `Im Diagramm zeigen`).
 
 ## How to get to it (user POV)
 
@@ -43,4 +43,4 @@ UI tests that need several cycles of scores launch with `-fixture=trends` (not `
 - If more cycles are shown than fit, pan the plot horizontally (`trends.plot`). It opens on the most recent cycles.
 - Domain math is `SymptomTrendLogic.summarize` / `CycleLogic.loggedCycleWindows`. Do not reimplement cycle bounds in the view.
 - Do not embed this chart in `CycleView`.
-- Screen catalog PNGs: `ios/docs/screens/`. Review Files changed, not PR comment galleries.
+- Screen catalog PNGs: `ios/docs/screens/` (`trends-sample`, `trends-sheet`, `trends-tap`, `trends-tick`, `trends-noscores`, empty). Review Files changed, not PR comment galleries. No chip-cloud layout shots.

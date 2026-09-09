@@ -29,7 +29,7 @@ Archived OpenSpec changes under `openspec/changes/archive/` may mention an old w
 
 ## Product rules
 
-- **Cycle / Trends / Month / More** via bottom nav. Cycle is the default home. Edit meds/schedules/symptoms via sheets, not extra full pages.
+- **Cycle / Month / Trends / More** via bottom nav. Cycle is the default home. Edit meds/schedules/symptoms via sheets, not extra full pages.
 - **Not medical advice** — sample data and UI are a personal demo, not clinical guidance.
 - Keep privacy local: never introduce a PeriMedi server or analytics without explicit user request. Apple iCloud (user’s Apple ID) is the allowed sync path.
 - Prefer clear, short UI copy (+ Med, Cycle settings, + Symptom, Taken / Not taken).

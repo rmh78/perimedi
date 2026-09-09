@@ -76,6 +76,6 @@ Do not commit `ios/DerivedData`, `ios/.build`, or secrets. The doctor uninstalls
 
 ## Product rails
 
-- Bottom nav is Cycle / Trends / Month / More. Cycle is home. Edit via sheets, not new full pages.
+- Bottom nav is Cycle / Month / Trends / More. Cycle is home. Edit via sheets, not new full pages.
 - No PeriMedi server. Privacy stays on-device (optional iCloud for the same Apple ID).
 - No menstrual phase labels (follicular/luteal). Period UI is label + background only.

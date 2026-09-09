@@ -6,8 +6,8 @@ struct PillTabBar: View {
     var body: some View {
         HStack(spacing: 4) {
             tab(.cycle, icon: "arrow.trianglehead.2.clockwise.rotate.90", key: "nav.cycle")
-            tab(.trends, icon: "chart.xyaxis.line", key: "nav.trends")
             tab(.month, icon: "calendar", key: "nav.month")
+            tab(.trends, icon: "chart.xyaxis.line", key: "nav.trends")
             tab(.more, icon: "ellipsis", key: "nav.more")
         }
         .padding(.horizontal, 6)

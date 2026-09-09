@@ -1,6 +1,6 @@
 # PeriMedi iOS
 
-Native SwiftUI app. Domain logic lives in the `PeriMediDomain` Swift package; the app target adds SwiftData + CloudKit and the Cycle / Trends / Month / More UI.
+Native SwiftUI app. Domain logic lives in the `PeriMediDomain` Swift package; the app target adds SwiftData + CloudKit and the Cycle / Month / Trends / More UI.
 
 ## Prerequisites
 

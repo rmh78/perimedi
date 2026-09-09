@@ -7,7 +7,7 @@ Give the user an in-app Trends chart (German: Verlauf) of symptom scores by cycl
 ## Requirements
 
 ### Requirement: Own Trends destination
-The system SHALL present Trends as a primary bottom-navigation destination, not as a card on Cycle. Bottom destinations SHALL be Cycle, Trends, Month, and More in that order. The Trends label SHALL be “Trends” in English and “Verlauf” in German.
+The system SHALL present Trends as a primary bottom-navigation destination, not as a card on Cycle. Bottom destinations SHALL be Cycle, Month, Trends, and More in that order. The Trends label SHALL be “Trends” in English and “Verlauf” in German.
 
 #### Scenario: Open Trends from the bottom bar
 - **WHEN** the user activates Trends in the bottom navigation
