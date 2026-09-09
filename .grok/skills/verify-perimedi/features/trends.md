@@ -32,7 +32,7 @@ UI tests that need several cycles of scores launch with `-fixture=trends` (not `
 - Y is days scored, never `hot_flash` episode `count`. Size is mean intensity, not the sum.
 - Missing scores for an id are a gap: no `trends.dot.{id}.{cycleStart}`, not `count:0`.
 - Default three are the ids with the most scored days in the visible span. Selecting a fourth replaces the lowest of those three. Max three selected.
-- Copy is EN/DE via L10n. Tab label is Trends / Verlauf. Group titles reuse `symptom.group.*`. No “you should…”, no HRT recommendation. No redundant on-screen “Trends” title that only repeats the tab.
+- Copy is EN/DE via L10n. Tab label is Trends / Verlauf. Group titles reuse `symptom.group.*`. German mood group is Stimmung; the mood chip is Niedrige Stimmung, not the same word. No “you should…”, no HRT recommendation. No redundant on-screen “Trends” title that only repeats the tab.
 - `-uiTesting` skips launch animation so the screen is tappable immediately.
 - Sample data has four scored cycles. Trends only plots cycles that have scores; empty period history is not enough.
 - If more cycles are shown than fit, pan the plot horizontally (`trends.plot`). It opens on the most recent cycles.

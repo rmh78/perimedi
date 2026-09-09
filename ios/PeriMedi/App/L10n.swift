@@ -501,7 +501,7 @@ enum L10n {
         "symptom.id.heart": "Herzstolpern",
         "symptom.id.sleep": "Schlaf",
         "symptom.id.joints": "Gelenke",
-        "symptom.id.mood": "Stimmung",
+        "symptom.id.mood": "Niedrige Stimmung",
         "symptom.id.irritability": "Reizbarkeit",
         "symptom.id.anxiety": "Angst",
         "symptom.id.exhaustion": "Erschöpfung",
