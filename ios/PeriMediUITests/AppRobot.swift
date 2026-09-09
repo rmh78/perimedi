@@ -56,6 +56,25 @@ struct AppRobot {
         }
     }
 
+    /// Screen catalog only. Allows `-loadSample` and `-de`. Not the journey proof.
+    func launchCatalog(locale: String, extra: [String] = []) {
+        XCTAssertTrue(locale == "en" || locale == "de", "catalog locale \(locale)")
+        XCTAssertFalse(extra.contains { $0.hasPrefix("-journeyStep") })
+        app.launchArguments = ["-\(locale)", "-clear", "-today=\(UITestDate.today)", "-uiTesting"] + extra
+        app.launch()
+        waitFor(id: "tab.cycle")
+        if extra.contains("-tabTrends") {
+            waitFor(id: "tab.trends")
+            waitFor(id: "trends.screen")
+        } else if extra.contains("-tabMonth") {
+            waitFor(id: "tab.month")
+        } else if extra.contains("-tabMore") {
+            waitFor(id: "tab.more")
+        } else {
+            waitFor(id: "cycle.action.med")
+        }
+    }
+
     func element(_ id: String) -> XCUIElement {
         app.descendants(matching: .any).matching(identifier: id).firstMatch
     }

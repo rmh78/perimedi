@@ -77,3 +77,14 @@ A failed instrumented step SHALL retain a screenshot (or equivalent visual attac
 #### Scenario: Visual drift does not fail the suite
 - **WHEN** type size, spacing, or system chrome differs from a previously captured PNG but the same controls and values are present
 - **THEN** the instrumented suite still passes
+
+### Requirement: Committed catalog of main screens
+The instrumented suite SHALL write a small committed catalog of Simulator pictures of the main destinations: Cycle empty, Cycle with data, Trends empty, Trends with data, Month, and More. English SHALL be included. German SHALL be included where the chrome changes. Verification SHALL fail if an expected catalog picture is missing. Verification SHALL NOT fail because pixels differ from a previous capture. Visual review SHALL use those committed pictures (the pull-request file diff), not a gallery of images pasted into pull-request comments.
+
+#### Scenario: Missing catalog picture fails
+- **WHEN** an expected main-screen catalog picture is not present
+- **THEN** verification fails
+
+#### Scenario: Pixel drift does not fail the catalog
+- **WHEN** a catalog picture differs in pixels from an earlier capture but the file is present
+- **THEN** verification still passes

@@ -55,6 +55,8 @@ if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
   python3 "$ROOT/ios/scripts/check-ui-coverage.py" --fail-uncovered
 fi
 
+# Screen-catalog missing-file check runs after UI tests (they write the PNGs).
+
 if [[ "$(uname -s)" != "Darwin" ]]; then
   fail "domain and UI tests need macOS with Xcode and an iPhone Simulator"
 fi
@@ -110,6 +112,10 @@ fi
 xcrun simctl shutdown "$UDID" 2>/dev/null || true
 xcrun simctl boot "$UDID"
 xcrun simctl bootstatus "$UDID" -b
+# Frozen chrome so catalog PNGs do not churn on the clock.
+xcrun simctl status_bar "$UDID" override --time "9:41" --batteryState charged --batteryLevel 100 \
+  --wifiMode active --wifiBars 3 --cellularMode active --cellularBars 4 --dataNetwork wifi \
+  || echo "verify: status_bar override skipped" >&2
 
 step "uninstall leftover PeriMedi"
 xcrun simctl uninstall "$UDID" "$BUNDLE" 2>/dev/null || true
@@ -135,6 +141,9 @@ if [[ "$status" -ne 0 ]]; then
   fi
   fail "xcodebuild test exited $status"
 fi
+
+step "screen catalog"
+python3 "$ROOT/ios/scripts/check-screen-catalog.py"
 
 step "uninstall after pass"
 xcrun simctl uninstall "$UDID" "$BUNDLE" 2>/dev/null || true

@@ -14,6 +14,6 @@ Index of user-facing surfaces. IDs are from `ios/PeriMedi/App/A11yID.swift` unle
 | Dose reminders | [reminders.md](reminders.md) | In-app banner, or More toggle |
 | Backup / sample | [backup.md](backup.md) | More, Backup section (no IDs yet) |
 
-Canonical ID source: `ios/PeriMedi/App/A11yID.swift`. Tests: `ios/PeriMediUITests/`.
+Canonical ID source: `ios/PeriMedi/App/A11yID.swift`. Tests: `ios/PeriMediUITests/`. Main-screen PNGs: `ios/docs/screens/` (review Files changed; no PR comment galleries).
 
 `python3 ios/scripts/check-ui-coverage.py` reports which of these surfaces UI tests never drive. Advisory today (does not fail CI). `tab.*` does not count as coverage. Backup is blocked until it has IDs.

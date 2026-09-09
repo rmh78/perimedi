@@ -43,6 +43,8 @@
 		E79FBA041C0F1558F7DE9745 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 899403094A6D8C99A71E12B9 /* LaunchScreen.storyboard */; };
 		834CC77C763103E8F47C99A4 /* AppRobot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08D40AD4E25A24C58A69F41E /* AppRobot.swift */; };
 		34F0D2545DEE97A3154A4D90 /* FirstUseJourneyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59821C676F8E7BF086EEB7C2 /* FirstUseJourneyTests.swift */; };
+		65BE1A8523834B5702F7EEF4 /* ScreenCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6577D057AE5306E1CD71B78C /* ScreenCatalog.swift */; };
+		556A9AD85C4E8C5D8733E802 /* ScreenCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D7ECE05280DF3A9B1D9FD1F /* ScreenCatalogTests.swift */; };
 		0B55123262C5821C2517E937 /* SymptomTrendsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D86058AC49F4359BDCB1837 /* SymptomTrendsTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -86,6 +88,8 @@
 		75902C37BB4D4EC5B0F09F3C /* PeriMediUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PeriMediUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		08D40AD4E25A24C58A69F41E /* AppRobot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRobot.swift; sourceTree = "<group>"; };
 		59821C676F8E7BF086EEB7C2 /* FirstUseJourneyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstUseJourneyTests.swift; sourceTree = "<group>"; };
+		6577D057AE5306E1CD71B78C /* ScreenCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenCatalog.swift; sourceTree = "<group>"; };
+		9D7ECE05280DF3A9B1D9FD1F /* ScreenCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenCatalogTests.swift; sourceTree = "<group>"; };
 		8D86058AC49F4359BDCB1837 /* SymptomTrendsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SymptomTrendsTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -190,6 +194,8 @@
 			children = (
 				08D40AD4E25A24C58A69F41E /* AppRobot.swift */,
 				59821C676F8E7BF086EEB7C2 /* FirstUseJourneyTests.swift */,
+				6577D057AE5306E1CD71B78C /* ScreenCatalog.swift */,
+				9D7ECE05280DF3A9B1D9FD1F /* ScreenCatalogTests.swift */,
 				8D86058AC49F4359BDCB1837 /* SymptomTrendsTests.swift */,
 			);
 			path = PeriMediUITests;
@@ -333,6 +339,8 @@
 			files = (
 				834CC77C763103E8F47C99A4 /* AppRobot.swift in Sources */,
 				34F0D2545DEE97A3154A4D90 /* FirstUseJourneyTests.swift in Sources */,
+				65BE1A8523834B5702F7EEF4 /* ScreenCatalog.swift in Sources */,
+				556A9AD85C4E8C5D8733E802 /* ScreenCatalogTests.swift in Sources */,
 				0B55123262C5821C2517E937 /* SymptomTrendsTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -69,9 +69,9 @@ xcodebuild test \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-Launch contract used by the suite: `-en -clear -today=2026-03-15 -uiTesting`. `-uiTesting` turns off UIView animations so XCTest is not blocked on springs. The reminder test also passes `-remindIn=4` so the next pending slot appears as a tappable in-app card (system banners are not asserted). Trends chart proof may pass `-fixture=trends` and `-tabTrends` (dummy multi-cycle scores; not sample data). Do not pass `-journeyStep` or `-loadSample` for these tests.
+Launch contract used by the suite: `-en -clear -today=2026-03-15 -uiTesting`. `-uiTesting` turns off UIView animations so XCTest is not blocked on springs. The reminder test also passes `-remindIn=4` so the next pending slot appears as a tappable in-app card (system banners are not asserted). Trends chart proof may pass `-fixture=trends` and `-tabTrends` (dummy multi-cycle scores; not sample data). Do not pass `-journeyStep` or `-loadSample` for these tests. The screen catalog test is the exception: it may pass `-loadSample` and `-de` to write `docs/screens/`.
 
-`JourneyScript` and `scripts/shot-journey.sh` only seed the store and take screenshots for visual review. They are not the interaction proof.
+Main-screen PNGs for UX review are `docs/screens/` (see [docs/screens.md](docs/screens.md)). `python3 ios/scripts/check-screen-catalog.py` fails only if an expected file is missing. Do not paste screenshot galleries on the PR. `JourneyScript` and `scripts/shot-journey.sh` remain optional extra capture, not the interaction proof.
 
 ## Persistence
 
