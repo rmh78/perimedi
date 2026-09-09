@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PillTabBar: View {
     @EnvironmentObject private var app: AppModel
+    @EnvironmentObject private var locale: LocaleController
 
     var body: some View {
         HStack(spacing: 4) {
@@ -15,7 +16,7 @@ struct PillTabBar: View {
         .padding(.bottom, 10)
         .background(Theme.cream.opacity(0.95))
         .overlay(alignment: .top) { Rectangle().fill(Theme.blush100).frame(height: 1) }
-        .accessibilityLabel(app.t("nav.aria"))
+        .accessibilityElement(children: .contain)
     }
 
     private func tab(_ tab: AppModel.Tab, icon: String, key: String) -> some View {
@@ -27,7 +28,7 @@ struct PillTabBar: View {
                 Image(systemName: icon)
                     .font(.system(size: 16, weight: .semibold))
                     .frame(height: 18)
-                Text(app.t(key))
+                Text(locale.t(key))
                     .font(.system(size: 11, weight: .semibold))
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
@@ -39,8 +40,10 @@ struct PillTabBar: View {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(active ? Theme.blush100 : Color.clear)
             )
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(locale.t(key))
         .accessibilityIdentifier(tabIdentifier(tab))
         .accessibilityAddTraits(active ? .isSelected : [])
     }

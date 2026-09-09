@@ -22,7 +22,7 @@ The system SHALL allow the user to switch the active language between English an
 
 #### Scenario: Switch to German
 - **WHEN** the user selects German
-- **THEN** the active language becomes German and visible product chrome updates without requiring the user to relaunch the app
+- **THEN** the active language becomes German and visible product chrome updates without requiring the user to relaunch the app, including the bottom tab labels Cycle · Month · Trends · More becoming Zyklus · Monat · Verlauf · Mehr
 
 #### Scenario: Switch to English
 - **WHEN** the user selects English

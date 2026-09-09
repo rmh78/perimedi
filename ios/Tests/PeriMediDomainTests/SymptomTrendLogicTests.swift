@@ -155,10 +155,10 @@ final class SymptomTrendLogicTests: XCTestCase {
 
     func testDoseChangeMarksVisibleCycle() {
         let chart = chart()
-        XCTAssertEqual(chart?.ticks.count, 1)
-        XCTAssertEqual(chart?.ticks.first?.cycleStart, TrendsFixture.cycleB)
+        XCTAssertEqual(chart?.ticks.count, 2)
+        XCTAssertEqual(chart?.ticks.map(\.cycleStart), [TrendsFixture.cycleB, TrendsFixture.cycleC])
+        XCTAssertEqual(chart?.ticks.map(\.newValue), [TrendsFixture.doseNewValue, TrendsFixture.doseNewValue2])
         XCTAssertEqual(chart?.ticks.first?.nameSnapshot, TrendsFixture.doseMedName)
-        XCTAssertEqual(chart?.ticks.first?.newValue, TrendsFixture.doseNewValue)
     }
 
     func testChangeOutsideVisibleSpanIsIgnored() {
@@ -179,6 +179,13 @@ final class SymptomTrendLogicTests: XCTestCase {
     func testMaxThreeSeries() {
         let chart = chart(selectedIds: ["hot_flash", "mood", "sleep", "joints"])
         XCTAssertLessThanOrEqual(chart?.series.count ?? 99, 3)
+    }
+
+    func testSampleHasAtLeastTwoDoseChanges() {
+        let sample = SampleData.payload(now: DateKeys.parseDateKey(today)!)
+        let doses = sample.medicationChanges.filter { $0.field == .dose }
+        XCTAssertGreaterThanOrEqual(doses.count, 2)
+        XCTAssertEqual(Set(doses.map(\.effectiveDate)).count, doses.count)
     }
 
     func testSampleHasAtLeastFourScoredCycles() {

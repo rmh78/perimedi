@@ -10,6 +10,9 @@ month-sample-en.png
 more-sample-en.png
 visit-range-sample-en.png
 visit-pdf-sample-en.png
+sheet-med-en.png
+sheet-period-en.png
+sheet-symptom-en.png
 cycle-empty-de.png
 cycle-sample-de.png
 trends-empty-de.png
@@ -22,3 +25,6 @@ month-sample-de.png
 more-sample-de.png
 visit-range-sample-de.png
 visit-pdf-sample-de.png
+sheet-med-de.png
+sheet-period-de.png
+sheet-symptom-de.png

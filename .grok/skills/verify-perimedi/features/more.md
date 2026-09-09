@@ -33,7 +33,9 @@ Bottom bar → More.
 
 `FirstUseJourneyTests.testMoreRemindersControls` is the More path: launch, `tab.more`, wait for language pills and tap `more.lang.en`, wait/tap `more.reminders`, wait for `more.reminderSound`, tap `more.reminderSoundPreview`, wait for `more.privacyPolicy`, wait for `more.sharePdf`, tap it through range Continue to the preview, wait `visit.pdf.share`, close, wait for backup row IDs, tap `more.sample` then `confirm.cancel`. Do not tap export, import, clear, German, the privacy link, or the preview Share button.
 
-Language pills call `LocaleController`. Preference is `AppStorage` `perimedi.locale`. Default German if device preferred languages include German. Tests force English with `-en`.
+Language pills call `LocaleController`. Preference is `AppStorage` `perimedi.locale`. Default German if device preferred languages include German. Tests force English with `-en`. Switching language updates the bottom tab labels immediately (`Zyklus` · `Monat` · `Verlauf` · `Mehr`). The whole More tab box is tappable, not only the ellipsis or the word More.
+
+Disclaimer copy is a personal companion, not a demo.
 
 If notification permission is denied, More shows `more.remindersDenied` copy and a settings button (`more.remindersSettings`). Fresh install with the master switch on (default) asks for permission once; UI tests launch `-uiTesting` and do not show the system dialog.
 

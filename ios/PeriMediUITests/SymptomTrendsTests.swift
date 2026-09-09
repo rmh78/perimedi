@@ -82,6 +82,8 @@ final class SymptomTrendsTests: PeriMediUITestCase {
             let tick = robot.value(of: "trends.tick.2026-02-01")
             XCTAssertTrue(tick.contains("Estrogel"), tick)
             XCTAssertTrue(tick.contains("2 pumps"), tick)
+            robot.waitFor(id: "trends.tick.2026-03-01")
+            XCTAssertTrue(robot.value(of: "trends.tick.2026-03-01").contains("2.5 pumps"))
             robot.tap("trends.tick.2026-02-01")
             robot.waitFor(id: "trends.tickCopy")
         }
@@ -98,7 +100,7 @@ final class SymptomTrendsTests: PeriMediUITestCase {
             XCTAssertEqual(robot.value(of: "trends.status"), "ids:hot_flash,mood,anxiety")
             XCTAssertEqual(robot.value(of: "trends.series.anxiety"), "on")
             XCTAssertEqual(robot.value(of: "trends.series.sleep"), "off")
-            robot.tap("trends.done")
+            robot.tap("sheet.close")
             robot.waitGone(id: "sheet.trends")
             robot.waitFor(id: "trends.series.anxiety")
             XCTAssertFalse(robot.exists("trends.series.sleep"))

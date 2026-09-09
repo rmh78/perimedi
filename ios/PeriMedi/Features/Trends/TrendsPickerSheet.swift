@@ -32,43 +32,26 @@ struct TrendsPickerSheet: View {
         return DialogChrome(
             title: app.t("trends.sheet"),
             identifier: A11yID.sheetTrends,
-            onClose: close,
-            content: {
-                VStack(alignment: .leading, spacing: 10) {
-                    ForEach(SymptomGroup.allCases, id: \.self) { group in
-                        Text(app.t("symptom.group.\(group.rawValue)"))
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(Theme.inkMuted)
-                            .textCase(.uppercase)
-                            .tracking(0.6)
-                            .frame(maxWidth: .infinity)
-                            .multilineTextAlignment(.center)
-                            .accessibilityIdentifier(A11yID.trendsGroup(group.rawValue))
-                        WrappingHStack(spacing: 6, lineSpacing: 6) {
-                            ForEach(group.ids, id: \.self) { id in
-                                chip(id, selectedIds: selectedIds, ranked: ranked)
-                            }
+            onClose: close
+        ) {
+            VStack(alignment: .leading, spacing: 10) {
+                ForEach(SymptomGroup.allCases, id: \.self) { group in
+                    Text(app.t("symptom.group.\(group.rawValue)"))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Theme.inkMuted)
+                        .textCase(.uppercase)
+                        .tracking(0.6)
+                        .frame(maxWidth: .infinity)
+                        .multilineTextAlignment(.center)
+                        .accessibilityIdentifier(A11yID.trendsGroup(group.rawValue))
+                    WrappingHStack(spacing: 6, lineSpacing: 6) {
+                        ForEach(group.ids, id: \.self) { id in
+                            chip(id, selectedIds: selectedIds, ranked: ranked)
                         }
                     }
                 }
-            },
-            footer: {
-                VStack(spacing: 0) {
-                    Rectangle().fill(Theme.blush100).frame(height: 1)
-                    HStack {
-                        Spacer()
-                        PillButton(
-                            title: app.t("common.done"),
-                            kind: .primary,
-                            identifier: A11yID.trendsDone,
-                            action: close
-                        )
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                }
             }
-        )
+        }
     }
 
     private func close() {

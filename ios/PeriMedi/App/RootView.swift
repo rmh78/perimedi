@@ -5,6 +5,7 @@ import PeriMediDomain
 struct RootView: View {
     @EnvironmentObject private var app: AppModel
     @EnvironmentObject private var store: Store
+    @EnvironmentObject private var locale: LocaleController
     @Environment(\.accessibilityLanguage) private var a11yLang
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var launchBeatVisible = LaunchBeat.shouldPlay
@@ -62,8 +63,8 @@ struct RootView: View {
                 ReminderCard(reminder: reminder)
             }
         }
-        .environment(\.locale, app.locale.language.locale)
-        .id(app.locale.language)
+        .environment(\.locale, locale.language.locale)
+        .id(locale.language)
         .overlay {
             if launchBeatVisible {
                 LaunchBrandOverlay()

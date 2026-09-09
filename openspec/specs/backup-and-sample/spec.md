@@ -33,7 +33,7 @@ New exports SHALL include the dose/schedule change-event list. Import SHALL rest
 - **THEN** the JSON includes both change events
 
 ### Requirement: Sample data
-The system SHALL provide a loadable sample dataset for a typical woman about 40 (35–45) in perimenopause: transdermal estradiol, cyclic micronized progesterone, local vaginal estradiol, common supplements, non-overlapping irregular periods (mixed short and long gaps, mixed flow), recent dose logs, and structured symptom scores. The sample SHALL include at least four logged cycles that each have symptom scores so Trends can show a multi-cycle picture. Sample dates SHALL be anchored on the app’s current today so Cycle shows the sample immediately. Loading sample SHALL move the selected day to today.
+The system SHALL provide a loadable sample dataset for a typical woman about 40 (35–45) in perimenopause: transdermal estradiol, cyclic micronized progesterone, local vaginal estradiol, common supplements, non-overlapping irregular periods (mixed short and long gaps, mixed flow), recent dose logs, and structured symptom scores. The sample SHALL include at least four logged cycles that each have symptom scores so Trends can show a multi-cycle picture. The sample SHALL include at least two stored dose changes. Sample dates SHALL be anchored on the app’s current today so Cycle shows the sample immediately. Loading sample SHALL move the selected day to today.
 
 #### Scenario: Load sample
 - **WHEN** the user confirms loading sample data
@@ -42,6 +42,10 @@ The system SHALL provide a loadable sample dataset for a typical woman about 40 
 #### Scenario: Sample has four scored cycles
 - **WHEN** the user loads sample data
 - **THEN** at least four logged cycles contain symptom scores so Trends can plot more than two points
+
+#### Scenario: Sample has two dose changes
+- **WHEN** the user loads sample data
+- **THEN** at least two stored dose-change events are present
 
 #### Scenario: Sample and clear use a confirm card
 - **WHEN** the user activates load sample or clear data

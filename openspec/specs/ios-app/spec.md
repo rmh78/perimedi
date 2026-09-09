@@ -24,6 +24,13 @@ The system SHALL present Cycle, Month, and More as the only primary destinations
 - **WHEN** the user activates Month or More
 - **THEN** that primary screen is shown without requiring a modal as the only way to reach it
 
+### Requirement: Bottom tab uses the full box
+Each bottom-navigation destination SHALL be activatable by tapping anywhere in its tab box, not only the icon or the label text.
+
+#### Scenario: More tab box
+- **WHEN** the user taps the empty area of the More tab
+- **THEN** More opens
+
 ### Requirement: Feature parity for tracking
 The system SHALL allow the user to add and edit medications and schedules, log doses as taken or not taken, log periods and cycle settings, add symptoms and notes, and load sample data, using sheets rather than extra full-screen pages for those edits.
 
@@ -106,6 +113,10 @@ The medication, period-settings, and symptom editors SHALL use an inset rounded 
 #### Scenario: Add medication dialog
 - **WHEN** the user opens add medication
 - **THEN** the panel shows a close control, name, form, dose, a Color-labeled single-row palette, start/end dates, compact take times, then a Type dropdown sized to its selected label, and it does not show a second medication heading under the title
+
+#### Scenario: Dose-from date next to dose
+- **WHEN** the user types a dose on add medication
+- **THEN** a dose-from date sits next to the dose field so it is clear when that dose starts
 
 #### Scenario: Shared dates stay above the schedule dropdown
 - **WHEN** the user switches among every day, specific days, and cyclic

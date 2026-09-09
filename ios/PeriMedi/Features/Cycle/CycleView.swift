@@ -235,7 +235,7 @@ struct CycleView: View {
                                 columnCount: snap.days.count,
                                 contentRevision: snap.plotRevision,
                                 focusColumn: snap.selectedIndex,
-                                focusToken: "\(snap.windowStart)#\(app.todayFocusNonce)",
+                                focusToken: "\(snap.windowStart)#\(app.todayFocusNonce)#\(app.selectedTab)",
                                 onOffset: { plotScroll.state.offsetX = $0 },
                                 scrollState: plotScroll.state,
                                 onSelectDayIndex: { index in

@@ -67,6 +67,12 @@ struct MedicationSheet: View {
                                 .foregroundStyle(Theme.ink)
                                 .accessibilityIdentifier(A11yID.medDose)
                         }
+                        if showsSinceDate {
+                            FieldLabel(text: app.t("med.since"))
+                            SoftField {
+                                DateKeyPicker(key: $effectiveDate, identifier: A11yID.medSince)
+                            }
+                        }
                     }
                 }
 
@@ -130,15 +136,6 @@ struct MedicationSheet: View {
                 }
                 if mode == .cyclic {
                     cyclicBlock
-                }
-
-                if showsSinceDate {
-                    VStack(alignment: .leading, spacing: 6) {
-                        FieldLabel(text: app.t("med.since"))
-                        SoftField {
-                            DateKeyPicker(key: $effectiveDate, identifier: A11yID.medSince)
-                        }
-                    }
                 }
 
                 if let error {
