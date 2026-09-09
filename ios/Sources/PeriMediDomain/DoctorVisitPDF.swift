@@ -43,9 +43,9 @@ public enum DoctorVisitPDF {
         let inset: CGFloat = 54
         while offset < total {
             ctx.beginPDFPage(nil)
-            ctx.saveGState()
-            ctx.translateBy(x: 0, y: pageSize.height)
-            ctx.scaleBy(x: 1, y: -1)
+            // PDF space is Y-up. Do not flip the CTM — that inverts glyphs and
+            // puts the title at the bottom of Quick Look / Files preview.
+            ctx.textMatrix = .identity
             let frameRect = CGRect(origin: .zero, size: pageSize).insetBy(dx: inset, dy: inset)
             let path = CGPath(rect: frameRect, transform: nil)
             let frame = CTFramesetterCreateFrame(
@@ -56,7 +56,6 @@ public enum DoctorVisitPDF {
             )
             CTFrameDraw(frame, ctx)
             let visible = CTFrameGetVisibleStringRange(frame)
-            ctx.restoreGState()
             ctx.endPDFPage()
             if visible.length == 0 { break }
             offset = visible.location + visible.length

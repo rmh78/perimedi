@@ -1,4 +1,7 @@
 import Foundation
+import PDFKit
+import SwiftUI
+import UIKit
 import PeriMediDomain
 
 @MainActor
@@ -20,6 +23,15 @@ enum DoctorVisitShare {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("perimedi-visit.pdf")
         try data.write(to: url, options: .atomic)
         return url
+    }
+
+    static func previewImage(store: Store, app: AppModel) -> UIImage? {
+        guard let url = try? file(store: store, app: app),
+              let data = try? Data(contentsOf: url),
+              let doc = PDFDocument(data: data),
+              let page = doc.page(at: 0)
+        else { return nil }
+        return page.thumbnail(of: CGSize(width: 612, height: 792), for: .mediaBox)
     }
 
     static func makePage(_ report: DoctorVisitReport, app: AppModel) -> DoctorVisitPage {
@@ -131,4 +143,21 @@ enum DoctorVisitShare {
 
 enum DoctorVisitShareError: Error {
     case empty
+}
+
+/// Catalog-only first page of the sample visit PDF (`-catalogVisitPdf`).
+struct DoctorVisitCatalogPreview: View {
+    var image: UIImage
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.white.ignoresSafeArea()
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
+                .padding(.horizontal, 12)
+                .padding(.top, 8)
+        }
+        .accessibilityIdentifier(A11yID.visitPdfPreview)
+    }
 }

@@ -290,5 +290,15 @@ final class DoctorVisitLogicTests: XCTestCase {
         XCTAssertTrue(text.contains("not medical advice"))
         XCTAssertFalse(text.contains("MRS"))
         XCTAssertFalse(text.lowercased().contains("follicular"))
+
+        let pdfPage = doc.page(at: 0)!
+        let box = pdfPage.bounds(for: .mediaBox)
+        let titleBox = pdfPage.characterBounds(at: 0)
+        XCTAssertFalse(titleBox.isNull || titleBox.isEmpty, "title glyph bounds")
+        XCTAssertGreaterThan(
+            titleBox.midY,
+            box.midY,
+            "title must sit in the upper half (PDF Y-up); was flipped in Quick Look"
+        )
     }
 }

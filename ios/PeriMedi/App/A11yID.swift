@@ -72,6 +72,7 @@ enum A11yID {
     static let moreRemindersSettings = "more.remindersSettings"
     static let morePrivacyPolicy = "more.privacyPolicy"
     static let moreSharePdf = "more.sharePdf"
+    static let visitPdfPreview = "visit.pdf.preview"
     static let moreSample = "more.sample"
     static let moreExport = "more.export"
     static let moreImport = "more.import"

@@ -21,6 +21,9 @@ final class ScreenCatalogTests: PeriMediUITestCase {
             robot.scrollTo("more.sharePdf")
             robot.waitFor(id: "more.sharePdf")
         }
+        try shot("visit-pdf-sample-en", locale: "en", extra: ["-loadSample", "-catalogVisitPdf"]) {
+            robot.waitFor(id: "visit.pdf.preview")
+        }
         try trendsExtras(locale: "en")
         try shot("cycle-empty-de", locale: "de") {
             robot.waitFor(id: "cycle.intro")
@@ -40,6 +43,9 @@ final class ScreenCatalogTests: PeriMediUITestCase {
         try shot("more-sample-de", locale: "de", extra: ["-loadSample", "-tabMore"]) {
             robot.scrollTo("more.sharePdf")
             robot.waitFor(id: "more.sharePdf")
+        }
+        try shot("visit-pdf-sample-de", locale: "de", extra: ["-loadSample", "-catalogVisitPdf"]) {
+            robot.waitFor(id: "visit.pdf.preview")
         }
         try trendsExtras(locale: "de")
 

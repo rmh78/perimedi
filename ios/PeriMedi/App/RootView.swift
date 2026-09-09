@@ -8,6 +8,7 @@ struct RootView: View {
     @Environment(\.accessibilityLanguage) private var a11yLang
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var launchBeatVisible = LaunchBeat.shouldPlay
+    @State private var catalogVisitImage: UIImage?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -65,8 +66,16 @@ struct RootView: View {
                     .transition(.opacity)
             }
         }
+        .overlay {
+            if let catalogVisitImage {
+                DoctorVisitCatalogPreview(image: catalogVisitImage)
+            }
+        }
         .onAppear {
             applyLaunchFlags()
+            if ProcessInfo.processInfo.arguments.contains("-catalogVisitPdf") {
+                catalogVisitImage = DoctorVisitShare.previewImage(store: store, app: app)
+            }
             DoseReminderCenter.shared.attach(store: store, app: app)
             if ProcessInfo.processInfo.arguments.contains("-clear") {
                 DoseReminderCenter.shared.clearAll()

@@ -8,6 +8,7 @@ trends-tick-en.png
 trends-noscores-en.png
 month-sample-en.png
 more-sample-en.png
+visit-pdf-sample-en.png
 cycle-empty-de.png
 cycle-sample-de.png
 trends-empty-de.png
@@ -18,3 +19,4 @@ trends-tick-de.png
 trends-noscores-de.png
 month-sample-de.png
 more-sample-de.png
+visit-pdf-sample-de.png

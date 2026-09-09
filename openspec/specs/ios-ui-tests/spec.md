@@ -99,3 +99,7 @@ The More visit PDF action SHALL expose a language-independent accessibility iden
 #### Scenario: More catalog includes the visit entry
 - **WHEN** the committed More catalog pictures are written
 - **THEN** the visit PDF entry is on those pictures
+
+#### Scenario: Catalog includes a sample visit PDF page
+- **WHEN** the committed screen catalog is written
+- **THEN** it includes a picture of a visit PDF generated from sample data, in English and German
