@@ -48,7 +48,7 @@ The system SHALL allow the user to choose a color from a single-row palette of m
 - **THEN** a form-based default color is used for display
 
 ### Requirement: Effective date when dose or schedule changes
-When the user is saving a medication whose default dose or primary schedule actually changed, the system SHALL allow choosing an effective date for that change. If the user does not choose another date, the effective date SHALL be the save day.
+When the user is saving a medication whose default dose or primary schedule actually changed, the system SHALL allow choosing an effective date for that change. That control SHALL sit next to the dose field and SHALL say when this dose starts, not a vague “since” after the schedule. If the user does not choose another date, the effective date SHALL be the save day. The control SHALL remain available whenever a dose or schedule change would be recorded, including a new medication with a dose.
 
 #### Scenario: Default effective date
 - **WHEN** the user changes the default dose and saves without picking another date
@@ -57,3 +57,7 @@ When the user is saving a medication whose default dose or primary schedule actu
 #### Scenario: Chosen effective date
 - **WHEN** the user changes the default dose, picks an earlier date as since-when, and saves
 - **THEN** the stored change is effective on that chosen date
+
+#### Scenario: Dose-from sits next to the dose
+- **WHEN** the user types a dose on add medication
+- **THEN** a dose-from date appears next to the dose field, not after the schedule block

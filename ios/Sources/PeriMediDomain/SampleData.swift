@@ -200,6 +200,16 @@ public enum SampleData {
                 medicationId: estradiol.id,
                 nameSnapshot: estradiol.name,
                 field: .dose,
+                previousValue: "0.25 pump",
+                newValue: "0.5 pump",
+                effectiveDate: key(55),
+                loggedAt: isoNow
+            ),
+            MedicationChange(
+                id: createId(),
+                medicationId: estradiol.id,
+                nameSnapshot: estradiol.name,
+                field: .dose,
                 previousValue: "0.5 pump",
                 newValue: estradiol.doseLabel,
                 effectiveDate: key(10),

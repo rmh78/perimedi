@@ -109,12 +109,32 @@ final class FirstUseJourneyTests: PeriMediUITestCase {
         XCTAssertTrue(robot.value(of: "month.day.\(UITestDate.today)").contains("selected"))
     }
 
+    func testMonthSelectionScrollsOnCycle() {
+        robot.launch()
+        robot.addPeriod()
+        robot.tap("tab.month")
+        robot.waitFor(id: "month.day.\(UITestDate.periodStart)")
+        robot.tap("month.day.\(UITestDate.periodStart)")
+        XCTAssertTrue(robot.value(of: "month.day.\(UITestDate.periodStart)").contains("selected"))
+        robot.tap("tab.cycle")
+        let strip = "cycle.strip.day.\(UITestDate.periodStart)"
+        robot.waitFor(id: strip)
+        XCTAssertTrue(robot.value(of: strip).contains("period"))
+        XCTAssertTrue(robot.element(strip).isHittable, "selected day should be in the visible plot")
+    }
+
     func testMoreRemindersControls() {
         robot.launch()
         robot.tap("tab.more")
         robot.waitFor(id: "more.lang.en")
         robot.waitFor(id: "more.lang.de")
+        robot.tap("more.lang.de")
+        XCTAssertEqual(robot.element("tab.cycle").label, "Zyklus")
+        XCTAssertEqual(robot.element("tab.month").label, "Monat")
+        XCTAssertEqual(robot.element("tab.trends").label, "Verlauf")
+        XCTAssertEqual(robot.element("tab.more").label, "Mehr")
         robot.tap("more.lang.en")
+        XCTAssertEqual(robot.element("tab.more").label, "More")
         robot.waitFor(id: "more.reminders")
         robot.tap("more.reminders")
         robot.waitFor(id: "more.reminderSound")

@@ -8,8 +8,10 @@ public enum TrendsFixture {
     public static let cycleC = "2026-03-01"
     public static let emptyStart = "2025-12-07"
     public static let doseChangeDate = "2026-02-10"
+    public static let doseChangeDate2 = "2026-03-08"
     public static let doseMedName = "Estrogel"
     public static let doseNewValue = "2 pumps"
+    public static let doseNewValue2 = "2.5 pumps"
 
     public static func payload() -> ExportPayload {
         let periods = [
@@ -47,6 +49,16 @@ public enum TrendsFixture {
             effectiveDate: doseChangeDate,
             loggedAt: "t"
         )
+        let change2 = MedicationChange(
+            id: "chg-dose-2",
+            medicationId: "m-estrogel",
+            nameSnapshot: doseMedName,
+            field: .dose,
+            previousValue: doseNewValue,
+            newValue: doseNewValue2,
+            effectiveDate: doseChangeDate2,
+            loggedAt: "t"
+        )
 
         return ExportPayload(
             version: 1,
@@ -58,7 +70,7 @@ public enum TrendsFixture {
             cycleSettings: CycleSettings(averageCycleLength: 28, averagePeriodLength: 5),
             periods: periods,
             symptomScores: scores,
-            medicationChanges: [change]
+            medicationChanges: [change, change2]
         )
     }
 

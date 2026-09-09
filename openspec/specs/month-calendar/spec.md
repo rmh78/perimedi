@@ -79,4 +79,4 @@ The system SHALL NOT present a dedicated control on Month whose only purpose is 
 
 #### Scenario: Open Cycle from Month via nav
 - **WHEN** the user selects a day on Month and then activates Cycle in the bottom navigation
-- **THEN** the Cycle screen is shown with that date still selected
+- **THEN** the Cycle screen is shown with that date still selected and that day scrolled into the visible plot area

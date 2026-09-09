@@ -8,7 +8,7 @@ Operator: Harald Reinmüller. Contact: [GitHub issues](https://github.com/rmh78/
 
 ## What PeriMedi is
 
-PeriMedi is an iPhone app for logging HRT doses, periods, and symptoms during perimenopause. It is not a medical device and does not provide medical advice.
+PeriMedi is a personal iPhone companion for logging HRT doses, periods, and symptoms during perimenopause. It is not a demo, not a medical device, and does not provide medical advice.
 
 ## No PeriMedi server
 

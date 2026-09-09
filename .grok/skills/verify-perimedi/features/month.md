@@ -30,3 +30,4 @@ Bottom bar → Month.
 - Month is a projection of the store, not a second source of truth. If Cycle says taken and Month does not, the bug is in the month model or the day-value encoding, not a separate database.
 - `cycle.pager.today` is shared. Do not assume it is Cycle-only.
 - After checking Month, first-use returns via `tab.cycle` and re-asserts lane status so the tab switch did not drop state.
+- Selecting a day on Month then opening Cycle keeps that day selected and scrolls it into the visible plot (`testMonthSelectionScrollsOnCycle`).

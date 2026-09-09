@@ -2,16 +2,16 @@
 
 ## Purpose
 
-Capture cross-cutting product constraints: demo/not-medical-advice stance, modal reliability, build quality, and UX clarity.
+Capture cross-cutting product constraints: personal-companion/not-medical-advice stance, modal reliability, build quality, and UX clarity.
 
 ## Requirements
 
 ### Requirement: Not medical advice
-The system SHALL present the product as a personal demo companion and SHALL NOT present sample data or UI as clinical medical advice.
+The system SHALL present the product as a personal companion and SHALL NOT present sample data or UI as clinical medical advice. Product chrome SHALL NOT call the app a demo.
 
-#### Scenario: Demo stance
+#### Scenario: Companion stance
 - **WHEN** the user uses sample data or standard UI copy
-- **THEN** the product does not claim to provide medical advice
+- **THEN** the product does not claim to provide medical advice and does not describe itself as a demo
 
 ### Requirement: Modal presentation
 The system SHALL render modal sheets above page content so they are not clipped by overflow containers and remain closable (including Escape and backdrop where provided).
@@ -48,9 +48,9 @@ The system SHALL provide clear, compact product chrome in each supported languag
 - **WHEN** the active language is German
 - **THEN** primary actions use short German labels equivalent in role to the English actions (for example add medication, cycle settings, add symptom)
 
-#### Scenario: Demo stance in active language
-- **WHEN** the user views product messaging about the demo or medical advice stance
-- **THEN** that messaging is shown in the active language and does not claim clinical medical advice
+#### Scenario: Companion stance in active language
+- **WHEN** the user views product messaging about the companion or medical advice stance
+- **THEN** that messaging is shown in the active language, does not call the app a demo, and does not claim clinical medical advice
 
 ### Requirement: Visit PDF is not a medical record
 The visit PDF SHALL state that it is not a medical record and not medical advice. The system SHALL NOT present the PDF as clinical documentation or treatment guidance.

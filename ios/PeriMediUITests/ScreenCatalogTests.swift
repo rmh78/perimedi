@@ -36,6 +36,7 @@ final class ScreenCatalogTests: PeriMediUITestCase {
             robot.waitFor(id: "visit.pdf.preview")
             robot.waitFor(id: "visit.pdf.share")
         }
+        try dialogShots(locale: "en")
         try trendsExtras(locale: "en")
         try shot("cycle-empty-de", locale: "de") {
             robot.waitFor(id: "cycle.intro")
@@ -71,6 +72,7 @@ final class ScreenCatalogTests: PeriMediUITestCase {
             robot.waitFor(id: "visit.pdf.preview")
             robot.waitFor(id: "visit.pdf.share")
         }
+        try dialogShots(locale: "de")
         try trendsExtras(locale: "de")
 
         let expected = ScreenCatalog.expectedNames
@@ -81,6 +83,20 @@ final class ScreenCatalogTests: PeriMediUITestCase {
                 FileManager.default.fileExists(atPath: url.path),
                 "missing catalog \(name) — UI tests should have written it"
             )
+        }
+    }
+
+    private func dialogShots(locale: String) throws {
+        try shot("sheet-med-\(locale)", locale: locale, extra: ["-sheetMed"]) {
+            robot.waitFor(id: "sheet.med")
+            robot.clearAndType("med.dose", "1 mg")
+            robot.waitFor(id: "med.since")
+        }
+        try shot("sheet-period-\(locale)", locale: locale, extra: ["-sheetPeriod"]) {
+            robot.waitFor(id: "sheet.period")
+        }
+        try shot("sheet-symptom-\(locale)", locale: locale, extra: ["-sheetSymptom"]) {
+            robot.waitFor(id: "sheet.symptom")
         }
     }
 

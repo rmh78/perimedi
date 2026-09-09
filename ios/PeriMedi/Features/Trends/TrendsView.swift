@@ -62,12 +62,18 @@ struct TrendsView: View {
     }
 
     private func emptyCopy(_ value: String, key: String) -> some View {
-        Text(app.t(key))
-            .font(.caption)
-            .foregroundStyle(Theme.inkSoft)
-            .fixedSize(horizontal: false, vertical: true)
-            .accessibilityIdentifier(A11yID.trendsEmpty)
-            .accessibilityValue(value)
+        VStack(alignment: .leading, spacing: 6) {
+            Text(app.t("\(key)Title"))
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.ink)
+            Text(app.t(key))
+                .font(.caption)
+                .foregroundStyle(Theme.inkSoft)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier(A11yID.trendsEmpty)
+                .accessibilityValue(value)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func chartBody(_ chart: SymptomTrendChart) -> some View {
@@ -90,13 +96,16 @@ struct TrendsView: View {
             if let selectedTick {
                 tickCopy(selectedTick)
             }
-            Button(app.t("trends.change")) {
-                app.showTrendsPicker = true
+            HStack {
+                Spacer(minLength: 0)
+                PillButton(
+                    title: app.t("trends.change"),
+                    kind: .secondary,
+                    identifier: A11yID.trendsChange
+                ) {
+                    app.showTrendsPicker = true
+                }
             }
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(Theme.blush700)
-            .buttonStyle(.plain)
-            .accessibilityIdentifier(A11yID.trendsChange)
         }
         .onAppear {
             guard ProcessInfo.processInfo.arguments.contains("-trendsTap") else { return }
@@ -210,25 +219,42 @@ struct TrendsView: View {
                     }
                 }
             }
+            Color.clear
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    selected = nil
+                    selectedTick = nil
+                }
             ForEach(Array(chart.series.enumerated()), id: \.element.id) { index, series in
                 ForEach(series.points, id: \.cycleStart) { point in
                     if let x = xs[point.cycleStart] {
                         let y = yPos(point.dayCount, yMax: yMax, plot: plot)
                         let d = dotDiameter(point.meanIntensity)
                         let color = Self.seriesColors[index % Self.seriesColors.count]
+                        let on = self.selected?.id == series.id
+                            && self.selected?.point.cycleStart == point.cycleStart
                         Button {
-                            selected = SelectedDot(id: series.id, point: point, colorIndex: index)
-                            selectedTick = nil
+                            selectDot(
+                                SelectedDot(id: series.id, point: point, colorIndex: index),
+                                in: chart
+                            )
                         } label: {
-                            Circle()
-                                .fill(color)
-                                .frame(width: d, height: d)
-                                .overlay {
-                                    if self.selected?.id == series.id,
-                                       self.selected?.point.cycleStart == point.cycleStart {
-                                        Circle().stroke(Theme.ink, lineWidth: 1.2)
-                                    }
+                            ZStack {
+                                if on {
+                                    Circle()
+                                        .stroke(Theme.ink, lineWidth: 3)
+                                        .frame(width: d + 14, height: d + 14)
+                                    Circle()
+                                        .stroke(Color.white, lineWidth: 2)
+                                        .frame(width: d + 6, height: d + 6)
                                 }
+                                Circle()
+                                    .fill(color)
+                                    .frame(width: d, height: d)
+                            }
+                            .frame(width: max(d + 16, 28), height: max(d + 16, 28))
+                            .shadow(color: on ? color.opacity(0.5) : .clear, radius: on ? 5 : 0)
+                            .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                         .position(x: x, y: y)
@@ -247,12 +273,15 @@ struct TrendsView: View {
                         selectedTick = tick
                         selected = nil
                     } label: {
-                        Capsule()
-                            .fill(on ? Theme.ink : Theme.inkMuted)
-                            .frame(width: 3, height: 10)
+                        Image(systemName: "triangle.fill")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(on ? Theme.blush800 : Theme.blush600)
+                            .rotationEffect(.degrees(180))
+                            .frame(width: 32, height: 24)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .position(x: x, y: plot.maxY - 6)
+                    .position(x: x, y: plot.maxY - 10)
                     .accessibilityLabel(tick.nameSnapshot)
                     .accessibilityIdentifier(A11yID.trendsTick(tick.cycleStart))
                     .accessibilityValue("\(tick.nameSnapshot):\(tick.newValue)")
@@ -264,9 +293,43 @@ struct TrendsView: View {
                         .font(.system(size: 9))
                         .foregroundStyle(Theme.inkMuted)
                         .position(x: x, y: plot.maxY + 12)
+                        .allowsHitTesting(false)
                 }
             }
         }
+    }
+
+    private func selectDot(_ candidate: SelectedDot, in chart: SymptomTrendChart) {
+        let group = overlappingDots(
+            cycleStart: candidate.point.cycleStart,
+            dayCount: candidate.point.dayCount,
+            chart: chart
+        )
+        if let selected,
+           let idx = group.firstIndex(where: {
+               $0.id == selected.id && $0.point.cycleStart == selected.point.cycleStart
+           }) {
+            self.selected = group[(idx + 1) % group.count]
+        } else {
+            self.selected = candidate
+        }
+        selectedTick = nil
+    }
+
+    private func overlappingDots(
+        cycleStart: String,
+        dayCount: Int,
+        chart: SymptomTrendChart
+    ) -> [SelectedDot] {
+        var out: [SelectedDot] = []
+        for (index, series) in chart.series.enumerated() {
+            if let point = series.points.first(where: {
+                $0.cycleStart == cycleStart && $0.dayCount == dayCount
+            }) {
+                out.append(SelectedDot(id: series.id, point: point, colorIndex: index))
+            }
+        }
+        return out
     }
 
     private func detail(_ selected: SelectedDot) -> some View {

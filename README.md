@@ -4,7 +4,7 @@
 
 The product is a **native iOS app** (`ios/`) with on-device SwiftData and optional Apple iCloud sync for the same Apple ID. There is no PeriMedi account, backend, or website.
 
-This is a personal demo, not medical advice.
+This is a personal companion, not medical advice.
 
 ## Features
 

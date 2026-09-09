@@ -293,6 +293,9 @@ struct AppRobot {
         if let start {
             setDateKey("med.start", start)
         }
+        if !element("med.save").isHittable {
+            app.swipeUp()
+        }
         tap("med.save")
         waitGone(id: "sheet.med")
     }
