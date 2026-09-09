@@ -97,11 +97,11 @@ The system SHALL show short English and German copy when Trends cannot draw a us
 
 #### Scenario: No period history
 - **WHEN** no logged period start exists
-- **THEN** Trends shows short copy that it needs at least two logged cycles and does not draw axes with zero dots
+- **THEN** Trends shows short copy that it needs at least two logged cycles, in the same full-width card as the chart, and does not draw axes with zero dots
 
 #### Scenario: No scores in range
 - **WHEN** at least one logged cycle exists and none of those cycles have symptom scores
-- **THEN** Trends shows copy equivalent to “No symptom scores in these cycles yet.”
+- **THEN** Trends shows copy equivalent to “No symptom scores in these cycles yet.” in the same full-width card as the chart
 
 #### Scenario: No treatment advice
 - **WHEN** Trends is shown with or without scores

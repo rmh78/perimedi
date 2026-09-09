@@ -33,7 +33,7 @@ UI tests that need several cycles of scores launch with `-fixture=trends` (not `
 ## Gotchas
 
 - Default chart is plot → stacked selected names → size key → Change. No chip cloud, no group titles, no “Select the symptoms…”.
-- Empty states hide Change and the catalog sheet.
+- Empty states hide Change and the catalog sheet. The card is full width like the chart card; height follows the copy.
 - Y is days scored, never `hot_flash` episode `count`. Size is mean intensity, not the sum.
 - Missing scores for an id are a gap: no `trends.dot.{id}.{cycleStart}`, not `count:0`.
 - Default three are the ids with the most scored days in the visible span. Selecting a fourth in the sheet replaces the lowest of those three. Max three selected.

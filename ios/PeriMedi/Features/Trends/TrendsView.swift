@@ -48,6 +48,7 @@ struct TrendsView: View {
                         .accessibilityValue(containerValue(result))
                 }
                 .padding(12)
+                .frame(maxWidth: .infinity, alignment: .topLeading)
                 .accessibilityElement(children: .contain)
             }
             .accessibilityIdentifier(A11yID.trendsScreen)
