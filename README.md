@@ -60,4 +60,4 @@ CI job `openspec` fails if an active `openspec/changes/<name>/` delta is not yet
 
 ## License
 
-Personal project — use and modify freely.
+Proprietary — All rights reserved. See [`LICENSE`](LICENSE). A free App Store listing does not mean this project is open source.
