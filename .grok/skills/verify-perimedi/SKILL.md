@@ -17,7 +17,7 @@ The doctor is one command:
 bash ios/scripts/verify.sh
 ```
 
-That sources `ios/env.sh`, checks feature-map IDs, checks feature layout, checks domain boundary, fails UI-test coverage if a feature-map surface is uncovered, runs domain tests, uninstalls leftover PeriMedi, runs UI tests, checks `ios/docs/screens/` files exist (no pixel compare), and uninstalls again on success. It prefers iPhone 17e, then iPhone 17. Override with `SIM_DEVICE` or `SIM_UDID`. Before it boots the Simulator, it turns Connect Hardware Keyboard off for that UDID so `typeText` hits the software keyboard.
+That sources `ios/env.sh`, checks feature-map IDs, checks feature layout, checks domain boundary, fails UI-test coverage if a feature-map surface is uncovered, runs domain tests, uninstalls leftover PeriMedi, runs UI tests, checks `ios/docs/screens/` files exist (no pixel compare), and uninstalls again on success. Locally UI tests write the catalog PNGs unless `SCREEN_CATALOG=0`. CI skips `ScreenCatalogTests`. It prefers iPhone 17e, then iPhone 17. Override with `SIM_DEVICE` or `SIM_UDID`. Before it boots the Simulator, it turns Connect Hardware Keyboard off for that UDID so `typeText` hits the software keyboard.
 
 Pieces, if you need one step:
 
@@ -36,7 +36,7 @@ xcodebuild test -project ios/PeriMedi.xcodeproj -scheme PeriMedi \
   -derivedDataPath ios/DerivedData CODE_SIGNING_ALLOWED=NO
 ```
 
-`AppRobot.launch()` always uses `-en -clear -today=2026-03-15 -uiTesting`. Never pass `-journeyStep` or `-loadSample` on the journey tests. `ScreenCatalogTests` uses `launchCatalog` (`-loadSample` / `-de`) to write `ios/docs/screens/`. Dose reminders in-process: `-remindIn=4`.
+`AppRobot.launch()` always uses `-en -clear -today=2026-03-15 -uiTesting`. Never pass `-journeyStep` or `-loadSample` on the journey tests. `ScreenCatalogTests` uses `launchCatalog` (`-loadSample` / fixtures) and in-app language pills to write `ios/docs/screens/` in a few launches. Dose reminders in-process: `-remindIn=2`.
 
 Frozen test dates in `UITestDate`: today `2026-03-15`, yesterday `2026-03-14`, period `2026-03-07`–`2026-03-11`.
 
@@ -68,7 +68,7 @@ Run `bash ios/scripts/verify.sh`. That is the doctor. Do not assemble the steps 
 
 A pass is `verify: ok` from `bash ios/scripts/verify.sh` on a Mac with Xcode. Domain `swift test --package-path ios` alone is not UI proof. CI job `ui` is the same proof on GitHub (17e if the image has it, else iPhone 17). Main-screen PNGs are `ios/docs/screens/` (see `ios/docs/screens.md`). Commit those after UI changes. UX reviews the Files changed image diff. Do not paste screenshot galleries into PR comments.
 
-Existing journeys: `FirstUseJourneyTests.testFirstUseJourney`, `testMonthPager`, `testMoreRemindersControls`, `testDoseReminderTaken`, `SymptomTrendsTests`, and `ScreenCatalogTests`.
+Existing journeys: `FirstUseJourneyTests.testFirstUseJourney`, `testMoreRemindersControls`, `testDoseReminderTaken`, `SymptomTrendsTests`, and `ScreenCatalogTests`.
 
 ## Cleanup
 

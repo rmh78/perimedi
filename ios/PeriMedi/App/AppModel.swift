@@ -18,6 +18,8 @@ final class AppModel: ObservableObject {
     @Published var pendingReminder: PendingReminder?
     /// Bumped when Cycle should snap the plot to today (launch / return from background).
     @Published private(set) var todayFocusNonce = 0
+    /// Launch flags (`-clear`, `-en`, …) apply once. Language change recreates RootView.
+    var didApplyLaunchFlags = false
 
     enum Tab: Hashable {
         case cycle, trends, month, more

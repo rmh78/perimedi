@@ -22,7 +22,7 @@ Turn reminders on in More. Enable remind on a medication. When a slot is due, a 
 | More master | `more.reminders` | See [more.md](more.md). |
 | Per-med remind | `med.remind` | On [medication-sheet.md](medication-sheet.md). |
 
-Launch extra: `-remindIn=4` fires the next pending slot in-process (see `FirstUseJourneyTests.testDoseReminderTaken`). Add a med first so a lane exists with `not-taken`, then wait for the banner.
+Launch extra: `-remindIn=2` fires the next pending slot in-process (see `FirstUseJourneyTests.testDoseReminderTaken`). Add a med first so a lane exists with `not-taken`, then wait for the banner.
 
 ## Gotchas
 

@@ -1,8 +1,9 @@
 import XCTest
 
-/// One first-session path: a woman opens an empty app, logs her last period,
-/// adds the medications she actually takes, marks this morning’s dose, notes a
-/// symptom, and checks that Month agrees.
+/// One first-session path: a woman opens an empty app, glances at empty Trends,
+/// logs her last period, adds the medications she actually takes, marks this
+/// morning’s dose, notes a symptom, checks that Month agrees, pages Month, and
+/// opens a period day back on Cycle.
 final class FirstUseJourneyTests: PeriMediUITestCase {
     func testFirstUseJourney() {
         robot.launch()
@@ -21,6 +22,20 @@ final class FirstUseJourneyTests: PeriMediUITestCase {
             robot.waitFor(id: "cycle.intro")
             XCTAssertFalse(robot.exists("cycle.lane.estrogen"))
             XCTAssertFalse(robot.exists("cycle.effect"))
+        }
+
+        XCTContext.runActivity(named: "01b empty Trends") { _ in
+            robot.tap("tab.trends")
+            robot.waitFor(id: "trends.screen")
+            robot.waitFor(id: "trends.status")
+            XCTAssertEqual(robot.value(of: "trends.status"), "need-cycles")
+            robot.waitFor(id: "trends.empty")
+            XCTAssertEqual(robot.value(of: "trends.empty"), "need-cycles")
+            XCTAssertFalse(robot.exists("trends.series.hot_flash"))
+            XCTAssertFalse(robot.exists("trends.intro"))
+            XCTAssertFalse(robot.exists("trends.change"))
+            robot.tap("tab.cycle")
+            robot.waitFor(id: "cycle.intro")
         }
 
         XCTContext.runActivity(named: "02 log last period") { _ in
@@ -88,39 +103,25 @@ final class FirstUseJourneyTests: PeriMediUITestCase {
             XCTAssertTrue(robot.value(of: "month.day.\(UITestDate.periodStart)").contains("period"))
             XCTAssertTrue(robot.value(of: "month.day.\(UITestDate.today)").contains("taken"))
             XCTAssertTrue(robot.value(of: "month.day.\(UITestDate.today)").contains("symptom"))
+            robot.tap("month.pager.next")
+            robot.waitFor(id: "month.day.2026-04-01")
+            robot.tap("month.pager.prev")
+            robot.waitFor(id: "month.day.\(UITestDate.today)")
+            XCTAssertTrue(robot.value(of: "month.day.\(UITestDate.today)").contains("selected"))
+            robot.tap("cycle.pager.today")
+            XCTAssertTrue(robot.value(of: "month.day.\(UITestDate.today)").contains("selected"))
+            robot.tap("month.day.\(UITestDate.periodStart)")
+            XCTAssertTrue(robot.value(of: "month.day.\(UITestDate.periodStart)").contains("selected"))
             robot.tap("tab.cycle")
+            let strip = "cycle.strip.day.\(UITestDate.periodStart)"
+            robot.waitFor(id: strip)
+            XCTAssertTrue(robot.value(of: strip).contains("period"))
+            XCTAssertTrue(robot.element(strip).isHittable, "selected day should be in the visible plot")
+            robot.tap("cycle.pager.today")
             robot.waitFor(id: "cycle.lane.estrogen")
             robot.waitFor(id: "cycle.lane.progesterone")
             XCTAssertEqual(robot.value(of: "cycle.lane.estrogen.status"), "taken")
         }
-    }
-
-    func testMonthPager() {
-        robot.launch()
-        robot.tap("tab.month")
-        robot.waitFor(id: "month.day.\(UITestDate.today)")
-        XCTAssertTrue(robot.value(of: "month.day.\(UITestDate.today)").contains("selected"))
-        robot.tap("month.pager.next")
-        robot.waitFor(id: "month.day.2026-04-01")
-        robot.tap("month.pager.prev")
-        robot.waitFor(id: "month.day.\(UITestDate.today)")
-        XCTAssertTrue(robot.value(of: "month.day.\(UITestDate.today)").contains("selected"))
-        robot.tap("cycle.pager.today")
-        XCTAssertTrue(robot.value(of: "month.day.\(UITestDate.today)").contains("selected"))
-    }
-
-    func testMonthSelectionScrollsOnCycle() {
-        robot.launch()
-        robot.addPeriod()
-        robot.tap("tab.month")
-        robot.waitFor(id: "month.day.\(UITestDate.periodStart)")
-        robot.tap("month.day.\(UITestDate.periodStart)")
-        XCTAssertTrue(robot.value(of: "month.day.\(UITestDate.periodStart)").contains("selected"))
-        robot.tap("tab.cycle")
-        let strip = "cycle.strip.day.\(UITestDate.periodStart)"
-        robot.waitFor(id: strip)
-        XCTAssertTrue(robot.value(of: strip).contains("period"))
-        XCTAssertTrue(robot.element(strip).isHittable, "selected day should be in the visible plot")
     }
 
     func testMoreRemindersControls() {
@@ -167,7 +168,7 @@ final class FirstUseJourneyTests: PeriMediUITestCase {
     /// Springboard banners are unreliable in XCTest. `-remindIn` fires the next
     /// pending slot in-process; Taken uses the same path as the notification action.
     func testDoseReminderTaken() {
-        robot.launch(extra: ["-remindIn=4"])
+        robot.launch(extra: ["-remindIn=2"])
 
         XCTContext.runActivity(named: "add a dose that is still pending") { _ in
             robot.addMedication(name: "Estrogen", dose: "1 mg", start: UITestDate.today)

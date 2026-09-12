@@ -2,78 +2,10 @@ import XCTest
 
 final class ScreenCatalogTests: PeriMediUITestCase {
     func testWriteScreenCatalog() throws {
-        try shot("cycle-empty-en", locale: "en") {
-            robot.waitFor(id: "cycle.intro")
-        }
-        try shot("trends-empty-en", locale: "en", extra: ["-tabTrends"]) {
-            robot.waitFor(id: "trends.empty")
-        }
-        try shot("cycle-sample-en", locale: "en", extra: ["-loadSample"]) {
-            robot.waitFor(id: "cycle.effect")
-        }
-        try shot("trends-sample-en", locale: "en", extra: ["-loadSample", "-tabTrends"]) {
-            robot.waitFor(id: "trends.plot")
-        }
-        try shot("month-sample-en", locale: "en", extra: ["-loadSample", "-tabMonth"]) {
-            robot.waitFor(id: "month.day.\(UITestDate.today)")
-        }
-        try shot("more-sample-en", locale: "en", extra: ["-loadSample", "-tabMore"]) {
-            robot.scrollTo("more.sharePdf")
-            robot.waitFor(id: "more.sharePdf")
-        }
-        try shot("visit-range-sample-en", locale: "en", extra: ["-loadSample", "-tabMore"]) {
-            robot.scrollTo("more.sharePdf")
-            robot.tap("more.sharePdf")
-            robot.waitFor(id: "visit.range")
-            robot.waitFor(id: "visit.range.cycle.2026-02-02")
-            robot.waitFor(id: "visit.range.previous")
-        }
-        try shot("visit-pdf-sample-en", locale: "en", extra: ["-loadSample", "-tabMore"]) {
-            robot.scrollTo("more.sharePdf")
-            robot.tap("more.sharePdf")
-            robot.waitFor(id: "visit.range.continue")
-            robot.tap("visit.range.continue")
-            robot.waitFor(id: "visit.pdf.preview")
-            robot.waitFor(id: "visit.pdf.share")
-        }
-        try dialogShots(locale: "en")
-        try trendsExtras(locale: "en")
-        try shot("cycle-empty-de", locale: "de") {
-            robot.waitFor(id: "cycle.intro")
-        }
-        try shot("trends-empty-de", locale: "de", extra: ["-tabTrends"]) {
-            robot.waitFor(id: "trends.empty")
-        }
-        try shot("cycle-sample-de", locale: "de", extra: ["-loadSample"]) {
-            robot.waitFor(id: "cycle.effect")
-        }
-        try shot("trends-sample-de", locale: "de", extra: ["-loadSample", "-tabTrends"]) {
-            robot.waitFor(id: "trends.plot")
-        }
-        try shot("month-sample-de", locale: "de", extra: ["-loadSample", "-tabMonth"]) {
-            robot.waitFor(id: "month.day.\(UITestDate.today)")
-        }
-        try shot("more-sample-de", locale: "de", extra: ["-loadSample", "-tabMore"]) {
-            robot.scrollTo("more.sharePdf")
-            robot.waitFor(id: "more.sharePdf")
-        }
-        try shot("visit-range-sample-de", locale: "de", extra: ["-loadSample", "-tabMore"]) {
-            robot.scrollTo("more.sharePdf")
-            robot.tap("more.sharePdf")
-            robot.waitFor(id: "visit.range")
-            robot.waitFor(id: "visit.range.cycle.2026-02-02")
-            robot.waitFor(id: "visit.range.previous")
-        }
-        try shot("visit-pdf-sample-de", locale: "de", extra: ["-loadSample", "-tabMore"]) {
-            robot.scrollTo("more.sharePdf")
-            robot.tap("more.sharePdf")
-            robot.waitFor(id: "visit.range.continue")
-            robot.tap("visit.range.continue")
-            robot.waitFor(id: "visit.pdf.preview")
-            robot.waitFor(id: "visit.pdf.share")
-        }
-        try dialogShots(locale: "de")
-        try trendsExtras(locale: "de")
+        try captureEmpty()
+        try captureSample()
+        try captureTrendsFixture()
+        try captureTrendsNoScores()
 
         let expected = ScreenCatalog.expectedNames
         XCTAssertFalse(expected.isEmpty, "ios/docs/screens/expected.txt")
@@ -86,55 +18,115 @@ final class ScreenCatalogTests: PeriMediUITestCase {
         }
     }
 
-    private func dialogShots(locale: String) throws {
-        try shot("sheet-med-\(locale)", locale: locale, extra: ["-sheetMed"]) {
-            robot.waitFor(id: "sheet.med")
-            robot.clearAndType("med.dose", "1 mg")
-            robot.waitFor(id: "med.since")
-        }
-        try shot("sheet-period-\(locale)", locale: locale, extra: ["-sheetPeriod"]) {
-            robot.waitFor(id: "sheet.period")
-        }
-        try shot("sheet-symptom-\(locale)", locale: locale, extra: ["-sheetSymptom"]) {
-            robot.waitFor(id: "sheet.symptom")
-        }
+    private func captureEmpty() throws {
+        robot.launchCatalog(locale: "en")
+        try emptyShots(locale: "en")
+        robot.setLanguage("de")
+        try emptyShots(locale: "de")
     }
 
-    private func trendsExtras(locale: String) throws {
-        try shot("trends-sheet-\(locale)", locale: locale, extra: ["-loadSample", "-tabTrends"]) {
-            robot.waitFor(id: "trends.change")
-            robot.tap("trends.change")
-            robot.waitFor(id: "sheet.trends")
-        }
-        try shot(
-            "trends-tap-\(locale)",
-            locale: locale,
-            extra: ["-fixture=trends", "-tabTrends", "-trendsTap"]
-        ) {
-            robot.waitFor(id: "trends.detail")
-        }
-        try shot("trends-tick-\(locale)", locale: locale, extra: ["-fixture=trends", "-tabTrends"]) {
-            robot.waitFor(id: "trends.tick.2026-02-01")
-            robot.tap("trends.tick.2026-02-01")
-            robot.waitFor(id: "trends.tickCopy")
-        }
-        try shot(
-            "trends-noscores-\(locale)",
-            locale: locale,
-            extra: ["-fixture=trends-noscores", "-tabTrends"]
-        ) {
-            robot.waitFor(id: "trends.empty")
-        }
+    private func emptyShots(locale: String) throws {
+        robot.tap("tab.cycle")
+        robot.waitFor(id: "cycle.intro")
+        try write("cycle-empty-\(locale)")
+
+        robot.tap("tab.trends")
+        robot.waitFor(id: "trends.empty")
+        try write("trends-empty-\(locale)")
+
+        robot.tap("tab.cycle")
+        robot.tap("cycle.action.med")
+        robot.waitFor(id: "sheet.med")
+        robot.clearAndType("med.dose", "1 mg")
+        robot.waitFor(id: "med.since")
+        try write("sheet-med-\(locale)")
+        robot.closeSheet(id: "sheet.med")
+
+        robot.tap("cycle.action.period")
+        robot.waitFor(id: "sheet.period")
+        try write("sheet-period-\(locale)")
+        robot.closeSheet(id: "sheet.period")
+
+        robot.tap("cycle.action.symptom")
+        robot.waitFor(id: "sheet.symptom")
+        try write("sheet-symptom-\(locale)")
+        robot.closeSheet(id: "sheet.symptom")
     }
 
-    private func shot(
-        _ name: String,
-        locale: String,
-        extra: [String] = [],
-        ready: () -> Void
-    ) throws {
-        robot.launchCatalog(locale: locale, extra: extra)
-        ready()
+    private func captureSample() throws {
+        robot.launchCatalog(locale: "en", extra: ["-loadSample"])
+        try sampleShots(locale: "en")
+        robot.setLanguage("de")
+        try sampleShots(locale: "de")
+    }
+
+    private func sampleShots(locale: String) throws {
+        robot.tap("tab.cycle")
+        robot.waitFor(id: "cycle.effect")
+        try write("cycle-sample-\(locale)")
+
+        robot.tap("tab.trends")
+        robot.waitFor(id: "trends.plot")
+        try write("trends-sample-\(locale)")
+        robot.waitFor(id: "trends.change")
+        robot.tap("trends.change")
+        robot.waitFor(id: "sheet.trends")
+        try write("trends-sheet-\(locale)")
+        robot.closeSheet(id: "sheet.trends")
+
+        robot.tap("tab.month")
+        robot.waitFor(id: "month.day.\(UITestDate.today)")
+        try write("month-sample-\(locale)")
+
+        robot.tap("tab.more")
+        robot.scrollTo("more.sharePdf")
+        robot.waitFor(id: "more.sharePdf")
+        try write("more-sample-\(locale)")
+        robot.tap("more.sharePdf")
+        robot.waitFor(id: "visit.range")
+        robot.waitFor(id: "visit.range.cycle.2026-02-02")
+        robot.waitFor(id: "visit.range.previous")
+        try write("visit-range-sample-\(locale)")
+        robot.waitFor(id: "visit.range.continue")
+        robot.tap("visit.range.continue")
+        robot.waitFor(id: "visit.pdf.preview")
+        robot.waitFor(id: "visit.pdf.share")
+        try write("visit-pdf-sample-\(locale)")
+        robot.tap("sheet.close")
+        robot.waitGone(id: "visit.pdf.preview")
+    }
+
+    private func captureTrendsFixture() throws {
+        robot.launchCatalog(locale: "en", extra: ["-fixture=trends", "-tabTrends"])
+        try trendsFixtureShots(locale: "en")
+        robot.setLanguage("de")
+        robot.tap("tab.trends")
+        robot.waitFor(id: "trends.screen")
+        try trendsFixtureShots(locale: "de")
+    }
+
+    private func trendsFixtureShots(locale: String) throws {
+        robot.waitFor(id: "trends.tick.2026-02-01")
+        robot.tap("trends.tick.2026-02-01")
+        robot.waitFor(id: "trends.tickCopy")
+        try write("trends-tick-\(locale)")
+        robot.waitFor(id: "trends.dot.hot_flash.2026-03-01")
+        robot.tap("trends.dot.hot_flash.2026-03-01")
+        robot.waitFor(id: "trends.detail")
+        try write("trends-tap-\(locale)")
+    }
+
+    private func captureTrendsNoScores() throws {
+        robot.launchCatalog(locale: "en", extra: ["-fixture=trends-noscores", "-tabTrends"])
+        robot.waitFor(id: "trends.empty")
+        try write("trends-noscores-en")
+        robot.setLanguage("de")
+        robot.tap("tab.trends")
+        robot.waitFor(id: "trends.empty")
+        try write("trends-noscores-de")
+    }
+
+    private func write(_ name: String) throws {
         try ScreenCatalog.write(name)
     }
 }

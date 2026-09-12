@@ -55,7 +55,7 @@ if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
   python3 "$ROOT/ios/scripts/check-ui-coverage.py" --fail-uncovered
 fi
 
-# Screen-catalog missing-file check runs after UI tests (they write the PNGs).
+# Screen-catalog missing-file check runs after UI tests (local runs write PNGs).
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
   fail "domain and UI tests need macOS with Xcode and an iPhone Simulator"
@@ -122,14 +122,35 @@ xcrun simctl uninstall "$UDID" "$BUNDLE" 2>/dev/null || true
 
 step "UI tests"
 rm -rf "$RESULT"
+# Catalog PNGs are committed for UX review. CI cannot commit them; rewriting
+# on the runner is discarded. Local doctor still writes them unless SCREEN_CATALOG=0.
+SKIP_CATALOG=0
+if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+  SKIP_CATALOG=1
+  echo "Skipping ScreenCatalogTests on CI (committed PNGs; ids job checks they exist)"
+elif [[ "${SCREEN_CATALOG:-1}" == "0" ]]; then
+  SKIP_CATALOG=1
+  echo "Skipping ScreenCatalogTests (SCREEN_CATALOG=0)"
+fi
 set +e
-xcodebuild test \
-  -project "$PROJECT" \
-  -scheme PeriMedi \
-  -destination "platform=iOS Simulator,id=$UDID" \
-  -derivedDataPath "$DERIVED" \
-  -resultBundlePath "$RESULT" \
-  CODE_SIGNING_ALLOWED=NO
+if [[ "$SKIP_CATALOG" -eq 1 ]]; then
+  xcodebuild test \
+    -project "$PROJECT" \
+    -scheme PeriMedi \
+    -destination "platform=iOS Simulator,id=$UDID" \
+    -derivedDataPath "$DERIVED" \
+    -resultBundlePath "$RESULT" \
+    -skip-testing:PeriMediUITests/ScreenCatalogTests \
+    CODE_SIGNING_ALLOWED=NO
+else
+  xcodebuild test \
+    -project "$PROJECT" \
+    -scheme PeriMedi \
+    -destination "platform=iOS Simulator,id=$UDID" \
+    -derivedDataPath "$DERIVED" \
+    -resultBundlePath "$RESULT" \
+    CODE_SIGNING_ALLOWED=NO
+fi
 status=$?
 set -e
 if [[ "$status" -ne 0 ]]; then

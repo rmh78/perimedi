@@ -1,20 +1,6 @@
 import XCTest
 
 final class SymptomTrendsTests: PeriMediUITestCase {
-    func testSymptomTrendsEmpty() {
-        robot.launch()
-        robot.waitFor(id: "tab.trends")
-        robot.tap("tab.trends")
-        robot.waitFor(id: "trends.screen")
-        robot.waitFor(id: "trends.status")
-        XCTAssertEqual(robot.value(of: "trends.status"), "need-cycles")
-        robot.waitFor(id: "trends.empty")
-        XCTAssertEqual(robot.value(of: "trends.empty"), "need-cycles")
-        XCTAssertFalse(robot.exists("trends.series.hot_flash"))
-        XCTAssertFalse(robot.exists("trends.intro"))
-        XCTAssertFalse(robot.exists("trends.change"))
-    }
-
     func testSymptomTrendsNoScores() {
         robot.launch(extra: ["-fixture=trends-noscores", "-tabTrends"])
         robot.waitFor(id: "trends.screen")

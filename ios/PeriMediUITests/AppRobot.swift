@@ -261,6 +261,20 @@ struct AppRobot {
         waitGone(id: id)
     }
 
+    /// More language pills. Launch flags apply only once, so this sticks.
+    func setLanguage(_ locale: String, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertTrue(locale == "en" || locale == "de", "locale \(locale)", file: file, line: line)
+        tap("tab.more", file: file, line: line)
+        tap("more.lang.\(locale)", file: file, line: line)
+        let expected = locale == "de" ? "Zyklus" : "Cycle"
+        XCTAssertTrue(
+            spin(timeout: 3) { element("tab.cycle").label == expected },
+            "tab.cycle is \(element("tab.cycle").label.debugDescription), wanted \(expected)",
+            file: file,
+            line: line
+        )
+    }
+
     func addPeriod(start: String = UITestDate.periodStart, end: String = UITestDate.periodEnd) {
         tap("cycle.action.period")
         waitFor(id: "sheet.period")
