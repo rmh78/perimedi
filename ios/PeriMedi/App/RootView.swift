@@ -72,11 +72,14 @@ struct RootView: View {
             }
         }
         .onAppear {
-            applyLaunchFlags()
-            DoseReminderCenter.shared.attach(store: store, app: app)
-            if ProcessInfo.processInfo.arguments.contains("-clear") {
-                DoseReminderCenter.shared.clearAll()
+            if !app.didApplyLaunchFlags {
+                applyLaunchFlags()
+                app.didApplyLaunchFlags = true
+                if ProcessInfo.processInfo.arguments.contains("-clear") {
+                    DoseReminderCenter.shared.clearAll()
+                }
             }
+            DoseReminderCenter.shared.attach(store: store, app: app)
             UIAccessibility.post(notification: .layoutChanged, argument: nil)
             dismissLaunchBeatIfNeeded()
         }

@@ -107,14 +107,6 @@ struct TrendsView: View {
                 }
             }
         }
-        .onAppear {
-            guard ProcessInfo.processInfo.arguments.contains("-trendsTap") else { return }
-            guard let series = chart.series.first,
-                  let point = series.points.last
-            else { return }
-            selected = SelectedDot(id: series.id, point: point, colorIndex: 0)
-            selectedTick = nil
-        }
     }
 
     private func legend(_ chart: SymptomTrendChart) -> some View {

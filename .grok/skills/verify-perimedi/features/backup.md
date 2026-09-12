@@ -24,7 +24,7 @@ Bottom bar → More → Backup section.
 
 `testMoreRemindersControls` waits for all four row IDs (swipe up if below the fold), taps sample, then `confirm.cancel`, then `waitGone` for the confirm card. Do not confirm sample load or clear.
 
-UI tests never pass `-loadSample`. Sample load is a user action on More, not a launch flag.
+Journey tests never pass `-loadSample`. Sample load is a user action on More, not a launch flag. `ScreenCatalogTests` may pass `-loadSample` to write populated pictures.
 
 ## Gotchas
 

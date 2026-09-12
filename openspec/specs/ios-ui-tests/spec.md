@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Prove that a person can actually perform PeriMedi’s empty-to-tracking journey on iOS by driving the real controls from an empty store and asserting UI elements and resulting state. Screenshots are failure evidence, not the pass/fail oracle.
+Prove that a person can perform PeriMedi’s real-world jobs on iOS by driving the real controls from a cleared store and asserting UI elements and resulting state. The empty-to-tracking first session is the core proof. Additional user-story journeys cover settings, a due dose reminder, and Trends once several cycles exist. Screenshots are failure evidence and a committed UX catalog, not the pass/fail oracle.
 
 ## Requirements
 
@@ -33,11 +33,15 @@ When launched for verification, the app SHALL honor a pinned English chrome flag
 - **THEN** that start date is eight calendar days before the pinned date, not eight days before the device clock
 
 ### Requirement: Empty-to-tracking journey is machine-verifiable
-An instrumented UI suite SHALL consist of a single first-use journey that drives the real controls (not by writing the resulting records into the store) and SHALL fail if a step’s UI elements or resulting state are wrong. The suite SHALL start from a cleared store and a pinned today. The journey SHALL follow a first-session path: empty home, log a recent period, add everyday and cyclic medications, mark today’s dose taken, page back through the week and return to today, log a symptom, then confirm Month agrees.
+An instrumented UI suite SHALL include a first-use journey that drives the real controls (not by writing the resulting records into the store) and SHALL fail if a step’s UI elements or resulting state are wrong. The suite SHALL start that journey from a cleared store and a pinned today. The journey SHALL follow a first-session path: empty home, empty Trends, log a recent period, add everyday and cyclic medications, mark today’s dose taken, page back through the week and return to today, log a symptom, confirm Month agrees, page Month, then select a period day on Month and see that day on Cycle.
 
 #### Scenario: Empty Cycle
 - **WHEN** the suite launches onto Cycle with no data
 - **THEN** a requirements card names the missing period and missing medication, the PeriMedi intro card is shown, no medication lanes are present, and the add-medication, cycle-settings, and add-symptom actions are available
+
+#### Scenario: Empty Trends on first session
+- **WHEN** the suite opens Trends before any period is logged
+- **THEN** Trends explains that cycles are needed, no series chips are shown, and the suite returns to Cycle to continue tracking
 
 #### Scenario: Add a period through the UI
 - **WHEN** the suite opens cycle settings, adds a period from eight days before the pinned today through four days before it, and saves
@@ -61,11 +65,34 @@ An instrumented UI suite SHALL consist of a single first-use journey that drives
 
 #### Scenario: Symptom then Month
 - **WHEN** the suite adds a symptom whose description is hot flush on the pinned today and then opens Month
-- **THEN** Month shows the pinned today selected and reflects the logged period span, the taken mark, and the symptom, and after returning to Cycle both medication lanes remain and Estrogen still reads taken
+- **THEN** Month shows the pinned today selected and reflects the logged period span, the taken mark, and the symptom
 
-#### Scenario: Seeded journey launch is not this proof
-- **WHEN** the instrumented suite runs
+#### Scenario: Month pager then a period day on Cycle
+- **WHEN** the suite pages Month forward and back, activates Today, then selects the logged period start and opens Cycle
+- **THEN** that period day is selected and visible on Cycle, and after activating Today both medication lanes remain and Estrogen still reads taken
+
+#### Scenario: Seeded first-use launch is not this proof
+- **WHEN** the first-use journey runs
 - **THEN** it does not pre-load the journey’s medications, periods, doses, or remarks; those records exist only because the suite created them through the UI
+
+### Requirement: Additional user-story journeys
+The instrumented suite SHALL include separate journeys for jobs that are not a first session of logging: More settings (language, reminders chrome, visit PDF preview, backup confirm-cancel), taking a due dose from the in-app reminder card, and Trends after several scored cycles. Those journeys SHALL still drive real controls. Trends history MAY start from a dedicated fixture so the suite does not invent months of scores through the UI. First-use SHALL NOT load sample data.
+
+#### Scenario: More settings journey
+- **WHEN** the suite opens More from a cleared store
+- **THEN** language pills, reminders chrome, the visit PDF action through in-app preview, and backup rows are identifiable, and the suite does not confirm a destructive wipe or load sample
+
+#### Scenario: Dose reminder journey
+- **WHEN** a pending dose exists and the in-app reminder card appears
+- **THEN** Taken dismisses the card and the Cycle lane reads taken
+
+#### Scenario: Trends with scored cycles
+- **WHEN** the suite opens Trends with several logged cycles that have scores
+- **THEN** the chart, series, a tapped dot, and a dose-change tick are identifiable
+
+#### Scenario: Trends with cycles but no scores
+- **WHEN** the suite opens Trends with logged cycles and no scores
+- **THEN** Trends explains that there are no scores and shows no series chips
 
 ### Requirement: Screenshots are evidence, not the gate
 A failed instrumented step SHALL retain a screenshot (or equivalent visual attachment) for a human. Passing SHALL be determined by UI-element and state assertions, not by pixel comparison against a reference image.
@@ -79,15 +106,19 @@ A failed instrumented step SHALL retain a screenshot (or equivalent visual attac
 - **THEN** the instrumented suite still passes
 
 ### Requirement: Committed catalog of main screens
-The instrumented suite SHALL write a small committed catalog of Simulator pictures of the main destinations: Cycle empty, Cycle with data, Trends empty, Trends with data, Month, and More, plus the medication, period, and symptom sheets. English SHALL be included. German SHALL be included where the chrome changes. Verification SHALL fail if an expected catalog picture is missing. Verification SHALL NOT fail because pixels differ from a previous capture. Visual review SHALL use those committed pictures (the pull-request file diff), not a gallery of images pasted into pull-request comments.
+A dedicated catalog capture SHALL write a small committed catalog of Simulator pictures of the main destinations: Cycle empty, Cycle with data, Trends empty, Trends with data, Month, and More, plus the medication, period, and symptom sheets. English SHALL be included. German SHALL be included where the chrome changes. The capture SHALL navigate those destinations in a small number of launches (tabs, Cycle sheet actions, More language) rather than launching once per picture. Sample data and Trends fixtures MAY seed catalog pictures; they SHALL NOT be the first-use proof. Verification SHALL fail if an expected catalog picture is missing from the committed files. Verification SHALL NOT fail because pixels differ from a previous capture. Visual review SHALL use those committed pictures (the pull-request file diff), not a gallery of images pasted into pull-request comments. Continuous integration MAY skip rewriting the pictures; it SHALL still fail when a committed file is missing.
 
 #### Scenario: Missing catalog picture fails
-- **WHEN** an expected main-screen catalog picture is not present
+- **WHEN** an expected main-screen catalog picture is not present in the committed catalog
 - **THEN** verification fails
 
 #### Scenario: Pixel drift does not fail the catalog
 - **WHEN** a catalog picture differs in pixels from an earlier capture but the file is present
 - **THEN** verification still passes
+
+#### Scenario: Catalog capture is not one launch per picture
+- **WHEN** the catalog capture writes English and German pictures of empty Cycle, empty Trends, and the add sheets
+- **THEN** those pictures come from navigating one empty-store session per language path, not from a separate app launch for each file
 
 ### Requirement: Visit share control is identifiable
 The More visit PDF action SHALL expose a language-independent accessibility identifier. The instrumented More journey SHALL wait for that control. Catalog pictures of More SHALL include the visit entry. Verification SHALL NOT paste screenshot galleries into pull-request comments.

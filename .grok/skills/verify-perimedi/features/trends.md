@@ -12,7 +12,7 @@ UI tests that need several cycles of scores launch with `-fixture=trends` (not `
 
 | Control | ID | Proof |
 |---|---|---|
-| Trends tab | `tab.trends` | Exists on launch. Empty journey taps it. Chart journey may pass `-tabTrends`. |
+| Trends tab | `tab.trends` | Exists on launch. First-use taps it on empty home. Chart journey may pass `-tabTrends`. |
 | Trends screen | `trends.screen` | Shown after the tab or `-tabTrends`. |
 | Status | `trends.status` | Empty home: `need-cycles`. Fixture: `ids:hot_flash,sleep,mood` (catalog order of the three most-logged ids). After selecting anxiety: `ids:hot_flash,mood,anxiety`. |
 | Empty copy | `trends.empty` | No periods: `need-cycles`. Logged cycles without scores (`-fixture=trends-noscores`): `no-scores`. A title sits above that copy. Empty journeys have no `trends.change` and no series chips. |
