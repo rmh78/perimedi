@@ -41,7 +41,7 @@ enum DoctorVisitShare {
                     : report.medications.map { row in
                         app.t("visit.medLine", [
                             "name": row.name,
-                            "dose": displayUnit(row.doseLabel, language: app.locale.language),
+                            "dose": DoseUnitCopy.display(row.doseLabel, languageCode: app.locale.language.rawValue),
                             "taken": String(row.taken),
                             "planned": String(row.planned),
                             "percent": String(row.percent),
@@ -59,8 +59,8 @@ enum DoctorVisitShare {
                         return app.t(key, [
                             "date": formatDate(change.effectiveDate, locale: locale),
                             "name": change.nameSnapshot,
-                            "previous": displayUnit(change.previousValue, language: app.locale.language),
-                            "new": displayUnit(change.newValue, language: app.locale.language),
+                            "previous": DoseUnitCopy.display(change.previousValue, languageCode: app.locale.language.rawValue),
+                            "new": DoseUnitCopy.display(change.newValue, languageCode: app.locale.language.rawValue),
                         ])
                     }
             )
@@ -123,14 +123,6 @@ enum DoctorVisitShare {
             key = "visit.range.twelveWeeks"
         }
         return app.t(key, ["start": start, "end": end])
-    }
-
-    static func displayUnit(_ value: String, language: AppLanguage) -> String {
-        guard language == .de else { return value }
-        var out = value
-        out = out.replacingOccurrences(of: "pumps", with: "Hub", options: .caseInsensitive)
-        out = out.replacingOccurrences(of: "pump", with: "Hub", options: .caseInsensitive)
-        return out
     }
 
     private static func formatDate(_ key: String, locale: Locale) -> String {

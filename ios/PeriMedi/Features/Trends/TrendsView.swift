@@ -14,14 +14,8 @@ struct TrendsView: View {
         var colorIndex: Int
     }
 
-    private static let seriesColors: [Color] = [
-        Color(hex: "#c47f00"),
-        Color(hex: "#d43d6c"),
-        Color(hex: "#6b5ca5"),
-    ]
-
     var body: some View {
-        let storedIds = parseStored()
+        let storedIds = TrendsSelectionStorage.parse(selectedStorage)
         let result = SymptomTrendLogic.summarize(
             today: DateKeys.todayKey(),
             periods: store.periods,
@@ -112,7 +106,7 @@ struct TrendsView: View {
     private func legend(_ chart: SymptomTrendChart) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             ForEach(Array(chart.series.enumerated()), id: \.element.id) { index, series in
-                let color = Self.seriesColors[index % Self.seriesColors.count]
+                let color = TrendsStyle.seriesColors[index % TrendsStyle.seriesColors.count]
                 HStack(spacing: 6) {
                     Circle()
                         .fill(color)
@@ -127,13 +121,6 @@ struct TrendsView: View {
                 .accessibilityValue("on")
             }
         }
-    }
-
-    private func parseStored() -> [String]? {
-        let raw = selectedStorage.trimmingCharacters(in: .whitespacesAndNewlines)
-        if raw.isEmpty { return nil }
-        if raw == "-" { return [] }
-        return raw.split(separator: ",").map(String.init)
     }
 
     private func plot(_ chart: SymptomTrendChart) -> some View {
@@ -195,7 +182,7 @@ struct TrendsView: View {
             Canvas { ctx, _ in
                 drawAxes(ctx, plot: plot)
                 for (index, series) in chart.series.enumerated() {
-                    let color = Self.seriesColors[index % Self.seriesColors.count]
+                    let color = TrendsStyle.seriesColors[index % TrendsStyle.seriesColors.count]
                     for segment in lineSegments(series, cycles: chart.cycles) where segment.count >= 2 {
                         var path = Path()
                         for (i, point) in segment.enumerated() {
@@ -222,7 +209,7 @@ struct TrendsView: View {
                     if let x = xs[point.cycleStart] {
                         let y = yPos(point.dayCount, yMax: yMax, plot: plot)
                         let d = dotDiameter(point.meanIntensity)
-                        let color = Self.seriesColors[index % Self.seriesColors.count]
+                        let color = TrendsStyle.seriesColors[index % TrendsStyle.seriesColors.count]
                         let on = self.selected?.id == series.id
                             && self.selected?.point.cycleStart == point.cycleStart
                         Button {
@@ -327,7 +314,7 @@ struct TrendsView: View {
     private func detail(_ selected: SelectedDot) -> some View {
         let point = selected.point
         let name = app.t("symptom.id.\(selected.id)")
-        let color = Self.seriesColors[selected.colorIndex % Self.seriesColors.count]
+        let color = TrendsStyle.seriesColors[selected.colorIndex % TrendsStyle.seriesColors.count]
         let text = app.t("trends.detail", [
             "name": name,
             "start": pretty(point.cycleStart),
@@ -357,7 +344,7 @@ struct TrendsView: View {
         let key = tick.field == .dose ? "trends.tick.dose" : "trends.tick.schedule"
         let text = app.t(key, [
             "name": tick.nameSnapshot,
-            "value": displayDoseValue(tick.newValue),
+            "value": DoseUnitCopy.display(tick.newValue, languageCode: app.locale.language.rawValue),
             "date": tickDate(tick.effectiveDate),
         ])
         return Text(text)
@@ -366,14 +353,6 @@ struct TrendsView: View {
             .fixedSize(horizontal: false, vertical: true)
             .accessibilityIdentifier(A11yID.trendsTickCopy)
             .accessibilityValue("\(tick.nameSnapshot):\(tick.newValue)")
-    }
-
-    private func displayDoseValue(_ value: String) -> String {
-        guard app.locale.language == .de else { return value }
-        var out = value
-        out = out.replacingOccurrences(of: "pumps", with: "Hub", options: .caseInsensitive)
-        out = out.replacingOccurrences(of: "pump", with: "Hub", options: .caseInsensitive)
-        return out
     }
 
     private func containerValue(_ result: SymptomTrendResult) -> String {

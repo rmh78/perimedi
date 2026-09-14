@@ -7,14 +7,8 @@ struct TrendsPickerSheet: View {
     @Environment(\.dialogClose) private var dialogClose
     @AppStorage("perimedi.trends.selected") private var selectedStorage = ""
 
-    private static let seriesColors: [Color] = [
-        Color(hex: "#c47f00"),
-        Color(hex: "#d43d6c"),
-        Color(hex: "#6b5ca5"),
-    ]
-
     var body: some View {
-        let storedIds = parseStored()
+        let storedIds = TrendsSelectionStorage.parse(selectedStorage)
         let result = SymptomTrendLogic.summarize(
             today: DateKeys.todayKey(),
             periods: store.periods,
@@ -90,13 +84,6 @@ struct TrendsPickerSheet: View {
     private func seriesColor(for id: String, selectedIds: [String]) -> Color {
         let ordered = SymptomId.allCases.map(\.rawValue).filter { selectedIds.contains($0) }
         let index = ordered.firstIndex(of: id) ?? 0
-        return Self.seriesColors[index % Self.seriesColors.count]
-    }
-
-    private func parseStored() -> [String]? {
-        let raw = selectedStorage.trimmingCharacters(in: .whitespacesAndNewlines)
-        if raw.isEmpty { return nil }
-        if raw == "-" { return [] }
-        return raw.split(separator: ",").map(String.init)
+        return TrendsStyle.seriesColors[index % TrendsStyle.seriesColors.count]
     }
 }
