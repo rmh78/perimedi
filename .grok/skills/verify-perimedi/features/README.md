@@ -7,7 +7,7 @@ This directory is the maintained verification source. Open one feature file for 
 ## Baseline preconditions
 
 - macOS with Xcode; `source ios/env.sh` if `xcode-select` is Command Line Tools.
-- Isolation is `--run-id` plus simulator UDID (`SIM_UDID` or `SIM_DEVICE`, default iPhone 17e). Do not pass `--checkout`.
+- Isolation is `--run-id` plus simulator UDID (`SIM_UDID` or `SIM_OS`, iPhone 17e only). Do not pass `--checkout`.
 - Run `control-perimedi --run-id "$RUN_ID" doctor` and require `doctor: ok` before driving.
 - Never drive an instance that was not started by this verification run. Refuse a simulator that already has PeriMedi installed unless this run-id holds the lock.
 - Journey launches are `-en -clear -today=2026-03-15 -uiTesting`. Do not pass `-journeyStep` or `-loadSample` on those tests.
@@ -44,7 +44,7 @@ Practical test walk for that order:
 3. `PeriMediUITests/FirstUseJourneyTests/testMoreRemindersControls` — More, visit PDF, backup cancel
 4. `PeriMediUITests/FirstUseJourneyTests/testDoseReminderTaken` — reminders Taken
 
-PR-wide equivalent: `bash ios/scripts/verify.sh`.
+PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verify`.
 
 ## Features
 

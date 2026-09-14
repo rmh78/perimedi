@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Drive PeriMedi on an iPhone Simulator for agent verification.
-# Isolation handle is --run-id plus the simulator UDID. Do not pass --checkout.
 set -euo pipefail
 
 SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -13,17 +11,23 @@ source "$ROOT/ios/env.sh"
 BUNDLE="app.perimedi.ios"
 PROJECT="$ROOT/ios/PeriMedi.xcodeproj"
 DERIVED="$ROOT/ios/DerivedData"
-PREFERRED_DEVICE="${SIM_DEVICE:-iPhone 17e}"
+RESULT="$DERIVED/PeriMedi.xcresult"
+REQUIRED_DEVICE="iPhone 17e"
 PREFERRED_OS="${SIM_OS:-}"
+VERIFY_SUITE_ID="control-perimedi-verify"
 
 usage() {
   cat <<'EOF'
 control-perimedi — PeriMedi iOS verification driver
 
-Require --run-id on every command. Isolation is that id plus the simulator
-UDID (SIM_UDID, or SIM_DEVICE / SIM_OS, default iPhone 17e). Do not pass
---checkout. Do not drive a simulator that already has PeriMedi installed
-unless this run-id holds the lock.
+Full product UI proof (no --run-id):
+
+  control-perimedi verify
+
+Agents. Require --run-id. Isolation is that id plus the simulator
+UDID (SIM_UDID, or SIM_OS, iPhone 17e only). Do not pass --checkout.
+Do not drive a simulator that already has PeriMedi installed unless
+this run-id holds the lock.
 
   control-perimedi --run-id <id> doctor
   control-perimedi --run-id <id> launch
@@ -52,22 +56,38 @@ udid_named() {
   fi
 }
 
+sim_name_from_line() {
+  echo "$1" | awk '{
+    sub(/^[[:space:]]+/, "")
+    if (match($0, / \([A-F0-9-]{36}\)/)) {
+      print substr($0, 1, RSTART-1)
+    }
+  }'
+}
+
+require_iphone_17e_env() {
+  if [[ -n "${SIM_DEVICE:-}" && "$SIM_DEVICE" != "$REQUIRED_DEVICE" ]]; then
+    fail "SIM_DEVICE must be ${REQUIRED_DEVICE} (got '${SIM_DEVICE}')"
+  fi
+}
+
 resolve_udid() {
   if [[ -n "${SIM_UDID:-}" ]]; then
-    local line
+    local line name
     line="$(xcrun simctl list devices | grep "${SIM_UDID}" | head -n 1 || true)"
     [[ -n "$line" ]] || fail "SIM_UDID ${SIM_UDID} is not a known simulator"
     UDID="${SIM_UDID}"
     DEVICE_LINE="$line"
+    name="$(sim_name_from_line "$DEVICE_LINE")"
+    [[ "$name" == "$REQUIRED_DEVICE" ]] || fail "SIM_UDID ${SIM_UDID} is '${name}', not ${REQUIRED_DEVICE}"
     return
   fi
-  UDID="$(udid_named "$PREFERRED_DEVICE" "$PREFERRED_OS")"
-  [[ -n "$UDID" ]] || fail "required simulator '${PREFERRED_DEVICE}${PREFERRED_OS:+ (iOS $PREFERRED_OS)}' not found"
+  UDID="$(udid_named "$REQUIRED_DEVICE" "$PREFERRED_OS")"
+  [[ -n "$UDID" ]] || fail "required simulator '${REQUIRED_DEVICE}${PREFERRED_OS:+ (iOS $PREFERRED_OS)}' not found"
   DEVICE_LINE="$(xcrun simctl list devices | grep "$UDID" | head -n 1 || true)"
 }
 
 sim_state() {
-  # "    iPhone 17e (UUID) (Booted)" — last (...) group is Booted/Shutdown.
   echo "$DEVICE_LINE" | awk -F '[()]' '{print $(NF-1)}' | tr -d ' '
 }
 
@@ -83,6 +103,10 @@ read_lock_run() {
   if [[ -f "$f" ]]; then
     cat "$f"
   fi
+}
+
+uninstall_app() {
+  xcrun simctl uninstall "$UDID" "$BUNDLE" 2>/dev/null || true
 }
 
 RUN_ID=""
@@ -104,7 +128,7 @@ while [[ $# -gt 0 ]]; do
       usage
       exit 0
       ;;
-    doctor|launch|drive|cleanup)
+    doctor|launch|drive|cleanup|verify)
       [[ -z "$CMD" ]] || fail "already have command $CMD"
       CMD="$1"
       shift
@@ -115,13 +139,19 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-[[ -n "$CMD" ]] || { usage >&2; fail "need doctor, launch, drive, or cleanup"; }
-[[ -n "$RUN_ID" ]] || fail "need --run-id"
-[[ "$RUN_ID" =~ ^[A-Za-z0-9._-]+$ ]] || fail "run-id must match [A-Za-z0-9._-]+"
+[[ -n "$CMD" ]] || { usage >&2; fail "need doctor, launch, drive, cleanup, or verify"; }
+require_iphone_17e_env
 
-EVIDENCE="$SKILL_DIR/evidence/$RUN_ID"
-RUNS="$SKILL_DIR/runs/$RUN_ID"
-STATE="$RUNS/state"
+if [[ "$CMD" == "verify" ]]; then
+  [[ -z "$RUN_ID" ]] || fail "verify does not take --run-id"
+  [[ -z "$TEST" ]] || fail "verify does not take --test"
+else
+  [[ -n "$RUN_ID" ]] || fail "need --run-id"
+  [[ "$RUN_ID" =~ ^[A-Za-z0-9._-]+$ ]] || fail "run-id must match [A-Za-z0-9._-]+"
+  EVIDENCE="$SKILL_DIR/evidence/$RUN_ID"
+  RUNS="$SKILL_DIR/runs/$RUN_ID"
+  STATE="$RUNS/state"
+fi
 
 load_state() {
   if [[ -f "$STATE" ]]; then
@@ -151,9 +181,17 @@ acquire_lock() {
     return
   fi
   if [[ -n "$holder" ]]; then
-    fail "simulator $UDID is locked by run-id $holder (lock $dir). Refuse double-drive. Cleanup that run, or set SIM_UDID / SIM_DEVICE to another iPhone."
+    fail "simulator $UDID is locked by run-id $holder (lock $dir). Refuse double-drive. Cleanup that run."
   fi
   fail "simulator $UDID has a lock directory $dir with no run_id. Remove it only if no other verification run owns this UDID."
+}
+
+release_lock() {
+  local dir
+  dir="$(lock_dir)"
+  if [[ -d "$dir" && "$(read_lock_run)" == "$RUN_ID" ]]; then
+    rm -rf "$dir"
+  fi
 }
 
 require_our_lock() {
@@ -220,7 +258,7 @@ cmd_doctor() {
       return 1
     fi
     if app_installed && [[ "$holder" != "$RUN_ID" ]]; then
-      echo "doctor: fail (PeriMedi already installed on $UDID without this run-id. That is a shared instance. Set SIM_DEVICE to another iPhone, or uninstall only if you own that install.)"
+      echo "doctor: fail (PeriMedi already installed on $UDID without this run-id. That is a shared instance. Uninstall only if you own that install.)"
       return 1
     fi
   fi
@@ -233,6 +271,7 @@ cmd_doctor() {
 }
 
 disable_hardware_keyboard() {
+  # FB9148288: Simulator samples ConnectHardwareKeyboard at boot.
   defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool false
   local plist="$HOME/Library/Preferences/com.apple.iphonesimulator.plist"
   if [[ -f "$plist" ]]; then
@@ -254,7 +293,7 @@ cmd_launch() {
     fail "simulator $UDID is locked by run-id $holder. Refuse double-drive."
   fi
   if app_installed && [[ "$holder" != "$RUN_ID" ]]; then
-    fail "PeriMedi is already installed on $UDID and this run does not hold the lock. Refuse to steal a shared instance. Set SIM_UDID or SIM_DEVICE to another iPhone (iPhone 17 if 17e is the user's)."
+    fail "PeriMedi is already installed on $UDID and this run does not hold the lock. Refuse to steal a shared instance."
   fi
 
   acquire_lock
@@ -353,10 +392,8 @@ cmd_cleanup() {
     if [[ "${BOOTED_BY_US:-0}" == "1" ]]; then
       xcrun simctl shutdown "$UDID" 2>/dev/null || true
     fi
-    local dir
-    dir="$(lock_dir)"
-    if [[ -d "$dir" && "$(read_lock_run)" == "$RUN_ID" ]]; then
-      rm -rf "$dir"
+    if [[ "$(read_lock_run)" == "$RUN_ID" ]]; then
+      release_lock
     fi
   fi
   rm -f "$STATE"
@@ -364,9 +401,109 @@ cmd_cleanup() {
   printf 'cleanup: ok evidence remains at %s\n' "$EVIDENCE"
 }
 
+dump_xcresult() {
+  if [[ -d "$RESULT" ]]; then
+    xcrun xcresulttool get test-results summary --path "$RESULT" \
+      || xcrun xcresulttool get test-results tests --path "$RESULT" \
+      || true
+  fi
+}
+
+cmd_verify() {
+  if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
+    python3 "$ROOT/ios/scripts/check-feature-map.py"
+    python3 "$ROOT/ios/scripts/check-feature-layout.py"
+    python3 "$ROOT/ios/scripts/check-l10n-layout.py"
+    python3 "$ROOT/ios/scripts/check-domain-boundary.py"
+    python3 "$ROOT/ios/scripts/check-openspec-sync.py"
+    python3 "$ROOT/ios/scripts/check-ui-coverage.py" --fail-uncovered
+    python3 "$ROOT/ios/scripts/check-screen-catalog.py"
+  fi
+
+  [[ "$(uname -s)" == "Darwin" ]] || fail "domain and UI tests need macOS with Xcode and an iPhone Simulator"
+
+  if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
+    swift test --package-path "$ROOT/ios"
+  fi
+
+  RUN_ID="$VERIFY_SUITE_ID"
+  resolve_udid
+  echo "device: $DEVICE_LINE"
+
+  local holder
+  holder="$(read_lock_run)"
+  if [[ -n "$holder" && "$holder" != "$RUN_ID" ]]; then
+    fail "simulator $UDID is locked by run-id $holder (lock $(lock_dir)). Refuse double-drive. Cleanup that run."
+  fi
+  if app_installed && [[ "$holder" != "$RUN_ID" ]]; then
+    if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
+      fail "PeriMedi is already installed on $UDID and this run does not hold the lock. Refuse to steal a shared instance."
+    fi
+  fi
+
+  acquire_lock
+  VERIFY_LOCK_HELD=1
+  trap 'if [[ "${VERIFY_LOCK_HELD:-0}" == 1 ]]; then uninstall_app; release_lock; VERIFY_LOCK_HELD=0; fi' EXIT
+
+  disable_hardware_keyboard
+  xcrun simctl shutdown "$UDID" 2>/dev/null || true
+  xcrun simctl boot "$UDID"
+  xcrun simctl bootstatus "$UDID" -b
+  xcrun simctl status_bar "$UDID" override --time "9:41" --batteryState charged --batteryLevel 100 \
+    --wifiMode active --wifiBars 3 --cellularMode active --cellularBars 4 --dataNetwork wifi \
+    || echo "control-perimedi: status_bar override skipped" >&2
+
+  uninstall_app
+
+  rm -rf "$RESULT"
+  local skip_catalog=0
+  if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+    skip_catalog=1
+    echo "Skipping ScreenCatalogTests on CI (committed PNGs; ids job checks they exist)"
+  elif [[ "${SCREEN_CATALOG:-1}" == "0" ]]; then
+    skip_catalog=1
+    echo "Skipping ScreenCatalogTests (SCREEN_CATALOG=0)"
+  fi
+
+  set +e
+  if [[ "$skip_catalog" -eq 1 ]]; then
+    xcodebuild test \
+      -project "$PROJECT" \
+      -scheme PeriMedi \
+      -destination "platform=iOS Simulator,id=$UDID" \
+      -derivedDataPath "$DERIVED" \
+      -resultBundlePath "$RESULT" \
+      -skip-testing:PeriMediUITests/ScreenCatalogTests \
+      CODE_SIGNING_ALLOWED=NO
+  else
+    xcodebuild test \
+      -project "$PROJECT" \
+      -scheme PeriMedi \
+      -destination "platform=iOS Simulator,id=$UDID" \
+      -derivedDataPath "$DERIVED" \
+      -resultBundlePath "$RESULT" \
+      CODE_SIGNING_ALLOWED=NO
+  fi
+  local status=$?
+  set -e
+
+  if [[ "$status" -ne 0 ]]; then
+    dump_xcresult
+    fail "xcodebuild test exited $status"
+  fi
+
+  python3 "$ROOT/ios/scripts/check-screen-catalog.py"
+
+  uninstall_app
+  release_lock
+  VERIFY_LOCK_HELD=0
+  printf 'verify: ok\n'
+}
+
 case "$CMD" in
   doctor) cmd_doctor ;;
   launch) cmd_launch ;;
   drive) cmd_drive ;;
   cleanup) cmd_cleanup ;;
+  verify) cmd_verify ;;
 esac

@@ -13,11 +13,11 @@ PeriMedi stores domain data in SwiftData. When an Apple ID is signed in and the 
 
 One published `StoreSnapshot` means one SwiftUI invalidation per refresh.
 
-Green `ui` / unsigned `verify.sh` only proves the local store path. They do **not** prove already-running CloudKit follow.
+Green `ui` / unsigned `control-perimedi verify` only proves the local store path. They do **not** prove already-running CloudKit follow.
 
 ## Simulator without iCloud
 
-On this machine the Simulator is the required milestone. Unsigned Simulator builds (`CODE_SIGNING_ALLOWED=NO`, including `verify.sh`) have **no CloudKit entitlement**; asking SwiftData for a private CloudKit database SIGTRAPs. The app therefore uses a local-only store unless the process is entitled for `iCloud.app.perimedi.ios`.
+On this machine the Simulator is the required milestone. Unsigned Simulator builds (`CODE_SIGNING_ALLOWED=NO`, including `control-perimedi verify`) have **no CloudKit entitlement**; asking SwiftData for a private CloudKit database SIGTRAPs. The app therefore uses a local-only store unless the process is entitled for `iCloud.app.perimedi.ios`.
 
 Device builds put that container in `embedded.mobileprovision`. Signed Simulator builds usually have **no** provision file; CloudKit is still enabled when the process entitlements include the container (Xcode “Sign to Run Locally” Simulated.xcent, or a development identity + `PeriMedi.entitlements`).
 
@@ -27,7 +27,7 @@ Device builds put that container in `embedded.mobileprovision`. Signed Simulator
 
 ## Signed Simulator pair (local device-switch)
 
-`verify.sh` cannot do this (it forces unsigned). From the repo root:
+`control-perimedi verify` cannot do this (it forces unsigned). From the repo root:
 
 ```bash
 bash ios/scripts/setup-signed-icloud-sims.sh

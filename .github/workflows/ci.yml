@@ -53,13 +53,11 @@ jobs:
       actions: write
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
-      SIM_DEVICE: iPhone 17e
       SIM_OS: "26.5"
-      STRICT_SIM: "1"
     steps:
       - uses: actions/checkout@v5
       - name: UI tests
-        run: bash ios/scripts/verify.sh
+        run: .grok/skills/verify-perimedi/scripts/control-perimedi verify
       - name: Upload xcresult on failure
         if: failure()
         uses: actions/upload-artifact@v4

@@ -27,7 +27,7 @@ Launch extra: `-remindIn=2` fires the next pending slot in-process (see `FirstUs
 ## Gotchas
 
 - Springboard banners are unreliable in XCTest. Use `-remindIn`, not a real notification.
-- Banner proof is on **iPhone 17e**. On iPhone 17, `testDoseReminderTaken` can save the med and still miss `reminder.banner` within 12s (`-remindIn=2`). Do not treat that miss as coverage.
+- Banner proof is on iPhone 17e only. `testDoseReminderTaken` can save the med and still miss `reminder.banner` within 12s (`-remindIn=2`) on any other phone. Do not treat that miss as coverage.
 - Taken on the banner uses the same path as the notification action. System banners use title/subtitle/body (medication name is subtitle, not title). Springboard copy is not XCTest-asserted.
 - German Taken is “Genommen” so it matches the body (“Tippe auf Genommen”).
 - Master switch off on More means no banner, even if `med.remind` is on.
