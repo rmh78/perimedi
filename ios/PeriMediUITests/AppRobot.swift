@@ -56,7 +56,8 @@ struct AppRobot {
         }
     }
 
-    /// Screen catalog only. Allows `-loadSample` and `-de`. Not the journey proof.
+    /// Screen catalog only. Allows `-loadSample` and fixtures. Not the journey proof.
+    /// German shots switch via More language pills after an EN launch (flags apply once).
     func launchCatalog(locale: String, extra: [String] = []) {
         XCTAssertTrue(locale == "en" || locale == "de", "catalog locale \(locale)")
         XCTAssertFalse(extra.contains { $0.hasPrefix("-journeyStep") })
