@@ -1,0 +1,372 @@
+#!/usr/bin/env bash
+# Drive PeriMedi on an iPhone Simulator for agent verification.
+# Isolation handle is --run-id plus the simulator UDID. Do not pass --checkout.
+set -euo pipefail
+
+SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT="$(cd "$SKILL_DIR/../../.." && pwd)"
+cd "$ROOT"
+
+# shellcheck disable=SC1091
+source "$ROOT/ios/env.sh"
+
+BUNDLE="app.perimedi.ios"
+PROJECT="$ROOT/ios/PeriMedi.xcodeproj"
+DERIVED="$ROOT/ios/DerivedData"
+PREFERRED_DEVICE="${SIM_DEVICE:-iPhone 17e}"
+PREFERRED_OS="${SIM_OS:-}"
+
+usage() {
+  cat <<'EOF'
+control-perimedi — PeriMedi iOS verification driver
+
+Require --run-id on every command. Isolation is that id plus the simulator
+UDID (SIM_UDID, or SIM_DEVICE / SIM_OS, default iPhone 17e). Do not pass
+--checkout. Do not drive a simulator that already has PeriMedi installed
+unless this run-id holds the lock.
+
+  control-perimedi --run-id <id> doctor
+  control-perimedi --run-id <id> launch
+  control-perimedi --run-id <id> drive --test PeriMediUITests/<Class>/<method>
+  control-perimedi --run-id <id> cleanup
+
+Evidence: .grok/skills/verify-perimedi/evidence/<id>/
+Lock:     /tmp/perimedi-verify-<udid>.lock
+State:    .grok/skills/verify-perimedi/runs/<id>/state
+EOF
+}
+
+fail() { printf 'control-perimedi: %s\n' "$*" >&2; exit 1; }
+
+udid_named() {
+  local name="$1"
+  local os="${2:-}"
+  if [[ -n "$os" ]]; then
+    xcrun simctl list devices available | awk -F '[()]' -v n="$name (" -v os="$os" '
+      $0 ~ "^-- iOS " os " " {p=1; next}
+      /^-- / {p=0}
+      p && index($0, n) {print $2; exit}
+    '
+  else
+    xcrun simctl list devices available | awk -F '[()]' -v n="$name (" 'index($0, n) {print $2; exit}'
+  fi
+}
+
+resolve_udid() {
+  if [[ -n "${SIM_UDID:-}" ]]; then
+    local line
+    line="$(xcrun simctl list devices | grep "${SIM_UDID}" | head -n 1 || true)"
+    [[ -n "$line" ]] || fail "SIM_UDID ${SIM_UDID} is not a known simulator"
+    UDID="${SIM_UDID}"
+    DEVICE_LINE="$line"
+    return
+  fi
+  UDID="$(udid_named "$PREFERRED_DEVICE" "$PREFERRED_OS")"
+  [[ -n "$UDID" ]] || fail "required simulator '${PREFERRED_DEVICE}${PREFERRED_OS:+ (iOS $PREFERRED_OS)}' not found"
+  DEVICE_LINE="$(xcrun simctl list devices | grep "$UDID" | head -n 1 || true)"
+}
+
+sim_state() {
+  # "    iPhone 17e (UUID) (Booted)" — last (...) group is Booted/Shutdown.
+  echo "$DEVICE_LINE" | awk -F '[()]' '{print $(NF-1)}' | tr -d ' '
+}
+
+app_installed() {
+  xcrun simctl get_app_container "$UDID" "$BUNDLE" >/dev/null 2>&1
+}
+
+lock_dir() { printf '/tmp/perimedi-verify-%s.lock' "$UDID"; }
+
+read_lock_run() {
+  local f
+  f="$(lock_dir)/run_id"
+  if [[ -f "$f" ]]; then
+    cat "$f"
+  fi
+}
+
+RUN_ID=""
+TEST=""
+CMD=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --run-id)
+      [[ $# -ge 2 ]] || fail "--run-id needs a value"
+      RUN_ID="$2"
+      shift 2
+      ;;
+    --test)
+      [[ $# -ge 2 ]] || fail "--test needs a value"
+      TEST="$2"
+      shift 2
+      ;;
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    doctor|launch|drive|cleanup)
+      [[ -z "$CMD" ]] || fail "already have command $CMD"
+      CMD="$1"
+      shift
+      ;;
+    *)
+      fail "unknown argument: $1"
+      ;;
+  esac
+done
+
+[[ -n "$CMD" ]] || { usage >&2; fail "need doctor, launch, drive, or cleanup"; }
+[[ -n "$RUN_ID" ]] || fail "need --run-id"
+[[ "$RUN_ID" =~ ^[A-Za-z0-9._-]+$ ]] || fail "run-id must match [A-Za-z0-9._-]+"
+
+EVIDENCE="$SKILL_DIR/evidence/$RUN_ID"
+RUNS="$SKILL_DIR/runs/$RUN_ID"
+STATE="$RUNS/state"
+
+load_state() {
+  if [[ -f "$STATE" ]]; then
+    # shellcheck disable=SC1090
+    source "$STATE"
+  fi
+}
+
+write_state() {
+  cat >"$STATE" <<EOF
+UDID=$UDID
+BOOTED_BY_US=${BOOTED_BY_US:-0}
+WAS_BOOTED=${WAS_BOOTED:-0}
+EOF
+}
+
+acquire_lock() {
+  local dir
+  dir="$(lock_dir)"
+  if mkdir "$dir" 2>/dev/null; then
+    printf '%s\n' "$RUN_ID" >"$dir/run_id"
+    return
+  fi
+  local holder
+  holder="$(read_lock_run)"
+  if [[ "$holder" == "$RUN_ID" ]]; then
+    return
+  fi
+  if [[ -n "$holder" ]]; then
+    fail "simulator $UDID is locked by run-id $holder (lock $dir). Refuse double-drive. Cleanup that run, or set SIM_UDID / SIM_DEVICE to another iPhone."
+  fi
+  fail "simulator $UDID has a lock directory $dir with no run_id. Remove it only if no other verification run owns this UDID."
+}
+
+require_our_lock() {
+  local holder
+  holder="$(read_lock_run)"
+  [[ "$holder" == "$RUN_ID" ]] || fail "run-id $RUN_ID does not hold the lock on $UDID (holder: ${holder:-none}). Launch first, and do not drive a shared instance."
+}
+
+cmd_doctor() {
+  local rc=0
+  if [[ "$(uname -s)" != "Darwin" ]]; then
+    echo "doctor: fail (need macOS with Xcode and an iPhone Simulator)"
+    return 1
+  fi
+  echo "darwin: $(uname -s)"
+  echo "developer_dir: ${DEVELOPER_DIR:-}"
+  xcodebuild -version | sed 's/^/xcode: /'
+
+  python3 "$ROOT/ios/scripts/check-feature-map.py" || rc=1
+  python3 "$ROOT/ios/scripts/check-feature-layout.py" || rc=1
+  python3 "$ROOT/ios/scripts/check-l10n-layout.py" || rc=1
+  python3 "$ROOT/ios/scripts/check-domain-boundary.py" || rc=1
+  python3 "$ROOT/ios/scripts/check-openspec-sync.py" || rc=1
+  python3 "$ROOT/ios/scripts/check-ui-coverage.py" --fail-uncovered || rc=1
+  python3 "$ROOT/ios/scripts/check-screen-catalog.py" || rc=1
+
+  load_state
+  if [[ -z "${UDID:-}" ]]; then
+    resolve_udid
+  else
+    DEVICE_LINE="$(xcrun simctl list devices | grep "$UDID" | head -n 1 || true)"
+    [[ -n "$DEVICE_LINE" ]] || fail "state UDID $UDID is not a known simulator"
+  fi
+  echo "device: $DEVICE_LINE"
+  echo "udid: $UDID"
+  echo "sim_state: $(sim_state)"
+  local holder
+  holder="$(read_lock_run)"
+  echo "lock: ${holder:-none}"
+  if app_installed; then
+    echo "app: installed"
+  else
+    echo "app: absent"
+  fi
+
+  if [[ -f "$STATE" ]]; then
+    require_our_lock
+    local st
+    st="$(sim_state)"
+    if [[ "$st" != "Booted" ]]; then
+      echo "doctor: fail (this run launched $UDID but sim_state=$st)"
+      return 1
+    fi
+    local kb
+    kb="$(defaults read com.apple.iphonesimulator ConnectHardwareKeyboard 2>/dev/null || echo '?')"
+    echo "connect_hardware_keyboard: $kb"
+    if [[ "$kb" != "0" ]]; then
+      echo "doctor: fail (ConnectHardwareKeyboard must be false so typeText hits the software keyboard)"
+      return 1
+    fi
+  else
+    if [[ -n "$holder" && "$holder" != "$RUN_ID" ]]; then
+      echo "doctor: fail (UDID locked by $holder)"
+      return 1
+    fi
+    if app_installed && [[ "$holder" != "$RUN_ID" ]]; then
+      echo "doctor: fail (PeriMedi already installed on $UDID without this run-id. That is a shared instance. Set SIM_DEVICE to another iPhone, or uninstall only if you own that install.)"
+      return 1
+    fi
+  fi
+
+  if [[ "$rc" -ne 0 ]]; then
+    echo "doctor: fail (a python rail failed)"
+    return 1
+  fi
+  echo "doctor: ok"
+}
+
+disable_hardware_keyboard() {
+  defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool false
+  local plist="$HOME/Library/Preferences/com.apple.iphonesimulator.plist"
+  if [[ -f "$plist" ]]; then
+    /usr/libexec/PlistBuddy -c "Set :DevicePreferences:${UDID}:ConnectHardwareKeyboard false" "$plist" 2>/dev/null \
+      || /usr/libexec/PlistBuddy -c "Add :DevicePreferences:${UDID}:ConnectHardwareKeyboard bool false" "$plist" 2>/dev/null \
+      || true
+  fi
+}
+
+cmd_launch() {
+  [[ "$(uname -s)" == "Darwin" ]] || fail "launch needs macOS with Xcode"
+  mkdir -p "$EVIDENCE" "$RUNS"
+  resolve_udid
+  load_state
+
+  local holder
+  holder="$(read_lock_run)"
+  if [[ -n "$holder" && "$holder" != "$RUN_ID" ]]; then
+    fail "simulator $UDID is locked by run-id $holder. Refuse double-drive."
+  fi
+  if app_installed && [[ "$holder" != "$RUN_ID" ]]; then
+    fail "PeriMedi is already installed on $UDID and this run does not hold the lock. Refuse to steal a shared instance. Set SIM_UDID or SIM_DEVICE to another iPhone (iPhone 17 if 17e is the user's)."
+  fi
+
+  acquire_lock
+
+  local st
+  st="$(sim_state)"
+  WAS_BOOTED=0
+  BOOTED_BY_US=0
+  if [[ "$st" == "Booted" ]]; then
+    WAS_BOOTED=1
+  else
+    BOOTED_BY_US=1
+    disable_hardware_keyboard
+    xcrun simctl boot "$UDID"
+  fi
+  disable_hardware_keyboard
+  xcrun simctl bootstatus "$UDID" -b
+  xcrun simctl status_bar "$UDID" override --time "9:41" --batteryState charged --batteryLevel 100 \
+    --wifiMode active --wifiBars 3 --cellularMode active --cellularBars 4 --dataNetwork wifi \
+    || echo "control-perimedi: status_bar override skipped" >&2
+
+  xcrun simctl uninstall "$UDID" "$BUNDLE" 2>/dev/null || true
+  xcrun simctl uninstall "$UDID" "${BUNDLE}.uitests.xctrunner" 2>/dev/null || true
+
+  DEVICE_LINE="$(xcrun simctl list devices | grep "$UDID" | head -n 1 || true)"
+  write_state
+  printf 'launch: ready udid=%s device=%s\n' "$UDID" "$DEVICE_LINE"
+}
+
+cmd_drive() {
+  [[ -n "$TEST" ]] || fail "drive needs --test PeriMediUITests/<Class>/<method>"
+  if [[ "$TEST" != PeriMediUITests/* ]]; then
+    TEST="PeriMediUITests/$TEST"
+  fi
+  load_state
+  [[ -n "${UDID:-}" ]] || fail "no launch state for run-id $RUN_ID; launch first"
+  DEVICE_LINE="$(xcrun simctl list devices | grep "$UDID" | head -n 1 || true)"
+  [[ -n "$DEVICE_LINE" ]] || fail "state UDID $UDID is not a known simulator"
+  require_our_lock
+  [[ "$(sim_state)" == "Booted" ]] || fail "simulator $UDID is not Booted"
+
+  mkdir -p "$EVIDENCE"
+  local slot_name
+  slot_name="$(printf '%s' "$TEST" | tr '/' '-')"
+  local slot="$EVIDENCE/$slot_name"
+  mkdir -p "$slot"
+  local result="$slot/PeriMedi.xcresult"
+  local log="$slot/xcodebuild.log"
+  rm -rf "$result"
+  printf '%s\n' "$TEST" >"$slot/test.txt"
+  printf 'destination id=%s\n' "$UDID" >"$slot/command.txt"
+  printf '%s\n' "$slot_name" >>"$EVIDENCE/drives.txt"
+
+  set +e
+  xcodebuild test \
+    -project "$PROJECT" \
+    -scheme PeriMedi \
+    -destination "platform=iOS Simulator,id=$UDID" \
+    -derivedDataPath "$DERIVED" \
+    -resultBundlePath "$result" \
+    -only-testing:"$TEST" \
+    CODE_SIGNING_ALLOWED=NO \
+    2>&1 | tee "$log"
+  local status=${PIPESTATUS[0]}
+  set -e
+
+  if [[ -d "$result" ]]; then
+    xcrun xcresulttool get test-results summary --path "$result" \
+      >"$slot/summary.txt" 2>/dev/null \
+      || xcrun xcresulttool get test-results tests --path "$result" \
+      >"$slot/summary.txt" 2>/dev/null \
+      || true
+  fi
+
+  if [[ "$status" -ne 0 ]]; then
+    fail "xcodebuild test exited $status (log $log)"
+  fi
+  if ! grep -q 'TEST SUCCEEDED' "$log"; then
+    fail "xcodebuild finished 0 but $log has no TEST SUCCEEDED"
+  fi
+  printf 'drive: ok test=%s evidence=%s\n' "$TEST" "$slot"
+}
+
+cmd_cleanup() {
+  load_state
+  if [[ -n "${UDID:-}" ]]; then
+    DEVICE_LINE="$(xcrun simctl list devices | grep "$UDID" | head -n 1 || true)"
+    local holder
+    holder="$(read_lock_run)"
+    if [[ "$holder" == "$RUN_ID" || -z "$holder" ]]; then
+      xcrun simctl uninstall "$UDID" "$BUNDLE" 2>/dev/null || true
+      xcrun simctl uninstall "$UDID" "${BUNDLE}.uitests.xctrunner" 2>/dev/null || true
+    else
+      echo "control-perimedi: skip uninstall; lock holder is $holder" >&2
+    fi
+    if [[ "${BOOTED_BY_US:-0}" == "1" ]]; then
+      xcrun simctl shutdown "$UDID" 2>/dev/null || true
+    fi
+    local dir
+    dir="$(lock_dir)"
+    if [[ -d "$dir" && "$(read_lock_run)" == "$RUN_ID" ]]; then
+      rm -rf "$dir"
+    fi
+  fi
+  rm -f "$STATE"
+  rmdir "$RUNS" 2>/dev/null || true
+  printf 'cleanup: ok evidence remains at %s\n' "$EVIDENCE"
+}
+
+case "$CMD" in
+  doctor) cmd_doctor ;;
+  launch) cmd_launch ;;
+  drive) cmd_drive ;;
+  cleanup) cmd_cleanup ;;
+esac

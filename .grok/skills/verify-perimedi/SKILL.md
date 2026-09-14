@@ -1,81 +1,105 @@
 ---
 name: verify-perimedi
-description: Use this when driving or checking PeriMedi UI from an agent. Maps each user-facing surface to A11yID strings and AppRobot, then says what visible state proves it worked.
+description: Use when driving or checking PeriMedi iOS UI from an agent, proving Cycle/Month/Trends/More behavior, or for /verify-perimedi. Maps each surface to A11yID and AppRobot. Do not invent identifiers.
+disable-model-invocation: true
 ---
 
 # Verify PeriMedi
 
-PeriMedi is a native iOS app. Proof is XCUITest on an iPhone Simulator (local default **iPhone 17e**), not markdown. Identifiers live in `ios/PeriMedi/App/A11yID.swift`. The harness is `ios/PeriMediUITests/AppRobot.swift`. Do not invent IDs.
+Native iOS app. Proof is XCUITest on an iPhone Simulator through `control-perimedi`, not markdown. Identifiers live in `ios/PeriMedi/App/A11yID.swift`. The in-test harness is `ios/PeriMediUITests/AppRobot.swift`. Read `features/` for the surface you are about to touch, then drive it.
 
-Read `features/` for the surface you are about to touch. Then drive it.
+`--run-id` plus the simulator UDID is the isolation handle. Require `--run-id` on every `control-perimedi` command. Do not pass `--checkout`. Refuse to drive a simulator that already has `app.perimedi.ios` installed unless this run-id holds the lock.
 
 ## Launch
 
-The doctor is one command:
+Prefer **iPhone 17e**. If that simulator already has PeriMedi (a user session), set `SIM_DEVICE` to another available iPhone (often `iPhone 17`) or pass `SIM_UDID`. Override OS with `SIM_OS` (for example `26.5`). Journey tests that type into fields are proven on 17e; a different iPhone can fail `clearAndType` when the software keyboard does not appear.
 
 ```bash
-bash ios/scripts/verify.sh
+.grok/skills/verify-perimedi/scripts/control-perimedi --run-id "$RUN_ID" launch
 ```
 
-That sources `ios/env.sh`, checks feature-map IDs, checks feature layout, checks domain boundary, fails UI-test coverage if a feature-map surface is uncovered, runs domain tests, uninstalls leftover PeriMedi, runs UI tests, checks `ios/docs/screens/` files exist (no pixel compare), and uninstalls again on success. Locally UI tests write the catalog PNGs unless `SCREEN_CATALOG=0`. CI skips `ScreenCatalogTests`. It prefers iPhone 17e, then iPhone 17. Override with `SIM_DEVICE` or `SIM_UDID`. Before it boots the Simulator, it turns Connect Hardware Keyboard off for that UDID so `typeText` hits the software keyboard.
+Ready when stdout contains `launch: ready udid=`. The helper boots that UDID if it was shut down, turns Connect Hardware Keyboard off (so `typeText` hits the software keyboard), freezes the status bar at 9:41, and uninstalls leftover PeriMedi **on that UDID only**. XCUITest launches the app per drive; there is no long-lived server. Booting a second simulator can leave the first Shutdown; if 17e was a user session, `xcrun simctl boot` that UDID again and do not uninstall it.
 
-Pieces, if you need one step:
+Teardown is `cleanup` on the same `--run-id`.
 
-Domain tests (no Simulator):
-
-```bash
-source ios/env.sh    # if xcode-select still points at Command Line Tools
-swift test --package-path ios
-```
-
-UI tests (local default: iPhone 17e):
-
-```bash
-xcodebuild test -project ios/PeriMedi.xcodeproj -scheme PeriMedi \
-  -destination 'platform=iOS Simulator,name=iPhone 17e' \
-  -derivedDataPath ios/DerivedData CODE_SIGNING_ALLOWED=NO
-```
-
-`AppRobot.launch()` always uses `-en -clear -today=2026-03-15 -uiTesting`. Never pass `-journeyStep` or `-loadSample` on the journey tests. `ScreenCatalogTests` uses `launchCatalog` (`-loadSample` / fixtures) and in-app language pills to write `ios/docs/screens/` in a few launches. Dose reminders in-process: `-remindIn=2`.
-
-Frozen test dates in `UITestDate`: today `2026-03-15`, yesterday `2026-03-14`, period `2026-03-07`–`2026-03-11`.
+`AppRobot.launch()` always uses `-en -clear -today=2026-03-15 -uiTesting`. Never pass `-journeyStep` or `-loadSample` on journey tests. `ScreenCatalogTests` may pass `-loadSample`. Frozen dates in `UITestDate`: today `2026-03-15`, yesterday `2026-03-14`, period `2026-03-07`–`2026-03-11`.
 
 ## Doctor
 
-Run `bash ios/scripts/verify.sh`. That is the doctor. Do not assemble the steps by hand unless you need a single piece.
+Read-only. Run first, and again whenever anything looks off. A capture against a stale or foreign instance is not evidence.
 
-- Watch **iPhone 17e** in Simulator when that device exists (Window → iPhone 17e).
-- The script sources `ios/env.sh` (needed when `xcode-select -p` is Command Line Tools).
-- It uninstalls leftover `app.perimedi.ios` before UI tests, and again after a pass. Failed tests leave the app so you can inspect.
-- Before boot it turns Simulator Connect Hardware Keyboard off for that UDID. `typeText` needs the software keyboard (the phone path).
-- `python3 ios/scripts/check-feature-map.py` must pass. It fails if an `A11yID` is not named in backticks under `features/` . Update the matching feature file in the same commit as the ID or surface change.
-- `python3 ios/scripts/check-feature-layout.py` must pass. Feature sheets live under `Features/Cycle`, `Features/Month`, or `Features/More`. `DialogChrome` stays in `Features/Sheets/`.
-- `python3 ios/scripts/check-domain-boundary.py` must pass. Domain owns schedule/cycle/therapy expansion; `Store.setDoseStatus` is the only dose-log writer.
-- `python3 ios/scripts/check-ui-coverage.py --fail-uncovered` must pass (the doctor and CI `ids` job pass the flag). It fails when a surface with distinctive IDs is never driven by UI tests. Waiting for `tab.more` is not coverage. More and backup journeys exist (`testMoreRemindersControls`). A bare local run without the flag stays advisory.
-- `python3 ios/scripts/check-screen-catalog.py` must pass. It fails only when an expected `ios/docs/screens/*.png` is missing. Pixel differences do not fail.
+```bash
+.grok/skills/verify-perimedi/scripts/control-perimedi --run-id "$RUN_ID" doctor
+```
+
+Pass is a final `doctor: ok`. It checks Darwin/Xcode, the python rails (`check-feature-map.py`, `check-feature-layout.py`, `check-l10n-layout.py`, `check-domain-boundary.py`, `check-openspec-sync.py`, `check-ui-coverage.py --fail-uncovered`, `check-screen-catalog.py`), that this run-id owns the UDID lock after launch, that the sim is Booted, and that Connect Hardware Keyboard is false. It fails if PeriMedi is already installed on the target UDID without this run-id.
+
+`bash ios/scripts/verify.sh` remains the full product doctor (domain tests + every UI test + uninstall). Use it for a PR-wide pass, not as the per-drive health check.
 
 ## Drive
 
 1. Open the matching file under `features/`.
 2. Get there the way a user would (bottom tabs, Cycle action buttons, sheets).
 3. Tap `A11yID` strings through `AppRobot` (`tap`, `waitFor`, `value(of:)`, `exists`).
-4. Type into fields the way a user does (`clearAndType` / `typeText`): tap, wait until the software keyboard exists, type once, assert the exact value. Do not paste, retry-loop `typeText`, use the clipboard menu, or test-only setters.
-5. Assert the observable state listed in that file (lane status, empty-meds value, month-day tokens).
+4. Type with `clearAndType` / `typeText`: tap, wait until the software keyboard exists, type once, assert the exact value. Do not paste, retry-loop `typeText`, use the clipboard menu, or test-only setters.
+5. Assert the observable state listed in that file.
 
-`AppRobot.pick` tries the option as an accessibility identifier first, then falls back to a visible label. Tests launch with `-en`. `addMedication` uses `med.mode.everyday` / `med.mode.cyclic`. IDs themselves are language-independent.
+```bash
+.grok/skills/verify-perimedi/scripts/control-perimedi --run-id "$RUN_ID" \
+  drive --test PeriMediUITests/FirstUseJourneyTests/testFirstUseJourney
+```
+
+Mapped tests:
+
+| Surface | `--test` |
+|---|---|
+| Cycle, period, med, symptom, Month | `PeriMediUITests/FirstUseJourneyTests/testFirstUseJourney` |
+| More, visit PDF, backup rows (cancel) | `PeriMediUITests/FirstUseJourneyTests/testMoreRemindersControls` |
+| Dose reminder Taken | `PeriMediUITests/FirstUseJourneyTests/testDoseReminderTaken` |
+| Trends empty / chart | `PeriMediUITests/SymptomTrendsTests/testSymptomTrendsNoScores` and `testSymptomTrendsChart` |
+
+`AppRobot.pick` tries an accessibility identifier first, then a visible label. Tests launch `-en`. `addMedication` uses `med.mode.everyday` / `med.mode.cyclic`.
+
+## Proof bar
+
+Do not submit "look, it opens." Proof is a production user path plus an observable result a skeptical reviewer would accept.
+
+- Exercise every reachable entry point, mode, gated variant, and the success, cancel, error, empty, and persistence paths the change can affect.
+- Show the trigger and the stable end state in the same evidence (`TEST SUCCEEDED` plus the assertions in that test / the values in the feature file).
+- Verify side effects (lane status, strip tokens, Month day values, banner gone), not only the final screen.
+- Run doctor first.
+- A proof that drives one convenient entry point is incomplete when the map lists others.
+- For a broad regression, walk `features/README.md` top to bottom (Full sweep). Driving one feature is not a sweep.
+
+PR-wide UI proof is still `verify: ok` from `bash ios/scripts/verify.sh` (or CI job `ui`). Domain `swift test --package-path ios` alone is not UI proof.
 
 ## Evidence
 
-A pass is `verify: ok` from `bash ios/scripts/verify.sh` on a Mac with Xcode. Domain `swift test --package-path ios` alone is not UI proof. CI job `ui` is the same proof on GitHub (17e if the image has it, else iPhone 17). Main-screen PNGs are `ios/docs/screens/` (see `ios/docs/screens.md`). Commit those after UI changes. UX reviews the Files changed image diff. Do not paste screenshot galleries into PR comments.
+Named location: `.grok/skills/verify-perimedi/evidence/<run-id>/`
 
-Existing journeys: `FirstUseJourneyTests.testFirstUseJourney`, `testMoreRemindersControls`, `testDoseReminderTaken`, `SymptomTrendsTests`, and `ScreenCatalogTests`.
+Each `drive` writes a subdirectory named after the `--test` path (slashes become dashes), for example `…/evidence/<run-id>/PeriMediUITests-SymptomTrendsTests-testSymptomTrendsNoScores/`. That slot holds `xcodebuild.log` (`TEST SUCCEEDED`), `summary.txt`, `test.txt`, `command.txt`, and `PeriMedi.xcresult`. Later drives on the same run-id must not delete earlier slots. `drives.txt` lists slot names in order. Exercise the real user path (`AppRobot` taps and `typeText`), not `-loadSample`, `-journeyStep`, or test-only setters. Journey tests never pass those flags.
+
+Main-screen PNGs for UX review are `ios/docs/screens/` (written by `ScreenCatalogTests` on a local `verify.sh` unless `SCREEN_CATALOG=0`). Commit those after UI changes. UX reviews the Files changed image diff. Do not paste screenshot galleries into PR comments. `control-perimedi drive` does not rewrite that catalog.
 
 ## Cleanup
 
-Do not commit `ios/DerivedData`, `ios/.build`, or secrets. The doctor uninstalls the Simulator app after a pass. If you changed the binary without the doctor, uninstall leftover PeriMedi yourself.
+```bash
+.grok/skills/verify-perimedi/scripts/control-perimedi --run-id "$RUN_ID" cleanup
+```
 
-## Product rails
+Uninstalls `app.perimedi.ios` and the UITest runner on the UDID this run locked, shuts that simulator down only if this run booted it, and deletes the lock and run state. It never kills by process name, never shuts down a simulator it found already Booted, and never deletes evidence. Failed iterations still need this cleanup so locks and leftover installs do not strand the next run.
 
-- Bottom nav is Cycle / Month / Trends / More. Cycle is home. Edit via sheets, not new full pages.
-- No PeriMedi server. Privacy stays on-device (optional iCloud for the same Apple ID).
-- No menstrual phase labels (follicular/luteal). Period UI is label + background only.
+Do not commit `ios/DerivedData`, `ios/.build`, or secrets.
+
+## Helpers
+
+Driver (executable): `.grok/skills/verify-perimedi/scripts/control-perimedi`
+
+```bash
+.grok/skills/verify-perimedi/scripts/control-perimedi --run-id "$RUN_ID" doctor
+.grok/skills/verify-perimedi/scripts/control-perimedi --run-id "$RUN_ID" launch
+.grok/skills/verify-perimedi/scripts/control-perimedi --run-id "$RUN_ID" doctor
+.grok/skills/verify-perimedi/scripts/control-perimedi --run-id "$RUN_ID" \
+  drive --test PeriMediUITests/FirstUseJourneyTests/testFirstUseJourney
+.grok/skills/verify-perimedi/scripts/control-perimedi --run-id "$RUN_ID" cleanup
+```

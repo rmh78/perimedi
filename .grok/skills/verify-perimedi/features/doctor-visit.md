@@ -19,7 +19,7 @@ Bottom bar → More → Doctor visit → View PDF → pick cycle(s) → Continue
 | View PDF | `more.sharePdf` | `testMoreRemindersControls` scrolls, waits, taps. Opens `visit.range`, not the system share sheet. |
 | Range sheet | `visit.range` | After tapping View PDF. |
 | Cycle row | `visit.range.cycle.{start}` | `A11yID.visitRangeCycle(_:)` → `visit.range.cycle.{start}`. Catalog with sample waits `visit.range.cycle.2026-02-02`. |
-| Include previous | `visit.range.previous` | Toggle. Shown when the selected cycle has a previous completed cycle. Journey includes the ID string; empty store has no toggle. |
+| Include previous | `visit.range.previous` | Toggle. Shown when the selected cycle has a previous completed cycle. `testMoreRemindersControls` is an empty store — no toggle. Catalog with sample waits `visit.range.cycle.2026-02-02`. |
 | Continue | `visit.range.continue` | Journey taps it. |
 | Preview | `visit.pdf.preview` | After Continue. Stay in PeriMedi. |
 | Share on preview | `visit.pdf.share` | Journey waits. Do not tap — system share sheet has no PeriMedi IDs. |

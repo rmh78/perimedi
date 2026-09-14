@@ -8,8 +8,8 @@ Home. Bottom tab. Default after launch.
 - Cycle pager (previous / next / today / label)
 - Action buttons: add med, cycle settings (period), add symptom
 - Med lanes (name slug) with status and edit
-- Day strip under the plot
-- Period chip and symptom-score chips on the plot
+- Day strip at the top of the plot canvas (dose tracks below)
+- Period chip and symptom-score chips for the **selected** day
 - Effect sentence (cycle-to-cycle comparison; missing scores are not 0)
 
 ## How to get to it (user POV)
@@ -26,11 +26,11 @@ Open the app, or tap Cycle in the bottom bar. Sheets for med / period / symptom 
 | Add symptom | `cycle.action.symptom` | Opens `sheet.symptom` |
 | Empty meds chip | `cycle.empty.meds` | First-use value contains `need-period` and `need-med`. After a period only: exactly `need-med`. Gone once a lane exists. |
 | Intro | `cycle.intro` | Present on empty home. Gone after a period is logged. |
-| Period chip | `cycle.chip.period` | Exists when the visible range includes a logged period (pager back in the first-use journey). |
+| Period chip | `cycle.chip.period` | Exists when the **selected** day is a logged period (first-use pages back until a period day is selected). Predicted-period chip has no ID. |
 | Symptom chip | `cycle.chip.score.{id}` | `A11yID.chipScore(_:)` returns `cycle.chip.score.{id}` (literal prefix `cycle.chip.score.`). CycleView attaches that ID. After logging hot flash 3, `cycle.chip.score.hot_flash` value contains `strong` (en). |
 | Pager prev / next / today / label | `cycle.pager.prev` `cycle.pager.next` `cycle.pager.today` `cycle.pager.label` | Prev changes label; next then today restores it. |
 | Lane | `cycle.lane.{slug}` | Slug from `A11yID.slug(name)`: lowercased, whitespace/`_` → `-`. `Estrogen` → `cycle.lane.estrogen`. |
-| Lane status | `cycle.lane.{slug}.status` | Tap the lane to mark taken. Values: `taken`, `not-taken`. |
+| Lane status | `cycle.lane.{slug}.status` | Tap the lane avatar to mark taken when a dose is planned. Values: `taken`, `not-taken`, `no-dose` (selected day has no planned dose). |
 | Lane edit | `cycle.lane.{slug}.edit` | Opens the medication sheet for that med. |
 | Strip day | `cycle.strip.day.{yyyy-MM-dd}` | Period days include `period` in the value. |
 | Effect sentence | `cycle.effect` | After two logged cycles with overlapping scores: value lists `id:down` / `id:worse`. First-use after one period: `no-previous`. Empty home (no cycle): absent. |

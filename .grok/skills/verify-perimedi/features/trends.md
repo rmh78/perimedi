@@ -2,6 +2,13 @@
 
 Third bottom tab: Cycle · Month · Trends · More. Own screen under `Features/Trends/`, not a card on Cycle. One point per logged cycle: Y is days scored, dot size is mean intensity 1–4. German tab label **Verlauf**. Spec id `symptom-trends`. Chart first; catalog lives in a Choose Symptoms sheet (`Show on chart` / `Im Diagramm zeigen`). Close is enough; there is no Done button.
 
+## Sub-features
+
+- Empty store: title plus `need-cycles` (`trends.status` / `trends.empty`)
+- Logged cycles with no scores (`-fixture=trends-noscores`): `no-scores`
+- Chart: days-scored axis, size key, stacked series, dots, dose ticks
+- Choose Symptoms sheet (`trends.change` → `sheet.trends`); close is enough
+
 ## How to get to it (user POV)
 
 Bottom bar → Trends. Launch flag `-tabTrends` (same pattern as `-tabMonth` / `-tabMore`).
