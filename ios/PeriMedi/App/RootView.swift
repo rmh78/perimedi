@@ -169,14 +169,6 @@ struct RootView: View {
         if args.contains("-tabTrends") { app.selectedTab = .trends }
         if args.contains("-tabMonth") { app.selectedTab = .month }
         if args.contains("-tabMore") { app.selectedTab = .more }
-        if args.contains("-sheetMed") {
-            app.medSheet = MedSheetState(isNew: true, medication: nil)
-        }
-        if args.contains("-sheetPeriod") {
-            app.showPeriod = true
-            app.launchPeriodEditor = false
-        }
-        if args.contains("-sheetSymptom") { app.showSymptom = true }
     }
 
     private func journeyStep(from args: [String]) -> Int? {
