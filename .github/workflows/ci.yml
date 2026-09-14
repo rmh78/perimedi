@@ -23,6 +23,8 @@ jobs:
         run: python3 ios/scripts/check-screen-catalog.py
       - name: Feature sheets live under Cycle/Month/More
         run: python3 ios/scripts/check-feature-layout.py
+      - name: Trends and Visit keys stay out of L10n.swift
+        run: python3 ios/scripts/check-l10n-layout.py
       - name: Domain owns math; persistence writes logs
         run: python3 ios/scripts/check-domain-boundary.py
 
