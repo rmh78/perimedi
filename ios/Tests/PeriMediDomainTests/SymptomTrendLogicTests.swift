@@ -188,6 +188,83 @@ final class SymptomTrendLogicTests: XCTestCase {
         XCTAssertEqual(Set(doses.map(\.effectiveDate)).count, doses.count)
     }
 
+    func testDayStatsLastWriteWins() {
+        let scores = [
+            SymptomScore(id: "hot_flash", date: "2026-02-10", severity: 2, loggedAt: "t"),
+            SymptomScore(id: "hot_flash", date: "2026-02-10", severity: 4, loggedAt: "t"),
+        ]
+        let stats = SymptomTrendLogic.dayStats(
+            scores, id: "hot_flash", from: "2026-02-01", to: "2026-02-28"
+        )
+        XCTAssertEqual(stats?.dayCount, 1)
+        XCTAssertEqual(stats?.meanIntensity, 4)
+    }
+
+    func testDayStatsSeverityZeroDoesNotEraseEarlierScore() {
+        let scores = [
+            SymptomScore(id: "hot_flash", date: "2026-02-10", severity: 3, loggedAt: "t"),
+            SymptomScore(id: "hot_flash", date: "2026-02-10", severity: 0, loggedAt: "t"),
+        ]
+        let stats = SymptomTrendLogic.dayStats(
+            scores, id: "hot_flash", from: "2026-02-01", to: "2026-02-28"
+        )
+        XCTAssertEqual(stats?.dayCount, 1)
+        XCTAssertEqual(stats?.meanIntensity, 3)
+    }
+
+    func testDayStatsIgnoresCount() {
+        let scores = [
+            SymptomScore(id: "hot_flash", date: "2026-02-10", severity: 2, count: 12, loggedAt: "t"),
+        ]
+        let stats = SymptomTrendLogic.dayStats(
+            scores, id: "hot_flash", from: "2026-02-01", to: "2026-02-28"
+        )
+        XCTAssertEqual(stats?.dayCount, 1)
+        XCTAssertEqual(stats?.meanIntensity, 2)
+    }
+
+    func testDayStatsEmptyIsNil() {
+        XCTAssertNil(
+            SymptomTrendLogic.dayStats([], id: "hot_flash", from: "2026-02-01", to: "2026-02-28")
+        )
+    }
+
+    func testDayStatsSeverityZeroOnlyIsNil() {
+        let scores = [
+            SymptomScore(id: "hot_flash", date: "2026-02-10", severity: 0, loggedAt: "t"),
+        ]
+        XCTAssertNil(
+            SymptomTrendLogic.dayStats(
+                scores, id: "hot_flash", from: "2026-02-01", to: "2026-02-28"
+            )
+        )
+    }
+
+    func testDayStatsFromAfterToIsNil() {
+        let scores = [
+            SymptomScore(id: "hot_flash", date: "2026-02-10", severity: 2, loggedAt: "t"),
+        ]
+        XCTAssertNil(
+            SymptomTrendLogic.dayStats(
+                scores, id: "hot_flash", from: "2026-02-28", to: "2026-02-01"
+            )
+        )
+    }
+
+    func testDayStatsInclusiveBounds() {
+        let scores = [
+            SymptomScore(id: "hot_flash", date: "2026-01-31", severity: 1, loggedAt: "t"),
+            SymptomScore(id: "hot_flash", date: "2026-02-01", severity: 2, loggedAt: "t"),
+            SymptomScore(id: "hot_flash", date: "2026-02-28", severity: 4, loggedAt: "t"),
+            SymptomScore(id: "hot_flash", date: "2026-03-01", severity: 3, loggedAt: "t"),
+        ]
+        let stats = SymptomTrendLogic.dayStats(
+            scores, id: "hot_flash", from: "2026-02-01", to: "2026-02-28"
+        )
+        XCTAssertEqual(stats?.dayCount, 2)
+        XCTAssertEqual(stats?.meanIntensity, 3)
+    }
+
     func testSampleHasAtLeastFourScoredCycles() {
         let sample = SampleData.payload(now: DateKeys.parseDateKey(today)!)
         let result = SymptomTrendLogic.summarize(

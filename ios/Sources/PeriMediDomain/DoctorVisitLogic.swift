@@ -113,14 +113,15 @@ public enum DoctorVisitLogic {
         selectedCycles: [LoggedCycle] = []
     ) -> DoctorVisitReport {
         let today = DateKeys.toDateKey(today)
+        let completed = completedCycles(today: today, periods: periods, settings: settings)
+        let chosen = canonicalCycles(selected: selectedCycles, completed: completed)
         let from: String
         let to: String
         let kind: DoctorVisitRangeKind
-        if !selectedCycles.isEmpty {
-            let ordered = selectedCycles.sorted { $0.start < $1.start }
-            from = ordered[0].start
-            to = ordered[ordered.count - 1].end
-            kind = .completedCycles(ordered.count)
+        if let first = chosen.first, let last = chosen.last {
+            from = first.start
+            to = last.end
+            kind = .completedCycles(chosen.count)
         } else {
             (from, to, kind) = range(today: today, periods: periods, settings: settings)
         }
@@ -269,26 +270,39 @@ public enum DoctorVisitLogic {
         .sorted { $0.start < $1.start }
     }
 
-    /// Days scored + mean. Missing days omitted. `hot_flash` count field ignored.
+    private static func canonicalCycles(
+        selected: [LoggedCycle],
+        completed: [LoggedCycle]
+    ) -> [LoggedCycle] {
+        let byStart = Dictionary(
+            completed.map { (DateKeys.toDateKey($0.start), $0) },
+            uniquingKeysWith: { _, last in last }
+        )
+        var seen = Set<String>()
+        var chosen: [LoggedCycle] = []
+        for row in selected {
+            let start = DateKeys.toDateKey(row.start)
+            guard seen.insert(start).inserted, let cycle = byStart[start] else { continue }
+            chosen.append(cycle)
+        }
+        return chosen.sorted { $0.start < $1.start }
+    }
+
     private static func symptomRows(
         _ scores: [SymptomScore],
         from: String,
         to: String
     ) -> [DoctorVisitSymptomRow] {
         SymptomId.allCases.compactMap { id in
-            var byDay: [String: Int] = [:]
-            for row in scores where row.id == id.rawValue && row.severity >= 1 {
-                let day = DateKeys.toDateKey(row.date)
-                if day < from || day > to { continue }
-                byDay[day] = row.severity
+            guard let stats = SymptomTrendLogic.dayStats(
+                scores, id: id.rawValue, from: from, to: to
+            ) else {
+                return nil
             }
-            guard !byDay.isEmpty else { return nil }
-            let vals = Array(byDay.values)
-            let mean = Double(vals.reduce(0, +)) / Double(vals.count)
             return DoctorVisitSymptomRow(
                 id: id.rawValue,
-                dayCount: vals.count,
-                meanIntensity: mean
+                dayCount: stats.dayCount,
+                meanIntensity: stats.meanIntensity
             )
         }
     }

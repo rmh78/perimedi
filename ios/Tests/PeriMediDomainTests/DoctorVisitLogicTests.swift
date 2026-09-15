@@ -59,7 +59,8 @@ final class DoctorVisitLogicTests: XCTestCase {
         medications: [Medication]? = nil,
         schedules: [Schedule]? = nil,
         doseLogs: [DoseLog] = [],
-        changes: [MedicationChange] = []
+        changes: [MedicationChange] = [],
+        selectedCycles: [LoggedCycle] = []
     ) -> DoctorVisitReport {
         let meds = medications ?? [med()]
         return DoctorVisitLogic.report(
@@ -70,7 +71,8 @@ final class DoctorVisitLogicTests: XCTestCase {
             periods: periods,
             settings: settings ?? self.settings,
             scores: scores,
-            changes: changes
+            changes: changes,
+            selectedCycles: selectedCycles
         )
     }
 
@@ -276,6 +278,120 @@ final class DoctorVisitLogicTests: XCTestCase {
             scores: [],
             changes: [],
             selectedCycles: [cycles[0]]
+        )
+        XCTAssertEqual(result.rangeKind, .completedCycles(1))
+        XCTAssertEqual(result.rangeStart, "2026-01-01")
+        XCTAssertEqual(result.rangeEnd, "2026-01-31")
+    }
+
+    func testForgedEndUsesCanonicalEnd() {
+        let result = report(
+            periods: [
+                period("p0", start: "2026-01-01"),
+                period("p1", start: "2026-02-01"),
+                period("p2", start: "2026-03-01"),
+            ],
+            selectedCycles: [LoggedCycle(start: "2026-01-01", end: "2026-12-31")]
+        )
+        XCTAssertEqual(result.rangeKind, .completedCycles(1))
+        XCTAssertEqual(result.rangeStart, "2026-01-01")
+        XCTAssertEqual(result.rangeEnd, "2026-01-31")
+    }
+
+    func testUnknownStartUsesFallbackRange() {
+        let periods = [
+            period("p0", start: "2026-01-01"),
+            period("p1", start: "2026-02-01"),
+            period("p2", start: "2026-03-01"),
+        ]
+        let none = report(periods: periods)
+        let unknown = report(
+            periods: periods,
+            selectedCycles: [LoggedCycle(start: "2025-01-01", end: "2025-01-31")]
+        )
+        XCTAssertEqual(unknown.rangeKind, none.rangeKind)
+        XCTAssertEqual(unknown.rangeStart, none.rangeStart)
+        XCTAssertEqual(unknown.rangeEnd, none.rangeEnd)
+        XCTAssertEqual(unknown.rangeKind, .completedCycles(2))
+        XCTAssertEqual(unknown.rangeStart, "2026-01-01")
+        XCTAssertEqual(unknown.rangeEnd, "2026-02-28")
+    }
+
+    func testMixedKnownAndUnknownKeepsKnownCanonicalWindow() {
+        let result = report(
+            periods: [
+                period("p0", start: "2026-01-01"),
+                period("p1", start: "2026-02-01"),
+                period("p2", start: "2026-03-01"),
+            ],
+            selectedCycles: [
+                LoggedCycle(start: "2026-01-01", end: "2026-01-31"),
+                LoggedCycle(start: "2025-01-01", end: "2025-01-31"),
+            ]
+        )
+        XCTAssertEqual(result.rangeKind, .completedCycles(1))
+        XCTAssertEqual(result.rangeStart, "2026-01-01")
+        XCTAssertEqual(result.rangeEnd, "2026-01-31")
+    }
+
+    func testOpenCycleStartIsUnknown() {
+        let periods = [
+            period("p0", start: "2026-01-01"),
+            period("p1", start: "2026-02-01"),
+            period("p2", start: "2026-03-01"),
+        ]
+        let none = report(periods: periods)
+        let openOnly = report(
+            periods: periods,
+            selectedCycles: [LoggedCycle(start: "2026-03-01", end: today)]
+        )
+        XCTAssertEqual(openOnly.rangeKind, none.rangeKind)
+        XCTAssertEqual(openOnly.rangeStart, none.rangeStart)
+        XCTAssertEqual(openOnly.rangeEnd, none.rangeEnd)
+        XCTAssertEqual(openOnly.rangeKind, .completedCycles(2))
+        XCTAssertEqual(openOnly.rangeStart, "2026-01-01")
+        XCTAssertEqual(openOnly.rangeEnd, "2026-02-28")
+
+        let mixed = report(
+            periods: periods,
+            selectedCycles: [
+                LoggedCycle(start: "2026-01-01", end: "2026-01-31"),
+                LoggedCycle(start: "2026-03-01", end: today),
+            ]
+        )
+        XCTAssertEqual(mixed.rangeKind, .completedCycles(1))
+        XCTAssertEqual(mixed.rangeStart, "2026-01-01")
+        XCTAssertEqual(mixed.rangeEnd, "2026-01-31")
+    }
+
+    func testTrackingOffIgnoresSelectedCycles() {
+        var off = settings
+        off.tracksPeriods = false
+        let result = report(
+            periods: [
+                period("p0", start: "2026-01-01"),
+                period("p1", start: "2026-02-01"),
+                period("p2", start: "2026-03-01"),
+            ],
+            settings: off,
+            selectedCycles: [LoggedCycle(start: "2026-01-01", end: "2026-01-31")]
+        )
+        XCTAssertEqual(result.rangeKind, .twelveWeeks)
+        XCTAssertEqual(result.rangeStart, "2025-12-22")
+        XCTAssertEqual(result.rangeEnd, today)
+    }
+
+    func testDuplicateKnownStartCountsOnce() {
+        let result = report(
+            periods: [
+                period("p0", start: "2026-01-01"),
+                period("p1", start: "2026-02-01"),
+                period("p2", start: "2026-03-01"),
+            ],
+            selectedCycles: [
+                LoggedCycle(start: "2026-01-01", end: "2026-01-31"),
+                LoggedCycle(start: "2026-01-01", end: "2026-12-31"),
+            ]
         )
         XCTAssertEqual(result.rangeKind, .completedCycles(1))
         XCTAssertEqual(result.rangeStart, "2026-01-01")

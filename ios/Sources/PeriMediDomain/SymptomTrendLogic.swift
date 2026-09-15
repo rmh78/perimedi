@@ -16,6 +16,18 @@ public struct SymptomTrendPoint: Equatable, Sendable {
     }
 }
 
+public struct SymptomDayStats: Equatable, Sendable {
+    /// Days scored. Missing days are omitted, not 0.
+    public var dayCount: Int
+    /// Mean of logged 1–4 severities. Not the sum.
+    public var meanIntensity: Double
+
+    public init(dayCount: Int, meanIntensity: Double) {
+        self.dayCount = dayCount
+        self.meanIntensity = meanIntensity
+    }
+}
+
 public struct SymptomTrendSeries: Equatable, Sendable {
     public var id: String
     public var points: [SymptomTrendPoint]
@@ -85,6 +97,27 @@ public struct SymptomTrendResult: Equatable, Sendable {
 public enum SymptomTrendLogic {
     public static let maxSeries = 3
     public static let preferredCycleCount = 6
+
+    public static func dayStats(
+        _ scores: [SymptomScore],
+        id: String,
+        from: String,
+        to: String
+    ) -> SymptomDayStats? {
+        let from = DateKeys.toDateKey(from)
+        let to = DateKeys.toDateKey(to)
+        if from > to { return nil }
+        var byDay: [String: Int] = [:]
+        for row in scores where row.id == id && row.severity >= 1 {
+            let day = DateKeys.toDateKey(row.date)
+            if day < from || day > to { continue }
+            byDay[day] = row.severity
+        }
+        guard !byDay.isEmpty else { return nil }
+        let vals = Array(byDay.values)
+        let mean = Double(vals.reduce(0, +)) / Double(vals.count)
+        return SymptomDayStats(dayCount: vals.count, meanIntensity: mean)
+    }
 
     public static func summarize(
         today: String,
@@ -192,18 +225,14 @@ public enum SymptomTrendLogic {
         id: String,
         cycle: LoggedCycle
     ) -> SymptomTrendPoint? {
-        var byDay: [String: Int] = [:]
-        for row in scores where row.id == id && inCycle(row, cycle) && row.severity >= 1 {
-            byDay[DateKeys.toDateKey(row.date)] = row.severity
+        guard let stats = dayStats(scores, id: id, from: cycle.start, to: cycle.end) else {
+            return nil
         }
-        guard !byDay.isEmpty else { return nil }
-        let vals = Array(byDay.values)
-        let mean = Double(vals.reduce(0, +)) / Double(vals.count)
         return SymptomTrendPoint(
             cycleStart: cycle.start,
             cycleEnd: cycle.end,
-            dayCount: vals.count,
-            meanIntensity: mean
+            dayCount: stats.dayCount,
+            meanIntensity: stats.meanIntensity
         )
     }
 
