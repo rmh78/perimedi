@@ -1,6 +1,5 @@
 import Foundation
 
-/// One planned take. Same grain as a reminder slot and `ScheduleLogic.logKey`.
 public struct PlannedSlotIdentity: Hashable, Codable, Sendable {
     public var medicationId: String
     public var scheduleId: String
