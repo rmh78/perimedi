@@ -65,7 +65,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         let center = UNUserNotificationCenter.current()
         center.delegate = self
         registerCategories()
-        store.afterChange = { [weak self] in
+        store.addAfterChange { [weak self] in
             self?.refresh()
         }
         refresh()
@@ -194,6 +194,15 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             ) else { continue }
             try? await center.add(request)
         }
+
+        let liveSnooze = Set(slots.map(\.snoozeId))
+        let staleSnooze = ours
+            .map(\.identifier)
+            .filter { $0.hasPrefix("snooze.") && !liveSnooze.contains($0) }
+        if !staleSnooze.isEmpty {
+            center.removePendingNotificationRequests(withIdentifiers: staleSnooze)
+            center.removeDeliveredNotifications(withIdentifiers: staleSnooze)
+        }
     }
 
     private func scheduleSoon(using store: Store, delay: Int) async {
@@ -265,14 +274,54 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
     func take(reminder: PendingReminder) {
         testFire?.cancel()
         testFire = nil
-        markTaken(
-            medicationId: reminder.medicationId,
-            scheduleId: reminder.scheduleId,
-            date: reminder.date,
-            time: reminder.timeOfDay
-        )
+        try? markSlotTaken(reminder.identity)
         app?.pendingReminder = nil
         refresh()
+    }
+
+    @discardableResult
+    func markSlotTaken(_ identity: PlannedSlotIdentity) throws -> MarkSlotTakenResult {
+        guard let store else { throw MarkDoseTakenError.saveFailed }
+        cancelNotifications(for: identity)
+        switch NextPendingDose.resolve(
+            identity: identity,
+            medications: store.medications,
+            schedules: store.schedules,
+            doseLogs: store.doseLogs,
+            periods: store.periods,
+            settings: store.settings
+        ) {
+        case .missing:
+            DoseWidgetBridge.publish()
+            return .notPlanned
+        case .alreadyTaken:
+            DoseWidgetBridge.publish()
+            return .alreadyTaken
+        case .pending(let dose):
+            do {
+                try store.setDoseStatus(
+                    medicationId: identity.medicationId,
+                    scheduleId: identity.scheduleId,
+                    date: identity.date,
+                    timeOfDay: identity.timeOfDay,
+                    status: .taken,
+                    existingLogId: dose.log?.id
+                )
+                return .taken
+            } catch {
+                throw MarkDoseTakenError.saveFailed
+            }
+        }
+    }
+
+    private func cancelNotifications(for identity: PlannedSlotIdentity) {
+        let ids = [
+            ReminderSlot.doseId(scheduleId: identity.scheduleId, date: identity.date, timeOfDay: identity.timeOfDay),
+            ReminderSlot.snoozeId(scheduleId: identity.scheduleId, date: identity.date, timeOfDay: identity.timeOfDay),
+        ]
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: ids)
+        center.removeDeliveredNotifications(withIdentifiers: ids)
     }
 
     func snooze(reminder: PendingReminder) {
@@ -424,7 +473,14 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
 
         switch response.actionIdentifier {
         case Self.takenAction:
-            markTaken(medicationId: medicationId, scheduleId: scheduleId, date: date, time: time)
+            try? markSlotTaken(
+                PlannedSlotIdentity(
+                    medicationId: medicationId,
+                    scheduleId: scheduleId,
+                    date: date,
+                    timeOfDay: time
+                )
+            )
         case Self.snoozeAction:
             await snooze(response.notification)
         default:
@@ -432,38 +488,6 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             app?.selectedTab = .cycle
         }
         refresh()
-    }
-
-    private func markTaken(medicationId: String, scheduleId: String, date: String, time: String) {
-        guard let store else { return }
-        let existingId = store.doseLogs.first { log in
-            log.scheduleId == scheduleId
-                && DateKeys.toDateKey(log.plannedFor) == date
-                && timeFromPlanned(log.plannedFor) == time
-        }?.id
-        try? store.setDoseStatus(
-            medicationId: medicationId,
-            scheduleId: scheduleId,
-            date: date,
-            timeOfDay: time,
-            status: .taken,
-            existingLogId: existingId
-        )
-        let ids = [
-            ReminderSlot.doseId(scheduleId: scheduleId, date: date, timeOfDay: time),
-            ReminderSlot.snoozeId(scheduleId: scheduleId, date: date, timeOfDay: time),
-        ]
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ids)
-        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: ids)
-    }
-
-    private func timeFromPlanned(_ plannedFor: String) -> String {
-        if plannedFor.count >= 16 {
-            let start = plannedFor.index(plannedFor.startIndex, offsetBy: 11)
-            let end = plannedFor.index(start, offsetBy: 5)
-            return String(plannedFor[start..<end])
-        }
-        return "08:00"
     }
 
     private func snooze(_ notification: UNNotification) async {

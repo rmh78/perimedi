@@ -20,7 +20,16 @@ final class LocaleController: ObservableObject {
     @AppStorage("perimedi.locale") private var stored: String = ""
 
     @Published var language: AppLanguage {
-        didSet { stored = language.rawValue }
+        didSet {
+            stored = language.rawValue
+            languageChangeHandlers.forEach { $0() }
+        }
+    }
+
+    private var languageChangeHandlers: [() -> Void] = []
+
+    func addOnLanguageChange(_ handler: @escaping () -> Void) {
+        languageChangeHandlers.append(handler)
     }
 
     init() {
@@ -43,7 +52,7 @@ final class LocaleController: ObservableObject {
     }
 
     private func lookup(_ key: String, _ language: AppLanguage) -> String? {
-        for table in [L10n.table, TrendsStrings.table, VisitStrings.table] {
+        for table in [L10n.table, TrendsStrings.table, VisitStrings.table, DoseWidgetStrings.table] {
             if let value = table[language]?[key] {
                 return value
             }

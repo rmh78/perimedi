@@ -9,7 +9,7 @@ PeriMedi stores domain data in SwiftData. When an Apple ID is signed in and the 
 - After a **local** save, `Store` writes with `#Predicate` / fetch-by-id, then `refresh()`es the snapshot once.
 - When **CloudKit** is on, `Store` also observes Core Data remote-change and CloudKit import events (`NSPersistentStoreRemoteChange`, `NSPersistentCloudKitContainer` import/setup) and `refresh()`es after a short debounce.
 - Returning to the foreground (`willEnterForeground`) `refresh()`es `Store` as well as dose reminders. Destination B does not need a local write to show data that arrived from A. Remote-change observers cover the case where B stays in the foreground **after CloudKit has landed rows on disk**.
-- `DoseReminderCenter` still uses `store.afterChange`; that callback runs when a refresh actually changes the snapshot, including remote imports.
+- `DoseReminderCenter` and the home-screen widget subscribe with `store.addAfterChange`. Those callbacks run when a refresh actually changes the snapshot, including remote imports.
 
 One published `StoreSnapshot` means one SwiftUI invalidation per refresh.
 

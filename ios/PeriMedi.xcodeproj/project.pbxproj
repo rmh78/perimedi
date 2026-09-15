@@ -11,6 +11,8 @@
 		6647B957C0BCE26BFBFC83FE /* App/AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27927D1388C59A5DC763B302 /* App/AppModel.swift */; };
 		C4A6E28BDBA0E7D677A45D63 /* App/BrandHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02C8E06858619EFA7A9CF5B8 /* App/BrandHeader.swift */; };
 		39368F4521F7B1A7222A0D33 /* App/DoseReminderCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DA6E7123B912E3568EE99F3 /* App/DoseReminderCenter.swift */; };
+		35C305DC08086E83570C1FEE /* App/DoseWidgetBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72F601B6700877AC79AC3D22 /* App/DoseWidgetBridge.swift */; };
+		04317D1A1B841D4A5ABB2A08 /* App/DoseWidgetStrings.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9F8E9575BEF7B4F6F974B8D /* App/DoseWidgetStrings.swift */; };
 		BF53B48278F04C9E0D853E4B /* App/JourneyScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DF21C04AEC701EA053DEA60 /* App/JourneyScript.swift */; };
 		19C6CE31FB2D8E537B1BDCB3 /* App/L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0170DD6474294BDF742BBD67 /* App/L10n.swift */; };
 		3E6C5F04B632AF3A7952591F /* App/PillTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2018F6AE188112D3CC12E9F6 /* App/PillTabBar.swift */; };
@@ -49,11 +51,19 @@
 		64125C6868394BDC68482E52 /* ReminderDrop.caf in Resources */ = {isa = PBXBuildFile; fileRef = 97D2A202B1D02AB51BD678E2 /* ReminderDrop.caf */; };
 		F261E760DC0163A9DB08475B /* ReminderPulse.caf in Resources */ = {isa = PBXBuildFile; fileRef = FDA84AAE569584D90954F2AC /* ReminderPulse.caf */; };
 		E79FBA041C0F1558F7DE9745 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 899403094A6D8C99A71E12B9 /* LaunchScreen.storyboard */; };
+		C1E4D41C59C840291738DD2F /* DoseWidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C5C3A69A20F9E8D61C43308 /* DoseWidgetSnapshot.swift */; };
+		DF08CD29CC8E1A46F2D97D81 /* MarkDoseTakenIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC4EBBA48FBA9CA676374398 /* MarkDoseTakenIntent.swift */; };
 		834CC77C763103E8F47C99A4 /* AppRobot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08D40AD4E25A24C58A69F41E /* AppRobot.swift */; };
 		34F0D2545DEE97A3154A4D90 /* FirstUseJourneyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59821C676F8E7BF086EEB7C2 /* FirstUseJourneyTests.swift */; };
 		65BE1A8523834B5702F7EEF4 /* ScreenCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6577D057AE5306E1CD71B78C /* ScreenCatalog.swift */; };
 		556A9AD85C4E8C5D8733E802 /* ScreenCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D7ECE05280DF3A9B1D9FD1F /* ScreenCatalogTests.swift */; };
 		0B55123262C5821C2517E937 /* SymptomTrendsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D86058AC49F4359BDCB1837 /* SymptomTrendsTests.swift */; };
+		22E653FA472344C15E92C92E /* PeriMediDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 14300107B9E3EB1D420E4B3B /* PeriMediDomain */; };
+		7D564784EAF9A538A66ADDAB /* PeriMediDoseWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7E8C6E6A7CE57809166DFBF0 /* PeriMediDoseWidget.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		49E14E9F8072F447C5D24F92 /* DoseWidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C5C3A69A20F9E8D61C43308 /* DoseWidgetSnapshot.swift */; };
+		57317151F64A3B9D86D02CC6 /* MarkDoseTakenIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC4EBBA48FBA9CA676374398 /* MarkDoseTakenIntent.swift */; };
+		17D257423BA22E7A59C1D25E /* DoseWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9C0D9A8934B171D57086D95 /* DoseWidget.swift */; };
+		0FB10F802041E610F5CF0A0F /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 8D70415C7B86CE40507110F1 /* Localizable.xcstrings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -68,6 +78,8 @@
 		27927D1388C59A5DC763B302 /* App/AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/AppModel.swift; sourceTree = "<group>"; };
 		02C8E06858619EFA7A9CF5B8 /* App/BrandHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/BrandHeader.swift; sourceTree = "<group>"; };
 		5DA6E7123B912E3568EE99F3 /* App/DoseReminderCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/DoseReminderCenter.swift; sourceTree = "<group>"; };
+		72F601B6700877AC79AC3D22 /* App/DoseWidgetBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/DoseWidgetBridge.swift; sourceTree = "<group>"; };
+		F9F8E9575BEF7B4F6F974B8D /* App/DoseWidgetStrings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/DoseWidgetStrings.swift; sourceTree = "<group>"; };
 		2DF21C04AEC701EA053DEA60 /* App/JourneyScript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/JourneyScript.swift; sourceTree = "<group>"; };
 		0170DD6474294BDF742BBD67 /* App/L10n.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/L10n.swift; sourceTree = "<group>"; };
 		2018F6AE188112D3CC12E9F6 /* App/PillTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/PillTabBar.swift; sourceTree = "<group>"; };
@@ -107,6 +119,13 @@
 		6577D057AE5306E1CD71B78C /* ScreenCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenCatalog.swift; sourceTree = "<group>"; };
 		9D7ECE05280DF3A9B1D9FD1F /* ScreenCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenCatalogTests.swift; sourceTree = "<group>"; };
 		8D86058AC49F4359BDCB1837 /* SymptomTrendsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SymptomTrendsTests.swift; sourceTree = "<group>"; };
+		2C5C3A69A20F9E8D61C43308 /* DoseWidgetSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseWidgetSnapshot.swift; sourceTree = "<group>"; };
+		AC4EBBA48FBA9CA676374398 /* MarkDoseTakenIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkDoseTakenIntent.swift; sourceTree = "<group>"; };
+		7E8C6E6A7CE57809166DFBF0 /* PeriMediDoseWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PeriMediDoseWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		9C70F1830EBAF669EA35DDF5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		6500DA8D0AB8FECDA36044F7 /* PeriMediDoseWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PeriMediDoseWidget.entitlements; sourceTree = "<group>"; };
+		8D70415C7B86CE40507110F1 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		A9C0D9A8934B171D57086D95 /* DoseWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseWidget.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXContainerItemProxy section */
@@ -117,7 +136,28 @@
 			remoteGlobalIDString = CCD1BDFE40AA20836710EC01;
 			remoteInfo = PeriMedi;
 		};
+		518976148E3D94EBAFBCC323 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 98F54143AB4E86B28C3AFEE0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = ADEAF5E167D4943BE484764E;
+			remoteInfo = PeriMediDoseWidget;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		9E711B283697C277D09B7230 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				7D564784EAF9A538A66ADDAB /* PeriMediDoseWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		E941DA8187B32B086A8E8098 /* Frameworks */ = {
@@ -135,6 +175,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		63B8F20D065E7DF0A1C22F44 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				22E653FA472344C15E92C92E /* PeriMediDomain in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -142,6 +190,8 @@
 			isa = PBXGroup;
 			children = (
 				4B48653AF5A0B20C6ED00351 /* PeriMedi */,
+				546CD4D0A54E7DAFD1A9F0F6 /* PeriMediDoseWidgetSupport */,
+				237ED2667819882798ED7400 /* PeriMediDoseWidget */,
 				88189ACCA3913C501CCC3799 /* PeriMediUITests */,
 				4FDE57E4B72FFCEE306CEB0F /* Products */,
 			);
@@ -160,6 +210,8 @@
 				27927D1388C59A5DC763B302 /* App/AppModel.swift */,
 				02C8E06858619EFA7A9CF5B8 /* App/BrandHeader.swift */,
 				5DA6E7123B912E3568EE99F3 /* App/DoseReminderCenter.swift */,
+				72F601B6700877AC79AC3D22 /* App/DoseWidgetBridge.swift */,
+				F9F8E9575BEF7B4F6F974B8D /* App/DoseWidgetStrings.swift */,
 				2DF21C04AEC701EA053DEA60 /* App/JourneyScript.swift */,
 				0170DD6474294BDF742BBD67 /* App/L10n.swift */,
 				2018F6AE188112D3CC12E9F6 /* App/PillTabBar.swift */,
@@ -201,6 +253,7 @@
 			isa = PBXGroup;
 			children = (
 				595C479D7AC91F29089D5228 /* PeriMedi.app */,
+				7E8C6E6A7CE57809166DFBF0 /* PeriMediDoseWidget.appex */,
 				75902C37BB4D4EC5B0F09F3C /* PeriMediUITests.xctest */,
 			);
 			name = Products;
@@ -225,6 +278,26 @@
 			path = PeriMediUITests;
 			sourceTree = "<group>";
 		};
+		546CD4D0A54E7DAFD1A9F0F6 /* PeriMediDoseWidgetSupport */ = {
+			isa = PBXGroup;
+			children = (
+				2C5C3A69A20F9E8D61C43308 /* DoseWidgetSnapshot.swift */,
+				AC4EBBA48FBA9CA676374398 /* MarkDoseTakenIntent.swift */,
+			);
+			path = PeriMediDoseWidgetSupport;
+			sourceTree = "<group>";
+		};
+		237ED2667819882798ED7400 /* PeriMediDoseWidget */ = {
+			isa = PBXGroup;
+			children = (
+				9C70F1830EBAF669EA35DDF5 /* Info.plist */,
+				6500DA8D0AB8FECDA36044F7 /* PeriMediDoseWidget.entitlements */,
+				8D70415C7B86CE40507110F1 /* Localizable.xcstrings */,
+				A9C0D9A8934B171D57086D95 /* DoseWidget.swift */,
+			);
+			path = PeriMediDoseWidget;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -235,10 +308,12 @@
 				5B1B2B2ECB524BA8C71F3188 /* Sources */,
 				E941DA8187B32B086A8E8098 /* Frameworks */,
 				C5926192950FAB508AE8C163 /* Resources */,
+				9E711B283697C277D09B7230 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				6B8C519DBDA2CCA7773684FB /* PBXTargetDependency */,
 			);
 			name = PeriMedi;
 			packageProductDependencies = (
@@ -265,6 +340,26 @@
 			productName = PeriMediUITests;
 			productReference = 75902C37BB4D4EC5B0F09F3C /* PeriMediUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		ADEAF5E167D4943BE484764E /* PeriMediDoseWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C89FDED2BAF45AD6268E8473 /* Build configuration list for PBXNativeTarget "PeriMediDoseWidget" */;
+			buildPhases = (
+				51794DA74A5DB6ECA49425DA /* Sources */,
+				63B8F20D065E7DF0A1C22F44 /* Frameworks */,
+				7262259527D4DCAC0B64B47B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PeriMediDoseWidget;
+			packageProductDependencies = (
+				14300107B9E3EB1D420E4B3B /* PeriMediDomain */,
+			);
+			productName = PeriMediDoseWidget;
+			productReference = 7E8C6E6A7CE57809166DFBF0 /* PeriMediDoseWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -294,6 +389,7 @@
 			projectRoot = "";
 			targets = (
 				CCD1BDFE40AA20836710EC01 /* PeriMedi */,
+				ADEAF5E167D4943BE484764E /* PeriMediDoseWidget */,
 				5B5330F45E919B349BFE3A6A /* PeriMediUITests */,
 			);
 		};
@@ -322,6 +418,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7262259527D4DCAC0B64B47B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0FB10F802041E610F5CF0A0F /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -333,6 +437,8 @@
 				6647B957C0BCE26BFBFC83FE /* App/AppModel.swift in Sources */,
 				C4A6E28BDBA0E7D677A45D63 /* App/BrandHeader.swift in Sources */,
 				39368F4521F7B1A7222A0D33 /* App/DoseReminderCenter.swift in Sources */,
+				35C305DC08086E83570C1FEE /* App/DoseWidgetBridge.swift in Sources */,
+				04317D1A1B841D4A5ABB2A08 /* App/DoseWidgetStrings.swift in Sources */,
 				BF53B48278F04C9E0D853E4B /* App/JourneyScript.swift in Sources */,
 				19C6CE31FB2D8E537B1BDCB3 /* App/L10n.swift in Sources */,
 				3E6C5F04B632AF3A7952591F /* App/PillTabBar.swift in Sources */,
@@ -362,6 +468,8 @@
 				B250661E90C3E1F193AAA0F2 /* Persistence/PersistenceController.swift in Sources */,
 				55530328B1463F9426C1E1C4 /* Persistence/Store.swift in Sources */,
 				085CBEE1AE5E4CA5F3E586D2 /* Persistence/SwiftDataModels.swift in Sources */,
+				C1E4D41C59C840291738DD2F /* DoseWidgetSnapshot.swift in Sources */,
+				DF08CD29CC8E1A46F2D97D81 /* MarkDoseTakenIntent.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -377,6 +485,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		51794DA74A5DB6ECA49425DA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				49E14E9F8072F447C5D24F92 /* DoseWidgetSnapshot.swift in Sources */,
+				57317151F64A3B9D86D02CC6 /* MarkDoseTakenIntent.swift in Sources */,
+				17D257423BA22E7A59C1D25E /* DoseWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -384,6 +502,11 @@
 			isa = PBXTargetDependency;
 			target = CCD1BDFE40AA20836710EC01 /* PeriMedi */;
 			targetProxy = 08FE7D5FD43F955EE30EE1E9 /* PBXContainerItemProxy */;
+		};
+		6B8C519DBDA2CCA7773684FB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = ADEAF5E167D4943BE484764E /* PeriMediDoseWidget */;
+			targetProxy = 518976148E3D94EBAFBCC323 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -444,6 +567,7 @@
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) PERIMEDI_APP";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -470,6 +594,7 @@
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) PERIMEDI_APP";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -516,6 +641,60 @@
 			};
 			name = Release;
 		};
+		2A1F89C68E6BABD18E9B2C0D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = PeriMediDoseWidget/PeriMediDoseWidget.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7H4A6PWSPS;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = PeriMediDoseWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.perimedi.ios.dose;
+				PRODUCT_NAME = PeriMediDoseWidget;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		C0B158EE645FF6D139E65890 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = PeriMediDoseWidget/PeriMediDoseWidget.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7H4A6PWSPS;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = PeriMediDoseWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.perimedi.ios.dose;
+				PRODUCT_NAME = PeriMediDoseWidget;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -546,6 +725,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		C89FDED2BAF45AD6268E8473 /* Build configuration list for PBXNativeTarget "PeriMediDoseWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2A1F89C68E6BABD18E9B2C0D /* Debug */,
+				C0B158EE645FF6D139E65890 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
@@ -557,6 +745,11 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		C81CD5F22406E4B780AC870D /* PeriMediDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0B2C5848BF186D63E30F5575 /* XCLocalSwiftPackageReference "." */;
+			productName = PeriMediDomain;
+		};
+		14300107B9E3EB1D420E4B3B /* PeriMediDomain */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 0B2C5848BF186D63E30F5575 /* XCLocalSwiftPackageReference "." */;
 			productName = PeriMediDomain;

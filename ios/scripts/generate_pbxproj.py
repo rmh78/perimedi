@@ -10,6 +10,8 @@ ROOT = Path(__file__).resolve().parents[1]
 PROJ = ROOT / "PeriMedi.xcodeproj"
 APP = ROOT / "PeriMedi"
 UITESTS = ROOT / "PeriMediUITests"
+WIDGET = ROOT / "PeriMediDoseWidget"
+SUPPORT = ROOT / "PeriMediDoseWidgetSupport"
 
 
 def hid(name: str) -> str:
@@ -18,6 +20,12 @@ def hid(name: str) -> str:
 
 def main() -> None:
     swift = sorted(p.relative_to(APP) for p in APP.rglob("*.swift"))
+    support_swift = (
+        sorted(p.relative_to(SUPPORT) for p in SUPPORT.rglob("*.swift")) if SUPPORT.exists() else []
+    )
+    widget_swift = (
+        sorted(p.relative_to(WIDGET) for p in WIDGET.rglob("*.swift")) if WIDGET.exists() else []
+    )
     xcstrings = APP / "Resources" / "Localizable.xcstrings"
 
     ids = {
@@ -55,6 +63,25 @@ def main() -> None:
         "release_ui": hid("xc_release_ui"),
         "ui_proxy": hid("proxy_ui"),
         "ui_dep": hid("dep_ui"),
+        "widget_target": hid("widget_target"),
+        "widget_product": hid("product_widget"),
+        "widget_sources": hid("phase_widget_sources"),
+        "widget_resources": hid("phase_widget_resources"),
+        "widget_frameworks": hid("phase_widget_frameworks"),
+        "widget_group": hid("group_widget"),
+        "support_group": hid("group_support"),
+        "config_list_widget": hid("xc_list_widget"),
+        "debug_widget": hid("xc_debug_widget"),
+        "release_widget": hid("xc_release_widget"),
+        "widget_proxy": hid("proxy_widget"),
+        "widget_dep": hid("dep_widget"),
+        "widget_embed": hid("phase_embed_widget"),
+        "widget_embed_file": hid("build_embed_widget"),
+        "widget_pkg_prod": hid("pkg_prod_widget"),
+        "widget_info": hid("file_widget_info"),
+        "widget_entitlements": hid("file_widget_entitlements"),
+        "widget_strings": hid("file_widget_strings"),
+        "widget_pkg_build": hid("build:widget_pkg"),
     }
 
     file_refs = []
@@ -279,14 +306,74 @@ def main() -> None:
         ui_source_builds.append(f"\t\t\t\t{bkey} /* {rel.name} in Sources */,")
         ui_group_children.append(f"{key} /* {rel} */,")
 
+    support_file_refs = []
+    support_group_children = []
+    support_app_builds = []
+    widget_only_file_refs = [
+        f"\t\t{ids['widget_product']} /* PeriMediDoseWidget.appex */ = {{isa = PBXFileReference; explicitFileType = \"wrapper.app-extension\"; includeInIndex = 0; path = PeriMediDoseWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; }};",
+        f"\t\t{ids['widget_info']} /* Info.plist */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = \"<group>\"; }};",
+        f"\t\t{ids['widget_entitlements']} /* PeriMediDoseWidget.entitlements */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PeriMediDoseWidget.entitlements; sourceTree = \"<group>\"; }};",
+        f"\t\t{ids['widget_strings']} /* Localizable.xcstrings */ = {{isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = \"<group>\"; }};",
+    ]
+    widget_group_children = [
+        f"{ids['widget_info']} /* Info.plist */,",
+        f"{ids['widget_entitlements']} /* PeriMediDoseWidget.entitlements */,",
+        f"{ids['widget_strings']} /* Localizable.xcstrings */,",
+    ]
+    widget_source_builds = []
+    widget_build_files = [
+        f"\t\t{ids['widget_pkg_build']} /* PeriMediDomain in Frameworks */ = {{isa = PBXBuildFile; productRef = {ids['widget_pkg_prod']} /* PeriMediDomain */; }};",
+        f"\t\t{ids['widget_embed_file']} /* PeriMediDoseWidget.appex in Embed Foundation Extensions */ = {{isa = PBXBuildFile; fileRef = {ids['widget_product']} /* PeriMediDoseWidget.appex */; settings = {{ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }}; }};",
+    ]
+    widget_resource_builds = []
+
+    for rel in support_swift:
+        key = hid(f"support-swift:{rel}")
+        app_bkey = hid(f"support-app-build:{rel}")
+        widget_bkey = hid(f"support-widget-build:{rel}")
+        support_file_refs.append(
+            f"\t\t{key} /* {rel} */ = {{isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = {rel.as_posix()}; sourceTree = \"<group>\"; }};"
+        )
+        build_files.append(
+            f"\t\t{app_bkey} /* {rel.as_posix()} in Sources */ = {{isa = PBXBuildFile; fileRef = {key} /* {rel} */; }};"
+        )
+        widget_build_files.append(
+            f"\t\t{widget_bkey} /* {rel.as_posix()} in Sources */ = {{isa = PBXBuildFile; fileRef = {key} /* {rel} */; }};"
+        )
+        support_app_builds.append(f"\t\t\t\t{app_bkey} /* {rel.as_posix()} in Sources */,")
+        widget_source_builds.append(f"\t\t\t\t{widget_bkey} /* {rel.as_posix()} in Sources */,")
+        support_group_children.append(f"{key} /* {rel} */,")
+
+    for rel in widget_swift:
+        key = hid(f"widget-swift:{rel}")
+        bkey = hid(f"widget-build:{rel}")
+        widget_only_file_refs.append(
+            f"\t\t{key} /* {rel} */ = {{isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = {rel.as_posix()}; sourceTree = \"<group>\"; }};"
+        )
+        widget_build_files.append(
+            f"\t\t{bkey} /* {rel.as_posix()} in Sources */ = {{isa = PBXBuildFile; fileRef = {key} /* {rel} */; }};"
+        )
+        widget_source_builds.append(f"\t\t\t\t{bkey} /* {rel.as_posix()} in Sources */,")
+        widget_group_children.append(f"{key} /* {rel} */,")
+
+    widget_strings_build = hid("build:widget_strings")
+    widget_build_files.append(
+        f"\t\t{widget_strings_build} /* Localizable.xcstrings in Resources */ = {{isa = PBXBuildFile; fileRef = {ids['widget_strings']} /* Localizable.xcstrings */; }};"
+    )
+    widget_resource_builds.append(f"\t\t\t\t{widget_strings_build} /* Localizable.xcstrings in Resources */,")
+
     nl = "\n"
-    build_files_block = nl.join(build_files + ui_build_files)
-    file_refs_block = nl.join(file_refs_flat + ui_file_refs)
+    build_files_block = nl.join(build_files + ui_build_files + widget_build_files)
+    file_refs_block = nl.join(file_refs_flat + ui_file_refs + support_file_refs + widget_only_file_refs)
     app_children_block = nl.join("\t\t\t\t" + c for c in flat_children)
     resource_block = nl.join(resource_builds)
-    source_block = nl.join(source_builds)
+    source_block = nl.join(source_builds + support_app_builds)
     ui_source_block = nl.join(ui_source_builds)
     ui_group_block = nl.join("\t\t\t\t" + c for c in ui_group_children)
+    widget_source_block = nl.join(widget_source_builds)
+    widget_group_block = nl.join("\t\t\t\t" + c for c in widget_group_children)
+    support_group_block = nl.join("\t\t\t\t" + c for c in support_group_children)
+    widget_resource_block = nl.join(widget_resource_builds)
 
     pbx = f"""// !$*UTF8*$!
 {{
@@ -312,7 +399,28 @@ def main() -> None:
 			remoteGlobalIDString = {ids['app_target']};
 			remoteInfo = PeriMedi;
 		}};
+		{ids['widget_proxy']} /* PBXContainerItemProxy */ = {{
+			isa = PBXContainerItemProxy;
+			containerPortal = {ids['project']} /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = {ids['widget_target']};
+			remoteInfo = PeriMediDoseWidget;
+		}};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		{ids['widget_embed']} /* Embed Foundation Extensions */ = {{
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				{ids['widget_embed_file']} /* PeriMediDoseWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		{ids['frameworks']} /* Frameworks */ = {{
@@ -330,6 +438,14 @@ def main() -> None:
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		}};
+		{ids['widget_frameworks']} /* Frameworks */ = {{
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				{ids['widget_pkg_build']} /* PeriMediDomain in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -337,6 +453,8 @@ def main() -> None:
 			isa = PBXGroup;
 			children = (
 				{ids['group_app']} /* PeriMedi */,
+				{ids['support_group']} /* PeriMediDoseWidgetSupport */,
+				{ids['widget_group']} /* PeriMediDoseWidget */,
 				{ids['ui_group']} /* PeriMediUITests */,
 				{ids['group_products']} /* Products */,
 			);
@@ -354,6 +472,7 @@ def main() -> None:
 			isa = PBXGroup;
 			children = (
 				{ids['product']} /* PeriMedi.app */,
+				{ids['widget_product']} /* PeriMediDoseWidget.appex */,
 				{ids['ui_product']} /* PeriMediUITests.xctest */,
 			);
 			name = Products;
@@ -374,6 +493,22 @@ def main() -> None:
 			path = PeriMediUITests;
 			sourceTree = "<group>";
 		}};
+		{ids['support_group']} /* PeriMediDoseWidgetSupport */ = {{
+			isa = PBXGroup;
+			children = (
+{support_group_block}
+			);
+			path = PeriMediDoseWidgetSupport;
+			sourceTree = "<group>";
+		}};
+		{ids['widget_group']} /* PeriMediDoseWidget */ = {{
+			isa = PBXGroup;
+			children = (
+{widget_group_block}
+			);
+			path = PeriMediDoseWidget;
+			sourceTree = "<group>";
+		}};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -384,10 +519,12 @@ def main() -> None:
 				{ids['sources']} /* Sources */,
 				{ids['frameworks']} /* Frameworks */,
 				{ids['resources']} /* Resources */,
+				{ids['widget_embed']} /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				{ids['widget_dep']} /* PBXTargetDependency */,
 			);
 			name = PeriMedi;
 			packageProductDependencies = (
@@ -414,6 +551,26 @@ def main() -> None:
 			productName = PeriMediUITests;
 			productReference = {ids['ui_product']} /* PeriMediUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
+		}};
+		{ids['widget_target']} /* PeriMediDoseWidget */ = {{
+			isa = PBXNativeTarget;
+			buildConfigurationList = {ids['config_list_widget']} /* Build configuration list for PBXNativeTarget "PeriMediDoseWidget" */;
+			buildPhases = (
+				{ids['widget_sources']} /* Sources */,
+				{ids['widget_frameworks']} /* Frameworks */,
+				{ids['widget_resources']} /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PeriMediDoseWidget;
+			packageProductDependencies = (
+				{ids['widget_pkg_prod']} /* PeriMediDomain */,
+			);
+			productName = PeriMediDoseWidget;
+			productReference = {ids['widget_product']} /* PeriMediDoseWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		}};
 /* End PBXNativeTarget section */
 
@@ -443,6 +600,7 @@ def main() -> None:
 			projectRoot = "";
 			targets = (
 				{ids['app_target']} /* PeriMedi */,
+				{ids['widget_target']} /* PeriMediDoseWidget */,
 				{ids['ui_target']} /* PeriMediUITests */,
 			);
 		}};
@@ -461,6 +619,14 @@ def main() -> None:
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
+		{ids['widget_resources']} /* Resources */ = {{
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+{widget_resource_block}
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		}};
@@ -483,6 +649,14 @@ def main() -> None:
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		}};
+		{ids['widget_sources']} /* Sources */ = {{
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+{widget_source_block}
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -490,6 +664,11 @@ def main() -> None:
 			isa = PBXTargetDependency;
 			target = {ids['app_target']} /* PeriMedi */;
 			targetProxy = {ids['ui_proxy']} /* PBXContainerItemProxy */;
+		}};
+		{ids['widget_dep']} /* PBXTargetDependency */ = {{
+			isa = PBXTargetDependency;
+			target = {ids['widget_target']} /* PeriMediDoseWidget */;
+			targetProxy = {ids['widget_proxy']} /* PBXContainerItemProxy */;
 		}};
 /* End PBXTargetDependency section */
 
@@ -550,6 +729,7 @@ def main() -> None:
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) PERIMEDI_APP";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -576,6 +756,7 @@ def main() -> None:
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) PERIMEDI_APP";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -622,6 +803,60 @@ def main() -> None:
 			}};
 			name = Release;
 		}};
+		{ids['debug_widget']} /* Debug */ = {{
+			isa = XCBuildConfiguration;
+			buildSettings = {{
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = PeriMediDoseWidget/PeriMediDoseWidget.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = {os.environ.get("PERIMEDI_DEVELOPMENT_TEAM", "7H4A6PWSPS")};
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = PeriMediDoseWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.perimedi.ios.dose;
+				PRODUCT_NAME = PeriMediDoseWidget;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			}};
+			name = Debug;
+		}};
+		{ids['release_widget']} /* Release */ = {{
+			isa = XCBuildConfiguration;
+			buildSettings = {{
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = PeriMediDoseWidget/PeriMediDoseWidget.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = {os.environ.get("PERIMEDI_DEVELOPMENT_TEAM", "7H4A6PWSPS")};
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = PeriMediDoseWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.perimedi.ios.dose;
+				PRODUCT_NAME = PeriMediDoseWidget;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			}};
+			name = Release;
+		}};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -652,6 +887,15 @@ def main() -> None:
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		}};
+		{ids['config_list_widget']} /* Build configuration list for PBXNativeTarget "PeriMediDoseWidget" */ = {{
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				{ids['debug_widget']} /* Debug */,
+				{ids['release_widget']} /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		}};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
@@ -663,6 +907,11 @@ def main() -> None:
 
 /* Begin XCSwiftPackageProductDependency section */
 		{ids['pkg_prod']} /* PeriMediDomain */ = {{
+			isa = XCSwiftPackageProductDependency;
+			package = {ids['pkg_ref']} /* XCLocalSwiftPackageReference "." */;
+			productName = PeriMediDomain;
+		}};
+		{ids['widget_pkg_prod']} /* PeriMediDomain */ = {{
 			isa = XCSwiftPackageProductDependency;
 			package = {ids['pkg_ref']} /* XCLocalSwiftPackageReference "." */;
 			productName = PeriMediDomain;
@@ -740,7 +989,11 @@ def main() -> None:
 </Scheme>
 """
     )
-    print(f"Wrote {PROJ / 'project.pbxproj'} ({len(swift)} app swift, {len(ui_swift)} UI test swift)")
+    print(
+        f"Wrote {PROJ / 'project.pbxproj'} "
+        f"({len(swift)} app swift, {len(support_swift)} support swift, "
+        f"{len(widget_swift)} widget swift, {len(ui_swift)} UI test swift)"
+    )
 
 
 if __name__ == "__main__":
