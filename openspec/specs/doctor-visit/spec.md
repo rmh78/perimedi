@@ -59,6 +59,21 @@ The system SHALL choose the PDF date range from logged period starts, not from a
 - **WHEN** period tracking is off
 - **THEN** the PDF range is the last twelve weeks ending today even if period rows still exist
 
+### Requirement: Chosen cycles match completed windows
+The system SHALL resolve a chosen PDF cycle range against completed-cycle windows by period-start date. A chosen start that matches a completed cycle SHALL use that completed cycle's start and end. A chosen start that is not a completed cycle SHALL be ignored. When no chosen start remains, the system SHALL use the same four-week / twelve-week fallback as when no cycle was chosen. The system SHALL NOT let a caller-supplied end date move a completed window.
+
+#### Scenario: Known start uses the completed window
+- **WHEN** the chosen cycle start matches a completed cycle and a different end is supplied with that choice
+- **THEN** the PDF range end is the completed cycle's end
+
+#### Scenario: Unknown start is dropped
+- **WHEN** one chosen start matches a completed cycle and another does not
+- **THEN** the PDF range is only the completed cycle that matched
+
+#### Scenario: No remaining match uses the fallback
+- **WHEN** every chosen cycle start is not a completed cycle
+- **THEN** the PDF uses the four-week or twelve-week fallback
+
 ### Requirement: Visit PDF contents
 The PDF SHALL include: the date it was generated; the date range used; medications that had planned doses in that range and how often those planned doses were marked taken; stored dose or schedule changes whose effective date falls in that range, presented as context only; periods that overlap that range; the current Effect sentence when Cycle would show one; and a visible disclaimer that the PDF is not a medical record and not medical advice. Change context SHALL NOT claim a dose or schedule change caused a symptom difference and SHALL NOT advise a treatment change. JSON backup and iCloud behavior SHALL remain unchanged.
 
