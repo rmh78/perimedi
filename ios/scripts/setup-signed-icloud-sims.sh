@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Signed Simulator pair for iCloud device-switch. Not used by CI / verify.sh.
+# Signed Simulator pair for iCloud device-switch. Not used by CI / control-perimedi verify.
 # Does not sign the Simulators into iCloud — do that in Settings on each.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"

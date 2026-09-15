@@ -17,6 +17,10 @@ logs
 # Optional iOS screenshot dumps
 ios/shots/
 
+# Agent verification run state (proof logs stay local)
+.grok/skills/verify-perimedi/evidence/
+.grok/skills/verify-perimedi/runs/
+
 # Xcode / iOS
 ios/DerivedData
 ios/DerivedData-signed

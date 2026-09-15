@@ -50,15 +50,15 @@ Domain owns schedule/cycle/therapy expansion (`ScheduleLogic` / `CycleLogic` / `
 
 ## Commands
 
-The doctor is one script. Run it after feature work instead of picking among the pieces:
+The product UI proof is one command. Run it after feature work instead of picking among the pieces:
 
 ```bash
-bash ios/scripts/verify.sh
+.grok/skills/verify-perimedi/scripts/control-perimedi verify
 ```
 
-It sources `ios/env.sh`, checks feature-map IDs, checks feature layout, checks L10n layout, checks domain boundary, checks OpenSpec sync, fails UI-test coverage if a feature-map surface is uncovered, runs domain tests, uninstalls leftover PeriMedi, runs `xcodebuild test`, checks the screen catalog files exist (no pixel compare), then uninstalls again on success. Locally that test run writes `ios/docs/screens/` unless `SCREEN_CATALOG=0`. On GitHub it skips `ScreenCatalogTests` (committed PNGs; `ids` already checks they exist). It prefers **iPhone 17e**, then **iPhone 17** locally. Override with `SIM_DEVICE`, `SIM_OS` (e.g. `26.5`), or `SIM_UDID`. GitHub Actions pins `macos-26` + Xcode 26.6 and requires iPhone 17e on iOS 26.5 (no fallback). It needs macOS + Xcode; anywhere else it still runs the ID, layout, domain-boundary, OpenSpec-sync, and coverage checks, then exits. Before it boots the Simulator, it turns Connect Hardware Keyboard off for that UDID so `typeText` hits the software keyboard (the phone path).
+It sources `ios/env.sh`, checks feature-map IDs, checks feature layout, checks L10n layout, checks domain boundary, checks OpenSpec sync, fails UI-test coverage if a feature-map surface is uncovered, runs domain tests, uninstalls leftover PeriMedi, runs `xcodebuild test`, checks the screen catalog files exist (no pixel compare), then uninstalls again on success. Locally that test run writes `ios/docs/screens/` unless `SCREEN_CATALOG=0`. On GitHub it skips `ScreenCatalogTests` (committed PNGs; `ids` already checks they exist). Device is **iPhone 17e** only. Do not fall back to another iPhone. Unset `SIM_DEVICE` is fine. `SIM_DEVICE` set to anything other than `iPhone 17e` fails. `SIM_OS` still selects the runtime (e.g. `26.5`). `SIM_UDID` is allowed only when that simulator is named iPhone 17e. GitHub Actions pins `macos-26` + Xcode 26.6 and requires iPhone 17e on iOS 26.5. It needs macOS + Xcode; anywhere else it still runs the ID, layout, domain-boundary, OpenSpec-sync, and coverage checks, then exits. Before it boots the Simulator, it turns Connect Hardware Keyboard off for that UDID so `typeText` hits the software keyboard (the phone path). On GitHub, leftover PeriMedi on 17e is uninstalled. Locally, an occupied 17e whose lock is not this suite run is refused.
 
-CI runs only on `pull_request` (not on push to main). A new commit on a PR cancels the previous `ci` run for that PR. Every PR runs `ids` on Ubuntu (`python3 ios/scripts/check-feature-map.py`, `python3 ios/scripts/check-feature-layout.py`, `python3 ios/scripts/check-l10n-layout.py`, `python3 ios/scripts/check-domain-boundary.py`, `python3 ios/scripts/check-ui-coverage.py --fail-uncovered`, then `python3 ios/scripts/check-screen-catalog.py`), `openspec` on Ubuntu (`python3 ios/scripts/check-openspec-sync.py`), `domain` on macOS 26 with Xcode 26.6 (`swift test --package-path ios`), and `ui` on the same pin (`bash ios/scripts/verify.sh`). A green `ui` job is UI proof. Protect main should require `ids`, `openspec`, `domain`, and `ui` (add `openspec` to the GitHub ruleset; it is not required there yet). Coverage stays inside `ids`; OpenSpec sync is the `openspec` job. On GitHub the doctor skips the Python rails and domain tests (`ids` / `openspec` / `domain` already ran them). A failed `ui` job uploads `ios/DerivedData/PeriMedi.xcresult`.
+CI runs only on `pull_request` (not on push to main). A new commit on a PR cancels the previous `ci` run for that PR. Every PR runs `ids` on Ubuntu (`python3 ios/scripts/check-feature-map.py`, `python3 ios/scripts/check-feature-layout.py`, `python3 ios/scripts/check-l10n-layout.py`, `python3 ios/scripts/check-domain-boundary.py`, `python3 ios/scripts/check-ui-coverage.py --fail-uncovered`, then `python3 ios/scripts/check-screen-catalog.py`), `openspec` on Ubuntu (`python3 ios/scripts/check-openspec-sync.py`), `domain` on macOS 26 with Xcode 26.6 (`swift test --package-path ios`), and `ui` on the same pin (`.grok/skills/verify-perimedi/scripts/control-perimedi verify`). A green `ui` job is UI proof. Protect main should require `ids`, `openspec`, `domain`, and `ui` (add `openspec` to the GitHub ruleset; it is not required there yet). Coverage stays inside `ids`; OpenSpec sync is the `openspec` job. On GitHub, `verify` skips the Python rails and domain tests (`ids` / `openspec` / `domain` already ran them). A failed `ui` job uploads `ios/DerivedData/PeriMedi.xcresult`.
 
 Pieces, if you need one step:
 
@@ -92,18 +92,18 @@ python3 ios/scripts/check-domain-boundary.py
 # OpenSpec change deltas in main specs (fails CI)
 python3 ios/scripts/check-openspec-sync.py
 
-# Feature map vs UITest coverage (fails CI / doctor with --fail-uncovered)
+# Feature map vs UITest coverage (fails CI / verify with --fail-uncovered)
 python3 ios/scripts/check-ui-coverage.py --fail-uncovered
 
 # Screen catalog files exist (no pixel compare)
 python3 ios/scripts/check-screen-catalog.py
 ```
 
-UI tests are user-story journeys: `testFirstUseJourney` (empty → Trends empty → tracking → Month pager → period day on Cycle), `testMoreRemindersControls`, `testDoseReminderTaken`, plus Trends history (`testSymptomTrendsNoScores`, `testSymptomTrendsChart`). They launch with `-en -clear -today=2026-03-15` and tap real controls. They type into fields the way a user does (`typeText`). Do not paste, use the clipboard menu, or test-only setters; that makes the journey synthetic. `clearAndType` taps the field, waits until the software keyboard exists, types, then asserts the exact value. Journey tests never pass `-journeyStep` or `-loadSample`. `ScreenCatalogTests` may pass `-loadSample` and switch language in-app to write `ios/docs/screens/` in a few launches (not one launch per PNG). CI skips rewriting those PNGs; the `ids` job still fails if a committed file is missing. Local doctor writes them unless `SCREEN_CATALOG=0`. Watch **iPhone 17e** in Simulator when that device exists (Window → iPhone 17e).
+UI tests are user-story journeys: `testFirstUseJourney` (empty → Trends empty → tracking → Month pager → period day on Cycle), `testMoreRemindersControls`, `testDoseReminderTaken`, plus Trends history (`testSymptomTrendsNoScores`, `testSymptomTrendsChart`). They launch with `-en -clear -today=2026-03-15` and tap real controls. They type into fields the way a user does (`typeText`). Do not paste, use the clipboard menu, or test-only setters; that makes the journey synthetic. `clearAndType` taps the field, waits until the software keyboard exists, types, then asserts the exact value. Journey tests never pass `-journeyStep` or `-loadSample`. `ScreenCatalogTests` may pass `-loadSample` and switch language in-app to write `ios/docs/screens/` in a few launches (not one launch per PNG). CI skips rewriting those PNGs; the `ids` job still fails if a committed file is missing. Local `verify` writes them unless `SCREEN_CATALOG=0`. Watch **iPhone 17e** in Simulator when that device exists (Window → iPhone 17e).
 
-Main-screen pictures for UX are `ios/docs/screens/` (written by `ScreenCatalogTests` on a local doctor). `JourneyScript` / `ios/scripts/shot-journey.sh` remain optional extra capture. They are not the interaction proof.
+Main-screen pictures for UX are `ios/docs/screens/` (written by `ScreenCatalogTests` on a local `verify`). `JourneyScript` / `ios/scripts/shot-journey.sh` remain optional extra capture. They are not the interaction proof.
 
-If `xcode-select -p` is Command Line Tools, either `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer` or `source ios/env.sh` (`DEVELOPER_DIR`). The doctor sources `ios/env.sh` for you.
+If `xcode-select -p` is Command Line Tools, either `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer` or `source ios/env.sh` (`DEVELOPER_DIR`). `control-perimedi` sources `ios/env.sh` for you.
 
 Simulator signing does not require a paid team. Add an Apple ID in Xcode → Accounts later for device / production CloudKit. See `ios/docs/icloud-device-switch.md`.
 
@@ -123,8 +123,8 @@ Simulator signing does not require a paid team. Add an Apple ID in Xcode → Acc
 2. Keep med lane labels and dose tracks row-aligned on Cycle.
 3. Period UI: label + background only (no duplicate red bar).
 4. No menstrual “phase” labels (follicular/luteal etc.).
-5. After structural or UI changes: `bash ios/scripts/verify.sh`.
-6. If you skip the doctor and launch by hand: rebuild, **uninstall**, reinstall, and launch on **iPhone 17e** so the Simulator is not showing a leftover install.
+5. After structural or UI changes: `.grok/skills/verify-perimedi/scripts/control-perimedi verify`.
+6. If you skip `verify` and launch by hand: rebuild, **uninstall**, reinstall, and launch on **iPhone 17e** so the Simulator is not showing a leftover install.
 7. Keep the feature map current in the same commit (see Feature map below).
 8. New Swift files go next to the feature (`Features/Cycle`, `Features/Trends`, `Features/Month`, or `Features/More`), not in `CycleView.swift` / `L10n.swift` / `DialogChrome.swift` / `Features/Sheets`.
 
@@ -134,9 +134,9 @@ When driving or checking a screen, read `.grok/skills/verify-perimedi/` first. `
 
 Soft: same commit as the feature, like OpenSpec. A new user-facing surface gets a new file under `.grok/skills/verify-perimedi/features/`. A change to how a user gets there, what visible state proves it worked, or a gotcha updates that file even when no `A11yID` was added. CI cannot see those.
 
-Hard: `python3 ios/scripts/check-feature-map.py` must pass (the doctor runs it). CI job `ids` runs it on every PR. `python3 ios/scripts/check-feature-layout.py` must also pass; `ids` runs it too. `python3 ios/scripts/check-l10n-layout.py` must pass; `ids` runs it too. `python3 ios/scripts/check-domain-boundary.py` must pass; `ids` runs it too. CI job `openspec` runs `python3 ios/scripts/check-openspec-sync.py`. CI job `domain` runs `swift test --package-path ios` on macOS. CI job `ui` runs the doctor (Simulator XCUITest). Protect main should require `ids`, `openspec`, `domain`, and `ui` (add `openspec` to the GitHub ruleset).
+Hard: `python3 ios/scripts/check-feature-map.py` must pass (`control-perimedi verify` and `doctor` run it). CI job `ids` runs it on every PR. `python3 ios/scripts/check-feature-layout.py` must also pass; `ids` runs it too. `python3 ios/scripts/check-l10n-layout.py` must pass; `ids` runs it too. `python3 ios/scripts/check-domain-boundary.py` must pass; `ids` runs it too. CI job `openspec` runs `python3 ios/scripts/check-openspec-sync.py`. CI job `domain` runs `swift test --package-path ios` on macOS. CI job `ui` runs `control-perimedi verify` (Simulator XCUITest). Protect main should require `ids`, `openspec`, `domain`, and `ui` (add `openspec` to the GitHub ruleset).
 
-Coverage is a failing check inside `ids` (and the doctor): `python3 ios/scripts/check-ui-coverage.py --fail-uncovered` fails when a feature-map surface with distinctive IDs is never driven by UI tests. Waiting for `tab.more` is not coverage. More and backup journeys exist (`testMoreRemindersControls`). Do not add coverage as a separate required check. Protect main should stay `ids`, `openspec`, `domain`, and `ui` once `openspec` is on the GitHub ruleset.
+Coverage is a failing check inside `ids` (and `verify`): `python3 ios/scripts/check-ui-coverage.py --fail-uncovered` fails when a feature-map surface with distinctive IDs is never driven by UI tests. Waiting for `tab.more` is not coverage. More and backup journeys exist (`testMoreRemindersControls`). Do not add coverage as a separate required check. Protect main should stay `ids`, `openspec`, `domain`, and `ui` once `openspec` is on the GitHub ruleset.
 
 ## OpenSpec
 
@@ -148,6 +148,6 @@ Product behavior is specified under `openspec/specs/<capability>/spec.md`.
 2. Spec shape: `## Purpose`, `## Requirements`, `### Requirement: …` (SHALL/MUST), and at least one `#### Scenario:` with WHEN/THEN. Describe observable behavior only — not component or file names.
 3. Ship OpenSpec updates **in the same commit** as the feature/fix when behavior changes. Archive/sync the change in the same PR so `openspec/specs/` has the new requirements.
 4. After editing specs: `openspec validate --specs --strict` when practical.
-5. `python3 ios/scripts/check-openspec-sync.py` must pass. CI job `openspec` and the doctor run it. It fails while an active `openspec/changes/<name>/` delta is not yet in `openspec/specs/`.
+5. `python3 ios/scripts/check-openspec-sync.py` must pass. CI job `openspec` and `control-perimedi verify` run it. It fails while an active `openspec/changes/<name>/` delta is not yet in `openspec/specs/`.
 
 Do not invent requirements unrelated to the product or the change.
