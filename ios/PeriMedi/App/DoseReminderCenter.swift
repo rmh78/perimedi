@@ -195,7 +195,14 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             try? await center.add(request)
         }
 
-        let liveSnooze = Set(slots.map(\.snoozeId))
+        let liveSnooze = ReminderLogic.pendingSnoozeIds(
+            now: Date(),
+            medications: store.medications,
+            schedules: store.schedules,
+            doseLogs: store.doseLogs,
+            periods: store.periods,
+            settings: store.settings
+        )
         let staleSnooze = ours
             .map(\.identifier)
             .filter { $0.hasPrefix("snooze.") && !liveSnooze.contains($0) }
