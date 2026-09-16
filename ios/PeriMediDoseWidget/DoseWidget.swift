@@ -49,10 +49,11 @@ struct DoseWidgetView: View {
 
     var body: some View {
         let visible = snapshot.visible(at: Date())
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             Text(snapshot.chrome.brandTitle)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(DoseWidgetTheme.blush800)
+                .fixedSize(horizontal: false, vertical: true)
             if visible.meds.isEmpty {
                 empty
             } else if family == .systemMedium {
@@ -81,94 +82,76 @@ struct DoseWidgetView: View {
     private func smallStack(_ meds: [DoseWidgetSnapshot.Row]) -> some View {
         let front = meds[0]
         let rest = Array(meds.dropFirst())
-        let backs = Array(rest.prefix(2))
-        return ZStack(alignment: .topTrailing) {
-            ZStack(alignment: .topLeading) {
-                ForEach(Array(backs.enumerated().reversed()), id: \.element.id) { index, row in
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(fill(for: row))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .offset(x: CGFloat(index + 1) * 7, y: CGFloat(index + 1) * 7)
-                }
-                frontCard(front)
-            }
-            if rest.count > 0 {
-                Text("+\(rest.count)")
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Capsule().fill(DoseWidgetTheme.blush800))
+        return VStack(alignment: .leading, spacing: 6) {
+            frontCard(front)
+            if !rest.isEmpty {
+                moreMark(rest)
             }
         }
-        .padding(.trailing, rest.isEmpty ? 0 : 16)
-        .padding(.bottom, rest.isEmpty ? 0 : 16)
     }
 
     private func frontCard(_ row: DoseWidgetSnapshot.Row) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 2) {
             Text(row.name)
-                .font(.headline)
+                .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.white)
                 .lineLimit(1)
             Text("\(row.doseLabel) · \(row.earliestTimeOfDay)")
-                .font(.caption)
+                .font(.caption2)
                 .foregroundStyle(.white.opacity(0.92))
                 .lineLimit(1)
-            Spacer(minLength: 0)
             takenButton(row, compact: true)
         }
-        .padding(10)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .padding(8)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(fill(for: row))
         )
     }
 
     private func mediumList(_ meds: [DoseWidgetSnapshot.Row]) -> some View {
-        let rows = Array(meds.prefix(3))
-        let extra = Array(meds.dropFirst(3))
-        return VStack(alignment: .leading, spacing: 6) {
+        let rows = Array(meds.prefix(2))
+        let extra = Array(meds.dropFirst(2))
+        return VStack(alignment: .leading, spacing: 4) {
             ForEach(rows) { row in
-                HStack(spacing: 8) {
-                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                HStack(spacing: 6) {
+                    RoundedRectangle(cornerRadius: 3, style: .continuous)
                         .fill(fill(for: row))
-                        .frame(width: 6)
-                    VStack(alignment: .leading, spacing: 1) {
+                        .frame(width: 5, height: 28)
+                    VStack(alignment: .leading, spacing: 0) {
                         Text(row.name)
-                            .font(.subheadline.weight(.semibold))
+                            .font(.caption.weight(.semibold))
                             .foregroundStyle(DoseWidgetTheme.ink)
                             .lineLimit(1)
                         Text("\(row.doseLabel) · \(row.earliestTimeOfDay)")
-                            .font(.caption)
+                            .font(.caption2)
                             .foregroundStyle(DoseWidgetTheme.ink.opacity(0.7))
                             .lineLimit(1)
                     }
                     Spacer(minLength: 4)
                     takenButton(row, compact: true)
                 }
-                .padding(.vertical, 4)
-                .padding(.trailing, 4)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(fill(for: row).opacity(0.16))
-                )
             }
             if !extra.isEmpty {
-                HStack(spacing: 6) {
-                    ForEach(extra.prefix(4)) { row in
-                        Circle()
-                            .fill(fill(for: row))
-                            .frame(width: 10, height: 10)
-                    }
-                    Text("+\(extra.count)")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(DoseWidgetTheme.blush800)
-                    Spacer(minLength: 0)
-                }
+                moreMark(extra)
             }
         }
+    }
+
+    private func moreMark(_ extra: [DoseWidgetSnapshot.Row]) -> some View {
+        HStack(spacing: 5) {
+            ForEach(extra.prefix(4)) { row in
+                Circle()
+                    .fill(fill(for: row))
+                    .frame(width: 8, height: 8)
+            }
+            Text("+\(extra.count)")
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(DoseWidgetTheme.blush800)
+            Spacer(minLength: 0)
+        }
+        .accessibilityLabel("+\(extra.count)")
     }
 
     private func takenButton(_ row: DoseWidgetSnapshot.Row, compact: Bool) -> some View {

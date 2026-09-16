@@ -26,15 +26,15 @@ The system SHALL allow the user to toggle planned doses for the selected day bet
 - **THEN** activating the medication icon does not create a taken state for that day
 
 ### Requirement: Home Screen widget shows today's untaken medications
-The system SHALL show only medications that still have a pending planned slot on the device's current calendar day. The system SHALL NOT show another day's medications as the visible list. When more than one such medication remains, the system SHALL show a remaining count on a stacked deck.
+The system SHALL show only medications that still have a pending planned slot on the device's current calendar day. The system SHALL NOT show another day's medications as the visible list. When more medications remain than the widget can list as rows, the system SHALL keep the PeriMedi title visible and SHALL mark the overflow with a remaining count. The widget SHALL NOT grow to fit extra rows.
 
 #### Scenario: Today only
 - **WHEN** a medication is pending tomorrow and nothing is pending today
 - **THEN** the Home Screen widget shows today's empty chrome, not tomorrow's medication
 
 #### Scenario: Remaining count
-- **WHEN** more than one medication still has a pending planned slot today
-- **THEN** the widget shows those medications as a stacked deck and a remaining count for the medications behind the front card
+- **WHEN** more medications still have a pending planned slot today than the widget lists as rows
+- **THEN** the PeriMedi title stays visible and a remaining count marks the medications that are not listed as rows
 
 ### Requirement: Taken from the Home Screen widget
 The system SHALL allow the user to record a medication as taken from a Home Screen widget using the same grain as Cycle for today: every remaining pending planned slot for that medication on the current calendar day, each written through the same dose-log path as Cycle. The system SHALL NOT mark other medications taken. The system SHALL NOT mark slots on another day. A second activation after those slots are taken SHALL leave them taken. Un-take SHALL NOT be available on the widget; un-taking on Cycle for today SHALL make that medication eligible for the widget again.
