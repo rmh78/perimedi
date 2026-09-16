@@ -131,13 +131,7 @@ struct PillButton: View {
 }
 
 func medFormImage(_ form: MedForm) -> String {
-    switch form {
-    case .PILL: return "MedPill"
-    case .CREAM: return "MedCream"
-    case .DROPS: return "MedDrops"
-    case .INJECTION: return "MedInjection"
-    case .OTHER: return "MedOther"
-    }
+    form.assetName
 }
 
 extension Color {

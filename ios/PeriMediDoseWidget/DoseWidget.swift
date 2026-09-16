@@ -91,23 +91,21 @@ struct DoseWidgetView: View {
     }
 
     private func frontCard(_ row: DoseWidgetSnapshot.Row) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(row.name)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.white)
-                .lineLimit(1)
-            Text("\(row.doseLabel) · \(row.earliestTimeOfDay)")
-                .font(.caption2)
-                .foregroundStyle(.white.opacity(0.92))
-                .lineLimit(1)
-            takenButton(row, compact: true)
+        HStack(alignment: .center, spacing: 8) {
+            medIcon(row, size: 36)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(row.name)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(DoseWidgetTheme.ink)
+                    .lineLimit(1)
+                Text("\(row.doseLabel) · \(row.earliestTimeOfDay)")
+                    .font(.caption2)
+                    .foregroundStyle(DoseWidgetTheme.ink.opacity(0.7))
+                    .lineLimit(1)
+                takenButton(row)
+            }
+            Spacer(minLength: 0)
         }
-        .padding(8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(fill(for: row))
-        )
     }
 
     private func mediumList(_ meds: [DoseWidgetSnapshot.Row]) -> some View {
@@ -116,9 +114,7 @@ struct DoseWidgetView: View {
         return VStack(alignment: .leading, spacing: 4) {
             ForEach(rows) { row in
                 HStack(spacing: 6) {
-                    RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(fill(for: row))
-                        .frame(width: 5, height: 28)
+                    medIcon(row, size: 28)
                     VStack(alignment: .leading, spacing: 0) {
                         Text(row.name)
                             .font(.caption.weight(.semibold))
@@ -130,13 +126,23 @@ struct DoseWidgetView: View {
                             .lineLimit(1)
                     }
                     Spacer(minLength: 4)
-                    takenButton(row, compact: true)
+                    takenButton(row)
                 }
             }
             if !extra.isEmpty {
                 moreMark(extra)
             }
         }
+    }
+
+    private func medIcon(_ row: DoseWidgetSnapshot.Row, size: CGFloat) -> some View {
+        Image(row.icon)
+            .resizable()
+            .scaledToFill()
+            .frame(width: size, height: size)
+            .clipShape(Circle())
+            .padding(2)
+            .background(Circle().fill(fill(for: row)))
     }
 
     private func moreMark(_ extra: [DoseWidgetSnapshot.Row]) -> some View {
@@ -154,13 +160,14 @@ struct DoseWidgetView: View {
         .accessibilityLabel("+\(extra.count)")
     }
 
-    private func takenButton(_ row: DoseWidgetSnapshot.Row, compact: Bool) -> some View {
+    private func takenButton(_ row: DoseWidgetSnapshot.Row) -> some View {
         Button(intent: MarkTodayMedicationTakenIntent(medicationId: row.medicationId)) {
             Text(snapshot.chrome.takenAction)
-                .font(compact ? .caption.weight(.semibold) : .subheadline.weight(.semibold))
-                .frame(maxWidth: compact ? nil : .infinity)
+                .font(.caption.weight(.semibold))
         }
-        .tint(DoseWidgetTheme.blush500)
+        .tint(Color.white)
+        .foregroundStyle(DoseWidgetTheme.blush800)
+        .buttonStyle(.borderedProminent)
     }
 
     private func fill(for row: DoseWidgetSnapshot.Row) -> Color {

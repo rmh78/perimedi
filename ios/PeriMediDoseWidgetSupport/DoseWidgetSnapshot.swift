@@ -30,6 +30,7 @@ struct DoseWidgetSnapshot: Codable, Equatable, Sendable {
         var name: String
         var doseLabel: String
         var color: String
+        var icon: String
         var earliestTimeOfDay: String
         var id: String { medicationId }
     }
@@ -43,6 +44,7 @@ struct DoseWidgetSnapshot: Codable, Equatable, Sendable {
                 name: med.medication.name,
                 doseLabel: med.doseLabel,
                 color: MedColors.resolve(form: med.medication.form, color: med.medication.color),
+                icon: med.medication.form.assetName,
                 earliestTimeOfDay: med.earliestTimeOfDay
             )
         }

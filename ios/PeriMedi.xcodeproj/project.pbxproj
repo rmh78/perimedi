@@ -64,6 +64,7 @@
 		57317151F64A3B9D86D02CC6 /* MarkDoseTakenIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC4EBBA48FBA9CA676374398 /* MarkDoseTakenIntent.swift */; };
 		17D257423BA22E7A59C1D25E /* DoseWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9C0D9A8934B171D57086D95 /* DoseWidget.swift */; };
 		0FB10F802041E610F5CF0A0F /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 8D70415C7B86CE40507110F1 /* Localizable.xcstrings */; };
+		FD129F476E0BE8B7B6F2B6AE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E9DCABA0F941C89A68E28B8A /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -423,6 +424,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0FB10F802041E610F5CF0A0F /* Localizable.xcstrings in Resources */,
+				FD129F476E0BE8B7B6F2B6AE /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

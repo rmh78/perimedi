@@ -357,10 +357,15 @@ def main() -> None:
         widget_group_children.append(f"{key} /* {rel} */,")
 
     widget_strings_build = hid("build:widget_strings")
+    widget_assets_build = hid("build:widget_assets")
     widget_build_files.append(
         f"\t\t{widget_strings_build} /* Localizable.xcstrings in Resources */ = {{isa = PBXBuildFile; fileRef = {ids['widget_strings']} /* Localizable.xcstrings */; }};"
     )
+    widget_build_files.append(
+        f"\t\t{widget_assets_build} /* Assets.xcassets in Resources */ = {{isa = PBXBuildFile; fileRef = {ids['assets']} /* Assets.xcassets */; }};"
+    )
     widget_resource_builds.append(f"\t\t\t\t{widget_strings_build} /* Localizable.xcstrings in Resources */,")
+    widget_resource_builds.append(f"\t\t\t\t{widget_assets_build} /* Assets.xcassets in Resources */,")
 
     nl = "\n"
     build_files_block = nl.join(build_files + ui_build_files + widget_build_files)
