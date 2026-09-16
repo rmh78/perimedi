@@ -21,6 +21,10 @@ The system SHALL store application domain data on the user’s device and SHALL 
 - **WHEN** a planned take time is due and reminders are on
 - **THEN** the reminder is delivered by the device and is not sent through a PeriMedi server
 
+#### Scenario: Home Screen widget snapshot stays on device
+- **WHEN** today's untaken medications are shown on a Home Screen widget
+- **THEN** that display copy is stored on the device in an App Group file and is not submitted to a PeriMedi server
+
 ### Requirement: No required environment configuration
 The system SHALL run and build without required environment variables or secrets checked into the project or supplied by the developer for normal Simulator use.
 

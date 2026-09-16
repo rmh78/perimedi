@@ -55,6 +55,37 @@ final class ReminderLogicTests: XCTestCase {
         XCTAssertEqual(slots.first?.date, "2026-08-08")
     }
 
+    func testPendingSnoozeIdsKeepOverdueAndDropTaken() {
+        let overdue = ReminderLogic.pendingSnoozeIds(
+            now: nowOn("2026-08-07", time: "09:00"),
+            medications: [med()],
+            schedules: [sched()],
+            doseLogs: [],
+            periods: [],
+            settings: settings
+        )
+        XCTAssertTrue(overdue.contains("snooze.s1.2026-08-07.08:00"))
+
+        let taken = ReminderLogic.pendingSnoozeIds(
+            now: nowOn("2026-08-07", time: "09:00"),
+            medications: [med()],
+            schedules: [sched()],
+            doseLogs: [
+                DoseLog(
+                    id: "l1",
+                    medicationId: "m1",
+                    scheduleId: "s1",
+                    plannedFor: DateKeys.combineDateAndTime(dateKey: "2026-08-07", timeOfDay: "08:00"),
+                    status: .taken,
+                    confirmedAt: "t"
+                ),
+            ],
+            periods: [],
+            settings: settings
+        )
+        XCTAssertFalse(taken.contains("snooze.s1.2026-08-07.08:00"))
+    }
+
     func testSkipsTaken() {
         let log = DoseLog(
             id: "l1",

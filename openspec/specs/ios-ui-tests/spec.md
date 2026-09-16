@@ -86,6 +86,10 @@ The instrumented suite SHALL include separate journeys for jobs that are not a f
 - **WHEN** a pending dose exists and the in-app reminder card appears
 - **THEN** Taken dismisses the card and the Cycle lane reads taken
 
+#### Scenario: Home Screen widget is not the XCTest proof
+- **WHEN** the instrumented suite records a planned slot as taken
+- **THEN** it uses the in-app reminder card, not a SpringBoard widget control
+
 #### Scenario: Trends with scored cycles
 - **WHEN** the suite opens Trends with several logged cycles that have scores
 - **THEN** the chart, series, a tapped dot, and a dose-change tick are identifiable

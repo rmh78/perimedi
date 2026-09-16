@@ -9,6 +9,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 DOMAIN = ROOT / "ios/Sources/PeriMediDomain"
 APP = ROOT / "ios/PeriMedi"
+WIDGET = ROOT / "ios/PeriMediDoseWidget"
+SUPPORT = ROOT / "ios/PeriMediDoseWidgetSupport"
 PERSISTENCE = APP / "Persistence"
 STORE = PERSISTENCE / "Store.swift"
 
@@ -21,6 +23,8 @@ MATH_FILES = (
     "MedicationChangeLog.swift",
     "SymptomTrendLogic.swift",
     "DoctorVisitLogic.swift",
+    "NextPendingDose.swift",
+    "TodayPendingMeds.swift",
 )
 
 NEEDLES = (
@@ -32,6 +36,7 @@ NEEDLES = (
     "MedicationChangeLog.hasChanges",
     "SymptomTrendLogic.summarize",
     "DoctorVisitLogic.report",
+    "TodayPendingMeds.list",
 )
 
 PUBLIC_STATIC_FUNC = re.compile(r"public\s+static\s+func\s+(\w+)\b")
@@ -60,6 +65,14 @@ def collect_math_names() -> tuple[list[str], list[str]]:
 
 def app_swift_files() -> list[Path]:
     return sorted(p for p in APP.rglob("*.swift") if p.is_file())
+
+
+def widget_swift_files() -> list[Path]:
+    files: list[Path] = []
+    for tree in (WIDGET, SUPPORT):
+        if tree.is_dir():
+            files.extend(sorted(p for p in tree.rglob("*.swift") if p.is_file()))
+    return files
 
 
 def is_under_persistence(path: Path) -> bool:
@@ -133,12 +146,13 @@ def main() -> int:
     if not files:
         print(f"missing {APP.relative_to(ROOT).as_posix()} Swift sources", file=sys.stderr)
         return 2
+    scanned = files + widget_swift_files()
 
     violations: list[str] = []
-    violations.extend(check_reimplemented(names, files))
+    violations.extend(check_reimplemented(names, scanned))
     needles = missing_needles(files)
-    violations.extend(check_sddoselog(files))
-    violations.extend(check_set_dose_status(files))
+    violations.extend(check_sddoselog(scanned))
+    violations.extend(check_set_dose_status(scanned))
 
     failed = False
     if needles:

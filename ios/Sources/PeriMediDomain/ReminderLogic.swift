@@ -196,6 +196,31 @@ public enum ReminderLogic {
         return slots
     }
 
+    /// Snooze ids for pending reminder slots in the horizon, including overdue times today.
+    public static func pendingSnoozeIds(
+        now: Date,
+        medications: [Medication],
+        schedules: [Schedule],
+        doseLogs: [DoseLog],
+        periods: [Period],
+        settings: CycleSettings,
+        horizonDays: Int = horizonDays
+    ) -> Set<String> {
+        let today = DateKeys.toDateKey(now)
+        let to = DateKeys.addDaysKey(today, horizonDays)
+        return Set(
+            slots(
+                from: today,
+                to: to,
+                medications: medications,
+                schedules: schedules,
+                doseLogs: doseLogs,
+                periods: periods,
+                settings: settings
+            ).map(\.snoozeId)
+        )
+    }
+
     /// Pending slots on one calendar day, including times that have already passed.
     public static func pending(
         on dateKey: String,

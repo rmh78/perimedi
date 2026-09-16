@@ -53,6 +53,10 @@ The system SHALL NOT retranslate user-entered free text (medication names, dose 
 - **WHEN** the user has a medication named with custom text and switches language
 - **THEN** that medication name is unchanged
 
+#### Scenario: Home Screen widget chrome follows the app language
+- **WHEN** the active language is German and a Home Screen widget of today's untaken medications is shown
+- **THEN** widget chrome including today's empty copy is German and the medication name and dose label stay as typed
+
 ### Requirement: Locale-aware dates and calendar chrome
 The system SHALL format dates and calendar weekday/month labels according to the active language’s locale conventions.
 

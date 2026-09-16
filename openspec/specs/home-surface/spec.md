@@ -32,6 +32,10 @@ The system SHALL NOT present a separate Today primary screen in the bottom navig
 - **WHEN** the user views the bottom navigation band
 - **THEN** the destinations are Cycle, Month, Trends, and More only, in that order
 
+#### Scenario: Home Screen widget is not a tab
+- **WHEN** the user views the bottom navigation band
+- **THEN** the destinations remain Cycle, Month, Trends, and More only
+
 ### Requirement: Shared selected date across screens
 The system SHALL keep a shared selected calendar date so choosing a day on Cycle or Month remains the selected date when the user switches tabs.
 

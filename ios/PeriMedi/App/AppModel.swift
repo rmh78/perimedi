@@ -85,6 +85,15 @@ struct PendingReminder: Identifiable, Equatable {
     var doseLabel: String
 
     var id: String { "\(scheduleId)|\(date)|\(timeOfDay)" }
+
+    var identity: PlannedSlotIdentity {
+        PlannedSlotIdentity(
+            medicationId: medicationId,
+            scheduleId: scheduleId,
+            date: date,
+            timeOfDay: timeOfDay
+        )
+    }
 }
 
 struct ConfirmPrompt: Identifiable {
