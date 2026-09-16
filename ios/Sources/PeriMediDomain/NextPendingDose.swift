@@ -6,7 +6,6 @@ public enum NextPendingDoseResolution: Equatable, Sendable {
     case missing
 }
 
-/// Resolve one planned slot for reminder Taken.
 public enum NextPendingDose {
     public static func resolve(
         identity: PlannedSlotIdentity,

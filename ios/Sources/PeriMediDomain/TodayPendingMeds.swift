@@ -1,7 +1,5 @@
 import Foundation
 
-/// One medication with at least one pending planned slot on a single date.
-/// Empty pending is unrepresentable. Taken slots are not stored here.
 public struct TodayPendingMedication: Equatable, Sendable {
     public var medication: Medication
     public var pending: [PlannedDose]
@@ -10,7 +8,6 @@ public struct TodayPendingMedication: Equatable, Sendable {
     public var earliestTimeOfDay: String { pending[0].timeOfDay }
     public var doseLabel: String { pending[0].doseLabel }
 
-    /// pending is never empty. Every element is .pending, same medication.id, same date.
     public init?(medication: Medication, pending: [PlannedDose]) {
         let valid = pending
             .filter { $0.status == .pending && $0.medication.id == medication.id }
@@ -26,9 +23,6 @@ public struct TodayPendingMedication: Equatable, Sendable {
     }
 }
 
-/// Planned doses on the calendar day of `now` whose status is pending, grouped by medication.
-/// Sort groups by earliest pending fire time, then medication name.
-/// Does not honor remindersEnabled. Does not look at any other day.
 public enum TodayPendingMeds {
     public static func list(
         now: Date,
