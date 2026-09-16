@@ -81,30 +81,25 @@ struct DoseWidgetView: View {
 
     private func smallStack(_ meds: [DoseWidgetSnapshot.Row]) -> some View {
         let front = meds[0]
-        let rest = Array(meds.dropFirst())
-        return VStack(alignment: .leading, spacing: 6) {
-            frontCard(front)
-            if !rest.isEmpty {
-                moreMark(rest)
-            }
-        }
-    }
-
-    private func frontCard(_ row: DoseWidgetSnapshot.Row) -> some View {
-        HStack(alignment: .center, spacing: 8) {
-            medIcon(row, size: 36)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(row.name)
-                    .font(.subheadline.weight(.semibold))
+        let extra = meds.count - 1
+        return VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 6) {
+                medIcon(front, size: 22)
+                Text(front.name)
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(DoseWidgetTheme.ink)
-                    .lineLimit(1)
-                Text("\(row.doseLabel) · \(row.earliestTimeOfDay)")
-                    .font(.caption2)
-                    .foregroundStyle(DoseWidgetTheme.ink.opacity(0.7))
-                    .lineLimit(1)
-                takenButton(row)
+                    .lineLimit(2)
             }
-            Spacer(minLength: 0)
+            Text("\(front.doseLabel) · \(front.earliestTimeOfDay)")
+                .font(.caption2)
+                .foregroundStyle(DoseWidgetTheme.ink.opacity(0.7))
+                .lineLimit(1)
+            takenButton(front)
+            if extra > 0 {
+                Text("+\(extra)")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(DoseWidgetTheme.blush800)
+            }
         }
     }
 

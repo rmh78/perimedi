@@ -24,7 +24,7 @@ enum MarkTodayMedicationTakenRuntime {
 
 struct MarkTodayMedicationTakenIntent: AppIntent {
     static var title: LocalizedStringResource = "Mark medication taken"
-    static var openAppWhenRun = false
+    static var openAppWhenRun = true
     static var isDiscoverable = false
 
     @Parameter(title: "Medication")
