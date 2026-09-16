@@ -21,7 +21,7 @@ On this machine the Simulator is the required milestone. Unsigned Simulator buil
 
 Device builds put that container in `embedded.mobileprovision`. Signed Simulator builds usually have **no** provision file; CloudKit is still enabled when the process entitlements include the container (Xcode “Sign to Run Locally” Simulated.xcent, or a development identity + `PeriMedi.entitlements`).
 
-`CODE_SIGN_ENTITLEMENTS` points at `PeriMedi/Resources/PeriMedi.entitlements` (CloudKit + container only). `DEVELOPMENT_TEAM` is `7H4A6PWSPS`, overridable with `PERIMEDI_DEVELOPMENT_TEAM` when regenerating the project. Do not add the iCloud capability on a free Personal Team.
+`CODE_SIGN_ENTITLEMENTS` points at `PeriMedi/Resources/PeriMedi.entitlements` (CloudKit, container, and App Group `group.app.perimedi.ios`). `DEVELOPMENT_TEAM` is `7H4A6PWSPS`, overridable with `PERIMEDI_DEVELOPMENT_TEAM` when regenerating the project. Do not add the iCloud capability on a free Personal Team. The Home Screen widget needs that App Group. An unsigned Simulator install cannot publish `next-dose.json`.
 
 **Expected without iCloud:** add a medication, force-quit, relaunch — the row is still there. JSON export/import still moves data. The app must not block on a missing Apple ID.
 

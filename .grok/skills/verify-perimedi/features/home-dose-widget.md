@@ -26,5 +26,6 @@ Proof is domain plus the existing reminder Taken journey:
 
 - The widget reads App Group JSON only. It does not call `NextPendingDose.select` and does not open SwiftData.
 - Taken is four identity strings on an App Intent that must run in the app process. If it ran in the extension it fails closed.
+- Unsigned Simulator (`CODE_SIGNING_ALLOWED=NO`) never stamps `group.app.perimedi.ios`. `containerURL` is nil, `publish` cannot write `next-dose.json`, and the widget shows the missing-file empty chrome (`Keine offene Dosis` / `No pending dose`) even when Cycle has pending slots. Local install must be signed (no `CODE_SIGNING_ALLOWED=NO`). `control-perimedi verify` stays unsigned on purpose.
 - No distinctive IDs on purpose. Coverage would fail `check-ui-coverage.py --fail-uncovered` if SpringBoard IDs were added and never tapped.
 - The widget is not a fifth tab. Bottom nav stays Cycle, Month, Trends, More.
