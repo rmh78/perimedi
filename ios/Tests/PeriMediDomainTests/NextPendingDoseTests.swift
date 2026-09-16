@@ -38,10 +38,6 @@ final class NextPendingDoseTests: XCTestCase {
         return s
     }
 
-    func nowOn(_ dateKey: String, time: String) -> Date {
-        DateKeys.date(dateKey: dateKey, timeOfDay: time)!
-    }
-
     func log(
         scheduleId: String = "s1",
         date: String,
@@ -56,102 +52,6 @@ final class NextPendingDoseTests: XCTestCase {
             status: status,
             confirmedAt: "t"
         )
-    }
-
-    func select(
-        now: Date,
-        medications: [Medication]? = nil,
-        schedules: [Schedule]? = nil,
-        logs: [DoseLog] = []
-    ) -> PlannedDose? {
-        NextPendingDose.select(
-            now: now,
-            medications: medications ?? [med()],
-            schedules: schedules ?? [sched()],
-            doseLogs: logs,
-            periods: [],
-            settings: settings
-        )
-    }
-
-    func testSelectsOverdueTimeToday() {
-        let dose = select(now: nowOn("2026-08-07", time: "09:00"))
-        XCTAssertEqual(dose?.date, "2026-08-07")
-        XCTAssertEqual(dose?.timeOfDay, "08:00")
-        XCTAssertEqual(dose?.status, .pending)
-    }
-
-    func testTakenSlotYieldsLaterTimeSameDay() {
-        let dose = select(
-            now: nowOn("2026-08-07", time: "09:00"),
-            schedules: [sched(times: ["08:00", "20:00"])],
-            logs: [log(date: "2026-08-07", time: "08:00")]
-        )
-        XCTAssertEqual(dose?.date, "2026-08-07")
-        XCTAssertEqual(dose?.timeOfDay, "20:00")
-    }
-
-    func testCyclicPauseIsExcluded() {
-        let dose = select(
-            now: nowOn("2026-08-08", time: "07:00"),
-            schedules: [sched {
-                $0.therapyCycle = TherapyCycle(
-                    enabled: true,
-                    mode: .on_off_days,
-                    anchorDate: "2026-08-07",
-                    onDays: 1,
-                    offDays: 1
-                )
-            }]
-        )
-        XCTAssertEqual(dose?.date, "2026-08-09")
-        XCTAssertEqual(dose?.timeOfDay, "08:00")
-    }
-
-    func testReminderOffIsStillSelected() {
-        let dose = select(
-            now: nowOn("2026-08-07", time: "07:00"),
-            medications: [med(reminders: false)]
-        )
-        XCTAssertEqual(dose?.medication.id, "m1")
-        XCTAssertEqual(dose?.date, "2026-08-07")
-        XCTAssertEqual(dose?.timeOfDay, "08:00")
-    }
-
-    func testSortsByFireAtThenMedicationName() {
-        let alpha = med(id: "ma", name: "Alpha")
-        let zest = med(id: "mz", name: "Zest")
-        let laterAlpha = sched(id: "sa", medicationId: "ma", times: ["09:00"])
-        let earlierZest = sched(id: "sz", medicationId: "mz", times: ["08:00"])
-        let byTime = select(
-            now: nowOn("2026-08-07", time: "07:00"),
-            medications: [alpha, zest],
-            schedules: [laterAlpha, earlierZest]
-        )
-        XCTAssertEqual(byTime?.medication.name, "Zest")
-        XCTAssertEqual(byTime?.timeOfDay, "08:00")
-
-        let sameTimeAlpha = sched(id: "sa2", medicationId: "ma", times: ["08:00"])
-        let byName = select(
-            now: nowOn("2026-08-07", time: "07:00"),
-            medications: [zest, alpha],
-            schedules: [earlierZest, sameTimeAlpha]
-        )
-        XCTAssertEqual(byName?.medication.name, "Alpha")
-    }
-
-    func testEmptyWhenNothingPendingInHorizon() {
-        let dose = select(
-            now: nowOn("2026-08-07", time: "07:00"),
-            schedules: [sched { $0.startDate = "2026-08-22" }]
-        )
-        XCTAssertNil(dose)
-    }
-
-    func testDoesNotSelectYesterday() {
-        let dose = select(now: nowOn("2026-08-07", time: "09:00"))
-        XCTAssertNotEqual(dose?.date, "2026-08-06")
-        XCTAssertEqual(dose?.date, "2026-08-07")
     }
 
     func testResolvePendingAlreadyTakenAndMissing() {

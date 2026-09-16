@@ -24,6 +24,7 @@ MATH_FILES = (
     "SymptomTrendLogic.swift",
     "DoctorVisitLogic.swift",
     "NextPendingDose.swift",
+    "TodayPendingMeds.swift",
 )
 
 NEEDLES = (
@@ -35,7 +36,7 @@ NEEDLES = (
     "MedicationChangeLog.hasChanges",
     "SymptomTrendLogic.summarize",
     "DoctorVisitLogic.report",
-    "NextPendingDose.select",
+    "TodayPendingMeds.list",
 )
 
 PUBLIC_STATIC_FUNC = re.compile(r"public\s+static\s+func\s+(\w+)\b")

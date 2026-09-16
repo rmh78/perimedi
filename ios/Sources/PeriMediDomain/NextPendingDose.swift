@@ -6,37 +6,8 @@ public enum NextPendingDoseResolution: Equatable, Sendable {
     case missing
 }
 
-/// Next pending planned dose, including overdue times today.
-/// Does not honor per-med remindersEnabled or the master notification switch.
+/// Resolve one planned slot for reminder Taken.
 public enum NextPendingDose {
-    public static let horizonDays = 14
-
-    public static func select(
-        now: Date,
-        medications: [Medication],
-        schedules: [Schedule],
-        doseLogs: [DoseLog],
-        periods: [Period],
-        settings: CycleSettings,
-        horizonDays: Int = horizonDays
-    ) -> PlannedDose? {
-        let today = DateKeys.toDateKey(now)
-        let to = DateKeys.addDaysKey(today, horizonDays)
-        let planned = ScheduleLogic.expandPlannedDoses(
-            from: today,
-            to: to,
-            medications: medications,
-            schedules: schedules,
-            doseLogs: doseLogs,
-            periods: periods,
-            settings: settings
-        )
-        return planned
-            .filter { $0.status == .pending }
-            .sorted(by: Self.isOrderedBefore)
-            .first
-    }
-
     public static func resolve(
         identity: PlannedSlotIdentity,
         medications: [Medication],
@@ -61,14 +32,5 @@ public enum NextPendingDose {
             return .alreadyTaken(dose)
         }
         return .pending(dose)
-    }
-
-    private static func isOrderedBefore(_ a: PlannedDose, _ b: PlannedDose) -> Bool {
-        let fireA = DateKeys.date(dateKey: a.date, timeOfDay: a.timeOfDay) ?? .distantPast
-        let fireB = DateKeys.date(dateKey: b.date, timeOfDay: b.timeOfDay) ?? .distantPast
-        if fireA != fireB {
-            return fireA < fireB
-        }
-        return a.medication.name < b.medication.name
     }
 }
