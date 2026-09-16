@@ -2,14 +2,14 @@ import Foundation
 import PeriMediDomain
 
 struct DoseWidgetChrome: Codable, Equatable, Sendable {
-    var nextTitle: String
+    var brandTitle: String
     var emptyTitle: String
     var emptyBody: String
     var takenAction: String
 
     static func make(t: (String, [String: String]) -> String) -> DoseWidgetChrome {
         DoseWidgetChrome(
-            nextTitle: t("widget.next.title", [:]),
+            brandTitle: "PeriMedi",
             emptyTitle: t("widget.empty.title", [:]),
             emptyBody: t("widget.empty.body", [:]),
             takenAction: t("reminder.taken", [:])
@@ -20,63 +20,93 @@ struct DoseWidgetChrome: Codable, Equatable, Sendable {
 struct DoseWidgetSnapshot: Codable, Equatable, Sendable {
     var version: Int
     var chrome: DoseWidgetChrome
-    var slot: Slot?
+    var date: String
+    var meds: [Row]
+    var nextDate: String
+    var nextMeds: [Row]
 
-    struct Slot: Codable, Equatable, Sendable {
-        var identity: PlannedSlotIdentity
-        var medicationName: String
+    struct Row: Codable, Equatable, Sendable, Identifiable {
+        var medicationId: String
+        var name: String
         var doseLabel: String
-        var timeOfDay: String
-        var date: String
-        var color: String?
-        var fireAtEpoch: TimeInterval
+        var color: String
+        var earliestTimeOfDay: String
+        var id: String { medicationId }
     }
 
-    static let schemaVersion = 1
+    static let schemaVersion = 2
 
-    static func occupied(chrome: DoseWidgetChrome, dose: PlannedDose) -> DoseWidgetSnapshot {
-        let fireAt = DateKeys.date(dateKey: dose.date, timeOfDay: dose.timeOfDay) ?? Date.distantPast
-        return DoseWidgetSnapshot(
+    static func rows(from meds: [TodayPendingMedication]) -> [Row] {
+        meds.map { med in
+            Row(
+                medicationId: med.medication.id,
+                name: med.medication.name,
+                doseLabel: med.doseLabel,
+                color: MedColors.resolve(form: med.medication.form, color: med.medication.color),
+                earliestTimeOfDay: med.earliestTimeOfDay
+            )
+        }
+    }
+
+    static func make(
+        chrome: DoseWidgetChrome,
+        date: String,
+        meds: [TodayPendingMedication],
+        nextDate: String,
+        nextMeds: [TodayPendingMedication]
+    ) -> DoseWidgetSnapshot {
+        DoseWidgetSnapshot(
             version: schemaVersion,
             chrome: chrome,
-            slot: Slot(
-                identity: dose.identity,
-                medicationName: dose.medication.name,
-                doseLabel: dose.doseLabel,
-                timeOfDay: dose.timeOfDay,
-                date: dose.date,
-                color: dose.medication.color,
-                fireAtEpoch: fireAt.timeIntervalSince1970
-            )
+            date: date,
+            meds: rows(from: meds),
+            nextDate: nextDate,
+            nextMeds: rows(from: nextMeds)
         )
     }
 
-    static func empty(chrome: DoseWidgetChrome) -> DoseWidgetSnapshot {
-        DoseWidgetSnapshot(version: schemaVersion, chrome: chrome, slot: nil)
+    struct Visible: Equatable {
+        var date: String
+        var meds: [Row]
+    }
+
+    func visible(at now: Date) -> Visible {
+        let key = DateKeys.toDateKey(now)
+        if key == date { return Visible(date: date, meds: meds) }
+        if key == nextDate { return Visible(date: nextDate, meds: nextMeds) }
+        return Visible(date: key, meds: [])
     }
 
     static var placeholder: DoseWidgetSnapshot {
         DoseWidgetSnapshot(
             version: schemaVersion,
             chrome: DoseWidgetChrome(
-                nextTitle: "Next dose",
-                emptyTitle: "No pending dose",
-                emptyBody: "Nothing planned soon.",
+                brandTitle: "PeriMedi",
+                emptyTitle: "Nothing to take today",
+                emptyBody: "No untaken medications planned today.",
                 takenAction: "Taken"
             ),
-            slot: nil
+            date: "",
+            meds: [],
+            nextDate: "",
+            nextMeds: []
         )
     }
 
     static var missingFileFallback: DoseWidgetSnapshot {
         let german = Locale.preferredLanguages.joined(separator: ",").lowercased().contains("de")
-        return .empty(
+        return DoseWidgetSnapshot(
+            version: schemaVersion,
             chrome: DoseWidgetChrome(
-                nextTitle: german ? "Nächste Dosis" : "Next dose",
-                emptyTitle: german ? "Keine offene Dosis" : "No pending dose",
-                emptyBody: german ? "Bald nichts geplant." : "Nothing planned soon.",
+                brandTitle: "PeriMedi",
+                emptyTitle: german ? "Heute nichts zu nehmen" : "Nothing to take today",
+                emptyBody: german ? "Heute keine offene Dosis." : "No untaken medications planned today.",
                 takenAction: german ? "Genommen" : "Taken"
-            )
+            ),
+            date: "",
+            meds: [],
+            nextDate: "",
+            nextMeds: []
         )
     }
 }

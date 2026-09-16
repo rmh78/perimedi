@@ -287,6 +287,44 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
     }
 
     @discardableResult
+    func markMedicationTaken(medicationId: String) throws -> MarkMedicationTakenResult {
+        guard let store else { throw MarkDoseTakenError.saveFailed }
+        let today = DateKeys.todayKey()
+        guard let todayDate = DateKeys.parseDateKey(today) else {
+            DoseWidgetBridge.publish()
+            return .notPlanned
+        }
+        let list = TodayPendingMeds.list(
+            now: todayDate,
+            medications: store.medications,
+            schedules: store.schedules,
+            doseLogs: store.doseLogs,
+            periods: store.periods,
+            settings: store.settings
+        )
+        guard let med = list.first(where: { $0.medication.id == medicationId }) else {
+            DoseWidgetBridge.publish()
+            return .alreadyTaken
+        }
+        do {
+            for slot in med.pending {
+                cancelNotifications(for: slot.identity)
+                try store.setDoseStatus(
+                    medicationId: slot.medication.id,
+                    scheduleId: slot.schedule.id,
+                    date: slot.date,
+                    timeOfDay: slot.timeOfDay,
+                    status: .taken,
+                    existingLogId: slot.log?.id
+                )
+            }
+            return .taken
+        } catch {
+            throw MarkDoseTakenError.saveFailed
+        }
+    }
+
+    @discardableResult
     func markSlotTaken(_ identity: PlannedSlotIdentity) throws -> MarkSlotTakenResult {
         guard let store else { throw MarkDoseTakenError.saveFailed }
         cancelNotifications(for: identity)

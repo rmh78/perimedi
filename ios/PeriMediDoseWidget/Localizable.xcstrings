@@ -22,13 +22,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Next pending dose"
+            "value" : "Today's medications"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nächste offene Dosis"
+            "value" : "Heutige Medikamente"
           }
         }
       }

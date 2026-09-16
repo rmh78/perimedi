@@ -14,7 +14,7 @@ The system SHALL persist medications, schedules, dose logs, remarks, symptom sco
 - **THEN** that medication and period are still present
 
 #### Scenario: Widget display replica is not the domain store
-- **WHEN** the Home Screen widget shows the next pending dose
+- **WHEN** the Home Screen widget shows today's untaken medications
 - **THEN** medications, schedules, and dose logs remain in the app’s on-device store, not in the App Group file the widget reads
 
 ### Requirement: No PeriMedi account

@@ -25,20 +25,35 @@ The system SHALL allow the user to toggle planned doses for the selected day bet
 - **WHEN** the selected day has no planned doses for a medication
 - **THEN** activating the medication icon does not create a taken state for that day
 
+### Requirement: Home Screen widget shows today's untaken medications
+The system SHALL show only medications that still have a pending planned slot on the device's current calendar day. The system SHALL NOT show another day's medications as the visible list. When more than one such medication remains, the system SHALL show a remaining count on a stacked deck.
+
+#### Scenario: Today only
+- **WHEN** a medication is pending tomorrow and nothing is pending today
+- **THEN** the Home Screen widget shows today's empty chrome, not tomorrow's medication
+
+#### Scenario: Remaining count
+- **WHEN** more than one medication still has a pending planned slot today
+- **THEN** the widget shows those medications as a stacked deck and a remaining count for the medications behind the front card
+
 ### Requirement: Taken from the Home Screen widget
-The system SHALL allow the user to record the next pending planned slot as taken from a Home Screen widget. That write SHALL use the same one-slot taken path as a dose reminder Taken action. The system SHALL NOT mark other planned slots that day taken. A second activation for a slot that is already taken SHALL leave it taken.
+The system SHALL allow the user to record a medication as taken from a Home Screen widget using the same grain as Cycle for today: every remaining pending planned slot for that medication on the current calendar day, each written through the same dose-log path as Cycle. The system SHALL NOT mark other medications taken. The system SHALL NOT mark slots on another day. A second activation after those slots are taken SHALL leave them taken. Un-take SHALL NOT be available on the widget; un-taking on Cycle for today SHALL make that medication eligible for the widget again.
 
 #### Scenario: Taken from the Home Screen widget
-- **WHEN** the next pending planned slot is shown on the Home Screen widget and the user chooses Taken
-- **THEN** that slot is recorded as taken the same way as logging it from a dose reminder, and Cycle and Month reflect expansion
+- **WHEN** a medication with pending planned slots today is shown on the Home Screen widget and the user chooses Taken
+- **THEN** every remaining pending planned slot for that medication on today is recorded as taken the same way as activating that medication's Cycle lane for today, and Cycle and Month reflect expansion
 
-#### Scenario: Widget Taken is one slot
-- **WHEN** a medication has two planned times on the same day and the user chooses Taken on the widget for the earlier time
-- **THEN** only that time is taken; the later time stays pending
+#### Scenario: Widget Taken is Cycle grain for today
+- **WHEN** a medication has two planned times still pending today and the user chooses Taken on the widget for that medication
+- **THEN** both times are taken; other medications' slots stay pending
 
 #### Scenario: Widget Taken is idempotent
-- **WHEN** the user chooses Taken on the widget for a slot that is already taken
-- **THEN** the slot stays taken and no second log is created
+- **WHEN** the user chooses Taken on the widget for a medication whose planned slots today are already taken
+- **THEN** those slots stay taken and no second log is created
+
+#### Scenario: Un-take on Cycle returns the medication
+- **WHEN** the user marks a medication taken from the widget and later un-takes it on Cycle for today
+- **THEN** that medication is eligible for the widget's visible list again
 
 ### Requirement: Taken visual uses medication color
 The system SHALL reflect taken status on the cycle chart using the medication’s color for taken-day fills and taken indicator styling.

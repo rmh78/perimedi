@@ -3,14 +3,12 @@ import Foundation
 enum DoseWidgetStrings {
     static let table: [AppLanguage: [String: String]] = [
         .en: [
-            "widget.next.title": "Next dose",
-            "widget.empty.title": "No pending dose",
-            "widget.empty.body": "Nothing planned soon.",
+            "widget.empty.title": "Nothing to take today",
+            "widget.empty.body": "No untaken medications planned today.",
         ],
         .de: [
-            "widget.next.title": "Nächste Dosis",
-            "widget.empty.title": "Keine offene Dosis",
-            "widget.empty.body": "Bald nichts geplant.",
+            "widget.empty.title": "Heute nichts zu nehmen",
+            "widget.empty.body": "Heute keine offene Dosis.",
         ],
     ]
 }

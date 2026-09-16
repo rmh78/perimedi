@@ -22,7 +22,7 @@ The system SHALL store application domain data on the user’s device and SHALL 
 - **THEN** the reminder is delivered by the device and is not sent through a PeriMedi server
 
 #### Scenario: Home Screen widget snapshot stays on device
-- **WHEN** the next pending dose is shown on a Home Screen widget
+- **WHEN** today's untaken medications are shown on a Home Screen widget
 - **THEN** that display copy is stored on the device in an App Group file and is not submitted to a PeriMedi server
 
 ### Requirement: No required environment configuration

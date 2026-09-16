@@ -35,7 +35,7 @@ Each feature file starts with an H1 and one paragraph. It then uses exactly four
 
 ## Full sweep
 
-Walk this map top to bottom for a broad regression. Order is Cycle, Month, Trends, More, medication sheet, period sheet, symptom sheet, dose reminders, Home Screen next-dose widget (blocked), doctor visit, backup, then the first-use journey. Driving one convenient entry point is not a sweep.
+Walk this map top to bottom for a broad regression. Order is Cycle, Month, Trends, More, medication sheet, period sheet, symptom sheet, dose reminders, Home Screen today's-meds widget (blocked), doctor visit, backup, then the first-use journey. Driving one convenient entry point is not a sweep.
 
 Practical test walk for that order:
 
@@ -56,7 +56,7 @@ PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verif
 - [Period sheet](./period-sheet.md) — log bleeds over Cycle
 - [Symptom sheet](./symptom-sheet.md) — scores 1–4 over Cycle
 - [Dose reminders](./reminders.md) — in-app banner Taken / Snooze
-- [Home Screen next-dose widget](./home-dose-widget.md) — blocked SpringBoard surface; domain + reminder Taken proof
+- [Home Screen today's-meds widget](./home-dose-widget.md) — blocked SpringBoard surface; domain + reminder Taken proof
 - [Doctor visit PDF](./doctor-visit.md) — More → range → in-app preview
 - [Backup / sample](./backup.md) — sample, export, import, clear (cancel in journeys)
 - [First-use journey](./journeys.md) — empty app through tracking and Month

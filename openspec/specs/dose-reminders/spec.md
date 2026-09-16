@@ -18,8 +18,8 @@ The system SHALL schedule an on-device reminder for each future pending planned 
 - **THEN** no reminder remains scheduled for that slot
 
 #### Scenario: Taken from the widget clears reminders
-- **WHEN** the user marks a planned slot taken from the Home Screen widget
-- **THEN** no reminder remains scheduled for that slot, including a snooze
+- **WHEN** the user marks a medication taken from the Home Screen widget
+- **THEN** no reminder remains scheduled for the planned slots that write records as taken, including a snooze for those slots
 
 #### Scenario: Cyclic pause
 - **WHEN** a cyclic plan is in a pause day
