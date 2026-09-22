@@ -1,5 +1,6 @@
 import PeriMediDomain
 import SwiftUI
+import UIKit
 import WidgetKit
 
 struct DoseWidgetEntry: TimelineEntry {
@@ -38,6 +39,8 @@ enum DoseWidgetTheme {
     static let blush500 = Color(widgetHex: "#e85a84") ?? Color.pink
     static let blush800 = Color(widgetHex: "#94274b") ?? Color.pink
     static let ink = Color(widgetHex: "#3d2c33") ?? Color.black
+    static let inkSoft = Color(widgetHex: "#6b5560") ?? Color.gray
+    static let pageWash = Color(widgetHex: "#fde2ea") ?? Color.clear
 }
 
 struct DoseWidgetView: View {
@@ -64,22 +67,35 @@ struct DoseWidgetView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .containerBackground(for: .widget) {
-            DoseWidgetTheme.cream
+            ZStack {
+                DoseWidgetTheme.cream
+                RadialGradient(
+                    colors: [DoseWidgetTheme.pageWash, .clear],
+                    center: UnitPoint(x: 0.1, y: 0),
+                    startRadius: 4,
+                    endRadius: 180
+                )
+            }
         }
     }
 
     private func smallStack(_ meds: [DoseWidgetSnapshot.Row], taken: String) -> some View {
         let front = meds[0]
         let extra = meds.count - 1
-        return VStack(alignment: .leading, spacing: 4) {
-            Text(front.name)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(DoseWidgetTheme.ink)
-                .lineLimit(2)
-            Text("\(front.doseLabel) · \(front.earliestTimeOfDay)")
-                .font(.caption)
-                .foregroundStyle(DoseWidgetTheme.ink.opacity(0.7))
-                .lineLimit(1)
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                medIcon(front)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(front.name)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(DoseWidgetTheme.ink)
+                        .lineLimit(1)
+                    Text("\(front.doseLabel) · \(front.earliestTimeOfDay)")
+                        .font(.caption)
+                        .foregroundStyle(DoseWidgetTheme.inkSoft)
+                        .lineLimit(1)
+                }
+            }
             takenButton(front, taken: taken)
             if extra > 0 {
                 Text("+\(extra)")
@@ -92,22 +108,9 @@ struct DoseWidgetView: View {
     private func mediumList(_ meds: [DoseWidgetSnapshot.Row], taken: String) -> some View {
         let rows = Array(meds.prefix(2))
         let extra = meds.count - 2
-        return VStack(alignment: .leading, spacing: 6) {
+        return VStack(alignment: .leading, spacing: 8) {
             ForEach(rows) { row in
-                HStack {
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(row.name)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(DoseWidgetTheme.ink)
-                            .lineLimit(1)
-                        Text("\(row.doseLabel) · \(row.earliestTimeOfDay)")
-                            .font(.caption)
-                            .foregroundStyle(DoseWidgetTheme.ink.opacity(0.7))
-                            .lineLimit(1)
-                    }
-                    Spacer(minLength: 4)
-                    takenButton(row, taken: taken)
-                }
+                medRow(row, taken: taken, nameLines: 1)
             }
             if extra > 0 {
                 Text("+\(extra)")
@@ -117,14 +120,67 @@ struct DoseWidgetView: View {
         }
     }
 
+    private func medRow(_ row: DoseWidgetSnapshot.Row, taken: String, nameLines: Int) -> some View {
+        HStack(spacing: 8) {
+            medIcon(row)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(row.name)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(DoseWidgetTheme.ink)
+                    .lineLimit(nameLines)
+                Text("\(row.doseLabel) · \(row.earliestTimeOfDay)")
+                    .font(.caption)
+                    .foregroundStyle(DoseWidgetTheme.inkSoft)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 4)
+            takenButton(row, taken: taken)
+        }
+    }
+
+    private func medIcon(_ row: DoseWidgetSnapshot.Row) -> some View {
+        let ring = Color(widgetHex: row.color) ?? DoseWidgetTheme.blush500
+        return formImage(row.icon)
+            .scaledToFill()
+            .frame(width: 28, height: 28)
+            .clipShape(Circle())
+            .padding(2)
+            .background(Circle().fill(ring))
+            .accessibilityHidden(true)
+    }
+
+    @ViewBuilder
+    private func formImage(_ name: String) -> some View {
+        if #available(iOS 18.0, *) {
+            Image(uiImage: formThumbnail(name))
+                .resizable()
+                .widgetAccentedRenderingMode(.fullColor)
+        } else {
+            Image(uiImage: formThumbnail(name))
+                .resizable()
+        }
+    }
+
+    private func formThumbnail(_ name: String) -> UIImage {
+        // The catalog photo is 1024px. The small widget archive rejects that size.
+        let side: CGFloat = 96
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: side, height: side))
+        return renderer.image { _ in
+            UIImage(named: name)?.draw(in: CGRect(x: 0, y: 0, width: side, height: side))
+        }
+    }
+
     private func takenButton(_ row: DoseWidgetSnapshot.Row, taken: String) -> some View {
         Button(intent: MarkTodayMedicationTakenIntent(medicationId: row.medicationId)) {
             Text(taken)
                 .font(.caption.weight(.semibold))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Capsule().fill(Color(widgetHex: row.color) ?? DoseWidgetTheme.blush500))
         }
-        .tint(Color.white)
-        .foregroundStyle(DoseWidgetTheme.blush800)
-        .buttonStyle(.borderedProminent)
+        .buttonStyle(.plain)
     }
 }
 

@@ -36,6 +36,10 @@ The system SHALL show only medications that still have a pending planned slot on
 - **WHEN** more medications still have a pending planned slot today than the widget lists as rows
 - **THEN** the PeriMedi title stays visible and a remaining count marks the medications that are not listed as rows
 
+#### Scenario: Medication icon and Taken control
+- **WHEN** a medication is listed on the Home Screen widget
+- **THEN** that row shows the medication's form icon inside a circle of the medication color, and Taken is a white label on a control filled with that same medication color
+
 ### Requirement: Taken from the Home Screen widget
 The system SHALL allow the user to record a medication as taken from a Home Screen widget using the same grain as Cycle for today: every remaining pending planned slot for that medication on the current calendar day, each written through the same dose-log path as Cycle. The system SHALL NOT mark other medications taken. The system SHALL NOT mark slots on another day. A second activation after those slots are taken SHALL leave them taken. Un-take SHALL NOT be available on the widget; un-taking on Cycle for today SHALL make that medication eligible for the widget again.
 

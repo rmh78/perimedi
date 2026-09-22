@@ -4,7 +4,7 @@ Home Screen widget for today's untaken medications, with Taken at Cycle lane gra
 
 ## Sub-features
 
-- Occupied card: today's pending medications (overdue included, reminder-off included), stacked with `+N` when more than one remains
+- Occupied card: today's pending medications (overdue included, reminder-off included), each with its form icon in a medication-color ring and a white Taken label on that medication color, stacked with `+N` when more than one remains
 - Empty card when nothing is pending today (another day's doses do not appear)
 - Taken marks every remaining pending slot for that medication on today
 - Chrome follows the in-app language (en/de); medication name and dose label stay user text
