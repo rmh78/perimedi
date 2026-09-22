@@ -2,6 +2,16 @@ import Foundation
 
 public enum MedForm: String, Codable, CaseIterable, Sendable {
     case PILL, CREAM, DROPS, INJECTION, OTHER
+
+    public var assetName: String {
+        switch self {
+        case .PILL: return "MedPill"
+        case .CREAM: return "MedCream"
+        case .DROPS: return "MedDrops"
+        case .INJECTION: return "MedInjection"
+        case .OTHER: return "MedOther"
+        }
+    }
 }
 
 public enum DoseStatus: String, Codable, Sendable {

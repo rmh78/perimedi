@@ -13,6 +13,10 @@ The system SHALL persist medications, schedules, dose logs, remarks, symptom sco
 - **WHEN** the user adds a medication and a period, then force-quits and relaunches the app on the same Simulator
 - **THEN** that medication and period are still present
 
+#### Scenario: Widget display replica is not the domain store
+- **WHEN** the Home Screen widget shows today's untaken medications
+- **THEN** medications, schedules, and dose logs remain in the app’s on-device store, not in the App Group file the widget reads
+
 ### Requirement: No PeriMedi account
 The system SHALL NOT require a PeriMedi username, password, or API key to store or read the current user’s data.
 

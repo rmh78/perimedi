@@ -21,6 +21,7 @@ struct PeriMediApp: App {
         _appModel = StateObject(wrappedValue: model)
         UNUserNotificationCenter.current().delegate = DoseReminderCenter.shared
         DoseReminderCenter.shared.attach(store: store, app: model)
+        DoseWidgetBridge.install(store: store, locale: locale)
     }
 
     var body: some Scene {

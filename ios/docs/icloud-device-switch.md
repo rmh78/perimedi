@@ -9,7 +9,7 @@ PeriMedi stores domain data in SwiftData. When an Apple ID is signed in and the 
 - After a **local** save, `Store` writes with `#Predicate` / fetch-by-id, then `refresh()`es the snapshot once.
 - When **CloudKit** is on, `Store` also observes Core Data remote-change and CloudKit import events (`NSPersistentStoreRemoteChange`, `NSPersistentCloudKitContainer` import/setup) and `refresh()`es after a short debounce.
 - Returning to the foreground (`willEnterForeground`) `refresh()`es `Store` as well as dose reminders. Destination B does not need a local write to show data that arrived from A. Remote-change observers cover the case where B stays in the foreground **after CloudKit has landed rows on disk**.
-- `DoseReminderCenter` still uses `store.afterChange`; that callback runs when a refresh actually changes the snapshot, including remote imports.
+- `DoseReminderCenter` and the home-screen widget subscribe with `store.addAfterChange`. Those callbacks run when a refresh actually changes the snapshot, including remote imports.
 
 One published `StoreSnapshot` means one SwiftUI invalidation per refresh.
 
@@ -21,7 +21,7 @@ On this machine the Simulator is the required milestone. Unsigned Simulator buil
 
 Device builds put that container in `embedded.mobileprovision`. Signed Simulator builds usually have **no** provision file; CloudKit is still enabled when the process entitlements include the container (Xcode “Sign to Run Locally” Simulated.xcent, or a development identity + `PeriMedi.entitlements`).
 
-`CODE_SIGN_ENTITLEMENTS` points at `PeriMedi/Resources/PeriMedi.entitlements` (CloudKit + container only). `DEVELOPMENT_TEAM` is `7H4A6PWSPS`, overridable with `PERIMEDI_DEVELOPMENT_TEAM` when regenerating the project. Do not add the iCloud capability on a free Personal Team.
+`CODE_SIGN_ENTITLEMENTS` points at `PeriMedi/Resources/PeriMedi.entitlements` (CloudKit, container, and App Group `group.app.perimedi.ios`). `DEVELOPMENT_TEAM` is `7H4A6PWSPS`, overridable with `PERIMEDI_DEVELOPMENT_TEAM` when regenerating the project. Do not add the iCloud capability on a free Personal Team. The Home Screen widget needs that App Group. An unsigned Simulator install cannot publish `next-dose.json`.
 
 **Expected without iCloud:** add a medication, force-quit, relaunch — the row is still there. JSON export/import still moves data. The app must not block on a missing Apple ID.
 

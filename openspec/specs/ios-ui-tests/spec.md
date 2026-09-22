@@ -86,6 +86,14 @@ The instrumented suite SHALL include separate journeys for jobs that are not a f
 - **WHEN** a pending dose exists and the in-app reminder card appears
 - **THEN** Taken dismisses the card and the Cycle lane reads taken
 
+#### Scenario: Signed Home Screen widget journey
+- **WHEN** a signed Simulator run drives today's untaken medications on the Home Screen
+- **THEN** the suite chooses a widget size from the app icon, marks one medication taken from the widget so Cycle shows it taken, brings it back by un-taking on Cycle, shows the empty message when nothing remains today, and puts the app icon back
+
+#### Scenario: Unsigned verify skips the widget journey
+- **WHEN** verification runs without the App Group signature
+- **THEN** the Home Screen widget journey is skipped
+
 #### Scenario: Trends with scored cycles
 - **WHEN** the suite opens Trends with several logged cycles that have scores
 - **THEN** the chart, series, a tapped dot, and a dose-change tick are identifiable

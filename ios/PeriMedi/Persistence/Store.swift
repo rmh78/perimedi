@@ -35,7 +35,7 @@ final class Store: ObservableObject {
     var medicationChanges: [MedicationChange] { snapshot.medicationChanges }
 
     private let context: ModelContext
-    var afterChange: (() -> Void)?
+    private var afterChangeHandlers: [() -> Void] = []
     private var observerTokens: [NSObjectProtocol] = []
     private var remoteRefreshTask: Task<Void, Never>?
 
@@ -50,12 +50,16 @@ final class Store: ObservableObject {
         lastError = nil
     }
 
+    func addAfterChange(_ handler: @escaping () -> Void) {
+        afterChangeHandlers.append(handler)
+    }
+
     func refresh() {
         do {
             let next = try loadSnapshot()
             if next != snapshot {
                 snapshot = next
-                afterChange?()
+                afterChangeHandlers.forEach { $0() }
             }
         } catch {
             lastError = .fetchFailed

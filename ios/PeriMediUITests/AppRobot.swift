@@ -6,6 +6,15 @@ enum UITestDate {
     static let tomorrow = "2026-03-16"
     static let periodStart = "2026-03-07"
     static let periodEnd = "2026-03-11"
+
+    static var deviceToday: String {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = .current
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: Date())
+    }
 }
 
 class PeriMediUITestCase: XCTestCase {
@@ -31,7 +40,7 @@ class PeriMediUITestCase: XCTestCase {
 struct AppRobot {
     let app = XCUIApplication()
 
-    func launch(extra: [String] = []) {
+    func launch(extra: [String] = [], today: String = UITestDate.today) {
         XCTAssertFalse(
             ["-journeyStep", "-loadSample"].contains { flag in
                 app.launchArguments.contains(where: { $0.hasPrefix(flag) })
@@ -39,7 +48,7 @@ struct AppRobot {
         )
         XCTAssertFalse(extra.contains { $0.hasPrefix("-journeyStep") })
         XCTAssertFalse(extra.contains { $0.hasPrefix("-loadSample") })
-        app.launchArguments = ["-en", "-clear", "-today=\(UITestDate.today)", "-uiTesting"] + extra
+        app.launchArguments = ["-en", "-clear", "-today=\(today)", "-uiTesting"] + extra
         XCTAssertFalse(app.launchArguments.contains { $0.hasPrefix("-journeyStep") })
         XCTAssertFalse(app.launchArguments.contains { $0.hasPrefix("-loadSample") })
         app.launch()
