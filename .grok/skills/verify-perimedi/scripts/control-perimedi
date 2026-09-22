@@ -474,6 +474,7 @@ cmd_verify() {
       -derivedDataPath "$DERIVED" \
       -resultBundlePath "$RESULT" \
       -skip-testing:PeriMediUITests/ScreenCatalogTests \
+      -skip-testing:PeriMediUITests/WidgetJourneyTests \
       CODE_SIGNING_ALLOWED=NO
   else
     xcodebuild test \
@@ -482,6 +483,7 @@ cmd_verify() {
       -destination "platform=iOS Simulator,id=$UDID" \
       -derivedDataPath "$DERIVED" \
       -resultBundlePath "$RESULT" \
+      -skip-testing:PeriMediUITests/WidgetJourneyTests \
       CODE_SIGNING_ALLOWED=NO
   fi
   local status=$?

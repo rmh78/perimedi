@@ -1,6 +1,6 @@
 # Home Screen today's-meds widget
 
-Home Screen widget for today's untaken medications, with Taken at Cycle lane grain for today. SpringBoard is not an XCTest surface.
+Home Screen widget for today's untaken medications, with Taken at Cycle lane grain for today.
 
 ## Sub-features
 
@@ -11,13 +11,15 @@ Home Screen widget for today's untaken medications, with Taken at Cycle lane gra
 
 ## How to get to it (user POV)
 
-Add the PeriMedi widget from the Home Screen widget gallery. The app must have launched at least once so it can publish the snapshot. Taken does not open Cycle.
+Long-press the PeriMedi icon and choose one widget size. That replaces the icon with the widget. Long-press the widget and choose the app-icon chip to put the icon back. The app must have launched at least once so it can publish the snapshot. Taken opens the app, and Cycle shows that medication taken.
 
 ## Driving it with A11yID / AppRobot
 
-Blocked. SpringBoard widgets have no `A11yID` and are not driven by `AppRobot`. Do not add widget identifiers.
+`WidgetJourneyTests.testWidgetTakenUntakenAndEmptyMessage` drives the Home Screen by visible labels (medication name, `Taken` / `Genommen`, `Nothing to take today` / `Heute nichts zu nehmen`, `Mittelgroßes Widget`, `App-Symbol`). It presses Home and stays on that page. SpringBoard still has no `A11yID`. Do not add widget identifiers.
 
-Proof is domain plus the existing reminder Taken journey:
+The journey needs a signed App Group. Unsigned `verify` passes `-skip-testing:PeriMediUITests/WidgetJourneyTests`.
+
+Proof is that journey plus domain and the reminder Taken journey:
 
 - `TodayPendingMedsTests` for today's list (today not tomorrow, group two times, taken drops, reminder-off, pause, empty)
 - `NextPendingDoseTests` for reminder `resolve` (pending, already taken, missing)
@@ -31,3 +33,4 @@ Proof is domain plus the existing reminder Taken journey:
 - Unsigned Simulator (`CODE_SIGNING_ALLOWED=NO`) never stamps `group.app.perimedi.ios`. `containerURL` is nil, `publish` cannot write `next-dose.json`, and the widget shows the missing-file empty chrome (`Heute nichts zu nehmen` / `Nothing to take today`) even when Cycle has pending slots. Local install must be signed (no `CODE_SIGNING_ALLOWED=NO`). `control-perimedi verify` stays unsigned on purpose.
 - No distinctive IDs on purpose. Coverage would fail `check-ui-coverage.py --fail-uncovered` if SpringBoard IDs were added and never tapped.
 - The widget is not a fifth tab. Bottom nav stays Cycle, Month, Trends, More.
+- The journey does not swipe Home Screen pages. The PeriMedi icon or widget has to sit on the current page. Pressing an off-screen icon scrolls SpringBoard.
