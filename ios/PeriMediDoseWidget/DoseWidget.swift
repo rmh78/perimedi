@@ -41,11 +41,11 @@ enum DoseWidgetTheme {
 }
 
 struct DoseWidgetView: View {
+    var snapshot: DoseWidgetSnapshot
     var now: Date = Date()
     @Environment(\.widgetFamily) private var family
 
     var body: some View {
-        let snapshot = DoseWidgetSnapshotFile.read()
         let visible = snapshot.visible(at: now)
         VStack(alignment: .leading, spacing: 8) {
             Text(snapshot.chrome.brandTitle)
@@ -72,21 +72,18 @@ struct DoseWidgetView: View {
         let front = meds[0]
         let extra = meds.count - 1
         return VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 6) {
-                medIcon(front, size: 22)
-                Text(front.name)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(DoseWidgetTheme.ink)
-                    .lineLimit(2)
-            }
+            Text(front.name)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(DoseWidgetTheme.ink)
+                .lineLimit(2)
             Text("\(front.doseLabel) · \(front.earliestTimeOfDay)")
-                .font(.caption2)
+                .font(.caption)
                 .foregroundStyle(DoseWidgetTheme.ink.opacity(0.7))
                 .lineLimit(1)
             takenButton(front, taken: taken)
             if extra > 0 {
                 Text("+\(extra)")
-                    .font(.caption2.weight(.bold))
+                    .font(.caption.weight(.bold))
                     .foregroundStyle(DoseWidgetTheme.blush800)
             }
         }
@@ -94,18 +91,17 @@ struct DoseWidgetView: View {
 
     private func mediumList(_ meds: [DoseWidgetSnapshot.Row], taken: String) -> some View {
         let rows = Array(meds.prefix(2))
-        let extra = Array(meds.dropFirst(2))
-        return VStack(alignment: .leading, spacing: 4) {
+        let extra = meds.count - 2
+        return VStack(alignment: .leading, spacing: 6) {
             ForEach(rows) { row in
-                HStack(spacing: 6) {
-                    medIcon(row, size: 28)
+                HStack {
                     VStack(alignment: .leading, spacing: 0) {
                         Text(row.name)
-                            .font(.caption.weight(.semibold))
+                            .font(.subheadline.weight(.semibold))
                             .foregroundStyle(DoseWidgetTheme.ink)
                             .lineLimit(1)
                         Text("\(row.doseLabel) · \(row.earliestTimeOfDay)")
-                            .font(.caption2)
+                            .font(.caption)
                             .foregroundStyle(DoseWidgetTheme.ink.opacity(0.7))
                             .lineLimit(1)
                     }
@@ -113,35 +109,12 @@ struct DoseWidgetView: View {
                     takenButton(row, taken: taken)
                 }
             }
-            if !extra.isEmpty {
-                moreMark(extra)
+            if extra > 0 {
+                Text("+\(extra)")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(DoseWidgetTheme.blush800)
             }
         }
-    }
-
-    private func medIcon(_ row: DoseWidgetSnapshot.Row, size: CGFloat) -> some View {
-        Image(row.icon)
-            .resizable()
-            .scaledToFill()
-            .frame(width: size, height: size)
-            .clipShape(Circle())
-            .padding(2)
-            .background(Circle().fill(fill(for: row)))
-    }
-
-    private func moreMark(_ extra: [DoseWidgetSnapshot.Row]) -> some View {
-        HStack(spacing: 5) {
-            ForEach(extra.prefix(4)) { row in
-                Circle()
-                    .fill(fill(for: row))
-                    .frame(width: 8, height: 8)
-            }
-            Text("+\(extra.count)")
-                .font(.caption2.weight(.bold))
-                .foregroundStyle(DoseWidgetTheme.blush800)
-            Spacer(minLength: 0)
-        }
-        .accessibilityLabel("+\(extra.count)")
     }
 
     private func takenButton(_ row: DoseWidgetSnapshot.Row, taken: String) -> some View {
@@ -153,16 +126,12 @@ struct DoseWidgetView: View {
         .foregroundStyle(DoseWidgetTheme.blush800)
         .buttonStyle(.borderedProminent)
     }
-
-    private func fill(for row: DoseWidgetSnapshot.Row) -> Color {
-        Color(widgetHex: row.color) ?? DoseWidgetTheme.blush500
-    }
 }
 
 struct PeriMediDoseWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: DoseWidgetKind.id, provider: DoseWidgetTimeline()) { entry in
-            DoseWidgetView(now: entry.date)
+            DoseWidgetView(snapshot: entry.snapshot, now: entry.date)
         }
         .configurationDisplayName(LocalizedStringResource("widget.gallery.name", defaultValue: "PeriMedi"))
         .description(LocalizedStringResource("widget.gallery.description", defaultValue: "Today's medications"))

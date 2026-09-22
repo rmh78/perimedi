@@ -556,7 +556,7 @@
 				CODE_SIGN_ENTITLEMENTS = PeriMedi/Resources/PeriMedi.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_TEAM = 7H4A6PWSPS;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = PeriMedi/Resources/Info.plist;
@@ -583,7 +583,7 @@
 				CODE_SIGN_ENTITLEMENTS = PeriMedi/Resources/PeriMedi.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_TEAM = 7H4A6PWSPS;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = PeriMedi/Resources/Info.plist;
@@ -650,7 +650,7 @@
 				CODE_SIGN_ENTITLEMENTS = PeriMediDoseWidget/PeriMediDoseWidget.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_TEAM = 7H4A6PWSPS;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = PeriMediDoseWidget/Info.plist;
@@ -677,7 +677,7 @@
 				CODE_SIGN_ENTITLEMENTS = PeriMediDoseWidget/PeriMediDoseWidget.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 12;
 				DEVELOPMENT_TEAM = 7H4A6PWSPS;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = PeriMediDoseWidget/Info.plist;
