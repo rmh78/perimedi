@@ -35,7 +35,7 @@ Each feature file starts with an H1 and one paragraph. It then uses exactly four
 
 ## Full sweep
 
-Walk this map top to bottom for a broad regression. Order is Cycle, Month, Trends, More, medication sheet, period sheet, symptom sheet, dose reminders, Home Screen today's-meds widget (blocked), doctor visit, backup, then the first-use journey. Driving one convenient entry point is not a sweep.
+Walk this map top to bottom for a broad regression. Order is Cycle, Month, Trends, More, medication sheet, period sheet, symptom sheet, dose reminders, Home Screen today's-meds widget, doctor visit, backup, then the first-use journey. Driving one convenient entry point is not a sweep.
 
 Practical test walk for that order:
 
@@ -43,8 +43,9 @@ Practical test walk for that order:
 2. `PeriMediUITests/SymptomTrendsTests/testSymptomTrendsNoScores` and `testSymptomTrendsChart` — Trends
 3. `PeriMediUITests/FirstUseJourneyTests/testMoreRemindersControls` — More, visit PDF, backup cancel
 4. `PeriMediUITests/FirstUseJourneyTests/testDoseReminderTaken` — reminders Taken
+5. `PeriMediUITests/WidgetJourneyTests/testWidgetTakenUntakenAndEmptyMessage` — signed Home Screen widget. Unsigned `verify` skips it.
 
-PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verify`.
+PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verify`. Unsigned `verify` skips the widget journey.
 
 ## Features
 
@@ -56,7 +57,7 @@ PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verif
 - [Period sheet](./period-sheet.md) — log bleeds over Cycle
 - [Symptom sheet](./symptom-sheet.md) — scores 1–4 over Cycle
 - [Dose reminders](./reminders.md) — in-app banner Taken / Snooze
-- [Home Screen today's-meds widget](./home-dose-widget.md) — blocked SpringBoard surface; domain + reminder Taken proof
+- [Home Screen today's-meds widget](./home-dose-widget.md) — signed SpringBoard journey in `WidgetJourneyTests`. Unsigned `verify` skips it.
 - [Doctor visit PDF](./doctor-visit.md) — More → range → in-app preview
 - [Backup / sample](./backup.md) — sample, export, import, clear (cancel in journeys)
 - [First-use journey](./journeys.md) — empty app through tracking and Month
