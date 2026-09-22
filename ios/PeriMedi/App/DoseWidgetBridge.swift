@@ -42,5 +42,6 @@ enum DoseWidgetBridge {
         )
         try? DoseWidgetSnapshotFile.write(snapshot)
         WidgetCenter.shared.reloadTimelines(ofKind: DoseWidgetKind.id)
+        WidgetCenter.shared.reloadAllTimelines()
     }
 }

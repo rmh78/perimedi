@@ -100,6 +100,10 @@ struct RootView: View {
             app.focusTodayAfterForeground()
             store.refresh()
             DoseReminderCenter.shared.refresh()
+            DoseWidgetBridge.publish()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in
+            DoseWidgetBridge.publish()
         }
         .onChange(of: app.locale.language) { _, _ in
             DoseReminderCenter.shared.registerCategories()

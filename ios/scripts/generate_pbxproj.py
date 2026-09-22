@@ -721,7 +721,7 @@ def main() -> None:
 				CODE_SIGN_ENTITLEMENTS = PeriMedi/Resources/PeriMedi.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_TEAM = {os.environ.get("PERIMEDI_DEVELOPMENT_TEAM", "7H4A6PWSPS")};
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = PeriMedi/Resources/Info.plist;
@@ -748,7 +748,7 @@ def main() -> None:
 				CODE_SIGN_ENTITLEMENTS = PeriMedi/Resources/PeriMedi.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_TEAM = {os.environ.get("PERIMEDI_DEVELOPMENT_TEAM", "7H4A6PWSPS")};
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = PeriMedi/Resources/Info.plist;
@@ -815,7 +815,7 @@ def main() -> None:
 				CODE_SIGN_ENTITLEMENTS = PeriMediDoseWidget/PeriMediDoseWidget.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_TEAM = {os.environ.get("PERIMEDI_DEVELOPMENT_TEAM", "7H4A6PWSPS")};
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = PeriMediDoseWidget/Info.plist;
@@ -842,7 +842,7 @@ def main() -> None:
 				CODE_SIGN_ENTITLEMENTS = PeriMediDoseWidget/PeriMediDoseWidget.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_TEAM = {os.environ.get("PERIMEDI_DEVELOPMENT_TEAM", "7H4A6PWSPS")};
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = PeriMediDoseWidget/Info.plist;

@@ -26,11 +26,8 @@ struct DoseWidgetTimeline: TimelineProvider {
         ) ?? now.addingTimeInterval(86_400)
         completion(
             Timeline(
-                entries: [
-                    DoseWidgetEntry(date: now, snapshot: snapshot),
-                    DoseWidgetEntry(date: midnight, snapshot: snapshot),
-                ],
-                policy: .after(midnight)
+                entries: [DoseWidgetEntry(date: now, snapshot: snapshot)],
+                policy: .after(min(midnight, now.addingTimeInterval(15 * 60)))
             )
         )
     }
@@ -44,22 +41,25 @@ enum DoseWidgetTheme {
 }
 
 struct DoseWidgetView: View {
-    var snapshot: DoseWidgetSnapshot
+    var now: Date = Date()
     @Environment(\.widgetFamily) private var family
 
     var body: some View {
-        let visible = snapshot.visible(at: Date())
-        VStack(alignment: .leading, spacing: 6) {
+        let snapshot = DoseWidgetSnapshotFile.read()
+        let visible = snapshot.visible(at: now)
+        VStack(alignment: .leading, spacing: 8) {
             Text(snapshot.chrome.brandTitle)
-                .font(.caption.weight(.semibold))
+                .font(.headline.weight(.bold))
                 .foregroundStyle(DoseWidgetTheme.blush800)
                 .fixedSize(horizontal: false, vertical: true)
             if visible.meds.isEmpty {
-                empty
+                Text(snapshot.chrome.emptyTitle)
+                    .font(.subheadline)
+                    .foregroundStyle(DoseWidgetTheme.ink)
             } else if family == .systemMedium {
-                mediumList(visible.meds)
+                mediumList(visible.meds, taken: snapshot.chrome.takenAction)
             } else {
-                smallStack(visible.meds)
+                smallStack(visible.meds, taken: snapshot.chrome.takenAction)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -68,18 +68,7 @@ struct DoseWidgetView: View {
         }
     }
 
-    private var empty: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(snapshot.chrome.emptyTitle)
-                .font(.headline)
-                .foregroundStyle(DoseWidgetTheme.ink)
-            Text(snapshot.chrome.emptyBody)
-                .font(.subheadline)
-                .foregroundStyle(DoseWidgetTheme.ink.opacity(0.7))
-        }
-    }
-
-    private func smallStack(_ meds: [DoseWidgetSnapshot.Row]) -> some View {
+    private func smallStack(_ meds: [DoseWidgetSnapshot.Row], taken: String) -> some View {
         let front = meds[0]
         let extra = meds.count - 1
         return VStack(alignment: .leading, spacing: 4) {
@@ -94,7 +83,7 @@ struct DoseWidgetView: View {
                 .font(.caption2)
                 .foregroundStyle(DoseWidgetTheme.ink.opacity(0.7))
                 .lineLimit(1)
-            takenButton(front)
+            takenButton(front, taken: taken)
             if extra > 0 {
                 Text("+\(extra)")
                     .font(.caption2.weight(.bold))
@@ -103,7 +92,7 @@ struct DoseWidgetView: View {
         }
     }
 
-    private func mediumList(_ meds: [DoseWidgetSnapshot.Row]) -> some View {
+    private func mediumList(_ meds: [DoseWidgetSnapshot.Row], taken: String) -> some View {
         let rows = Array(meds.prefix(2))
         let extra = Array(meds.dropFirst(2))
         return VStack(alignment: .leading, spacing: 4) {
@@ -121,7 +110,7 @@ struct DoseWidgetView: View {
                             .lineLimit(1)
                     }
                     Spacer(minLength: 4)
-                    takenButton(row)
+                    takenButton(row, taken: taken)
                 }
             }
             if !extra.isEmpty {
@@ -155,9 +144,9 @@ struct DoseWidgetView: View {
         .accessibilityLabel("+\(extra.count)")
     }
 
-    private func takenButton(_ row: DoseWidgetSnapshot.Row) -> some View {
+    private func takenButton(_ row: DoseWidgetSnapshot.Row, taken: String) -> some View {
         Button(intent: MarkTodayMedicationTakenIntent(medicationId: row.medicationId)) {
-            Text(snapshot.chrome.takenAction)
+            Text(taken)
                 .font(.caption.weight(.semibold))
         }
         .tint(Color.white)
@@ -173,7 +162,7 @@ struct DoseWidgetView: View {
 struct PeriMediDoseWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: DoseWidgetKind.id, provider: DoseWidgetTimeline()) { entry in
-            DoseWidgetView(snapshot: entry.snapshot)
+            DoseWidgetView(now: entry.date)
         }
         .configurationDisplayName(LocalizedStringResource("widget.gallery.name", defaultValue: "PeriMedi"))
         .description(LocalizedStringResource("widget.gallery.description", defaultValue: "Today's medications"))
