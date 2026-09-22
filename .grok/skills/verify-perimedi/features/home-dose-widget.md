@@ -15,7 +15,7 @@ Long-press the PeriMedi icon and choose one widget size. That replaces the icon 
 
 ## Driving it with A11yID / AppRobot
 
-`WidgetJourneyTests.testWidgetTakenUntakenAndEmptyMessage` drives the Home Screen by visible labels (medication name, `Taken` / `Genommen`, `Nothing to take today` / `Heute nichts zu nehmen`, `Mittelgroßes Widget`, `App-Symbol`). It presses Home and stays on that page. SpringBoard still has no `A11yID`. Do not add widget identifiers.
+`WidgetJourneyTests.testWidgetTakenUntakenAndEmptyMessage` drives the Home Screen by visible labels (medication name, `Taken` / `Genommen`, `Nothing to take today` / `Heute nichts zu nehmen`, `Mittelgroßes Widget`, `App-Symbol`). It presses Home. If PeriMedi is not on that page, it swipes once toward the first page and stops. It does not swipe toward the App Library. SpringBoard still has no `A11yID`. Do not add widget identifiers.
 
 The journey needs a signed App Group. Unsigned `verify` passes `-skip-testing:PeriMediUITests/WidgetJourneyTests`.
 
@@ -33,4 +33,5 @@ Proof is that journey plus domain and the reminder Taken journey:
 - Unsigned Simulator (`CODE_SIGNING_ALLOWED=NO`) never stamps `group.app.perimedi.ios`. `containerURL` is nil, `publish` cannot write `next-dose.json`, and the widget shows the missing-file empty chrome (`Heute nichts zu nehmen` / `Nothing to take today`) even when Cycle has pending slots. Local install must be signed (no `CODE_SIGNING_ALLOWED=NO`). `control-perimedi verify` stays unsigned on purpose.
 - No distinctive IDs on purpose. Coverage would fail `check-ui-coverage.py --fail-uncovered` if SpringBoard IDs were added and never tapped.
 - The widget is not a fifth tab. Bottom nav stays Cycle, Month, Trends, More.
-- The journey does not swipe Home Screen pages. The PeriMedi icon or widget has to sit on the current page. Pressing an off-screen icon scrolls SpringBoard.
+- Home can open the page that holds the test runner. The journey then swipes once toward the first page, where the PeriMedi icon or widget sits. It does not swipe toward the App Library. Pressing an off-screen icon scrolls SpringBoard.
+- A failed journey still puts the app icon back. Tear-down taps the app-icon chip if the size menu is open, otherwise long-presses the widget and chooses that chip. It does not fail the test. The next run starts from the icon.

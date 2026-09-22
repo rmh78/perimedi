@@ -59,14 +59,19 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         ProcessInfo.processInfo.arguments.contains("-uiTesting")
     }
 
+    private var didRegisterAfterChange = false
+
     func attach(store: Store, app: AppModel) {
         self.store = store
         self.app = app
         let center = UNUserNotificationCenter.current()
         center.delegate = self
         registerCategories()
-        store.addAfterChange { [weak self] in
-            self?.refresh()
+        if !didRegisterAfterChange {
+            didRegisterAfterChange = true
+            store.addAfterChange { [weak self] in
+                self?.refresh()
+            }
         }
         refresh()
         Task { await requestAuthorizationIfNeeded() }

@@ -1,53 +1,72 @@
 import ObjectiveC
 import XCTest
 
-private let skipSpringboardIdle: Void = {
-    let skip: @convention(block) (AnyObject) -> Bool = { _ in true }
-    let skipImp = imp_implementationWithBlock(skip)
-    if let process = NSClassFromString("XCUIApplicationProcess") {
-        for name in ["shouldSkipPreEventQuiescence", "shouldSkipPostEventQuiescence"] {
-            let selector = NSSelectorFromString(name)
-            if let method = class_getInstanceMethod(process, selector) {
-                method_setImplementation(method, skipImp)
+private enum SpringboardIdleBypass {
+    private static var saved: [(AnyClass, Selector, IMP)] = []
+
+    static func install() {
+        guard saved.isEmpty else { return }
+        let skip: @convention(block) (AnyObject) -> Bool = { _ in true }
+        let skipImp = imp_implementationWithBlock(skip)
+        if let process = NSClassFromString("XCUIApplicationProcess") {
+            replace(process, ["shouldSkipPreEventQuiescence", "shouldSkipPostEventQuiescence"], skipImp)
+        }
+        let noop: @convention(block) (AnyObject) -> Void = { _ in }
+        replace(XCUIApplication.self, ["_waitForQuiescence"], imp_implementationWithBlock(noop))
+        let noopBool: @convention(block) (AnyObject, Bool) -> Void = { _, _ in }
+        replace(XCUIApplication.self, ["_waitForQuiescenceAsPreEvent:"], imp_implementationWithBlock(noopBool))
+    }
+
+    static func restore() {
+        for (cls, selector, imp) in saved {
+            if let method = class_getInstanceMethod(cls, selector) {
+                method_setImplementation(method, imp)
             }
         }
+        saved.removeAll()
     }
-    let noop: @convention(block) (AnyObject) -> Void = { _ in }
-    let noopImp = imp_implementationWithBlock(noop)
-    for name in ["_waitForQuiescence", "_waitForQuiescenceAsPreEvent:"] {
-        let selector = NSSelectorFromString(name)
-        if let method = class_getInstanceMethod(XCUIApplication.self, selector) {
-            method_setImplementation(method, noopImp)
+
+    private static func replace(_ cls: AnyClass, _ names: [String], _ imp: IMP) {
+        for name in names {
+            let selector = NSSelectorFromString(name)
+            guard let method = class_getInstanceMethod(cls, selector) else { continue }
+            saved.append((cls, selector, method_getImplementation(method)))
+            method_setImplementation(method, imp)
         }
     }
-}()
+}
 
 /// Home Screen widget: Taken drops a medication, un-take on Cycle brings it
 /// back, and an all-taken day shows the empty message.
 final class WidgetJourneyTests: PeriMediUITestCase {
     override func setUp() {
         super.setUp()
-        _ = skipSpringboardIdle
-        executionTimeAllowance = 4
+        SpringboardIdleBypass.install()
+        executionTimeAllowance = 180
+    }
+
+    override func tearDown() {
+        HomeWidgets().restoreAppIcon()
+        SpringboardIdleBypass.restore()
+        super.tearDown()
     }
 
     func testWidgetTakenUntakenAndEmptyMessage() {
-        robot.launch()
+        robot.launch(today: UITestDate.deviceToday)
         dismissSystemAlert()
 
         let home = HomeWidgets()
         home.open()
         home.ensureAppIcon()
         home.turnIconIntoWidget()
-        defer { home.turnWidgetIntoIcon() }
         guard home.spin(8, { home.hasWidget }) else {
-            XCTFail("icon did not become a widget. buttons: \(home.buttonLabels)")
+            XCTFail("icon did not become a widget. icons: \(home.iconLabels) buttons: \(home.buttonLabels)")
             return
         }
 
         robot.app.activate()
-        robot.addMedication(name: "Estrogen", dose: "1 mg", start: UITestDate.periodStart)
-        robot.addMedication(name: "Progesterone", dose: "200 mg", start: UITestDate.periodStart)
+        robot.addMedication(name: "Estrogen", dose: "1 mg")
+        robot.addMedication(name: "Progesterone", dose: "200 mg")
         robot.waitFor(id: "cycle.lane.estrogen")
         robot.waitFor(id: "cycle.lane.progesterone")
         XCTAssertNotEqual(robot.value(of: "cycle.lane.estrogen.status"), "taken")
@@ -115,35 +134,63 @@ private final class HomeWidgets {
         springboard.buttons.allElementsBoundByIndex.prefix(25).map(\.label)
     }
 
+    var iconLabels: [String] {
+        springboard.icons.allElementsBoundByIndex.prefix(20).map { "\($0.label)|\($0.identifier)" }
+    }
+
+    /// Puts the PeriMedi app icon back. Does not fail the test. Safe to call twice, and from tearDown after an error.
+    func restoreAppIcon() {
+        _ = tapLabel(["Abbrechen", "Cancel"], wait: 0.4)
+        open()
+        for _ in 0..<3 {
+            if onScreen(appIcon()) { return }
+            if !onScreen(widgetIcon()) {
+                dragTowardFirstPage()
+            }
+            if onScreen(appIcon()) { return }
+            if tapLabel(Self.appIconLabels, wait: 0.6), spin(5, { onScreen(appIcon()) }) { return }
+            guard onScreen(widgetIcon()) else { continue }
+            openSizeMenu(on: widgetIcon())
+            if tapLabel(Self.appIconLabels), spin(6, { onScreen(appIcon()) }) { return }
+            open()
+        }
+    }
+
     func ensureAppIcon() {
+        if !spin(2, { onScreen(appIcon()) || onScreen(widgetIcon()) }) {
+            dragTowardFirstPage()
+        }
         XCTAssertTrue(
-            spin(8) { onScreen(appIcon()) || onScreen(widgetIcon()) },
-            "PeriMedi is not on the current Home Screen page. buttons: \(buttonLabels)"
+            spin(6) { onScreen(appIcon()) || onScreen(widgetIcon()) },
+            "PeriMedi is not on the first Home Screen page. icons: \(iconLabels) buttons: \(buttonLabels)"
         )
-        guard onScreen(widgetIcon()), !onScreen(appIcon()) else { return }
+        guard spin(2, { onScreen(widgetIcon()) && !onScreen(appIcon()) }) else { return }
         openSizeMenu(on: widgetIcon())
-        XCTAssertTrue(tapLabel(Self.appIconLabels), "App-Symbol missing. buttons: \(buttonLabels)")
+        XCTAssertTrue(tapLabel(Self.appIconLabels), "App-Symbol missing. icons: \(iconLabels) buttons: \(buttonLabels)")
         XCTAssertTrue(
             spin(8) { onScreen(appIcon()) },
-            "App-Symbol did not restore the PeriMedi icon. buttons: \(buttonLabels)"
+            "App-Symbol did not restore the PeriMedi icon. icons: \(iconLabels) buttons: \(buttonLabels)"
         )
     }
 
     func turnIconIntoWidget() {
-        let icon = appIcon()
-        XCTAssertTrue(onScreen(icon), "PeriMedi icon missing")
-        openSizeMenu(on: icon)
-        XCTAssertTrue(tapLabel(Self.widgetSizeLabels), "widget size missing. buttons: \(buttonLabels)")
+        XCTAssertTrue(spin(4) { onScreen(appIcon()) }, "PeriMedi icon missing")
+        openSizeMenu(on: appIcon())
+        XCTAssertTrue(tapLabel(Self.widgetSizeLabels), "widget size missing. icons: \(iconLabels) buttons: \(buttonLabels)")
     }
 
     func turnWidgetIntoIcon() {
-        guard onScreen(widgetIcon()) else { return }
-        openSizeMenu(on: widgetIcon())
-        XCTAssertTrue(tapLabel(Self.appIconLabels), "App-Symbol missing. buttons: \(buttonLabels)")
+        restoreAppIcon()
         XCTAssertTrue(
-            spin(8) { onScreen(appIcon()) },
-            "widget did not turn back into the app icon. buttons: \(buttonLabels)"
+            spin(4) { onScreen(appIcon()) },
+            "widget did not turn back into the app icon. icons: \(iconLabels) buttons: \(buttonLabels)"
         )
+    }
+
+    private func dragTowardFirstPage() {
+        let start = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.55))
+        let end = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.55))
+        start.press(forDuration: 0.05, thenDragTo: end)
     }
 
     func appIcon() -> XCUIElement {
@@ -168,11 +215,19 @@ private final class HomeWidgets {
     private static let appIconLabels = ["App-Symbol", "App Icon"]
 
     private func openSizeMenu(on target: XCUIElement) {
-        target.press(forDuration: 1.0)
+        let frame = target.frame
+        let screen = springboard.frame
+        let dx = (frame.midX - screen.minX) / screen.width
+        let dy = (frame.midY - screen.minY) / screen.height
+        guard dx.isFinite, dy.isFinite, (0...1).contains(dx), (0...1).contains(dy) else {
+            target.press(forDuration: 1.0)
+            return
+        }
+        springboard.coordinate(withNormalizedOffset: CGVector(dx: dx, dy: dy)).press(forDuration: 1.0)
     }
 
-    private func tapLabel(_ labels: [String]) -> Bool {
-        let deadline = Date().addingTimeInterval(4)
+    private func tapLabel(_ labels: [String], wait: TimeInterval = 4) -> Bool {
+        let deadline = Date().addingTimeInterval(wait)
         repeat {
             if tapFirst(labels: labels) { return true }
             RunLoop.current.run(until: Date().addingTimeInterval(0.1))
@@ -211,8 +266,16 @@ private final class HomeWidgets {
             let match = springboard.descendants(matching: .any)[label].firstMatch
             guard match.exists else { continue }
             let frame = match.frame
-            guard frame.width > 8, frame.height > 8 else { continue }
-            match.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            let screen = springboard.frame
+            guard frame.origin.x.isFinite, frame.origin.y.isFinite,
+                  frame.width > 8, frame.width.isFinite,
+                  frame.height > 8, frame.height.isFinite,
+                  screen.width > 8, screen.height > 8
+            else { continue }
+            let dx = (frame.midX - screen.minX) / screen.width
+            let dy = (frame.midY - screen.minY) / screen.height
+            guard dx.isFinite, dy.isFinite, (0...1).contains(dx), (0...1).contains(dy) else { continue }
+            springboard.coordinate(withNormalizedOffset: CGVector(dx: dx, dy: dy)).tap()
             return true
         }
         return false

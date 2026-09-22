@@ -76,7 +76,6 @@ struct DoseWidgetSnapshot: Codable, Equatable, Sendable {
         let key = DateKeys.toDateKey(now)
         if key == date { return Visible(date: date, meds: meds) }
         if key == nextDate { return Visible(date: nextDate, meds: nextMeds) }
-        if !meds.isEmpty { return Visible(date: date, meds: meds) }
         return Visible(date: key, meds: [])
     }
 

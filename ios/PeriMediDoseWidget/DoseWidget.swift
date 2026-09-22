@@ -25,12 +25,11 @@ struct DoseWidgetTimeline: TimelineProvider {
             matching: DateComponents(hour: 0, minute: 0, second: 0),
             matchingPolicy: .nextTime
         ) ?? now.addingTimeInterval(86_400)
-        completion(
-            Timeline(
-                entries: [DoseWidgetEntry(date: now, snapshot: snapshot)],
-                policy: .after(min(midnight, now.addingTimeInterval(15 * 60)))
-            )
-        )
+        var entries = [DoseWidgetEntry(date: now, snapshot: snapshot)]
+        if midnight > now {
+            entries.append(DoseWidgetEntry(date: midnight, snapshot: snapshot))
+        }
+        completion(Timeline(entries: entries, policy: .after(midnight)))
     }
 }
 
