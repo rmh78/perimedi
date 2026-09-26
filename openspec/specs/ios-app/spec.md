@@ -77,7 +77,7 @@ The system SHALL provide English and German product chrome on iOS and SHALL keep
 
 #### Scenario: Home Screen widget chrome
 - **WHEN** the active language is German and the Home Screen widget of today's untaken medications is shown
-- **THEN** the PeriMedi title, today's empty copy, and the Taken action are in German and the medication name stays as typed
+- **THEN** the PeriMedi title, today's empty copy, the helper "Heute noch einnehmen" while a medication is still to take, and Nehmen are in German, and the medication name and dose stay as typed
 
 ### Requirement: Visual family
 The system SHALL present Cycle, Month, Trends, and More with a blush/peach background, the brand header photograph with the PeriMedi wordmark, rounded card surfaces, and a pill-style bottom navigation. The system SHALL NOT use stock system-gray chrome as the primary look. The header artwork SHALL include the portrait and the drop/pill atmosphere as part of the banner.
