@@ -36,13 +36,11 @@ private enum SpringboardIdleBypass {
     }
 }
 
-/// Home Screen widget: Taken drops a medication, un-take on Cycle brings it
-/// back, and an all-taken day shows the empty message.
 final class WidgetJourneyTests: PeriMediUITestCase {
     override func setUp() {
         super.setUp()
         SpringboardIdleBypass.install()
-        executionTimeAllowance = 180
+        executionTimeAllowance = 480
     }
 
     override func tearDown() {
@@ -72,16 +70,33 @@ final class WidgetJourneyTests: PeriMediUITestCase {
         XCTAssertNotEqual(robot.value(of: "cycle.lane.estrogen.status"), "taken")
 
         home.open()
-        XCTAssertTrue(home.spin(15, { home.hasMed("Estrogen") }), "estrogen missing on the widget")
+        XCTAssertTrue(
+            home.spin(15, { home.hasMed("Estrogen") && home.hasStillToTake }),
+            "estrogen or Still to take today missing on the widget"
+        )
+        home.settle()
+        home.saveShot("en-medium-before")
 
         home.tapTaken()
+        if home.spin(4, { home.hasCheck }) {
+            home.settle()
+            if home.hasCheck {
+                home.saveShot("en-medium-check")
+            }
+        }
+        if robot.app.state != .runningForeground {
+            robot.app.activate()
+        }
         robot.waitFor(id: "tab.cycle", timeout: 8)
         home.open()
         XCTAssertTrue(home.spin(15, { !home.hasMed("Estrogen") }), "taken estrogen still on the widget")
         XCTAssertTrue(home.spin(15, { home.hasMed("Progesterone") }), "progesterone missing after estrogen was taken")
+        _ = home.spin(3, { !home.hasCheck })
+        home.settle()
+        home.saveShot("en-medium-after")
 
         robot.app.activate()
-        robot.waitFor(id: "cycle.lane.estrogen")
+        robot.waitFor(id: "cycle.lane.estrogen", timeout: 8)
         if robot.value(of: "cycle.lane.estrogen.status") == "taken" {
             robot.tap("cycle.lane.estrogen")
         }
@@ -101,6 +116,77 @@ final class WidgetJourneyTests: PeriMediUITestCase {
         )
         home.turnWidgetIntoIcon()
         XCTAssertTrue(home.appIcon().exists, "widget did not turn back into the app icon")
+    }
+
+    func testSmallWidgetTakeInEnglishAndGerman() {
+        robot.launch(today: UITestDate.deviceToday)
+        dismissSystemAlert()
+
+        let home = HomeWidgets()
+        home.open()
+        home.ensureAppIcon()
+        home.turnIconIntoWidget(labels: HomeWidgets.smallSizeLabels)
+        guard home.spin(8, { home.hasWidget }) else {
+            XCTFail("icon did not become a small widget. icons: \(home.iconLabels) buttons: \(home.buttonLabels)")
+            return
+        }
+
+        robot.app.activate()
+        robot.addMedication(name: "Estrogen", dose: "1 mg")
+        home.open()
+        XCTAssertTrue(
+            home.spin(15, { home.hasMed("Estrogen") && home.hasStillToTake }),
+            "estrogen or Still to take today missing on the small widget"
+        )
+        home.settle()
+        home.saveShot("en-small-before")
+        home.tapTaken()
+        if home.spin(4, { home.hasCheck }) {
+            home.settle()
+            if home.hasCheck {
+                home.saveShot("en-small-check")
+            }
+        }
+        if robot.app.state != .runningForeground {
+            robot.app.activate()
+        }
+        robot.waitFor(id: "tab.cycle", timeout: 8)
+        XCTAssertEqual(robot.value(of: "cycle.lane.estrogen.status"), "taken")
+        home.open()
+        XCTAssertTrue(home.spin(15, { !home.hasMed("Estrogen") }), "taken estrogen still on the small widget")
+        _ = home.spin(3, { !home.hasCheck })
+        home.settle()
+        home.saveShot("en-small-after")
+
+        robot.app.activate()
+        robot.waitFor(id: "cycle.lane.estrogen")
+        if robot.value(of: "cycle.lane.estrogen.status") == "taken" {
+            robot.tap("cycle.lane.estrogen")
+        }
+        XCTAssertNotEqual(robot.value(of: "cycle.lane.estrogen.status"), "taken")
+        robot.setLanguage("de")
+        home.open()
+        XCTAssertTrue(
+            home.spin(20, { home.hasMed("Estrogen") && home.hasStillToTakeDE }),
+            "German helper or estrogen missing on the small widget"
+        )
+        home.settle()
+        home.saveShot("de-small-before")
+        home.tapTaken()
+        if home.spin(4, { home.hasCheck }) {
+            home.settle()
+            if home.hasCheck {
+                home.saveShot("de-small-check")
+            }
+        }
+        if robot.app.state != .runningForeground {
+            robot.app.activate()
+        }
+        home.open()
+        XCTAssertTrue(home.spin(15, { !home.hasMed("Estrogen") }), "German take left estrogen on the small widget")
+        _ = home.spin(3, { !home.hasCheck })
+        home.settle()
+        home.saveShot("de-small-after")
     }
 
     private func markTaken(_ slug: String) {
@@ -173,10 +259,10 @@ private final class HomeWidgets {
         )
     }
 
-    func turnIconIntoWidget() {
+    func turnIconIntoWidget(labels: [String] = HomeWidgets.mediumSizeLabels) {
         XCTAssertTrue(spin(4) { onScreen(appIcon()) }, "PeriMedi icon missing")
         openSizeMenu(on: appIcon())
-        XCTAssertTrue(tapLabel(Self.widgetSizeLabels), "widget size missing. icons: \(iconLabels) buttons: \(buttonLabels)")
+        XCTAssertTrue(tapLabel(labels), "widget size missing. icons: \(iconLabels) buttons: \(buttonLabels)")
     }
 
     func turnWidgetIntoIcon() {
@@ -211,7 +297,8 @@ private final class HomeWidgets {
         ).firstMatch
     }
 
-    private static let widgetSizeLabels = ["Mittelgroßes Widget", "Medium Widget", "Medium"]
+    static let smallSizeLabels = ["Kleines Widget", "Small Widget", "Small"]
+    private static let mediumSizeLabels = ["Mittelgroßes Widget", "Medium Widget", "Medium"]
     private static let appIconLabels = ["App-Symbol", "App Icon"]
 
     private func openSizeMenu(on target: XCUIElement) {
@@ -239,21 +326,58 @@ private final class HomeWidgets {
         labeled(["Nothing to take today", "Heute nichts zu nehmen"])
     }
 
+    var hasStillToTake: Bool {
+        springboard.descendants(matching: .staticText)["Still to take today"].exists
+    }
+
+    var hasStillToTakeDE: Bool {
+        springboard.descendants(matching: .staticText)["Heute noch einnehmen"].exists
+    }
+
+    var hasCheck: Bool {
+        springboard.descendants(matching: .staticText)["✓"].exists
+    }
+
+    func settle() {
+        RunLoop.current.run(until: Date().addingTimeInterval(0.8))
+    }
+
+    func saveShot(_ name: String, file: StaticString = #filePath, line: UInt = #line) {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let dir = root.appendingPathComponent("ios/docs/widget-take", isDirectory: true)
+        let url = dir.appendingPathComponent("\(name).png")
+        do {
+            try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            try springboard.screenshot().pngRepresentation.write(to: url)
+        } catch {
+            XCTFail("could not write \(name).png: \(error)", file: file, line: line)
+        }
+    }
+
     func hasMed(_ name: String) -> Bool {
         springboard.descendants(matching: .staticText)[name].exists
     }
 
     func tapTaken() {
-        let buttons = springboard.buttons.matching(
-            NSPredicate(format: "label == 'Taken' OR label == 'Genommen'")
-        ).allElementsBoundByIndex
+        let deadline = Date().addingTimeInterval(8)
         let screen = springboard.frame
-        let visible = buttons.first { button in
-            let frame = button.frame
-            return frame.width > 20 && screen.intersects(frame)
-        }
-        XCTAssertNotNil(visible, "Taken missing")
-        visible?.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        repeat {
+            let buttons = springboard.buttons.matching(
+                NSPredicate(format: "label == 'Take' OR label == 'Nehmen'")
+            ).allElementsBoundByIndex
+            if let visible = buttons.first(where: { button in
+                let frame = button.frame
+                return frame.width > 20 && screen.intersects(frame)
+            }) {
+                visible.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+                return
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+        } while Date() < deadline
+        XCTFail("Take missing. buttons: \(buttonLabels)")
     }
 
     private func labeled(_ names: [String]) -> Bool {
