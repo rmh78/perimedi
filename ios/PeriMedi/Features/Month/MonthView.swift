@@ -16,6 +16,7 @@ struct MonthView: View {
             doseLogs: store.doseLogs,
             remarks: store.remarks,
             symptomScores: store.symptomScores,
+            directory: store.symptomDirectory,
             periods: store.periods,
             settings: store.settings
         )
@@ -252,6 +253,7 @@ private struct MonthGridModel {
         doseLogs: [DoseLog],
         remarks: [Remark],
         symptomScores: [SymptomScore] = [],
+        directory: SymptomDirectory = .catalogOnly,
         periods: [Period],
         settings: CycleSettings
     ) -> MonthGridModel {
@@ -291,8 +293,8 @@ private struct MonthGridModel {
         let cells = grid.map { date -> MonthDayCell in
             let key = DateKeys.toDateKey(date)
             let dayScores = scoresByDay[key] ?? []
-            let summary = SymptomId.allCases.compactMap { id in
-                dayScores.first { $0.id == id.rawValue }.map { "\($0.severity)" }
+            let summary = directory.rankedIds.compactMap { id in
+                dayScores.first { $0.id == id }.map { "\($0.severity)" }
             }.joined(separator: "·")
             return MonthDayCell(
                 date: date,

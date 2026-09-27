@@ -94,6 +94,20 @@ enum A11yID {
 
     static let symptomBody = "symptom.body"
     static let symptomSave = "symptom.save"
+    static let symptomCustomAdd = "symptom.custom.add"
+    static let symptomCustomCreate = "symptom.custom.create"
+
+    static func symptomCustomName(_ id: String) -> String {
+        "symptom.custom.name.\(id)"
+    }
+
+    static func symptomCustomRename(_ id: String) -> String {
+        "symptom.custom.rename.\(id)"
+    }
+
+    static func symptomCustomDelete(_ id: String) -> String {
+        "symptom.custom.delete.\(id)"
+    }
 
     static func symptomScore(_ id: String, _ value: Int) -> String {
         "symptom.score.\(id).\(value)"

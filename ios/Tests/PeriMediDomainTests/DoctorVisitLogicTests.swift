@@ -72,6 +72,7 @@ final class DoctorVisitLogicTests: XCTestCase {
             settings: settings ?? self.settings,
             scores: scores,
             changes: changes,
+            directory: .catalogOnly,
             selectedCycles: selectedCycles
         )
     }
@@ -277,6 +278,7 @@ final class DoctorVisitLogicTests: XCTestCase {
             settings: settings,
             scores: [],
             changes: [],
+            directory: .catalogOnly,
             selectedCycles: [cycles[0]]
         )
         XCTAssertEqual(result.rangeKind, .completedCycles(1))

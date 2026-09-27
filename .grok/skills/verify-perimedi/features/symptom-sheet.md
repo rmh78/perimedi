@@ -5,7 +5,9 @@ Structured scores (1–4). Untouched catalog ids stay missing (not stored as 0).
 ## Sub-features
 
 - Per-symptom score buttons (tap again clears; persist on each tap)
-- Close (persists again; first-use uses close)
+- Close (does not write; each score tap already saved)
+- Custom name field `symptom.custom.add`, Add control `symptom.custom.create`
+- Custom row name `symptom.custom.name.{id}`, rename save `symptom.custom.rename.{id}`, delete `symptom.custom.delete.{id}`
 - `symptom.body` / `symptom.save` exist on the `A11yID` enum only — **not attached**
 
 ## How to get to it (user POV)
@@ -18,7 +20,12 @@ Cycle → + Symptom (`cycle.action.symptom`).
 |---|---|---|
 | Sheet | `sheet.symptom` | Present after `cycle.action.symptom`. |
 | Close | `sheet.close` | First-use path: tap scores, then close. Sheet gone. |
-| Score | `symptom.score.{id}.{1-4}` | First-use: `hot_flash` 3, `sleep` 2, `joints` 1. |
+| Score | `symptom.score.{id}.{1-4}` | First-use: `hot_flash` 3, `sleep` 2, `joints` 1. Custom rows use the same id shape. |
+| Custom name field | `symptom.custom.add` | Type a name, then Add. |
+| Add | `symptom.custom.create` | The new row appears under Custom. |
+| Custom name | `symptom.custom.name.{id}` | Tap to edit. The id is `c.` plus a UUID. |
+| Rename save | `symptom.custom.rename.{id}` | Keeps the id. The chip shows the new name. |
+| Delete | `symptom.custom.delete.{id}` | Confirm with `confirm.delete`. The chip is gone. |
 | Body / note | `symptom.body` | On the `A11yID` enum only; the sheet has no note field (`persist` always passes `note: nil`). Do not drive it. |
 | Save | `symptom.save` | On the `A11yID` enum only. First-use uses `sheet.close`. Do not drive it. |
 

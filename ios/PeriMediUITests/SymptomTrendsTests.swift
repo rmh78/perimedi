@@ -92,4 +92,53 @@ final class SymptomTrendsTests: PeriMediUITestCase {
             XCTAssertFalse(robot.exists("trends.series.sleep"))
         }
     }
+
+    func testCustomSymptomCreateScoreRenameChartAndDelete() {
+        robot.launch(extra: ["-fixture=trends"])
+        robot.tap("cycle.action.symptom")
+        robot.waitFor(id: "sheet.symptom")
+        robot.scrollTo("symptom.custom.add")
+        robot.clearAndType("symptom.custom.add", "Brain fog")
+        robot.tap("symptom.custom.create")
+
+        let name = robot.app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", "symptom.custom.name.c.")
+        ).firstMatch
+        XCTAssertTrue(name.waitForExistence(timeout: 3))
+        let raw = name.identifier.replacingOccurrences(of: "symptom.custom.name.", with: "")
+
+        robot.scrollTo("symptom.score.\(raw).2")
+        robot.tap("symptom.score.\(raw).2")
+        robot.tap("sheet.close")
+        robot.waitFor(id: "cycle.chip.score.\(raw)")
+        XCTAssertTrue(robot.value(of: "cycle.chip.score.\(raw)").contains("Brain fog"))
+
+        robot.tap("cycle.chip.score.\(raw)")
+        robot.waitFor(id: "sheet.symptom")
+        robot.scrollTo("symptom.custom.name.\(raw)")
+        robot.tap("symptom.custom.name.\(raw)")
+        robot.clearAndType("symptom.custom.name.\(raw)", "Fog")
+        robot.tap("symptom.custom.rename.\(raw)")
+        robot.tap("sheet.close")
+        let chip = robot.value(of: "cycle.chip.score.\(raw)")
+        XCTAssertTrue(chip.contains("Fog"))
+        XCTAssertFalse(chip.contains("Brain"))
+
+        robot.tap("tab.trends")
+        robot.waitFor(id: "trends.change")
+        robot.tap("trends.change")
+        robot.waitFor(id: "trends.group.custom")
+        robot.tap("trends.series.\(raw)")
+        XCTAssertTrue(robot.value(of: "trends.status").contains(raw))
+        robot.tap("sheet.close")
+
+        robot.tap("tab.cycle")
+        robot.tap("cycle.action.symptom")
+        robot.waitFor(id: "sheet.symptom")
+        robot.scrollTo("symptom.custom.delete.\(raw)")
+        robot.tap("symptom.custom.delete.\(raw)")
+        robot.tap("confirm.delete")
+        robot.tap("sheet.close")
+        XCTAssertFalse(robot.exists("cycle.chip.score.\(raw)"))
+    }
 }

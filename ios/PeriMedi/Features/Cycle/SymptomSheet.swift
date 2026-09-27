@@ -9,7 +9,11 @@ struct SymptomSheet: View {
 
     let dateKey: String
 
-    @State private var severity: [SymptomId: Int] = [:]
+    @State private var severity: [String: Int] = [:]
+    @State private var draft = ""
+    @State private var nameError: SymptomEditError?
+    @State private var editing: CustomSymptomId?
+    @State private var renameDraft = ""
 
     private var dayScores: [SymptomScore] {
         store.symptomScores.filter { $0.date == dateKey }
@@ -17,7 +21,6 @@ struct SymptomSheet: View {
 
     var body: some View {
         DialogChrome(title: app.t("symptom.title"), icon: "ActionSymptom", identifier: A11yID.sheetSymptom, onClose: {
-            persist(severity)
             dialogClose()
             dismiss()
         }, content: {
@@ -34,48 +37,161 @@ struct SymptomSheet: View {
                         .foregroundStyle(Theme.inkMuted)
                 }
 
-                ForEach(SymptomGroup.allCases, id: \.self) { group in
-                    Text(app.t("symptom.group.\(group.rawValue)"))
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Theme.ink)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                    VStack(spacing: 5) {
-                        ForEach(group.ids, id: \.self) { id in
-                            scoreRow(id)
+                ForEach(Array(store.symptomDirectory.blocks.enumerated()), id: \.offset) { _, block in
+                    switch block {
+                    case .catalog(let group, let ids):
+                        groupTitle(app.t("symptom.group.\(group.rawValue)"))
+                        VStack(spacing: 5) {
+                            ForEach(ids, id: \.self) { id in
+                                scoreRow(ref: .catalog(id), title: app.symptomTitle(id.rawValue))
+                            }
+                        }
+                    case .custom(let rows):
+                        groupTitle(app.t("symptom.group.custom"))
+                        addRow
+                        VStack(spacing: 5) {
+                            ForEach(rows) { symptom in
+                                customRow(symptom)
+                            }
                         }
                     }
                 }
-
             }
             .padding(.bottom, 8)
             .onAppear(perform: loadDay)
         })
     }
 
-    private func scoreRow(_ id: SymptomId) -> some View {
-        let chosen = severity[id]
-        return HStack(alignment: .center, spacing: 8) {
-            Text(app.t("symptom.id.\(id.rawValue)"))
+    private var addRow: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 8) {
+                TextField(app.t("symptom.addPlaceholder"), text: $draft)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.footnote)
+                    .accessibilityIdentifier(A11yID.symptomCustomAdd)
+                    .onSubmit(create)
+                Button(app.t("symptom.addAction"), action: create)
+                    .font(.footnote.weight(.semibold))
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Theme.blush800)
+                    .accessibilityIdentifier(A11yID.symptomCustomCreate)
+            }
+            if let nameError, let message = nameMessage(nameError) {
+                Text(message)
+                    .font(.caption2)
+                    .foregroundStyle(Theme.blush800)
+            }
+        }
+        .padding(.bottom, 8)
+    }
+
+    private func customRow(_ symptom: CustomSymptom) -> some View {
+        let renaming = editing == symptom.id
+        return VStack(alignment: .leading, spacing: 4) {
+            scoreRow(
+                ref: .custom(symptom.id),
+                title: symptom.name,
+                nameControl: AnyView(renaming ? AnyView(renameField(symptom.id)) : AnyView(nameButton(symptom)))
+            )
+            HStack {
+                if renaming {
+                    renameSave(symptom.id)
+                } else {
+                    deleteButton(symptom.id)
+                }
+                Spacer(minLength: 0)
+            }
+        }
+    }
+
+    private func renameField(_ id: CustomSymptomId) -> some View {
+        TextField(app.t("symptom.addPlaceholder"), text: $renameDraft)
+            .textFieldStyle(.roundedBorder)
+            .font(.footnote)
+            .accessibilityIdentifier(A11yID.symptomCustomName(id.rawValue))
+            .onSubmit { rename(id) }
+    }
+
+    private func renameSave(_ id: CustomSymptomId) -> some View {
+        Button(app.t("symptom.saveEdit"), action: { rename(id) })
+            .font(.caption2.weight(.semibold))
+            .buttonStyle(.plain)
+            .foregroundStyle(Theme.blush800)
+            .accessibilityIdentifier(A11yID.symptomCustomRename(id.rawValue))
+    }
+
+    private func nameButton(_ symptom: CustomSymptom) -> some View {
+        Button {
+            editing = symptom.id
+            renameDraft = symptom.name
+            nameError = nil
+        } label: {
+            Text(symptom.name)
                 .font(.footnote)
                 .foregroundStyle(Theme.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
-                .truncationMode(.tail)
-                .frame(width: 108, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier(A11yID.symptomCustomName(symptom.id.rawValue))
+        .disabled(editing == symptom.id)
+    }
+
+    private func deleteButton(_ id: CustomSymptomId) -> some View {
+        Button {
+            app.askConfirm(
+                message: app.t("symptom.deleteConfirm"),
+                confirmLabel: app.t("common.delete")
+            ) {
+                try? store.deleteCustomSymptom(id: id)
+                severity[id.rawValue] = nil
+                if editing == id { editing = nil }
+            }
+        } label: {
+            Text(app.t("common.delete"))
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(Theme.blush800)
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier(A11yID.symptomCustomDelete(id.rawValue))
+    }
+
+    private func groupTitle(_ title: String) -> some View {
+        Text(title)
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(Theme.ink)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+    }
+
+    private func scoreRow(
+        ref: SymptomRef,
+        title: String,
+        nameControl: AnyView? = nil
+    ) -> some View {
+        let key = ref.storageId
+        let chosen = severity[key]
+        return HStack(alignment: .center, spacing: 8) {
+            Group {
+                if let nameControl {
+                    nameControl
+                } else {
+                    Text(title)
+                        .font(.footnote)
+                        .foregroundStyle(Theme.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .frame(width: 108, alignment: .leading)
             HStack(spacing: 5) {
                 ForEach(1...4, id: \.self) { value in
                     let selected = chosen == value
-                    let word = app.t("symptom.level.\(id.rawValue).\(value)")
+                    let word = app.symptomLevelWord(key, severity: value)
                     Button {
-                        var next = severity
-                        if next[id] == value {
-                            next[id] = nil
-                        } else {
-                            next[id] = value
-                        }
-                        severity = next
-                        persist(next)
+                        choose(ref, value: value)
                     } label: {
                         VStack(spacing: 0) {
                             Text("\(value)")
@@ -94,41 +210,61 @@ struct SymptomSheet: View {
                         )
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("\(app.t("symptom.id.\(id.rawValue)")), \(word)")
-                    .accessibilityIdentifier(A11yID.symptomScore(id.rawValue, value))
+                    .accessibilityLabel("\(title), \(word)")
+                    .accessibilityIdentifier(A11yID.symptomScore(key, value))
                     .accessibilityAddTraits(selected ? [.isSelected, .isButton] : .isButton)
                 }
             }
         }
     }
 
-    private func loadDay() {
-        var next: [SymptomId: Int] = [:]
-        for score in dayScores {
-            guard let id = SymptomId(rawValue: score.id) else { continue }
-            if (1...4).contains(score.severity) {
-                next[id] = score.severity
-            }
-        }
-        severity = next
+    private func choose(_ ref: SymptomRef, value: Int) {
+        let key = ref.storageId
+        let next = severity[key] == value ? nil : value
+        severity[key] = next
+        try? store.setDaySeverity(date: dateKey, ref: ref, severity: next)
     }
 
-    private func persist(_ map: [SymptomId: Int]) {
-        let loggedAt = ISO8601DateFormatter().string(from: Date())
-        var scores: [SymptomScore] = []
-        for id in SymptomId.allCases {
-            guard let value = map[id], (1...4).contains(value) else { continue }
-            scores.append(
-                SymptomScore(
-                    id: id.rawValue,
-                    date: dateKey,
-                    severity: value,
-                    loggedAt: loggedAt,
-                    higherIsWorse: true
-                )
-            )
+    private func create() {
+        let trimmed = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        do {
+            _ = try store.addCustomSymptom(name: draft)
+            draft = ""
+            nameError = nil
+        } catch let error as SymptomEditError {
+            nameError = error
+        } catch {}
+    }
+
+    private func rename(_ id: CustomSymptomId) {
+        let trimmed = renameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        do {
+            try store.renameCustomSymptom(id: id, name: renameDraft)
+            editing = nil
+            nameError = nil
+        } catch let error as SymptomEditError {
+            nameError = error
+        } catch {}
+    }
+
+    private func nameMessage(_ error: SymptomEditError) -> String? {
+        switch error {
+        case .duplicateName: return app.t("symptom.nameDuplicate")
+        case .nameTooLong: return app.t("symptom.nameTooLong")
+        case .tooMany: return app.t("symptom.tooMany")
+        case .blankName, .unknownId: return nil
         }
-        try? store.replaceDayScores(date: dateKey, scores: scores, note: nil, noteId: nil)
+    }
+
+    private func loadDay() {
+        var next: [String: Int] = [:]
+        for score in dayScores {
+            guard SymptomRef.parse(score.id) != nil, (1...4).contains(score.severity) else { continue }
+            next[score.id] = score.severity
+        }
+        severity = next
     }
 
     private func pretty(_ key: String) -> String {

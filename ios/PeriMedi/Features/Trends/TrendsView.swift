@@ -22,6 +22,7 @@ struct TrendsView: View {
             settings: store.settings,
             scores: store.symptomScores,
             changes: store.medicationChanges,
+            directory: store.symptomDirectory,
             selectedIds: storedIds
         )
         ScrollView {
@@ -111,7 +112,7 @@ struct TrendsView: View {
                     Circle()
                         .fill(color)
                         .frame(width: 8, height: 8)
-                    Text(app.t("symptom.id.\(series.id)"))
+                    Text(app.symptomTitle(series.id))
                         .font(.caption)
                         .foregroundStyle(Theme.ink)
                         .fixedSize(horizontal: false, vertical: true)
@@ -237,7 +238,7 @@ struct TrendsView: View {
                         }
                         .buttonStyle(.plain)
                         .position(x: x, y: y)
-                        .accessibilityLabel(app.t("symptom.id.\(series.id)"))
+                        .accessibilityLabel(app.symptomTitle(series.id))
                         .accessibilityIdentifier(A11yID.trendsDot(series.id, point.cycleStart))
                         .accessibilityValue(
                             "count:\(point.dayCount),mean:\(formatMean(point.meanIntensity))"
@@ -313,7 +314,7 @@ struct TrendsView: View {
 
     private func detail(_ selected: SelectedDot) -> some View {
         let point = selected.point
-        let name = app.t("symptom.id.\(selected.id)")
+        let name = app.symptomTitle(selected.id)
         let color = TrendsStyle.seriesColors[selected.colorIndex % TrendsStyle.seriesColors.count]
         let text = app.t("trends.detail", [
             "name": name,

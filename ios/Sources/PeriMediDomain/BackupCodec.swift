@@ -44,6 +44,7 @@ public enum BackupCodec {
         periods: [Period],
         symptomScores: [SymptomScore] = [],
         medicationChanges: [MedicationChange] = [],
+        customSymptoms: [CustomSymptom] = [],
         exportedAt: Date = Date()
     ) -> ExportPayload {
         ExportPayload(
@@ -56,7 +57,8 @@ public enum BackupCodec {
             cycleSettings: cycleSettings,
             periods: periods,
             symptomScores: symptomScores,
-            medicationChanges: medicationChanges
+            medicationChanges: medicationChanges,
+            customSymptoms: customSymptoms
         )
     }
 }

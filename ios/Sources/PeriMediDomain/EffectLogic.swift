@@ -44,7 +44,8 @@ public enum EffectLogic {
         periods: [Period],
         settings: CycleSettings,
         scores: [SymptomScore],
-        changes: [MedicationChange]
+        changes: [MedicationChange],
+        directory: SymptomDirectory
     ) -> EffectResult {
         guard settings.tracksPeriods else {
             return EffectResult(kind: .hidden)
@@ -77,16 +78,16 @@ public enum EffectLogic {
 
         var shifts: [SymptomShift] = []
         var overlappingIds = 0
-        for id in SymptomId.allCases {
-            let currentMean = mean(scores, id: id.rawValue, dates: currentSet)
-            let previousMean = mean(scores, id: id.rawValue, dates: previousSet)
+        for id in directory.rankedIds {
+            let currentMean = mean(scores, id: id, dates: currentSet)
+            let previousMean = mean(scores, id: id, dates: previousSet)
             guard let currentMean, let previousMean else { continue }
             overlappingIds += 1
             let delta = currentMean - previousMean
             if delta >= meanThreshold {
-                shifts.append(SymptomShift(id: id.rawValue, direction: .worse, magnitude: delta))
+                shifts.append(SymptomShift(id: id, direction: .worse, magnitude: delta))
             } else if delta <= -meanThreshold {
-                shifts.append(SymptomShift(id: id.rawValue, direction: .improved, magnitude: -delta))
+                shifts.append(SymptomShift(id: id, direction: .improved, magnitude: -delta))
             }
         }
 
@@ -101,7 +102,7 @@ public enum EffectLogic {
             return EffectResult(kind: .similar, context: context)
         }
         let top = Array(shifts.sorted { $0.magnitude > $1.magnitude }.prefix(maxShifts))
-        let ordered = SymptomId.allCases.compactMap { id in top.first { $0.id == id.rawValue } }
+        let ordered = directory.rankedIds.compactMap { id in top.first { $0.id == id } }
         return EffectResult(kind: .changed(ordered), context: context)
     }
 

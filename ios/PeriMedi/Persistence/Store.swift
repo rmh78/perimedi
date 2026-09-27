@@ -9,6 +9,7 @@ struct StoreSnapshot: Equatable {
     var doseLogs: [DoseLog] = []
     var remarks: [Remark] = []
     var symptomScores: [SymptomScore] = []
+    var customSymptoms: [CustomSymptom] = []
     var periods: [Period] = []
     var settings: CycleSettings = .default
     var medicationChanges: [MedicationChange] = []
@@ -30,6 +31,8 @@ final class Store: ObservableObject {
     var doseLogs: [DoseLog] { snapshot.doseLogs }
     var remarks: [Remark] { snapshot.remarks }
     var symptomScores: [SymptomScore] { snapshot.symptomScores }
+    var customSymptoms: [CustomSymptom] { snapshot.customSymptoms }
+    var symptomDirectory: SymptomDirectory { SymptomDirectory.restored(customSymptoms) }
     var periods: [Period] { snapshot.periods }
     var settings: CycleSettings { snapshot.settings }
     var medicationChanges: [MedicationChange] { snapshot.medicationChanges }
@@ -74,6 +77,7 @@ final class Store: ObservableObject {
         next.doseLogs = try fetchAll(SDDoseLog.self).map { $0.toDomain() }
         next.remarks = try fetchAll(SDRemark.self).map { $0.toDomain() }
         next.symptomScores = try fetchAll(SDSymptomScore.self).map { $0.toDomain() }
+        next.customSymptoms = try fetchAll(SDCustomSymptom.self).compactMap { $0.toDomain() }
         next.periods = try fetchAll(SDPeriod.self).map { $0.toDomain() }
             .sorted { $0.startDate > $1.startDate }
         var settingsDesc = FetchDescriptor<SDCycleSettings>()
@@ -279,67 +283,72 @@ final class Store: ObservableObject {
         }
     }
 
-    func replaceDayScores(date: String, scores: [SymptomScore], note: String?, noteId: String?) throws {
+    func addCustomSymptom(name: String) throws -> CustomSymptom {
+        let result = symptomDirectory.adding(name)
+        let (next, created) = try result.get()
         try commitWrite {
-            let day = date
-            for row in try fetchWhere(SDSymptomScore.self, #Predicate { $0.date == day }) {
+            try replaceDefinitions(next)
+        }
+        return created
+    }
+
+    func renameCustomSymptom(id: CustomSymptomId, name: String) throws {
+        let next = try symptomDirectory.renaming(id, to: name).get()
+        try commitWrite {
+            try replaceDefinitions(next)
+        }
+    }
+
+    func deleteCustomSymptom(id: CustomSymptomId) throws {
+        let next = symptomDirectory.removing(id)
+        let raw = id.rawValue
+        try commitWrite {
+            try replaceDefinitions(next)
+            for row in try fetchWhere(SDSymptomScore.self, #Predicate { $0.symptomId == raw }) {
                 context.delete(row)
-            }
-            let loggedAt = ISO8601DateFormatter().string(from: Date())
-            let trimmed = note?.trimmingCharacters(in: .whitespacesAndNewlines)
-            let dayNote = (trimmed?.isEmpty == false) ? trimmed : nil
-            for raw in scores {
-                var score = SymptomLog.normalized(raw)
-                score.date = date
-                if score.loggedAt.isEmpty { score.loggedAt = loggedAt }
-                score.note = dayNote
-                let row = SDSymptomScore()
-                row.recordId = score.rowId
-                row.apply(score)
-                context.insert(row)
-            }
-            let noteKind = RemarkKind.note.rawValue
-            let dayRemarks = try fetchWhere(
-                SDRemark.self,
-                #Predicate { $0.kindRaw == noteKind && $0.occurredOn == day }
-            )
-            if let dayNote {
-                if let id = noteId {
-                    let rowId = id
-                    if let existing = try fetchOne(SDRemark.self, #Predicate { $0.id == rowId }) {
-                        existing.body = dayNote
-                        existing.kindRaw = noteKind
-                    } else if let existing = dayRemarks.first {
-                        existing.body = dayNote
-                    } else {
-                        insertDayNote(date: date, body: dayNote, loggedAt: loggedAt)
-                    }
-                } else if let existing = dayRemarks.first {
-                    existing.body = dayNote
-                } else {
-                    insertDayNote(date: date, body: dayNote, loggedAt: loggedAt)
-                }
-            } else if let id = noteId {
-                let rowId = id
-                for row in try fetchWhere(SDRemark.self, #Predicate { $0.id == rowId }) {
-                    context.delete(row)
-                }
             }
         }
     }
 
-    private func insertDayNote(date: String, body: String, loggedAt: String) {
-        let remark = SDRemark()
-        remark.apply(
-            Remark(
-                id: createId(),
-                occurredOn: date,
-                kind: .note,
-                body: body,
-                createdAt: loggedAt
-            )
-        )
-        context.insert(remark)
+    func setDaySeverity(date: String, ref: SymptomRef, severity: Int?) throws {
+        if case .custom(let id) = ref, !symptomDirectory.customs.contains(where: { $0.id == id }) {
+            guard severity == nil else { return }
+        }
+        let storageId = ref.storageId
+        let existing = symptomScores.filter { $0.date == date && $0.id == storageId }
+        if let severity, (1...4).contains(severity) {
+            if existing.count == 1, existing[0].severity == severity, existing[0].count == nil, (existing[0].note ?? "").isEmpty {
+                return
+            }
+        } else if existing.isEmpty {
+            return
+        }
+        let loggedAt = ISO8601DateFormatter().string(from: Date())
+        let row = SymptomDay.row(date: date, ref: ref, severity: severity, loggedAt: loggedAt)
+        try commitWrite {
+            let day = date
+            let symptom = storageId
+            for stored in try fetchWhere(SDSymptomScore.self, #Predicate { $0.date == day && $0.symptomId == symptom }) {
+                context.delete(stored)
+            }
+            if let row {
+                let stored = SDSymptomScore()
+                stored.recordId = row.rowId
+                stored.apply(SymptomLog.normalized(row))
+                context.insert(stored)
+            }
+        }
+    }
+
+    private func replaceDefinitions(_ directory: SymptomDirectory) throws {
+        for row in try fetchAll(SDCustomSymptom.self) {
+            context.delete(row)
+        }
+        for symptom in directory.customs {
+            let row = SDCustomSymptom()
+            row.apply(symptom)
+            context.insert(row)
+        }
     }
 
     func deleteDayScore(date: String, symptomId: String) throws {
@@ -428,6 +437,11 @@ final class Store: ObservableObject {
             for item in payload.medicationChanges {
                 let row = SDMedicationChange(); row.apply(item); context.insert(row)
             }
+            for item in SymptomDirectory.restored(payload.customSymptoms).customs {
+                let row = SDCustomSymptom()
+                row.apply(item)
+                context.insert(row)
+            }
             let settingsRow = SDCycleSettings()
             settingsRow.apply(payload.cycleSettings)
             context.insert(settingsRow)
@@ -452,7 +466,8 @@ final class Store: ObservableObject {
             cycleSettings: settings,
             periods: periods,
             symptomScores: symptomScores,
-            medicationChanges: medicationChanges
+            medicationChanges: medicationChanges,
+            customSymptoms: symptomDirectory.customs
         )
     }
 
@@ -481,6 +496,7 @@ final class Store: ObservableObject {
         let doseLogs = try fetchAll(SDDoseLog.self)
         let remarks = try fetchAll(SDRemark.self)
         let scores = try fetchAll(SDSymptomScore.self)
+        let customs = try fetchAll(SDCustomSymptom.self)
         let periods = try fetchAll(SDPeriod.self)
         let changes = try fetchAll(SDMedicationChange.self)
         let settingsRows = try fetchAll(SDCycleSettings.self)
@@ -489,6 +505,7 @@ final class Store: ObservableObject {
         doseLogs.forEach { context.delete($0) }
         remarks.forEach { context.delete($0) }
         scores.forEach { context.delete($0) }
+        customs.forEach { context.delete($0) }
         periods.forEach { context.delete($0) }
         changes.forEach { context.delete($0) }
         settingsRows.forEach { context.delete($0) }
