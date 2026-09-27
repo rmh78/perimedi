@@ -51,6 +51,26 @@ public enum TodayPendingMeds {
         .sorted(by: isOrderedBefore)
     }
 
+    public static func hasPlanned(
+        now: Date,
+        medications: [Medication],
+        schedules: [Schedule],
+        doseLogs: [DoseLog],
+        periods: [Period],
+        settings: CycleSettings
+    ) -> Bool {
+        let dateKey = DateKeys.toDateKey(now)
+        return !ScheduleLogic.expandPlannedDoses(
+            from: dateKey,
+            to: dateKey,
+            medications: medications,
+            schedules: schedules,
+            doseLogs: doseLogs,
+            periods: periods,
+            settings: settings
+        ).isEmpty
+    }
+
     private static func isOrderedBefore(_ a: TodayPendingMedication, _ b: TodayPendingMedication) -> Bool {
         let fireA = DateKeys.date(dateKey: a.date, timeOfDay: a.earliestTimeOfDay) ?? .distantPast
         let fireB = DateKeys.date(dateKey: b.date, timeOfDay: b.earliestTimeOfDay) ?? .distantPast
