@@ -72,6 +72,8 @@ struct DoseWidgetView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                     .allowsTightening(true)
+                    .opacity(face.helperBlank ? 0 : 1)
+                    .accessibilityHidden(face.helperBlank)
             }
             if face.rows.isEmpty {
                 if let emptyTitle = face.emptyTitle {
@@ -195,22 +197,30 @@ struct DoseWidgetView: View {
         switch row.control {
         case .take(let label):
             Button(intent: MarkTodayMedicationTakenIntent(medicationId: row.medicationId)) {
-                capsule(label, color: row.color)
+                capsule(label, widthOf: face.actionLabel, color: row.color)
             }
             .buttonStyle(.plain)
         case .check:
-            capsule("✓", color: row.color)
+            capsule("✓", widthOf: face.actionLabel, color: row.color)
         }
     }
 
-    private func capsule(_ text: String, color: String) -> some View {
-        Text(text)
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(.white)
-            .lineLimit(1)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(Capsule().fill(Color(widgetHex: WidgetCapsuleFill.hex(color)) ?? DoseWidgetTheme.blush500))
+    private func capsule(_ text: String, widthOf match: String, color: String) -> some View {
+        let sizing = match.isEmpty ? text : match
+        return ZStack {
+            Text(sizing)
+                .font(.caption.weight(.semibold))
+                .lineLimit(1)
+                .hidden()
+                .accessibilityHidden(true)
+            Text(text)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Capsule().fill(Color(widgetHex: WidgetCapsuleFill.hex(color)) ?? DoseWidgetTheme.blush500))
     }
 }
 

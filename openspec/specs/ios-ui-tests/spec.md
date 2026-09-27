@@ -92,7 +92,11 @@ The instrumented suite SHALL include separate journeys for jobs that are not a f
 
 #### Scenario: Signed small widget in English and German
 - **WHEN** a signed Simulator run drives the small Home Screen widget
-- **THEN** the suite sees "Still to take today" and Take, sees a check after the tap, sees the row leave, then in German sees "Heute noch einnehmen" and Nehmen, sees a check, and sees the row leave
+- **THEN** the suite sees "Still to take today" and Take, sees a check after the tap with the helper text blank, sees the row leave, then in German sees "Heute noch einnehmen" and Nehmen, sees a check with the helper text blank, and sees the row leave
+
+#### Scenario: Signed German medium widget with two rows
+- **WHEN** a signed Simulator run drives a German medium Home Screen widget with two medications, a long name, and a Hub dose
+- **THEN** the suite sees both names, "Heute noch einnehmen", and Hub, sees a check beside the remaining Nehmen, then sees "Heute alles genommen" when nothing remains
 
 #### Scenario: Unsigned verify skips the widget journey
 - **WHEN** verification runs without the App Group signature

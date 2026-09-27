@@ -1,12 +1,12 @@
 # Home Screen today's-meds widget
 
-Home Screen widget for today's untaken medications. The capsule says Take or Nehmen. While a medication is still to take, the helper reads "Still to take today" or "Heute noch einnehmen". After a widget tap the capsule shows a check briefly, then the row leaves. A Cycle take or a reminder take does not show that check.
+Home Screen widget for today's untaken medications. The capsule says Take or Nehmen. While a medication is still to take, the helper reads "Still to take today" or "Heute noch einnehmen". After the last dose is the brief check, that line keeps its height and the text is blank. The check capsule stays as wide as Take or Nehmen. After a widget tap the capsule shows a check briefly, then the row leaves. A Cycle take or a reminder take does not show that check.
 
 ## Sub-features
 
 - Occupied card: today's pending medications (overdue included, reminder-off included), each with its form icon in a medication-color ring and a white Take or Nehmen label on that medication color, stacked with `+N` when more than one remains
-- Helper under the PeriMedi title while any row is visible, including the brief check
-- Brief check on that same capsule after a widget tap, then the row leaves; the check is not a button and does not say Taken or Genommen
+- Helper under the PeriMedi title while a medication is still to take. After the last dose is the brief check, the line keeps its height and the text is blank
+- Brief check on that same capsule after a widget tap. The check stays as wide as Take or Nehmen, then the row leaves. The check is not a button and does not say Taken or Genommen
 - Empty card when nothing is pending today. "All taken for today" / "Heute alles genommen" when today had doses. "Nothing to take today" / "Heute nichts zu nehmen" when nothing was planned. No helper.
 - Take marks every remaining pending slot for that medication on today
 - Chrome follows the in-app language (en/de); medication name and dose label stay user text
@@ -17,13 +17,14 @@ Long-press the PeriMedi icon and choose one widget size. That replaces the icon 
 
 ## Driving it with A11yID / AppRobot
 
-`WidgetJourneyTests.testWidgetTakenUntakenAndEmptyMessage` drives the medium widget by visible labels (medication name, `Take`, `Still to take today`, the check, `All taken for today` / `Heute alles genommen`, `Mittelgroßes Widget`, `App-Symbol`). `testSmallWidgetTakeInEnglishAndGerman` drives `Kleines Widget` / `Small` in English and German (`Nehmen`, `Heute noch einnehmen`) and asserts the check. `testGermanMediumCheckBesidePending` drives a German medium card with two rows, a long name, `1 Hub`, and a light capsule. They press Home. If PeriMedi is not on that page, the suite swipes once toward the first page and stops. It does not swipe toward the App Library. SpringBoard still has no `A11yID`. Do not add widget identifiers. A signed run writes `ios/docs/widget-take/*.png`.
+`WidgetJourneyTests.testWidgetTakenUntakenAndEmptyMessage` drives the medium widget by visible labels (medication name, `Take`, `Still to take today`, the check, `All taken for today` / `Heute alles genommen`, `Mittelgroßes Widget`, `App-Symbol`). `testSmallWidgetTakeInEnglishAndGerman` drives `Kleines Widget` / `Small` in English and German (`Nehmen`, `Heute noch einnehmen` before the tap) and asserts the check with the helper text blank. `testGermanMediumCheckBesidePending` drives a German medium card with two rows, a long name, `1 Hub`, and a light capsule. They press Home. If PeriMedi is not on that page, the suite swipes once toward the first page and stops. It does not swipe toward the App Library. SpringBoard still has no `A11yID`. Do not add widget identifiers. A signed run writes `ios/docs/widget-take/*.png`.
 
 The journey needs a signed App Group. Unsigned `verify` passes `-skip-testing:PeriMediUITests/WidgetJourneyTests`.
 
 Proof is those journeys plus domain and the reminder Taken journey:
 
 - `TodayPendingMedsTests` for today's list (today not tomorrow, group two times, taken drops, reminder-off, pause, empty)
+- `DoseWidgetSnapshotTests` for the snapshot face (check window, blank helper after the last check, helper text while another medication remains, all-taken versus nothing planned, capsule contrast)
 - `NextPendingDoseTests` for reminder `resolve` (pending, already taken, missing)
 - `testDoseReminderTaken` for reminder Taken through `Store.setDoseStatus` and Cycle `taken`
 
