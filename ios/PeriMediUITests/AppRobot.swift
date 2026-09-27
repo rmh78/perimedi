@@ -302,6 +302,7 @@ struct AppRobot {
         name: String,
         dose: String,
         form: String? = nil,
+        color: String? = nil,
         cyclic: Bool = false,
         start: String? = nil
     ) {
@@ -312,6 +313,11 @@ struct AppRobot {
             pick("med.form", form)
         }
         clearAndType("med.dose", dose)
+        if let color {
+            let swatch = app.descendants(matching: .any)[color]
+            if !swatch.isHittable { app.swipeUp() }
+            swatch.tap()
+        }
         waitFor(id: "med.since")
         pick("med.mode", cyclic ? "med.mode.cyclic" : "med.mode.everyday")
         if let start {

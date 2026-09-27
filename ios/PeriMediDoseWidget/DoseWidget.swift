@@ -29,7 +29,7 @@ struct DoseWidgetTimeline: TimelineProvider {
         ) ?? now.addingTimeInterval(86_400)
         let faceNow = snapshot.face(at: now)
         var entries = [DoseWidgetEntry(date: now, face: faceNow)]
-        if showsCheck(faceNow), let until = snapshot.ack?.until, until > now {
+        if faceNow.showsCheck, let until = snapshot.ack?.until, until > now {
             entries.append(DoseWidgetEntry(date: until, face: snapshot.face(at: until)))
             if midnight > until {
                 entries.append(DoseWidgetEntry(date: midnight, face: snapshot.face(at: midnight)))
@@ -42,13 +42,6 @@ struct DoseWidgetTimeline: TimelineProvider {
             entries.append(DoseWidgetEntry(date: midnight, face: snapshot.face(at: midnight)))
         }
         completion(Timeline(entries: entries, policy: .after(midnight)))
-    }
-
-    private func showsCheck(_ face: DoseWidgetFace) -> Bool {
-        face.rows.contains { row in
-            if case .check = row.control { return true }
-            return false
-        }
     }
 }
 
@@ -217,7 +210,7 @@ struct DoseWidgetView: View {
             .lineLimit(1)
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .background(Capsule().fill(Color(widgetHex: color) ?? DoseWidgetTheme.blush500))
+            .background(Capsule().fill(Color(widgetHex: WidgetCapsuleFill.hex(color)) ?? DoseWidgetTheme.blush500))
     }
 }
 

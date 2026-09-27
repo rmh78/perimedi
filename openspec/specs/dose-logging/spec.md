@@ -26,7 +26,7 @@ The system SHALL allow the user to toggle planned doses for the selected day bet
 - **THEN** activating the medication icon does not create a taken state for that day
 
 ### Requirement: Home Screen widget shows today's untaken medications
-The system SHALL show only medications that still have a pending planned slot on the device's current calendar day. The system SHALL NOT show another day's medications as the visible list. When more medications remain than the widget can list as rows, the system SHALL keep the PeriMedi title visible and SHALL mark the overflow with a remaining count. The widget SHALL NOT grow to fit extra rows. Each listed medication SHALL show a white Take label on that medication's color (German: Nehmen). While at least one medication is still to take, the widget SHALL show the helper "Still to take today" in English or "Heute noch einnehmen" in German under the PeriMedi title. When nothing is still to take, including an empty list and a list that only shows the brief check, the widget SHALL NOT show that helper. An empty list SHALL show the empty title only.
+The system SHALL show only medications that still have a pending planned slot on the device's current calendar day. The system SHALL NOT show another day's medications as the visible list. When more medications remain than the widget can list as rows, the system SHALL keep the PeriMedi title visible and SHALL mark the overflow with a remaining count. The widget SHALL NOT grow to fit extra rows. Each listed medication SHALL show a white Take label on that medication's color (German: Nehmen). While the widget is showing a medication row, including the brief check, it SHALL show the helper "Still to take today" in English or "Heute noch einnehmen" in German under the PeriMedi title. An empty list SHALL NOT show that helper. When today had planned doses and none remain, the empty title SHALL be "All taken for today" in English or "Heute alles genommen" in German. When today had no planned doses, the empty title SHALL be "Nothing to take today" in English or "Heute nichts zu nehmen" in German.
 
 #### Scenario: Today only
 - **WHEN** a medication is pending tomorrow and nothing is pending today
@@ -41,12 +41,20 @@ The system SHALL show only medications that still have a pending planned slot on
 - **THEN** that row shows the medication's form icon inside a circle of the medication color, and Take is a white label on a control filled with that same medication color (German: Nehmen)
 
 #### Scenario: Still to take helper
-- **WHEN** at least one medication on the Home Screen widget is still to take
+- **WHEN** the Home Screen widget is showing a medication row, including the brief check
 - **THEN** the widget shows "Still to take today" in English or "Heute noch einnehmen" in German under the PeriMedi title
 
 #### Scenario: Empty list has no helper
 - **WHEN** the Home Screen widget has no medications left to show
-- **THEN** it shows today's empty title and does not show "Still to take today" or "Heute noch einnehmen"
+- **THEN** it does not show "Still to take today" or "Heute noch einnehmen"
+
+#### Scenario: All taken title
+- **WHEN** today had planned doses and the widget has no medications left to show
+- **THEN** it shows "All taken for today" in English or "Heute alles genommen" in German
+
+#### Scenario: Nothing planned title
+- **WHEN** today had no planned doses
+- **THEN** the widget shows "Nothing to take today" in English or "Heute nichts zu nehmen" in German
 
 ### Requirement: Taken from the Home Screen widget
 The system SHALL allow the user to record a medication as taken from a Home Screen widget by choosing Take (German: Nehmen), using the same grain as Cycle for today: every remaining pending planned slot for that medication on the current calendar day, each written through the same dose-log path as Cycle. The system SHALL NOT mark other medications taken. The system SHALL NOT mark slots on another day. After that choice the capsule SHALL show a check briefly, then that medication SHALL leave the list or the next medication SHALL advance, and no Taken or Genommen chip SHALL remain. A second activation after those slots are taken SHALL leave them taken and SHALL NOT create a second log. Un-take SHALL NOT be available on the widget; un-taking on Cycle for today SHALL make that medication eligible for the widget again with a Take label (German: Nehmen). Marking a medication taken on Cycle or from a reminder SHALL NOT show that check.

@@ -30,7 +30,7 @@ enum DoseWidgetBridge {
         stagedAck = DoseWidgetAck(
             row: row,
             index: index,
-            until: Date().addingTimeInterval(2)
+            until: Date().addingTimeInterval(DoseWidgetAck.duration)
         )
         publish()
         return result
@@ -42,22 +42,27 @@ enum DoseWidgetBridge {
         guard let todayDate = DateKeys.parseDateKey(today) else { return }
         let tomorrowDate = DateKeys.addDays(todayDate, 1)
         let chrome = DoseWidgetChrome.make(t: locale.t)
+        let todayMeds = pending(now: todayDate, store: store)
         var snapshot = DoseWidgetSnapshot.make(
             chrome: chrome,
             date: today,
-            meds: pending(now: todayDate, store: store),
+            meds: todayMeds,
             nextDate: DateKeys.toDateKey(tomorrowDate),
             nextMeds: pending(now: tomorrowDate, store: store)
+        )
+        snapshot.finishedToday = todayMeds.isEmpty && TodayPendingMeds.hasPlanned(
+            now: todayDate,
+            medications: store.medications,
+            schedules: store.schedules,
+            doseLogs: store.doseLogs,
+            periods: store.periods,
+            settings: store.settings
         )
         let staged = stagedAck
         stagedAck = nil
         if let candidate = staged ?? DoseWidgetSnapshotFile.read().ack {
             snapshot.ack = candidate
-            let showsCheck = snapshot.face(at: Date()).rows.contains { row in
-                if case .check = row.control { return true }
-                return false
-            }
-            if !showsCheck {
+            if !snapshot.face(at: Date()).showsCheck {
                 snapshot.ack = nil
             }
         }

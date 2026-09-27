@@ -88,7 +88,11 @@ The instrumented suite SHALL include separate journeys for jobs that are not a f
 
 #### Scenario: Signed Home Screen widget journey
 - **WHEN** a signed Simulator run drives today's untaken medications on the Home Screen
-- **THEN** the suite chooses a widget size from the app icon, marks one medication taken from the widget so Cycle shows it taken, brings it back by un-taking on Cycle, shows the empty message when nothing remains today, and puts the app icon back
+- **THEN** the suite chooses a widget size from the app icon, marks one medication taken from the widget so Cycle shows it taken, sees a check on that capsule, brings it back by un-taking on Cycle, shows the all-taken title when nothing remains today, and puts the app icon back
+
+#### Scenario: Signed small widget in English and German
+- **WHEN** a signed Simulator run drives the small Home Screen widget
+- **THEN** the suite sees "Still to take today" and Take, sees a check after the tap, sees the row leave, then in German sees "Heute noch einnehmen" and Nehmen, sees a check, and sees the row leave
 
 #### Scenario: Unsigned verify skips the widget journey
 - **WHEN** verification runs without the App Group signature

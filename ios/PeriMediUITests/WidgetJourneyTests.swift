@@ -78,12 +78,9 @@ final class WidgetJourneyTests: PeriMediUITestCase {
         home.saveShot("en-medium-before")
 
         home.tapTaken()
-        if home.spin(4, { home.hasCheck }) {
-            home.settle()
-            if home.hasCheck {
-                home.saveShot("en-medium-check")
-            }
-        }
+        XCTAssertTrue(home.spin(6, { home.hasCheck && home.hasStillToTake }), "check or helper missing after Take")
+        home.settle()
+        home.saveShot("en-medium-check")
         if robot.app.state != .runningForeground {
             robot.app.activate()
         }
@@ -141,12 +138,9 @@ final class WidgetJourneyTests: PeriMediUITestCase {
         home.settle()
         home.saveShot("en-small-before")
         home.tapTaken()
-        if home.spin(4, { home.hasCheck }) {
-            home.settle()
-            if home.hasCheck {
-                home.saveShot("en-small-check")
-            }
-        }
+        XCTAssertTrue(home.spin(6, { home.hasCheck && home.hasStillToTake }), "check or helper missing after Take")
+        home.settle()
+        home.saveShot("en-small-check")
         if robot.app.state != .runningForeground {
             robot.app.activate()
         }
@@ -173,12 +167,9 @@ final class WidgetJourneyTests: PeriMediUITestCase {
         home.settle()
         home.saveShot("de-small-before")
         home.tapTaken()
-        if home.spin(4, { home.hasCheck }) {
-            home.settle()
-            if home.hasCheck {
-                home.saveShot("de-small-check")
-            }
-        }
+        XCTAssertTrue(home.spin(6, { home.hasCheck && home.hasStillToTakeDE }), "check or German helper missing after Nehmen")
+        home.settle()
+        home.saveShot("de-small-check")
         if robot.app.state != .runningForeground {
             robot.app.activate()
         }
@@ -187,6 +178,57 @@ final class WidgetJourneyTests: PeriMediUITestCase {
         _ = home.spin(3, { !home.hasCheck })
         home.settle()
         home.saveShot("de-small-after")
+    }
+
+    func testGermanMediumCheckBesidePending() {
+        robot.launch(today: UITestDate.deviceToday)
+        dismissSystemAlert()
+        robot.setLanguage("de")
+
+        let home = HomeWidgets()
+        home.open()
+        home.ensureAppIcon()
+        home.turnIconIntoWidget()
+        guard home.spin(8, { home.hasWidget }) else {
+            XCTFail("icon did not become a medium widget. icons: \(home.iconLabels) buttons: \(home.buttonLabels)")
+            return
+        }
+
+        robot.app.activate()
+        robot.tap("tab.cycle")
+        robot.addMedication(name: "Estradiol gel morning dose", dose: "1 Hub", color: "#f472b6")
+        robot.addMedication(name: "Progesterone", dose: "200 mg")
+        home.open()
+        XCTAssertTrue(
+            home.spin(20, {
+                home.hasMed("Estradiol gel morning dose")
+                    && home.hasMed("Progesterone")
+                    && home.hasStillToTakeDE
+                    && home.hasHub
+            }),
+            "German medium rows missing. buttons: \(home.buttonLabels)"
+        )
+        home.settle()
+        home.saveShot("de-medium-two-before")
+        home.tapTaken()
+        XCTAssertTrue(
+            home.spin(6, { home.hasCheck && home.hasStillToTakeDE && home.hasMed("Progesterone") }),
+            "check beside Nehmen missing"
+        )
+        home.settle()
+        home.saveShot("de-medium-two-check")
+        home.tapTaken()
+        if robot.app.state != .runningForeground {
+            robot.app.activate()
+        }
+        home.open()
+        XCTAssertTrue(
+            home.spin(15, { home.hasEmptyMessage && !home.hasMed("Progesterone") }),
+            "German medium did not show all taken"
+        )
+        _ = home.spin(3, { !home.hasCheck })
+        home.settle()
+        home.saveShot("de-medium-after")
     }
 
     private func markTaken(_ slug: String) {
@@ -323,7 +365,7 @@ private final class HomeWidgets {
     }
 
     var hasEmptyMessage: Bool {
-        labeled(["Nothing to take today", "Heute nichts zu nehmen"])
+        labeled(["All taken for today", "Heute alles genommen"])
     }
 
     var hasStillToTake: Bool {
@@ -336,6 +378,10 @@ private final class HomeWidgets {
 
     var hasCheck: Bool {
         springboard.descendants(matching: .staticText)["✓"].exists
+    }
+
+    var hasHub: Bool {
+        springboard.staticTexts.matching(NSPredicate(format: "label CONTAINS 'Hub'")).firstMatch.exists
     }
 
     func settle() {

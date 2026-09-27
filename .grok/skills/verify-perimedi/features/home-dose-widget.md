@@ -5,9 +5,9 @@ Home Screen widget for today's untaken medications. The capsule says Take or Neh
 ## Sub-features
 
 - Occupied card: today's pending medications (overdue included, reminder-off included), each with its form icon in a medication-color ring and a white Take or Nehmen label on that medication color, stacked with `+N` when more than one remains
-- Helper under the PeriMedi title only while at least one row is still Take
+- Helper under the PeriMedi title while any row is visible, including the brief check
 - Brief check on that same capsule after a widget tap, then the row leaves; the check is not a button and does not say Taken or Genommen
-- Empty card when nothing is pending today (another day's doses do not appear): empty title only, no helper
+- Empty card when nothing is pending today. "All taken for today" / "Heute alles genommen" when today had doses. "Nothing to take today" / "Heute nichts zu nehmen" when nothing was planned. No helper.
 - Take marks every remaining pending slot for that medication on today
 - Chrome follows the in-app language (en/de); medication name and dose label stay user text
 
@@ -17,11 +17,11 @@ Long-press the PeriMedi icon and choose one widget size. That replaces the icon 
 
 ## Driving it with A11yID / AppRobot
 
-`WidgetJourneyTests.testWidgetTakenUntakenAndEmptyMessage` drives the medium widget by visible labels (medication name, `Take`, `Still to take today`, `Nothing to take today` / `Heute nichts zu nehmen`, `Mittelgroßes Widget`, `App-Symbol`). `testSmallWidgetTakeInEnglishAndGerman` drives `Kleines Widget` / `Small` in English and German (`Nehmen`, `Heute noch einnehmen`). Both press Home. If PeriMedi is not on that page, the suite swipes once toward the first page and stops. It does not swipe toward the App Library. SpringBoard still has no `A11yID`. Do not add widget identifiers. A signed run writes `ios/docs/widget-take/*.png`.
+`WidgetJourneyTests.testWidgetTakenUntakenAndEmptyMessage` drives the medium widget by visible labels (medication name, `Take`, `Still to take today`, the check, `All taken for today` / `Heute alles genommen`, `Mittelgroßes Widget`, `App-Symbol`). `testSmallWidgetTakeInEnglishAndGerman` drives `Kleines Widget` / `Small` in English and German (`Nehmen`, `Heute noch einnehmen`) and asserts the check. `testGermanMediumCheckBesidePending` drives a German medium card with two rows, a long name, `1 Hub`, and a light capsule. They press Home. If PeriMedi is not on that page, the suite swipes once toward the first page and stops. It does not swipe toward the App Library. SpringBoard still has no `A11yID`. Do not add widget identifiers. A signed run writes `ios/docs/widget-take/*.png`.
 
 The journey needs a signed App Group. Unsigned `verify` passes `-skip-testing:PeriMediUITests/WidgetJourneyTests`.
 
-Proof is that journey plus domain and the reminder Taken journey:
+Proof is those journeys plus domain and the reminder Taken journey:
 
 - `TodayPendingMedsTests` for today's list (today not tomorrow, group two times, taken drops, reminder-off, pause, empty)
 - `NextPendingDoseTests` for reminder `resolve` (pending, already taken, missing)

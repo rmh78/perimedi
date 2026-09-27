@@ -43,7 +43,9 @@ Practical test walk for that order:
 2. `PeriMediUITests/SymptomTrendsTests/testSymptomTrendsNoScores` and `testSymptomTrendsChart` — Trends
 3. `PeriMediUITests/FirstUseJourneyTests/testMoreRemindersControls` — More, visit PDF, backup cancel
 4. `PeriMediUITests/FirstUseJourneyTests/testDoseReminderTaken` — reminders Taken
-5. `PeriMediUITests/WidgetJourneyTests/testWidgetTakenUntakenAndEmptyMessage` — signed Home Screen widget. Unsigned `verify` skips it.
+5. `PeriMediUITests/WidgetJourneyTests/testWidgetTakenUntakenAndEmptyMessage` — signed medium Home Screen widget. Unsigned `verify` skips it.
+6. `PeriMediUITests/WidgetJourneyTests/testSmallWidgetTakeInEnglishAndGerman` — signed small widget in English and German. Unsigned `verify` skips it.
+7. `PeriMediUITests/WidgetJourneyTests/testGermanMediumCheckBesidePending` — signed German medium widget with two rows. Unsigned `verify` skips it.
 
 PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verify`. Unsigned `verify` skips the widget journey.
 
