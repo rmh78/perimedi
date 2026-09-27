@@ -284,26 +284,35 @@ final class Store: ObservableObject {
     }
 
     func addCustomSymptom(name: String) throws -> CustomSymptom {
-        let result = symptomDirectory.adding(name)
-        let (next, created) = try result.get()
+        let created = try symptomDirectory.adding(name).get().1
         try commitWrite {
-            try replaceDefinitions(next)
+            let raw = created.id.rawValue
+            let row = try fetchOne(SDCustomSymptom.self, #Predicate { $0.id == raw }) ?? {
+                let made = SDCustomSymptom()
+                context.insert(made)
+                return made
+            }()
+            row.apply(created)
         }
         return created
     }
 
     func renameCustomSymptom(id: CustomSymptomId, name: String) throws {
         let next = try symptomDirectory.renaming(id, to: name).get()
+        guard let updated = next.customs.first(where: { $0.id == id }) else { return }
         try commitWrite {
-            try replaceDefinitions(next)
+            let raw = id.rawValue
+            guard let row = try fetchOne(SDCustomSymptom.self, #Predicate { $0.id == raw }) else { return }
+            row.apply(updated)
         }
     }
 
     func deleteCustomSymptom(id: CustomSymptomId) throws {
-        let next = symptomDirectory.removing(id)
         let raw = id.rawValue
         try commitWrite {
-            try replaceDefinitions(next)
+            for row in try fetchWhere(SDCustomSymptom.self, #Predicate { $0.id == raw }) {
+                context.delete(row)
+            }
             for row in try fetchWhere(SDSymptomScore.self, #Predicate { $0.symptomId == raw }) {
                 context.delete(row)
             }
@@ -337,17 +346,6 @@ final class Store: ObservableObject {
                 stored.apply(SymptomLog.normalized(row))
                 context.insert(stored)
             }
-        }
-    }
-
-    private func replaceDefinitions(_ directory: SymptomDirectory) throws {
-        for row in try fetchAll(SDCustomSymptom.self) {
-            context.delete(row)
-        }
-        for symptom in directory.customs {
-            let row = SDCustomSymptom()
-            row.apply(symptom)
-            context.insert(row)
         }
     }
 
@@ -425,7 +423,9 @@ final class Store: ObservableObject {
             for item in payload.remarks {
                 let row = SDRemark(); row.apply(item); context.insert(row)
             }
-            for item in payload.symptomScores {
+            let customs = SymptomDirectory.restored(payload.customSymptoms)
+            let scores = SymptomDirectory.scoresToStore(payload.symptomScores, directory: customs)
+            for item in scores {
                 let row = SDSymptomScore()
                 row.recordId = item.rowId
                 row.apply(SymptomLog.normalized(item))
@@ -437,7 +437,7 @@ final class Store: ObservableObject {
             for item in payload.medicationChanges {
                 let row = SDMedicationChange(); row.apply(item); context.insert(row)
             }
-            for item in SymptomDirectory.restored(payload.customSymptoms).customs {
+            for item in customs.customs {
                 let row = SDCustomSymptom()
                 row.apply(item)
                 context.insert(row)

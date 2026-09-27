@@ -39,7 +39,8 @@ Archived OpenSpec changes under `openspec/changes/archive/` may mention an old w
 - **Medication** — name, form, default dose, optional color
 - **Schedule** — times; exclusive mode: every day, specific weekdays, or cyclic (apply N / pause M or week slots). Saved without menstrual-alignment UI (`cycleRule: none` in the editor).
 - **Period** — logged bleeds; day 1 of a cycle is the first period day
-- **SymptomScore** — catalog id (`hot_flash`, …), date, severity 1–4, optional note, loggedAt. Untouched ids are missing (none), not stored as 0.
+- **SymptomScore** — catalog id (`hot_flash`, …) or a custom id (`c.` plus a UUID), date, severity 1–4, optional note, loggedAt. Untouched ids are missing (none), not stored as 0.
+- **Custom symptom** — a stored name and sort order under the eleven defaults. The name is the user’s text. Rename keeps the id. Delete removes that symptom and its scores. The list round-trips on the version-1 backup. Import drops a custom score whose id is no longer in that list.
 - **Remark** — optional day note (and older backup note rows)
 - **DoseLog** — taken / pending (open) per planned dose
 - **MedicationChange** — stored dose/schedule change events (name snapshot, previous/new value, effective date). Survive medication delete. Cleared on wipe/import, not on delete-med.

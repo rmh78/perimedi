@@ -62,21 +62,31 @@ struct SymptomSheet: View {
         })
     }
 
+    private var atCap: Bool {
+        store.symptomDirectory.customs.count >= SymptomDirectory.addCap
+    }
+
     private var addRow: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
                 TextField(app.t("symptom.addPlaceholder"), text: $draft)
                     .textFieldStyle(.roundedBorder)
                     .font(.footnote)
+                    .disabled(atCap)
                     .accessibilityIdentifier(A11yID.symptomCustomAdd)
                     .onSubmit(create)
                 Button(app.t("symptom.addAction"), action: create)
                     .font(.footnote.weight(.semibold))
                     .buttonStyle(.plain)
                     .foregroundStyle(Theme.blush800)
+                    .disabled(atCap)
                     .accessibilityIdentifier(A11yID.symptomCustomCreate)
             }
-            if let nameError, let message = nameMessage(nameError) {
+            if atCap {
+                Text(app.t("symptom.tooMany"))
+                    .font(.caption2)
+                    .foregroundStyle(Theme.blush800)
+            } else if let nameError, let message = nameMessage(nameError) {
                 Text(message)
                     .font(.caption2)
                     .foregroundStyle(Theme.blush800)
@@ -97,7 +107,8 @@ struct SymptomSheet: View {
                 if renaming {
                     renameSave(symptom.id)
                 } else {
-                    deleteButton(symptom.id)
+                    renameStart(symptom)
+                    deleteButton(symptom)
                 }
                 Spacer(minLength: 0)
             }
@@ -117,7 +128,19 @@ struct SymptomSheet: View {
             .font(.caption2.weight(.semibold))
             .buttonStyle(.plain)
             .foregroundStyle(Theme.blush800)
-            .accessibilityIdentifier(A11yID.symptomCustomRename(id.rawValue))
+            .accessibilityIdentifier(A11yID.symptomCustomSave(id.rawValue))
+    }
+
+    private func renameStart(_ symptom: CustomSymptom) -> some View {
+        Button(app.t("symptom.rename")) {
+            editing = symptom.id
+            renameDraft = symptom.name
+            nameError = nil
+        }
+        .font(.caption2.weight(.semibold))
+        .buttonStyle(.plain)
+        .foregroundStyle(Theme.blush800)
+        .accessibilityIdentifier(A11yID.symptomCustomRename(symptom.id.rawValue))
     }
 
     private func nameButton(_ symptom: CustomSymptom) -> some View {
@@ -138,10 +161,11 @@ struct SymptomSheet: View {
         .disabled(editing == symptom.id)
     }
 
-    private func deleteButton(_ id: CustomSymptomId) -> some View {
-        Button {
+    private func deleteButton(_ symptom: CustomSymptom) -> some View {
+        let id = symptom.id
+        return Button {
             app.askConfirm(
-                message: app.t("symptom.deleteConfirm"),
+                message: app.t("symptom.deleteScores", ["name": symptom.name]),
                 confirmLabel: app.t("common.delete")
             ) {
                 try? store.deleteCustomSymptom(id: id)

@@ -217,4 +217,26 @@ final class EffectLogicTests: XCTestCase {
         XCTAssertEqual(result.context?.nameSnapshot, "Estradiol gel")
         XCTAssertEqual(result.context?.field, .dose)
     }
+
+    func testCustomSymptomCanBeTheShift() throws {
+        let id = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-00000000000a")!
+        let directory = try SymptomDirectory.catalogOnly.adding("Fog", mint: id).get().0
+        let scores = [
+            SymptomScore(id: id.rawValue, date: "2026-02-02", severity: 1, loggedAt: "t"),
+            SymptomScore(id: id.rawValue, date: "2026-03-06", severity: 4, loggedAt: "t"),
+        ]
+        let result = EffectLogic.summarize(
+            today: today,
+            periods: twoCycles,
+            settings: settings,
+            scores: scores,
+            changes: [],
+            directory: directory
+        )
+        guard case .changed(let shifts) = result.kind else {
+            return XCTFail("expected changed, got \(result.kind)")
+        }
+        XCTAssertEqual(shifts.map(\.id), [id.rawValue])
+        XCTAssertEqual(shifts[0].direction, .worse)
+    }
 }

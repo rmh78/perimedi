@@ -105,6 +105,10 @@ enum A11yID {
         "symptom.custom.rename.\(id)"
     }
 
+    static func symptomCustomSave(_ id: String) -> String {
+        "symptom.custom.save.\(id)"
+    }
+
     static func symptomCustomDelete(_ id: String) -> String {
         "symptom.custom.delete.\(id)"
     }

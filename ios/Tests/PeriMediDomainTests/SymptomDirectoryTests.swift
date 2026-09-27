@@ -141,4 +141,57 @@ final class SymptomDirectoryTests: XCTestCase {
         XCTAssertEqual(row?.severity, 2)
         XCTAssertNil(row?.note)
     }
+
+    func testEqualDayCountsKeepTheEarlierCatalogId() throws {
+        let directory = try SymptomDirectory.catalogOnly.adding("Fog", mint: fog).get().0
+        let periods = [
+            Period(id: "p0", startDate: "2026-01-01"),
+            Period(id: "p1", startDate: "2026-02-01"),
+        ]
+        let days = ["2026-01-02", "2026-02-02"]
+        var scores: [SymptomScore] = []
+        for day in days {
+            scores.append(SymptomScore(id: "hot_flash", date: day, severity: 2, loggedAt: "t"))
+            scores.append(SymptomScore(id: fog.rawValue, date: day, severity: 4, loggedAt: "t"))
+        }
+        let result = SymptomTrendLogic.summarize(
+            today: "2026-02-15",
+            periods: periods,
+            settings: CycleSettings(averageCycleLength: 28, averagePeriodLength: 5),
+            scores: scores,
+            changes: [],
+            directory: directory
+        )
+        guard case .chart(let chart) = result.kind else {
+            return XCTFail("expected a chart")
+        }
+        XCTAssertEqual(chart.defaultIds, ["hot_flash", fog.rawValue])
+    }
+
+    func testRoundTripKeepsCustomsAndDropsOrphanScores() throws {
+        let directory = try SymptomDirectory.catalogOnly.adding("Fog", mint: fog).get().0
+        let orphan = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-000000000099")!
+        let scores = [
+            SymptomScore(id: "hot_flash", date: "2026-03-15", severity: 3, loggedAt: "t"),
+            SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 2, loggedAt: "t"),
+            SymptomScore(id: orphan.rawValue, date: "2026-03-15", severity: 4, loggedAt: "t"),
+        ]
+        let payload = BackupCodec.makeExport(
+            medications: [],
+            schedules: [],
+            doseLogs: [],
+            remarks: [],
+            cycleSettings: .default,
+            periods: [],
+            symptomScores: scores,
+            customSymptoms: directory.customs
+        )
+        let decoded = try BackupCodec.decode(try BackupCodec.encode(payload))
+        XCTAssertEqual(decoded.customSymptoms, [CustomSymptom(id: fog, name: "Fog", sort: 0)])
+        let stored = SymptomDirectory.scoresToStore(
+            decoded.symptomScores,
+            directory: SymptomDirectory.restored(decoded.customSymptoms)
+        )
+        XCTAssertEqual(stored.map(\.id), ["hot_flash", fog.rawValue])
+    }
 }
