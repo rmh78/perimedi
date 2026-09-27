@@ -138,7 +138,10 @@ final class WidgetJourneyTests: PeriMediUITestCase {
         home.settle()
         home.saveShot("en-small-before")
         home.tapTaken()
-        XCTAssertTrue(home.spin(6, { home.hasCheck && home.hasStillToTake }), "check or helper missing after Take")
+        XCTAssertTrue(
+            home.spin(6, { home.hasCheck && home.hasMed("Estrogen") && !home.hasStillToTake }),
+            "check missing or helper still readable after the last Take"
+        )
         home.settle()
         home.saveShot("en-small-check")
         if robot.app.state != .runningForeground {
@@ -167,7 +170,10 @@ final class WidgetJourneyTests: PeriMediUITestCase {
         home.settle()
         home.saveShot("de-small-before")
         home.tapTaken()
-        XCTAssertTrue(home.spin(6, { home.hasCheck && home.hasStillToTakeDE }), "check or German helper missing after Nehmen")
+        XCTAssertTrue(
+            home.spin(6, { home.hasCheck && home.hasMed("Estrogen") && !home.hasStillToTakeDE }),
+            "check missing or German helper still readable after the last Nehmen"
+        )
         home.settle()
         home.saveShot("de-small-check")
         if robot.app.state != .runningForeground {

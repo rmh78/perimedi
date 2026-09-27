@@ -43,6 +43,8 @@ public struct DoseWidgetAck: Codable, Equatable, Sendable {
 public struct DoseWidgetFace: Equatable, Sendable {
     public var brandTitle: String
     public var helper: String?
+    public var helperBlank: Bool
+    public var actionLabel: String
     public var emptyTitle: String?
     public var rows: [Row]
 
@@ -162,10 +164,16 @@ public struct DoseWidgetSnapshot: Equatable, Sendable {
         } else {
             emptyTitle = chrome.emptyTitle
         }
+        let awaitingTake = rows.contains { row in
+            if case .take = row.control { return true }
+            return false
+        }
         let helper = rows.isEmpty || chrome.stillToTake.isEmpty ? nil : chrome.stillToTake
         return DoseWidgetFace(
             brandTitle: chrome.brandTitle,
             helper: helper,
+            helperBlank: helper != nil && !awaitingTake,
+            actionLabel: chrome.takeAction,
             emptyTitle: emptyTitle,
             rows: rows
         )

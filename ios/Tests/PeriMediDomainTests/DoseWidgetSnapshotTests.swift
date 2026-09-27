@@ -21,7 +21,21 @@ final class DoseWidgetSnapshotTests: XCTestCase {
         let face = inside.face(at: now)
         XCTAssertTrue(face.showsCheck)
         XCTAssertEqual(face.helper, "Still to take today")
+        XCTAssertTrue(face.helperBlank)
+        XCTAssertEqual(face.actionLabel, "Take")
         XCTAssertNil(face.emptyTitle)
+
+        let beside = try snapshot(
+            day: day,
+            meds: true,
+            until: now.addingTimeInterval(DoseWidgetAck.duration),
+            finished: false,
+            pendingId: "m2"
+        )
+        let besideFace = beside.face(at: now)
+        XCTAssertTrue(besideFace.showsCheck)
+        XCTAssertEqual(besideFace.helper, "Still to take today")
+        XCTAssertFalse(besideFace.helperBlank)
 
         let expired = try snapshot(day: day, meds: false, until: now, finished: false)
         XCTAssertFalse(expired.face(at: now).showsCheck)
@@ -42,6 +56,7 @@ final class DoseWidgetSnapshotTests: XCTestCase {
         let face = done.face(at: now)
         XCTAssertEqual(face.emptyTitle, "All taken for today")
         XCTAssertNil(face.helper)
+        XCTAssertFalse(face.helperBlank)
         XCTAssertFalse(face.showsCheck)
 
         let idle = try snapshot(day: day, meds: false, until: nil, finished: false)
@@ -64,9 +79,18 @@ final class DoseWidgetSnapshotTests: XCTestCase {
         return try JSONDecoder().decode(DoseWidgetSnapshot.self, from: Data(json.utf8))
     }
 
-    private func snapshot(day: String, meds: Bool, until: Date?, finished: Bool) throws -> DoseWidgetSnapshot {
+    private func snapshot(
+        day: String,
+        meds: Bool,
+        until: Date?,
+        finished: Bool,
+        pendingId: String = "m1"
+    ) throws -> DoseWidgetSnapshot {
+        let medsJSON = meds
+            ? "[{\"medicationId\":\"\(pendingId)\",\"name\":\"Estrogen\",\"doseLabel\":\"1 mg\",\"color\":\"#d43d6c\",\"icon\":\"pill\",\"earliestTimeOfDay\":\"20:00\"}]"
+            : "[]"
         var json = """
-        {"version":2,"chrome":{"brandTitle":"PeriMedi","emptyTitle":"Nothing to take today","emptyBody":"No untaken medications planned today.","takeAction":"Take","stillToTake":"Still to take today","doneTitle":"All taken for today"},"date":"\(day)","meds":\(meds ? "[{\"medicationId\":\"m1\",\"name\":\"Estrogen\",\"doseLabel\":\"1 mg\",\"color\":\"#d43d6c\",\"icon\":\"pill\",\"earliestTimeOfDay\":\"20:00\"}]" : "[]"),"nextDate":"","nextMeds":[],"finishedToday":\(finished)
+        {"version":2,"chrome":{"brandTitle":"PeriMedi","emptyTitle":"Nothing to take today","emptyBody":"No untaken medications planned today.","takeAction":"Take","stillToTake":"Still to take today","doneTitle":"All taken for today"},"date":"\(day)","meds":\(medsJSON),"nextDate":"","nextMeds":[],"finishedToday":\(finished)
         """
         if let until {
             let row = "{\"medicationId\":\"m1\",\"name\":\"Estrogen\",\"doseLabel\":\"1 mg\",\"color\":\"#d43d6c\",\"icon\":\"pill\",\"earliestTimeOfDay\":\"20:00\"}"
