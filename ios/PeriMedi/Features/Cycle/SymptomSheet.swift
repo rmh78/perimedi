@@ -48,16 +48,16 @@ struct SymptomSheet: View {
                         }
                     case .custom(let rows):
                         groupTitle(app.t("symptom.group.custom"))
-                        addRow
                         VStack(spacing: 5) {
                             ForEach(rows) { symptom in
                                 customRow(symptom)
                             }
                         }
+                        addRow
                     }
                 }
             }
-            .padding(.bottom, 8)
+            .padding(.bottom, 28)
             .onAppear(perform: loadDay)
         })
     }
@@ -92,7 +92,7 @@ struct SymptomSheet: View {
                     .foregroundStyle(Theme.blush800)
             }
         }
-        .padding(.bottom, 8)
+        .padding(.top, 12)
     }
 
     private func customRow(_ symptom: CustomSymptom) -> some View {
