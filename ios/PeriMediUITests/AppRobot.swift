@@ -216,7 +216,7 @@ struct AppRobot {
     /// `typeText` needs software-keyboard focus (Apple). The doctor turns
     /// Simulator hardware keyboard off before boot so this matches a phone.
     /// Do not paste: that is not how a user types.
-    func clearAndType(_ id: String, _ text: String, file: StaticString = #filePath, line: UInt = #line) {
+    func clearAndType(_ id: String, _ text: String, dismiss: Bool = true, file: StaticString = #filePath, line: UInt = #line) {
         waitFor(id: id, file: file, line: line)
         let field = element(id)
 
@@ -247,7 +247,9 @@ struct AppRobot {
             file: file,
             line: line
         )
-        dismissKeyboard()
+        if dismiss {
+            dismissKeyboard()
+        }
     }
 
     func dismissKeyboard() {

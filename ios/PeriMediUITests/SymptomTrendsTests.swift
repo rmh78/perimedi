@@ -97,20 +97,26 @@ final class SymptomTrendsTests: PeriMediUITestCase {
         robot.launch(extra: ["-fixture=trends"])
         robot.tap("cycle.action.symptom")
         robot.waitFor(id: "sheet.symptom")
-        robot.scrollTo("symptom.custom.add")
-        robot.clearAndType("symptom.custom.add", "Brain fog")
+        robot.scrollTo("symptom.custom.create")
+        robot.tap("symptom.custom.create")
+        if !robot.app.descendants(matching: .any).matching(identifier: "symptom.custom.add").firstMatch.waitForExistence(timeout: 1) {
+            robot.tap("symptom.custom.create")
+        }
+        robot.clearAndType("symptom.custom.add", "Brain fog", dismiss: false)
+        assertFieldAboveKeyboard("symptom.custom.add")
         robot.tap("symptom.custom.create")
 
-        let name = robot.app.buttons.matching(
+        let nameButton = robot.app.buttons.matching(
             NSPredicate(format: "identifier BEGINSWITH %@", "symptom.custom.name.c.")
         ).firstMatch
-        XCTAssertTrue(name.waitForExistence(timeout: 3))
-        let raw = name.identifier.replacingOccurrences(of: "symptom.custom.name.", with: "")
+        XCTAssertTrue(nameButton.waitForExistence(timeout: 3))
+        let raw = nameButton.identifier.replacingOccurrences(of: "symptom.custom.name.", with: "")
 
         robot.scrollTo("symptom.score.hot_flash.3")
         robot.tap("symptom.score.hot_flash.3")
-        robot.scrollTo("symptom.score.\(raw).2")
+        reveal("symptom.score.\(raw).2")
         robot.tap("symptom.score.\(raw).2")
+        XCTAssertTrue(robot.app.buttons["symptom.score.\(raw).2"].isSelected)
         robot.tap("sheet.close")
         robot.waitFor(id: "cycle.chip.score.\(raw)")
         robot.waitFor(id: "cycle.chip.score.hot_flash")
@@ -119,9 +125,10 @@ final class SymptomTrendsTests: PeriMediUITestCase {
 
         robot.tap("cycle.chip.score.\(raw)")
         robot.waitFor(id: "sheet.symptom")
-        robot.scrollTo("symptom.custom.rename.\(raw)")
-        robot.tap("symptom.custom.rename.\(raw)")
-        robot.clearAndType("symptom.custom.name.\(raw)", "Fog")
+        reveal("symptom.custom.name.\(raw)")
+        robot.tap("symptom.custom.name.\(raw)")
+        robot.clearAndType("symptom.custom.add", "Fog", dismiss: false)
+        assertFieldAboveKeyboard("symptom.custom.add")
         robot.tap("symptom.custom.save.\(raw)")
         robot.tap("sheet.close")
         let chip = robot.value(of: "cycle.chip.score.\(raw)")
@@ -140,10 +147,13 @@ final class SymptomTrendsTests: PeriMediUITestCase {
         robot.tap("tab.cycle")
         robot.tap("cycle.action.symptom")
         robot.waitFor(id: "sheet.symptom")
-        robot.scrollTo("symptom.custom.delete.\(raw)")
+        reveal("symptom.custom.name.\(raw)")
+        robot.tap("symptom.custom.name.\(raw)")
         robot.tap("symptom.custom.delete.\(raw)")
         XCTAssertTrue(robot.app.staticTexts["Delete Fog and all its past scores?"].waitForExistence(timeout: 2))
         robot.tap("confirm.delete")
+        robot.waitGone(id: "confirm.delete")
+        robot.waitGone(id: "symptom.custom.add")
         robot.tap("sheet.close")
         XCTAssertFalse(robot.exists("cycle.chip.score.\(raw)"))
         robot.waitFor(id: "cycle.chip.score.hot_flash")
@@ -153,5 +163,37 @@ final class SymptomTrendsTests: PeriMediUITestCase {
         XCTAssertFalse(robot.exists("symptom.custom.name.\(raw)"))
         XCTAssertTrue(robot.app.buttons["symptom.score.hot_flash.3"].isSelected)
         robot.tap("sheet.close")
+    }
+
+    /// The new custom row sits on the sheet edge after Add. A hittable check can
+    /// stop while the button center is still clipped, so the tap does nothing.
+    private func reveal(_ id: String) {
+        robot.scrollTo(id)
+        let el = robot.app.descendants(matching: .any).matching(identifier: id).firstMatch
+        guard el.frame.maxY > robot.app.frame.height - 140 else { return }
+        let start = robot.app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.58))
+        let end = robot.app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.42))
+        start.press(forDuration: 0.05, thenDragTo: end)
+    }
+
+    private func assertFieldAboveKeyboard(_ id: String, file: StaticString = #filePath, line: UInt = #line) {
+        let field = robot.app.descendants(matching: .any).matching(identifier: id).firstMatch
+        let keyboard = robot.app.keyboards.firstMatch
+        XCTAssertTrue(keyboard.waitForExistence(timeout: 2), "keyboard for \(id)", file: file, line: line)
+        let deadline = Date().addingTimeInterval(2)
+        var above = false
+        while Date() < deadline {
+            if field.frame.maxY <= keyboard.frame.minY + 1, field.frame.height > 1 {
+                above = true
+                break
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+        }
+        XCTAssertTrue(
+            above,
+            "\(id) maxY \(field.frame.maxY) is behind keyboard minY \(keyboard.frame.minY)",
+            file: file,
+            line: line
+        )
     }
 }

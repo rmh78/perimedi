@@ -9,11 +9,17 @@ struct SymptomSheet: View {
 
     let dateKey: String
 
+    private enum NameDraft: Equatable {
+        case create
+        case edit(CustomSymptomId)
+        case confirmDelete(CustomSymptomId)
+    }
+
     @State private var severity: [String: Int] = [:]
     @State private var draft = ""
     @State private var nameError: SymptomEditError?
-    @State private var editing: CustomSymptomId?
-    @State private var renameDraft = ""
+    @State private var nameDraft: NameDraft?
+    @FocusState private var nameFocused: Bool
 
     private var dayScores: [SymptomScore] {
         store.symptomScores.filter { $0.date == dateKey }
@@ -60,6 +66,11 @@ struct SymptomSheet: View {
             .padding(.bottom, 28)
             .onAppear(perform: loadDay)
         })
+        .overlay {
+            if nameDraft != nil {
+                nameDialog
+            }
+        }
     }
 
     private var atCap: Bool {
@@ -67,118 +78,141 @@ struct SymptomSheet: View {
     }
 
     private var addRow: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 8) {
-                TextField(app.t("symptom.addPlaceholder"), text: $draft)
-                    .textFieldStyle(.roundedBorder)
-                    .font(.footnote)
-                    .disabled(atCap)
-                    .accessibilityIdentifier(A11yID.symptomCustomAdd)
-                    .onSubmit(create)
-                Button(app.t("symptom.addAction"), action: create)
-                    .font(.footnote.weight(.semibold))
-                    .buttonStyle(.plain)
-                    .foregroundStyle(Theme.blush800)
-                    .disabled(atCap)
-                    .accessibilityIdentifier(A11yID.symptomCustomCreate)
-            }
+        VStack(alignment: .leading, spacing: 8) {
             if atCap {
                 Text(app.t("symptom.tooMany"))
                     .font(.caption2)
                     .foregroundStyle(Theme.blush800)
-            } else if let nameError, let message = nameMessage(nameError) {
-                Text(message)
-                    .font(.caption2)
-                    .foregroundStyle(Theme.blush800)
+            } else if nameDraft == nil {
+                PillButton(
+                    title: app.t("symptom.addAction"),
+                    kind: .secondary,
+                    identifier: A11yID.symptomCustomCreate
+                ) {
+                    openDraft(.create, name: "")
+                }
             }
         }
         .padding(.top, 12)
     }
 
-    private func customRow(_ symptom: CustomSymptom) -> some View {
-        let renaming = editing == symptom.id
-        return VStack(alignment: .leading, spacing: 4) {
-            scoreRow(
-                ref: .custom(symptom.id),
-                title: symptom.name,
-                nameControl: AnyView(renaming ? AnyView(renameField(symptom.id)) : AnyView(nameButton(symptom)))
-            )
-            HStack {
-                if renaming {
-                    renameSave(symptom.id)
+    private var nameDialog: some View {
+        ZStack(alignment: .bottom) {
+            Theme.ink.opacity(0.28)
+                .onTapGesture { closeDraft() }
+            Group {
+                if case .confirmDelete(let id) = nameDraft {
+                    deletePrompt(id)
                 } else {
-                    renameStart(symptom)
-                    deleteButton(symptom)
+                    editorFields
                 }
-                Spacer(minLength: 0)
             }
+            .padding(20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.cream)
+            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .stroke(Theme.blush100, lineWidth: 1)
+            )
+            .padding(.horizontal, 16)
+            .padding(.bottom, 12)
         }
+        .accessibilityAddTraits(.isModal)
+        .onAppear { nameFocused = nameDraft != nil }
     }
 
-    private func renameField(_ id: CustomSymptomId) -> some View {
-        TextField(app.t("symptom.addPlaceholder"), text: $renameDraft)
-            .textFieldStyle(.roundedBorder)
-            .font(.footnote)
-            .accessibilityIdentifier(A11yID.symptomCustomName(id.rawValue))
-            .onSubmit { rename(id) }
-    }
-
-    private func renameSave(_ id: CustomSymptomId) -> some View {
-        Button(app.t("symptom.saveEdit"), action: { rename(id) })
-            .font(.caption2.weight(.semibold))
-            .buttonStyle(.plain)
-            .foregroundStyle(Theme.blush800)
-            .accessibilityIdentifier(A11yID.symptomCustomSave(id.rawValue))
-    }
-
-    private func renameStart(_ symptom: CustomSymptom) -> some View {
-        Button(app.t("symptom.rename")) {
-            editing = symptom.id
-            renameDraft = symptom.name
-            nameError = nil
-        }
-        .font(.caption2.weight(.semibold))
-        .buttonStyle(.plain)
-        .foregroundStyle(Theme.blush800)
-        .accessibilityIdentifier(A11yID.symptomCustomRename(symptom.id.rawValue))
-    }
-
-    private func nameButton(_ symptom: CustomSymptom) -> some View {
-        Button {
-            editing = symptom.id
-            renameDraft = symptom.name
-            nameError = nil
-        } label: {
-            Text(symptom.name)
-                .font(.footnote)
+    private var editorFields: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(nameDraft == .create ? app.t("symptom.addAction") : app.t("symptom.rename"))
+                .font(.title3.weight(.semibold))
                 .foregroundStyle(Theme.ink)
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            TextField(app.t("symptom.addPlaceholder"), text: $draft)
+                .textFieldStyle(.roundedBorder)
+                .font(.footnote)
+                .focused($nameFocused)
+                .submitLabel(.done)
+                .accessibilityIdentifier(A11yID.symptomCustomAdd)
+                .onSubmit(commitDraft)
+            if let nameError, let message = nameMessage(nameError) {
+                Text(message)
+                    .font(.caption2)
+                    .foregroundStyle(Theme.blush800)
+            }
+            HStack(spacing: 8) {
+                Spacer(minLength: 0)
+                PillButton(title: app.t("common.cancel"), kind: .secondary) {
+                    closeDraft()
+                }
+                commitButton
+            }
+            if case .edit(let id) = nameDraft {
+                PillButton(
+                    title: app.t("common.delete"),
+                    kind: .destructive,
+                    identifier: A11yID.symptomCustomDelete(id.rawValue)
+                ) {
+                    nameFocused = false
+                    nameDraft = .confirmDelete(id)
+                }
+            }
         }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier(A11yID.symptomCustomName(symptom.id.rawValue))
-        .disabled(editing == symptom.id)
     }
 
-    private func deleteButton(_ symptom: CustomSymptom) -> some View {
-        let id = symptom.id
-        return Button {
-            app.askConfirm(
-                message: app.t("symptom.deleteScores", ["name": symptom.name]),
-                confirmLabel: app.t("common.delete")
-            ) {
-                try? store.deleteCustomSymptom(id: id)
-                severity[id.rawValue] = nil
-                if editing == id { editing = nil }
+    private func deletePrompt(_ id: CustomSymptomId) -> some View {
+        let name = store.symptomDirectory.customs.first { $0.id == id }?.name ?? draft
+        return VStack(alignment: .leading, spacing: 12) {
+            Text(app.t("confirm.title"))
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(Theme.ink)
+            Text(app.t("symptom.deleteScores", ["name": name]))
+                .font(.subheadline)
+                .foregroundStyle(Theme.inkSoft)
+            HStack(spacing: 8) {
+                Spacer(minLength: 0)
+                PillButton(title: app.t("common.cancel"), kind: .secondary, identifier: A11yID.confirmCancel) {
+                    nameDraft = .edit(id)
+                    nameFocused = true
+                }
+                PillButton(
+                    title: app.t("common.delete"),
+                    kind: .destructive,
+                    identifier: A11yID.confirmDelete
+                ) {
+                    try? store.deleteCustomSymptom(id: id)
+                    severity[id.rawValue] = nil
+                    closeDraft()
+                }
             }
-        } label: {
-            Text(app.t("common.delete"))
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(Theme.blush800)
         }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier(A11yID.symptomCustomDelete(id.rawValue))
+    }
+
+    @ViewBuilder
+    private var commitButton: some View {
+        switch nameDraft {
+        case .create:
+            PillButton(
+                title: app.t("symptom.addAction"),
+                kind: .primary,
+                identifier: A11yID.symptomCustomCreate,
+                action: commitDraft
+            )
+        case .edit(let id):
+            PillButton(
+                title: app.t("symptom.saveEdit"),
+                kind: .primary,
+                identifier: A11yID.symptomCustomSave(id.rawValue),
+                action: commitDraft
+            )
+        case .confirmDelete, nil:
+            EmptyView()
+        }
+    }
+
+    private func customRow(_ symptom: CustomSymptom) -> some View {
+        scoreRow(ref: .custom(symptom.id), title: symptom.name) {
+            openDraft(.edit(symptom.id), name: symptom.name)
+        }
     }
 
     private func groupTitle(_ title: String) -> some View {
@@ -199,14 +233,24 @@ struct SymptomSheet: View {
     private func scoreRow(
         ref: SymptomRef,
         title: String,
-        nameControl: AnyView? = nil
+        onName: (() -> Void)? = nil
     ) -> some View {
         let key = ref.storageId
         let chosen = severity[key]
         return HStack(alignment: .center, spacing: 8) {
             Group {
-                if let nameControl {
-                    nameControl
+                if let onName {
+                    Button(action: onName) {
+                        Text(title)
+                            .font(.footnote)
+                            .underline()
+                            .foregroundStyle(Theme.blush700)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.72)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier(A11yID.symptomCustomName(key))
                 } else {
                     Text(title)
                         .font(.footnote)
@@ -256,25 +300,33 @@ struct SymptomSheet: View {
         try? store.setDaySeverity(date: dateKey, ref: ref, severity: next)
     }
 
-    private func create() {
+    private func openDraft(_ mode: NameDraft, name: String) {
+        nameDraft = mode
+        draft = name
+        nameError = nil
+        nameFocused = true
+    }
+
+    private func closeDraft() {
+        nameDraft = nil
+        draft = ""
+        nameError = nil
+        nameFocused = false
+    }
+
+    private func commitDraft() {
         let trimmed = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         do {
-            _ = try store.addCustomSymptom(name: draft)
-            draft = ""
-            nameError = nil
-        } catch let error as SymptomEditError {
-            nameError = error
-        } catch {}
-    }
-
-    private func rename(_ id: CustomSymptomId) {
-        let trimmed = renameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        do {
-            try store.renameCustomSymptom(id: id, name: renameDraft)
-            editing = nil
-            nameError = nil
+            switch nameDraft {
+            case .create:
+                _ = try store.addCustomSymptom(name: draft)
+            case .edit(let id):
+                try store.renameCustomSymptom(id: id, name: draft)
+            case .confirmDelete, nil:
+                return
+            }
+            closeDraft()
         } catch let error as SymptomEditError {
             nameError = error
         } catch {}
