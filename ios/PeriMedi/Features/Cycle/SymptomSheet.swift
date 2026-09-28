@@ -182,11 +182,18 @@ struct SymptomSheet: View {
     }
 
     private func groupTitle(_ title: String) -> some View {
-        Text(title)
-            .font(.subheadline.weight(.semibold))
-            .foregroundStyle(Theme.ink)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
+        VStack(spacing: 0) {
+            Rectangle()
+                .fill(Theme.blush100)
+                .frame(height: 1)
+                .padding(.horizontal, -16)
+                .padding(.top, 8)
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.ink)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+        }
     }
 
     private func scoreRow(
