@@ -97,11 +97,8 @@ final class SymptomTrendsTests: PeriMediUITestCase {
         robot.launch(extra: ["-fixture=trends"])
         robot.tap("cycle.action.symptom")
         robot.waitFor(id: "sheet.symptom")
-        robot.scrollTo("symptom.custom.create")
+        reveal("symptom.custom.create")
         robot.tap("symptom.custom.create")
-        if !robot.app.descendants(matching: .any).matching(identifier: "symptom.custom.add").firstMatch.waitForExistence(timeout: 1) {
-            robot.tap("symptom.custom.create")
-        }
         robot.clearAndType("symptom.custom.add", "Brain fog", dismiss: false)
         assertFieldAboveKeyboard("symptom.custom.add")
         robot.tap("symptom.custom.create")
