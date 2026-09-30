@@ -9,14 +9,19 @@ struct PeriodSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dialogClose) private var dialogClose
 
+    private enum PeriodDraft: Equatable {
+        case create
+        case edit(String)
+        case confirmDelete(String)
+    }
+
     @State private var tracksPeriods = true
     @State private var cycleLen: Int = 28
     @State private var periodLen: Int = 5
-    @State private var editing: Period?
+    @State private var draft: PeriodDraft?
     @State private var start = DateKeys.todayKey()
     @State private var end = ""
     @State private var flow: FlowNote = .medium
-    @State private var showEditor = false
 
     private var nextPeriod: String? {
         CycleLogic.nextPredictedPeriodStart(periods: store.periods, settings: store.settings)
@@ -33,7 +38,7 @@ struct PeriodSheet: View {
                 .tint(Theme.blush600)
                 .onChange(of: tracksPeriods) { _, on in
                     persistSettings(tracks: on)
-                    if !on { showEditor = false }
+                    if !on { closeDraft() }
                 }
 
                 if tracksPeriods {
@@ -46,19 +51,13 @@ struct PeriodSheet: View {
                         dayCountField(app.t("period.avgPeriod"), $periodLen, 1...15)
                     }
 
-                    if showEditor {
-                        periodEditor
-                    } else {
+                    if draft == nil {
                         PillButton(
                             title: app.t("period.add"),
                             kind: .secondary,
                             identifier: A11yID.periodAdd
                         ) {
-                            editing = nil
-                            start = app.selectedDate
-                            end = ""
-                            flow = .medium
-                            showEditor = true
+                            openCreate()
                         }
                     }
 
@@ -69,35 +68,25 @@ struct PeriodSheet: View {
 
                     VStack(spacing: 0) {
                         ForEach(Array(store.periods.enumerated()), id: \.element.id) { index, period in
-                            HStack(spacing: 8) {
+                            Button {
+                                openEdit(period)
+                            } label: {
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(rangeLabel(period))
                                         .font(.subheadline.weight(.semibold))
-                                        .foregroundStyle(Theme.ink)
-                                        .lineLimit(1)
+                                        .underline()
+                                        .foregroundStyle(Theme.blush700)
+                                        .lineLimit(2)
+                                        .multilineTextAlignment(.leading)
                                     Text(meta(period))
                                         .font(.caption)
                                         .foregroundStyle(Theme.inkMuted)
                                         .lineLimit(1)
                                 }
-                                Spacer(minLength: 4)
-                                IconCircleButton(systemName: "pencil", label: app.t("common.edit")) {
-                                    editing = period
-                                    start = period.startDate
-                                    end = period.endDate ?? ""
-                                    flow = period.flowNote ?? .medium
-                                    showEditor = true
-                                }
-                                IconCircleButton(systemName: "trash", label: app.t("common.delete"), tint: Theme.blush800) {
-                                    app.askConfirm(
-                                        message: app.t("period.deleteConfirm"),
-                                        confirmLabel: app.t("common.delete"),
-                                        destructive: true
-                                    ) {
-                                        try? store.deletePeriod(id: period.id)
-                                    }
-                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier(A11yID.periodHistory(period.id))
                             .padding(.vertical, 8)
                             if index < store.periods.count - 1 {
                                 Rectangle().fill(Theme.blush100).frame(height: 1)
@@ -111,27 +100,55 @@ struct PeriodSheet: View {
                 }
             }
         }
+        .overlay {
+            if draft != nil {
+                periodCard
+            }
+        }
         .onAppear {
             tracksPeriods = store.settings.tracksPeriods
             cycleLen = min(max(store.settings.averageCycleLength, 15), 45)
             periodLen = min(max(store.settings.averagePeriodLength, 1), 15)
             if startInAddEditor {
-                editing = nil
                 start = JourneyScript.periodStart(today: app.selectedDate)
                 end = JourneyScript.periodEnd(today: app.selectedDate)
                 flow = .medium
-                showEditor = true
+                draft = .create
             }
         }
         .onDisappear { persistSettings(tracks: tracksPeriods) }
     }
 
-    private var periodEditor: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(editing == nil ? app.t("period.new") : app.t("period.edit"))
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(Theme.inkMuted)
-                .textCase(.uppercase)
+    private var periodCard: some View {
+        ZStack(alignment: .bottom) {
+            Theme.ink.opacity(0.28)
+                .onTapGesture { closeDraft() }
+            Group {
+                if case .confirmDelete(let id) = draft {
+                    periodDeletePrompt(id)
+                } else {
+                    periodFields
+                }
+            }
+            .padding(20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.cream)
+            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .stroke(Theme.blush100, lineWidth: 1)
+            )
+            .padding(.horizontal, 16)
+            .padding(.bottom, 12)
+        }
+        .accessibilityAddTraits(.isModal)
+    }
+
+    private var periodFields: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(draft == .create ? app.t("period.new") : app.t("period.edit"))
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(Theme.ink)
             HStack(alignment: .top, spacing: 10) {
                 VStack(alignment: .leading, spacing: 6) {
                     FieldLabel(text: app.t("period.startDate"))
@@ -154,40 +171,104 @@ struct PeriodSheet: View {
             FieldLabel(text: app.t("period.flow"))
             SoftField {
                 Picker("", selection: $flow) {
-                    ForEach(FlowNote.allCases, id: \.self) { f in
-                        Text(app.t("flow.\(f.rawValue)")).tag(f)
+                    ForEach(FlowNote.allCases, id: \.self) { note in
+                        Text(app.t("flow.\(note.rawValue)")).tag(note)
                     }
                 }
                 .labelsHidden()
                 .pickerStyle(.menu)
             }
-            HStack(spacing: 10) {
-                PillButton(title: app.t(editing == nil ? "period.addPeriod" : "period.saveChanges"), kind: .primary, identifier: A11yID.periodSave) {
-                    do {
-                        try store.upsertPeriod(
-                            Period(
-                                id: editing?.id ?? createId(),
-                                startDate: DateKeys.toDateKey(start),
-                                endDate: end.isEmpty ? nil : DateKeys.toDateKey(end),
-                                flowNote: flow,
-                                notes: editing?.notes
-                            )
-                        )
-                        showEditor = false
-                        editing = nil
-                    } catch {
-                        // lastError is published for RootView
-                    }
-                }
+            HStack(spacing: 8) {
                 PillButton(title: app.t("common.cancel"), kind: .secondary) {
-                    showEditor = false
-                    editing = nil
+                    closeDraft()
+                }
+                Spacer(minLength: 0)
+                PillButton(
+                    title: app.t("common.save"),
+                    kind: .primary,
+                    identifier: A11yID.periodSave,
+                    action: saveDraft
+                )
+            }
+            if case .edit(let id) = draft {
+                PillButton(
+                    title: app.t("common.delete"),
+                    kind: .destructive,
+                    identifier: A11yID.periodDelete
+                ) {
+                    draft = .confirmDelete(id)
                 }
             }
         }
-        .padding(12)
-        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Theme.blush100))
+    }
+
+    private func periodDeletePrompt(_ id: String) -> some View {
+        let name = store.periods.first { $0.id == id }.map(rangeLabel) ?? id
+        return VStack(alignment: .leading, spacing: 12) {
+            Text(app.t("confirm.title"))
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(Theme.ink)
+            Text(app.t("period.deleteNamed", ["name": name]))
+                .font(.subheadline)
+                .foregroundStyle(Theme.inkSoft)
+            HStack(spacing: 8) {
+                PillButton(title: app.t("common.cancel"), kind: .secondary, identifier: A11yID.confirmCancel) {
+                    draft = .edit(id)
+                }
+                Spacer(minLength: 0)
+                PillButton(
+                    title: app.t("common.delete"),
+                    kind: .destructive,
+                    identifier: A11yID.confirmDelete
+                ) {
+                    try? store.deletePeriod(id: id)
+                    closeDraft()
+                }
+            }
+        }
+    }
+
+    private func openCreate() {
+        start = app.selectedDate
+        end = ""
+        flow = .medium
+        draft = .create
+    }
+
+    private func openEdit(_ period: Period) {
+        start = period.startDate
+        end = period.endDate ?? ""
+        flow = period.flowNote ?? .medium
+        draft = .edit(period.id)
+    }
+
+    private func closeDraft() {
+        draft = nil
+    }
+
+    private func saveDraft() {
+        let existing = store.periods.first { period in
+            if case .edit(let id) = draft { return period.id == id }
+            return false
+        }
+        let id: String
+        if case .edit(let existingId) = draft {
+            id = existingId
+        } else {
+            id = createId()
+        }
+        do {
+            try store.upsertPeriod(
+                Period(
+                    id: id,
+                    startDate: DateKeys.toDateKey(start),
+                    endDate: end.isEmpty ? nil : DateKeys.toDateKey(end),
+                    flowNote: flow,
+                    notes: existing?.notes
+                )
+            )
+            closeDraft()
+        } catch {}
     }
 
     private func dayCountField(_ label: String, _ value: Binding<Int>, _ range: ClosedRange<Int>) -> some View {

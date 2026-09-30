@@ -88,6 +88,11 @@ enum A11yID {
     static let periodStart = "period.start"
     static let periodEnd = "period.end"
     static let periodSave = "period.save"
+    static let periodDelete = "period.delete"
+
+    static func periodHistory(_ id: String) -> String {
+        "period.history.\(id)"
+    }
 
     static let dateDone = "date.done"
     static let timeDone = "time.done"
