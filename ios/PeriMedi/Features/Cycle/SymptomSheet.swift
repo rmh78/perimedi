@@ -140,10 +140,10 @@ struct SymptomSheet: View {
                     .foregroundStyle(Theme.blush800)
             }
             HStack(spacing: 8) {
-                Spacer(minLength: 0)
                 PillButton(title: app.t("common.cancel"), kind: .secondary) {
                     closeDraft()
                 }
+                Spacer(minLength: 0)
                 commitButton
             }
             if case .edit(let id) = nameDraft {
@@ -169,11 +169,11 @@ struct SymptomSheet: View {
                 .font(.subheadline)
                 .foregroundStyle(Theme.inkSoft)
             HStack(spacing: 8) {
-                Spacer(minLength: 0)
                 PillButton(title: app.t("common.cancel"), kind: .secondary, identifier: A11yID.confirmCancel) {
                     nameDraft = .edit(id)
                     nameFocused = true
                 }
+                Spacer(minLength: 0)
                 PillButton(
                     title: app.t("common.delete"),
                     kind: .destructive,
@@ -210,7 +210,7 @@ struct SymptomSheet: View {
     }
 
     private func customRow(_ symptom: CustomSymptom) -> some View {
-        scoreRow(ref: .custom(symptom.id), title: symptom.name) {
+        scoreRow(ref: .custom(symptom.id), title: symptom.name, nameWidth: 136) {
             openDraft(.edit(symptom.id), name: symptom.name)
         }
     }
@@ -233,6 +233,7 @@ struct SymptomSheet: View {
     private func scoreRow(
         ref: SymptomRef,
         title: String,
+        nameWidth: CGFloat = 108,
         onName: (() -> Void)? = nil
     ) -> some View {
         let key = ref.storageId
@@ -245,8 +246,9 @@ struct SymptomSheet: View {
                             .font(.footnote)
                             .underline()
                             .foregroundStyle(Theme.blush700)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.72)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.65)
+                            .multilineTextAlignment(.leading)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .buttonStyle(.plain)
@@ -260,7 +262,7 @@ struct SymptomSheet: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            .frame(width: 108, alignment: .leading)
+            .frame(width: nameWidth, alignment: .leading)
             HStack(spacing: 5) {
                 ForEach(1...4, id: \.self) { value in
                     let selected = chosen == value

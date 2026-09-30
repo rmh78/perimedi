@@ -87,10 +87,7 @@ struct TrendsPickerSheet: View {
                         .fill(color)
                         .frame(width: 8, height: 8)
                 }
-                Text(title)
-                    .font(.caption)
-                    .foregroundStyle(on ? Theme.ink : Theme.inkSoft)
-                    .lineLimit(1)
+                chipTitle(title, on: on)
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
@@ -101,6 +98,21 @@ struct TrendsPickerSheet: View {
         .accessibilityLabel(title)
         .accessibilityIdentifier(A11yID.trendsSeries(id))
         .accessibilityValue(on ? "on" : "off")
+    }
+
+    @ViewBuilder
+    private func chipTitle(_ title: String, on: Bool) -> some View {
+        let text = Text(title)
+            .font(.caption)
+            .foregroundStyle(on ? Theme.ink : Theme.inkSoft)
+            .multilineTextAlignment(.leading)
+        if title.count > 22 {
+            text
+                .lineLimit(2)
+                .frame(width: 220, alignment: .leading)
+        } else {
+            text.lineLimit(1)
+        }
     }
 
     private func seriesColor(for id: String, selectedIds: [String]) -> Color {

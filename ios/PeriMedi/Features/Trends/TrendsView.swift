@@ -238,6 +238,7 @@ struct TrendsView: View {
                         }
                         .buttonStyle(.plain)
                         .position(x: x, y: y)
+                        .zIndex(0)
                         .accessibilityLabel(app.symptomTitle(series.id))
                         .accessibilityIdentifier(A11yID.trendsDot(series.id, point.cycleStart))
                         .accessibilityValue(
@@ -261,7 +262,8 @@ struct TrendsView: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .position(x: x, y: plot.maxY - 10)
+                    .position(x: x, y: plot.maxY - 8)
+                    .zIndex(1)
                     .accessibilityLabel(tick.nameSnapshot)
                     .accessibilityIdentifier(A11yID.trendsTick(tick.cycleStart))
                     .accessibilityValue("\(tick.nameSnapshot):\(tick.newValue)")
@@ -379,8 +381,11 @@ struct TrendsView: View {
     }
 
     private func yPos(_ count: Int, yMax: Int, plot: CGRect) -> CGFloat {
-        let t = CGFloat(count) / CGFloat(yMax)
-        return plot.maxY - t * plot.height
+        let markerBand: CGFloat = 28
+        let bottom = plot.maxY - markerBand
+        let span = max(1, bottom - plot.minY)
+        let t = CGFloat(count) / CGFloat(max(yMax, 1))
+        return bottom - t * span
     }
 
     private func dotDiameter(_ mean: Double) -> CGFloat {
@@ -408,9 +413,10 @@ struct TrendsView: View {
 
     private func drawAxes(_ ctx: GraphicsContext, plot: CGRect) {
         var axis = Path()
+        let baseline = plot.maxY - 28
         axis.move(to: CGPoint(x: plot.minX, y: plot.minY))
-        axis.addLine(to: CGPoint(x: plot.minX, y: plot.maxY))
-        axis.addLine(to: CGPoint(x: plot.maxX, y: plot.maxY))
+        axis.addLine(to: CGPoint(x: plot.minX, y: baseline))
+        axis.addLine(to: CGPoint(x: plot.maxX, y: baseline))
         ctx.stroke(axis, with: .color(Theme.inkMuted.opacity(0.35)), lineWidth: 0.8)
     }
 
