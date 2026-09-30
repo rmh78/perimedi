@@ -102,7 +102,7 @@ The PDF SHALL include: the date it was generated; the date range used; medicatio
 - **THEN** the PDF names the medication and new value as context and does not claim the change caused symptoms
 
 ### Requirement: Symptom table, not a Trends chart
-The PDF SHALL list only catalog symptom ids that have at least one score in the range, each with the count of days scored and the mean intensity of those scores (1–4). Missing days and missing ids SHALL NOT be treated as 0. For `hot_flash`, the count SHALL be days scored until a separate episode log exists; the system SHALL NOT invent episode counts from 1–4 scores or from an optional count field. The system SHALL NOT paste the Trends chart into the PDF or draw all catalog symptoms as a graphic. The system SHALL NOT paste official MRS questionnaire wording.
+The PDF SHALL list only symptom ids, catalog or custom, that have at least one score in the range, each with the count of days scored and the mean intensity of those scores (1–4). A custom name SHALL be the name the user typed. Missing days and missing ids SHALL NOT be treated as 0. For `hot_flash`, the count SHALL be days scored until a separate episode log exists; the system SHALL NOT invent episode counts from 1–4 scores or from an optional count field. The system SHALL NOT paste the Trends chart into the PDF or draw all catalog symptoms as a graphic. The system SHALL NOT paste official MRS questionnaire wording.
 
 #### Scenario: Scored ids only
 - **WHEN** two catalog ids have scores in the range and the others do not

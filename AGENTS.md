@@ -39,7 +39,8 @@ Archived OpenSpec changes under `openspec/changes/archive/` may mention an old w
 - **Medication** — name, form, default dose, optional color
 - **Schedule** — times; exclusive mode: every day, specific weekdays, or cyclic (apply N / pause M or week slots). Saved without menstrual-alignment UI (`cycleRule: none` in the editor).
 - **Period** — logged bleeds; day 1 of a cycle is the first period day
-- **SymptomScore** — catalog id (`hot_flash`, …), date, severity 1–4, optional note, loggedAt. Untouched ids are missing (none), not stored as 0.
+- **SymptomScore** — catalog id (`hot_flash`, …) or a custom id (`c.` plus a UUID), date, severity 1–4, optional note, loggedAt. Untouched ids are missing (none), not stored as 0.
+- **Custom symptom** — a stored name and sort order under the eleven defaults. The name is the user’s text. Rename keeps the id. Delete removes that symptom and its scores. The list round-trips on the version-1 backup. Import drops a custom score whose id is no longer in that list.
 - **Remark** — optional day note (and older backup note rows)
 - **DoseLog** — taken / pending (open) per planned dose
 - **MedicationChange** — stored dose/schedule change events (name snapshot, previous/new value, effective date). Survive medication delete. Cleared on wipe/import, not on delete-med.
@@ -99,7 +100,7 @@ python3 ios/scripts/check-ui-coverage.py --fail-uncovered
 python3 ios/scripts/check-screen-catalog.py
 ```
 
-UI tests are user-story journeys: `testFirstUseJourney` (empty → Trends empty → tracking → Month pager → period day on Cycle), `testMoreRemindersControls`, `testDoseReminderTaken`, plus Trends history (`testSymptomTrendsNoScores`, `testSymptomTrendsChart`). They launch with `-en -clear -today=2026-03-15` and tap real controls. They type into fields the way a user does (`typeText`). Do not paste, use the clipboard menu, or test-only setters; that makes the journey synthetic. `clearAndType` taps the field, waits until the software keyboard exists, types, then asserts the exact value. Journey tests never pass `-journeyStep` or `-loadSample`. `ScreenCatalogTests` may pass `-loadSample` and switch language in-app to write `ios/docs/screens/` in a few launches (not one launch per PNG). CI skips rewriting those PNGs; the `ids` job still fails if a committed file is missing. Local `verify` writes them unless `SCREEN_CATALOG=0`. Watch **iPhone 17e** in Simulator when that device exists (Window → iPhone 17e).
+UI tests are user-story journeys: `testFirstUseJourney` (empty → Trends empty → tracking → Month pager → period day on Cycle), `testMoreRemindersControls`, `testDoseReminderTaken`, plus Trends history (`testSymptomTrendsNoScores`, `testSymptomTrendsChart`) and custom symptoms (`testCustomSymptomCreateScoreRenameChartAndDelete`). They launch with `-en -clear -today=2026-03-15` and tap real controls. They type into fields the way a user does (`typeText`). Do not paste, use the clipboard menu, or test-only setters; that makes the journey synthetic. `clearAndType` taps the field, waits until the software keyboard exists, types, then asserts the exact value. Journey tests never pass `-journeyStep` or `-loadSample`. `ScreenCatalogTests` may pass `-loadSample` and switch language in-app to write `ios/docs/screens/` in a few launches (not one launch per PNG). CI skips rewriting those PNGs; the `ids` job still fails if a committed file is missing. Local `verify` writes them unless `SCREEN_CATALOG=0`. Watch **iPhone 17e** in Simulator when that device exists (Window → iPhone 17e).
 
 Main-screen pictures for UX are `ios/docs/screens/` (written by `ScreenCatalogTests` on a local `verify`). `JourneyScript` / `ios/scripts/shot-journey.sh` remain optional extra capture. They are not the interaction proof.
 

@@ -11,9 +11,10 @@ struct EffectLine: View {
             periods: store.periods,
             settings: store.settings,
             scores: store.symptomScores,
-            changes: store.medicationChanges
+            changes: store.medicationChanges,
+            directory: store.symptomDirectory
         )
-        if let text = EffectCopy.sentence(result, t: app.t) {
+        if let text = EffectCopy.sentence(result, t: app.t, symptomName: app.symptomTitle) {
             Text(text)
                 .font(.caption)
                 .foregroundStyle(Theme.inkSoft)

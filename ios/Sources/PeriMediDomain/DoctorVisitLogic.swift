@@ -110,6 +110,7 @@ public enum DoctorVisitLogic {
         settings: CycleSettings,
         scores: [SymptomScore],
         changes: [MedicationChange],
+        directory: SymptomDirectory,
         selectedCycles: [LoggedCycle] = []
     ) -> DoctorVisitReport {
         let today = DateKeys.toDateKey(today)
@@ -130,7 +131,8 @@ public enum DoctorVisitLogic {
             periods: periods,
             settings: settings,
             scores: scores,
-            changes: changes
+            changes: changes,
+            directory: directory
         )
         return DoctorVisitReport(
             generatedOn: today,
@@ -148,7 +150,7 @@ public enum DoctorVisitLogic {
             ),
             changes: changesInRange(changes, from: from, to: to),
             periods: periodRows(periods, from: from, to: to, settings: settings),
-            symptoms: symptomRows(scores, from: from, to: to),
+            symptoms: symptomRows(scores, from: from, to: to, directory: directory),
             effect: effectInRange(rawEffect, from: from, to: to)
         )
     }
@@ -291,16 +293,17 @@ public enum DoctorVisitLogic {
     private static func symptomRows(
         _ scores: [SymptomScore],
         from: String,
-        to: String
+        to: String,
+        directory: SymptomDirectory
     ) -> [DoctorVisitSymptomRow] {
-        SymptomId.allCases.compactMap { id in
+        directory.rankedIds.compactMap { id in
             guard let stats = SymptomTrendLogic.dayStats(
-                scores, id: id.rawValue, from: from, to: to
+                scores, id: id, from: from, to: to
             ) else {
                 return nil
             }
             return DoctorVisitSymptomRow(
-                id: id.rawValue,
+                id: id,
                 dayCount: stats.dayCount,
                 meanIntensity: stats.meanIntensity
             )

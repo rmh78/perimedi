@@ -57,6 +57,7 @@ Mapped tests:
 | More, visit PDF, backup rows (cancel) | `PeriMediUITests/FirstUseJourneyTests/testMoreRemindersControls` |
 | Dose reminder Taken | `PeriMediUITests/FirstUseJourneyTests/testDoseReminderTaken` |
 | Trends empty / chart | `PeriMediUITests/SymptomTrendsTests/testSymptomTrendsNoScores` and `testSymptomTrendsChart` |
+| Custom symptoms | `PeriMediUITests/SymptomTrendsTests/testCustomSymptomCreateScoreRenameChartAndDelete` |
 
 `AppRobot.pick` tries an accessibility identifier first, then a visible label. Tests launch `-en`. `addMedication` uses `med.mode.everyday` / `med.mode.cyclic`.
 

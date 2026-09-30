@@ -358,6 +358,8 @@ public struct ExportPayload: Codable, Equatable, Sendable {
     public var symptomScores: [SymptomScore]
     /// Dose/schedule change events. Absent in older backups.
     public var medicationChanges: [MedicationChange]
+    /// User-defined symptoms. Absent in older backups.
+    public var customSymptoms: [CustomSymptom]
 
     public init(
         version: Int = 1,
@@ -369,7 +371,8 @@ public struct ExportPayload: Codable, Equatable, Sendable {
         cycleSettings: CycleSettings,
         periods: [Period],
         symptomScores: [SymptomScore] = [],
-        medicationChanges: [MedicationChange] = []
+        medicationChanges: [MedicationChange] = [],
+        customSymptoms: [CustomSymptom] = []
     ) {
         self.version = version
         self.exportedAt = exportedAt
@@ -381,10 +384,11 @@ public struct ExportPayload: Codable, Equatable, Sendable {
         self.periods = periods
         self.symptomScores = symptomScores
         self.medicationChanges = medicationChanges
+        self.customSymptoms = customSymptoms
     }
 
     enum CodingKeys: String, CodingKey {
-        case version, exportedAt, medications, schedules, doseLogs, remarks, cycleSettings, periods, symptomScores, medicationChanges
+        case version, exportedAt, medications, schedules, doseLogs, remarks, cycleSettings, periods, symptomScores, medicationChanges, customSymptoms
     }
 
     public init(from decoder: Decoder) throws {
@@ -399,6 +403,7 @@ public struct ExportPayload: Codable, Equatable, Sendable {
         periods = try c.decodeIfPresent([Period].self, forKey: .periods) ?? []
         symptomScores = try c.decodeIfPresent([SymptomScore].self, forKey: .symptomScores) ?? []
         medicationChanges = try c.decodeIfPresent([MedicationChange].self, forKey: .medicationChanges) ?? []
+        customSymptoms = CustomSymptomBackup.symptoms(from: c, key: .customSymptoms)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -413,6 +418,7 @@ public struct ExportPayload: Codable, Equatable, Sendable {
         try c.encode(periods, forKey: .periods)
         try c.encode(symptomScores, forKey: .symptomScores)
         try c.encode(medicationChanges, forKey: .medicationChanges)
+        try c.encode(customSymptoms, forKey: .customSymptoms)
     }
 }
 

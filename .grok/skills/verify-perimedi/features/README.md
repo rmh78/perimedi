@@ -40,7 +40,7 @@ Walk this map top to bottom for a broad regression. Order is Cycle, Month, Trend
 Practical test walk for that order:
 
 1. `PeriMediUITests/FirstUseJourneyTests/testFirstUseJourney` — Cycle, period, med, symptom, Month
-2. `PeriMediUITests/SymptomTrendsTests/testSymptomTrendsNoScores` and `testSymptomTrendsChart` — Trends
+2. `PeriMediUITests/SymptomTrendsTests/testSymptomTrendsNoScores`, `testSymptomTrendsChart`, and `testCustomSymptomCreateScoreRenameChartAndDelete` — Trends and custom symptoms
 3. `PeriMediUITests/FirstUseJourneyTests/testMoreRemindersControls` — More, visit PDF, backup cancel
 4. `PeriMediUITests/FirstUseJourneyTests/testDoseReminderTaken` — reminders Taken
 5. `PeriMediUITests/WidgetJourneyTests/testWidgetTakenUntakenAndEmptyMessage` — signed medium Home Screen widget. Unsigned `verify` skips it.

@@ -205,6 +205,26 @@ final class SDSymptomScore {
 }
 
 @Model
+final class SDCustomSymptom {
+    var id: String = ""
+    var name: String = ""
+    var sort: Int = 0
+
+    init() {}
+
+    func toDomain() -> CustomSymptom? {
+        guard let id = CustomSymptomId(rawValue: id) else { return nil }
+        return CustomSymptom(id: id, name: name, sort: sort)
+    }
+
+    func apply(_ symptom: CustomSymptom) {
+        id = symptom.id.rawValue
+        name = symptom.name
+        sort = symptom.sort
+    }
+}
+
+@Model
 final class SDPeriod {
     var id: String = ""
     var startDate: String = ""

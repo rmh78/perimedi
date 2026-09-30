@@ -82,34 +82,9 @@ enum JourneyScript {
         }
 
         if step >= 11 {
-            try? store.replaceDayScores(
-                date: today,
-                scores: [
-                    SymptomScore(
-                        id: SymptomId.hot_flash.rawValue,
-                        date: today,
-                        severity: 3,
-                        loggedAt: ISO8601DateFormatter().string(from: Date()),
-                        higherIsWorse: true
-                    ),
-                    SymptomScore(
-                        id: SymptomId.sleep.rawValue,
-                        date: today,
-                        severity: 2,
-                        loggedAt: ISO8601DateFormatter().string(from: Date()),
-                        higherIsWorse: true
-                    ),
-                    SymptomScore(
-                        id: SymptomId.joints.rawValue,
-                        date: today,
-                        severity: 1,
-                        loggedAt: ISO8601DateFormatter().string(from: Date()),
-                        higherIsWorse: true
-                    ),
-                ],
-                note: nil,
-                noteId: nil
-            )
+            try? store.setDaySeverity(date: today, ref: .catalog(.hot_flash), severity: 3)
+            try? store.setDaySeverity(date: today, ref: .catalog(.sleep), severity: 2)
+            try? store.setDaySeverity(date: today, ref: .catalog(.joints), severity: 1)
         }
 
         if step >= 12 {

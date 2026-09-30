@@ -11,7 +11,7 @@ The system SHALL allow the user to export all app data as a JSON file and import
 
 #### Scenario: Export
 - **WHEN** the user exports data
-- **THEN** a JSON backup file is produced containing medications, schedules, dose logs, remarks, symptom scores, periods, cycle settings, and dose/schedule change events and the user can save or share that file
+- **THEN** a JSON backup file is produced containing medications, schedules, dose logs, remarks, symptom scores, custom symptoms, periods, cycle settings, and dose/schedule change events and the user can save or share that file
 
 #### Scenario: Import
 - **WHEN** the user imports a valid backup file

@@ -40,6 +40,7 @@ struct CycleSnapshot: Equatable {
         doseLogs: [DoseLog],
         remarks: [Remark],
         symptomScores: [SymptomScore] = [],
+        directory: SymptomDirectory = .catalogOnly,
         periods: [Period],
         settings: CycleSettings
     ) -> CycleSnapshot {
@@ -87,8 +88,8 @@ struct CycleSnapshot: Equatable {
         let selectedNotes = remarks.filter {
             DateKeys.toDateKey($0.occurredOn) == selectedDate
         }
-        let selectedScores = SymptomId.allCases.compactMap { id in
-            symptomScores.first { $0.date == selectedDate && $0.id == id.rawValue }
+        let selectedScores = directory.rankedIds.compactMap { id in
+            symptomScores.first { $0.date == selectedDate && $0.id == id }
         }
         let selectedInfo = lookup.info(dateKey: selectedDate)
         var hasher = Hasher()

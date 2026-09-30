@@ -22,6 +22,7 @@ struct TrendsView: View {
             settings: store.settings,
             scores: store.symptomScores,
             changes: store.medicationChanges,
+            directory: store.symptomDirectory,
             selectedIds: storedIds
         )
         ScrollView {
@@ -111,7 +112,7 @@ struct TrendsView: View {
                     Circle()
                         .fill(color)
                         .frame(width: 8, height: 8)
-                    Text(app.t("symptom.id.\(series.id)"))
+                    Text(app.symptomTitle(series.id))
                         .font(.caption)
                         .foregroundStyle(Theme.ink)
                         .fixedSize(horizontal: false, vertical: true)
@@ -237,7 +238,8 @@ struct TrendsView: View {
                         }
                         .buttonStyle(.plain)
                         .position(x: x, y: y)
-                        .accessibilityLabel(app.t("symptom.id.\(series.id)"))
+                        .zIndex(0)
+                        .accessibilityLabel(app.symptomTitle(series.id))
                         .accessibilityIdentifier(A11yID.trendsDot(series.id, point.cycleStart))
                         .accessibilityValue(
                             "count:\(point.dayCount),mean:\(formatMean(point.meanIntensity))"
@@ -260,7 +262,8 @@ struct TrendsView: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .position(x: x, y: plot.maxY - 10)
+                    .position(x: x, y: plot.maxY - 8)
+                    .zIndex(1)
                     .accessibilityLabel(tick.nameSnapshot)
                     .accessibilityIdentifier(A11yID.trendsTick(tick.cycleStart))
                     .accessibilityValue("\(tick.nameSnapshot):\(tick.newValue)")
@@ -313,7 +316,7 @@ struct TrendsView: View {
 
     private func detail(_ selected: SelectedDot) -> some View {
         let point = selected.point
-        let name = app.t("symptom.id.\(selected.id)")
+        let name = app.symptomTitle(selected.id)
         let color = TrendsStyle.seriesColors[selected.colorIndex % TrendsStyle.seriesColors.count]
         let text = app.t("trends.detail", [
             "name": name,
@@ -378,8 +381,11 @@ struct TrendsView: View {
     }
 
     private func yPos(_ count: Int, yMax: Int, plot: CGRect) -> CGFloat {
-        let t = CGFloat(count) / CGFloat(yMax)
-        return plot.maxY - t * plot.height
+        let markerBand: CGFloat = 28
+        let bottom = plot.maxY - markerBand
+        let span = max(1, bottom - plot.minY)
+        let t = CGFloat(count) / CGFloat(max(yMax, 1))
+        return bottom - t * span
     }
 
     private func dotDiameter(_ mean: Double) -> CGFloat {
@@ -407,9 +413,10 @@ struct TrendsView: View {
 
     private func drawAxes(_ ctx: GraphicsContext, plot: CGRect) {
         var axis = Path()
+        let baseline = plot.maxY - 28
         axis.move(to: CGPoint(x: plot.minX, y: plot.minY))
-        axis.addLine(to: CGPoint(x: plot.minX, y: plot.maxY))
-        axis.addLine(to: CGPoint(x: plot.maxX, y: plot.maxY))
+        axis.addLine(to: CGPoint(x: plot.minX, y: baseline))
+        axis.addLine(to: CGPoint(x: plot.maxX, y: baseline))
         ctx.stroke(axis, with: .color(Theme.inkMuted.opacity(0.35)), lineWidth: 0.8)
     }
 

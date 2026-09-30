@@ -28,7 +28,7 @@ UI tests that need several cycles of scores launch with `-fixture=trends` (not `
 | Size key | `trends.sizeKey` | Chart only. Bigger dot = stronger. |
 | Choose Symptoms | `trends.change` | Chart only, button at the bottom of the card (EN Choose Symptoms / DE Symptome wählen). Opens `sheet.trends`. Missing on empty. |
 | Sheet | `sheet.trends` | After `trends.change`. Title Show on chart / Im Diagramm zeigen. Close with `sheet.close`. |
-| Group title | `trends.group.{id}` | `A11yID.trendsGroup(_:)` → `trends.group.{id}`. Body / mood / urogenital only inside the sheet. |
+| Group title | `trends.group.{id}` | `A11yID.trendsGroup(_:)` → `trends.group.{id}`. Body / mood / urogenital inside the sheet. `trends.group.custom` appears when the user has a custom symptom. |
 | Series | `trends.series.{id}` | `A11yID.trendsSeries(_:)` → `trends.series.{id}`. On the chart: stacked legend of the three selected, value `on`. Off ids exist only in the sheet. Fixture defaults: `hot_flash`, `mood`, `sleep` on the legend; `anxiety` after opening the sheet, value `off`. Selecting `anxiety` turns it `on` and `sleep` `off`. |
 | Dot | `trends.dot.{id}.{cycleStart}` | `A11yID.trendsDot(_:_:)` → `trends.dot.{id}.{cycleStart}`. Fixture `hot_flash` on `2026-01-04`: value contains `count:8` and `mean:1`. On `2026-02-01`: `count:2` and `mean:4`. Sleep on `2026-01-04` does not exist (gap, not a zero). |
 | Detail | `trends.detail` | After tapping a hot-flash dot: value contains `id:hot_flash`, `cycle:`, `count:`, and `mean:`. User-facing copy says average, not mean. A selected circle uses a strong ring. Same-point taps cycle through overlapping series; a tap on empty plot clears the selection. |

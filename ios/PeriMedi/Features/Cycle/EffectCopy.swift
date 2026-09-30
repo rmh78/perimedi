@@ -3,7 +3,8 @@ import PeriMediDomain
 enum EffectCopy {
     static func sentence(
         _ result: EffectResult,
-        t: (String, [String: String]) -> String
+        t: (String, [String: String]) -> String,
+        symptomName: (String) -> String
     ) -> String? {
         let body: String
         switch result.kind {
@@ -17,7 +18,7 @@ enum EffectCopy {
             body = t("effect.similar", [:])
         case .changed(let shifts):
             let clauses = shifts.map { shift in
-                let name = t("symptom.id.\(shift.id)", [:])
+                let name = symptomName(shift.id)
                 let key = shift.direction == .improved ? "effect.clause.down" : "effect.clause.worse"
                 return t(key, ["name": name])
             }

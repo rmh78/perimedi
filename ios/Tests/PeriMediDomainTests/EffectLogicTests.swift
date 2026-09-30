@@ -42,8 +42,8 @@ final class EffectLogicTests: XCTestCase {
             periods: [],
             settings: settings,
             scores: [],
-            changes: []
-        )
+            changes: [],
+            directory: .catalogOnly)
         XCTAssertEqual(result.kind, .hidden)
     }
 
@@ -58,8 +58,8 @@ final class EffectLogicTests: XCTestCase {
                 score(.hot_flash, date: "2026-03-06", severity: 3),
                 score(.hot_flash, date: "2026-02-02", severity: 1),
             ],
-            changes: []
-        )
+            changes: [],
+            directory: .catalogOnly)
         XCTAssertEqual(result.kind, .hidden)
     }
 
@@ -69,8 +69,8 @@ final class EffectLogicTests: XCTestCase {
             periods: [Period(id: "p1", startDate: currentStart)],
             settings: settings,
             scores: [score(.hot_flash, date: today, severity: 3)],
-            changes: []
-        )
+            changes: [],
+            directory: .catalogOnly)
         XCTAssertEqual(result.kind, .noPreviousCycle)
     }
 
@@ -80,8 +80,8 @@ final class EffectLogicTests: XCTestCase {
             periods: twoCycles,
             settings: settings,
             scores: [score(.hot_flash, date: "2026-03-06", severity: 3)],
-            changes: []
-        )
+            changes: [],
+            directory: .catalogOnly)
         XCTAssertEqual(result.kind, .notEnoughDays)
         XCTAssertNil(result.context)
     }
@@ -99,8 +99,8 @@ final class EffectLogicTests: XCTestCase {
             periods: twoCycles,
             settings: settings,
             scores: scores,
-            changes: []
-        )
+            changes: [],
+            directory: .catalogOnly)
         XCTAssertEqual(result.kind, .notEnoughDays)
     }
 
@@ -121,8 +121,8 @@ final class EffectLogicTests: XCTestCase {
             periods: twoCycles,
             settings: settings,
             scores: scores,
-            changes: []
-        )
+            changes: [],
+            directory: .catalogOnly)
         guard case .changed(let shifts) = result.kind else {
             return XCTFail("expected changed, got \(result.kind)")
         }
@@ -142,8 +142,8 @@ final class EffectLogicTests: XCTestCase {
             periods: twoCycles,
             settings: settings,
             scores: scores,
-            changes: []
-        )
+            changes: [],
+            directory: .catalogOnly)
         XCTAssertEqual(result.kind, .similar)
     }
 
@@ -157,8 +157,8 @@ final class EffectLogicTests: XCTestCase {
             periods: twoCycles,
             settings: settings,
             scores: scores,
-            changes: [change(effective: "2026-03-08")]
-        )
+            changes: [change(effective: "2026-03-08")],
+            directory: .catalogOnly)
         guard case .changed = result.kind else {
             return XCTFail("expected changed")
         }
@@ -177,8 +177,8 @@ final class EffectLogicTests: XCTestCase {
             periods: twoCycles,
             settings: settings,
             scores: scores,
-            changes: [change(effective: "2026-01-15")]
-        )
+            changes: [change(effective: "2026-01-15")],
+            directory: .catalogOnly)
         XCTAssertNil(result.context)
     }
 
@@ -195,8 +195,8 @@ final class EffectLogicTests: XCTestCase {
             changes: [
                 change(field: .schedule, effective: "2026-03-10", newValue: "every day @ 20:00"),
                 change(field: .dose, effective: "2026-03-06"),
-            ]
-        )
+            ],
+            directory: .catalogOnly)
         XCTAssertEqual(result.context?.field, .dose)
     }
 
@@ -207,8 +207,8 @@ final class EffectLogicTests: XCTestCase {
             periods: sample.periods,
             settings: sample.cycleSettings,
             scores: sample.symptomScores,
-            changes: sample.medicationChanges
-        )
+            changes: sample.medicationChanges,
+            directory: .catalogOnly)
         guard case .changed(let shifts) = result.kind else {
             return XCTFail("expected changed, got \(result.kind)")
         }
@@ -216,5 +216,27 @@ final class EffectLogicTests: XCTestCase {
         XCTAssertTrue(shifts.contains { $0.id == "sleep" && $0.direction == .worse })
         XCTAssertEqual(result.context?.nameSnapshot, "Estradiol gel")
         XCTAssertEqual(result.context?.field, .dose)
+    }
+
+    func testCustomSymptomCanBeTheShift() throws {
+        let id = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-00000000000a")!
+        let directory = try SymptomDirectory.catalogOnly.adding("Fog", mint: id).get().0
+        let scores = [
+            SymptomScore(id: id.rawValue, date: "2026-02-02", severity: 1, loggedAt: "t"),
+            SymptomScore(id: id.rawValue, date: "2026-03-06", severity: 4, loggedAt: "t"),
+        ]
+        let result = EffectLogic.summarize(
+            today: today,
+            periods: twoCycles,
+            settings: settings,
+            scores: scores,
+            changes: [],
+            directory: directory
+        )
+        guard case .changed(let shifts) = result.kind else {
+            return XCTFail("expected changed, got \(result.kind)")
+        }
+        XCTAssertEqual(shifts.map(\.id), [id.rawValue])
+        XCTAssertEqual(shifts[0].direction, .worse)
     }
 }

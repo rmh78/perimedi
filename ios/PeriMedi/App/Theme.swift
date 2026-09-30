@@ -57,25 +57,6 @@ struct GlassCard<Content: View>: View {
     }
 }
 
-struct IconCircleButton: View {
-    var systemName: String
-    var label: String
-    var tint: Color = Theme.blush700
-    var action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: systemName)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(tint)
-                .frame(width: 36, height: 36)
-                .background(Circle().fill(Theme.blush50))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(label)
-    }
-}
-
 struct PillButton: View {
     enum Kind {
         case primary, secondary, destructive

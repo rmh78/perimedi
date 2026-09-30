@@ -38,7 +38,7 @@ public enum SymptomGroup: String, CaseIterable, Sendable {
 
 /// One scored row. Identity in a backup is (`date`, `id`).
 public struct SymptomScore: Codable, Equatable, Sendable {
-    /// Stable catalog id (`hot_flash`, …), never a UUID.
+    /// Catalog raw value (`hot_flash`) or a custom id (`c.` plus a UUID). Never the display name.
     public var id: String
     public var date: String
     /// 0 = none, 4 = very strong. Missing rows are omitted, not zero.
