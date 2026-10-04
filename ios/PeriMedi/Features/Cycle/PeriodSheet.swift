@@ -71,19 +71,22 @@ struct PeriodSheet: View {
                             Button {
                                 openEdit(period)
                             } label: {
-                                VStack(alignment: .leading, spacing: 1) {
+                                HStack(alignment: .firstTextBaseline, spacing: 8) {
                                     Text(rangeLabel(period))
                                         .font(.subheadline.weight(.semibold))
                                         .underline()
                                         .foregroundStyle(Theme.blush700)
                                         .lineLimit(2)
                                         .multilineTextAlignment(.leading)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
                                     Text(meta(period))
                                         .font(.caption)
                                         .foregroundStyle(Theme.inkMuted)
                                         .lineLimit(1)
+                                        .layoutPriority(1)
                                 }
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
+                                .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
                             .accessibilityIdentifier(A11yID.periodHistory(period.id))
@@ -181,25 +184,26 @@ struct PeriodSheet: View {
                 .pickerStyle(.menu)
             }
             HStack(spacing: 8) {
-                PillButton(title: app.t("common.cancel"), kind: .secondary) {
+                PillButton(title: app.t("common.cancel"), kind: .secondary, fillsWidth: true) {
                     closeDraft()
                 }
-                Spacer(minLength: 0)
+                if case .edit(let id) = draft {
+                    PillButton(
+                        title: app.t("common.delete"),
+                        kind: .destructive,
+                        identifier: A11yID.periodDelete,
+                        fillsWidth: true
+                    ) {
+                        draft = .confirmDelete(id)
+                    }
+                }
                 PillButton(
                     title: app.t("common.save"),
                     kind: .primary,
                     identifier: A11yID.periodSave,
+                    fillsWidth: true,
                     action: saveDraft
                 )
-            }
-            if case .edit(let id) = draft {
-                PillButton(
-                    title: app.t("common.delete"),
-                    kind: .destructive,
-                    identifier: A11yID.periodDelete
-                ) {
-                    draft = .confirmDelete(id)
-                }
             }
         }
     }
