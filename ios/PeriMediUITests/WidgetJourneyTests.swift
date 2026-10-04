@@ -41,6 +41,7 @@ final class WidgetJourneyTests: PeriMediUITestCase {
         super.setUp()
         SpringboardIdleBypass.install()
         executionTimeAllowance = 480
+        XCUIApplication(bundleIdentifier: "com.apple.springboard").terminate()
     }
 
     override func tearDown() {
@@ -135,8 +136,6 @@ final class WidgetJourneyTests: PeriMediUITestCase {
             home.spin(15, { home.hasMed("Estrogen") && home.hasStillToTake }),
             "estrogen or Still to take today missing on the small widget"
         )
-        home.settle()
-        home.saveShot("en-small-before")
         home.tapTaken()
         XCTAssertTrue(
             home.spin(6, { home.hasCheck && home.hasMed("Estrogen") && !home.hasStillToTake }),
@@ -167,8 +166,6 @@ final class WidgetJourneyTests: PeriMediUITestCase {
             home.spin(20, { home.hasMed("Estrogen") && home.hasStillToTakeDE }),
             "German helper or estrogen missing on the small widget"
         )
-        home.settle()
-        home.saveShot("de-small-before")
         home.tapTaken()
         XCTAssertTrue(
             home.spin(6, { home.hasCheck && home.hasMed("Estrogen") && !home.hasStillToTakeDE }),
@@ -214,8 +211,6 @@ final class WidgetJourneyTests: PeriMediUITestCase {
             }),
             "German medium rows missing. buttons: \(home.buttonLabels)"
         )
-        home.settle()
-        home.saveShot("de-medium-two-before")
         home.tapTaken()
         XCTAssertTrue(
             home.spin(6, { home.hasCheck && home.hasStillToTakeDE && home.hasMed("Progesterone") }),
@@ -276,27 +271,23 @@ private final class HomeWidgets {
     func restoreAppIcon() {
         _ = tapLabel(["Abbrechen", "Cancel"], wait: 0.4)
         open()
+        revealPeriMedi()
         for _ in 0..<3 {
             if onScreen(appIcon()) { return }
-            if !onScreen(widgetIcon()) {
-                dragTowardFirstPage()
-            }
-            if onScreen(appIcon()) { return }
             if tapLabel(Self.appIconLabels, wait: 0.6), spin(5, { onScreen(appIcon()) }) { return }
-            guard onScreen(widgetIcon()) else { continue }
+            guard onScreen(widgetIcon()) else { return }
             openSizeMenu(on: widgetIcon())
             if tapLabel(Self.appIconLabels), spin(6, { onScreen(appIcon()) }) { return }
             open()
+            revealPeriMedi()
         }
     }
 
     func ensureAppIcon() {
-        if !spin(2, { onScreen(appIcon()) || onScreen(widgetIcon()) }) {
-            dragTowardFirstPage()
-        }
+        revealPeriMedi()
         XCTAssertTrue(
-            spin(6) { onScreen(appIcon()) || onScreen(widgetIcon()) },
-            "PeriMedi is not on the first Home Screen page. icons: \(iconLabels) buttons: \(buttonLabels)"
+            spin(6) { visiblePeriMedi() },
+            "PeriMedi is not on the Home Screen page. icons: \(iconLabels) buttons: \(buttonLabels)"
         )
         guard spin(2, { onScreen(widgetIcon()) && !onScreen(appIcon()) }) else { return }
         openSizeMenu(on: widgetIcon())
@@ -321,9 +312,31 @@ private final class HomeWidgets {
         )
     }
 
+    private func visiblePeriMedi() -> Bool {
+        onScreen(appIcon()) || onScreen(widgetIcon())
+    }
+
+    private func revealPeriMedi() {
+        if !spin(2, { visiblePeriMedi() }) {
+            dragTowardNextPage()
+        }
+        if !spin(2, { visiblePeriMedi() }) {
+            dragTowardFirstPage()
+            dragTowardFirstPage()
+        }
+    }
+
     private func dragTowardFirstPage() {
-        let start = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.55))
-        let end = springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.55))
+        drag(from: 0.2, to: 0.85)
+    }
+
+    private func dragTowardNextPage() {
+        drag(from: 0.85, to: 0.2)
+    }
+
+    private func drag(from startX: CGFloat, to endX: CGFloat) {
+        let start = springboard.coordinate(withNormalizedOffset: CGVector(dx: startX, dy: 0.55))
+        let end = springboard.coordinate(withNormalizedOffset: CGVector(dx: endX, dy: 0.55))
         start.press(forDuration: 0.05, thenDragTo: end)
     }
 
@@ -416,20 +429,28 @@ private final class HomeWidgets {
     func tapTaken() {
         let deadline = Date().addingTimeInterval(8)
         let screen = springboard.frame
+        var seen: [String] = []
         repeat {
             let buttons = springboard.buttons.matching(
                 NSPredicate(format: "label == 'Take' OR label == 'Nehmen'")
             ).allElementsBoundByIndex
-            if let visible = buttons.first(where: { button in
+            seen = buttons.map { button in
                 let frame = button.frame
-                return frame.width > 20 && screen.intersects(frame)
-            }) {
+                return "\(Int(frame.minX)),\(Int(frame.minY)) \(Int(frame.width))x\(Int(frame.height))"
+            }
+            if let visible = buttons.first(where: { capsule($0.frame, on: screen) }) {
                 visible.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
                 return
             }
             RunLoop.current.run(until: Date().addingTimeInterval(0.25))
         } while Date() < deadline
-        XCTFail("Take missing. buttons: \(buttonLabels)")
+        XCTFail("Take missing. frames: \(seen) buttons: \(buttonLabels)")
+    }
+
+    private func capsule(_ frame: CGRect, on screen: CGRect) -> Bool {
+        frame.width > 20 && frame.width < screen.width * 0.5
+            && frame.height > 16 && frame.height < 64
+            && screen.intersects(frame)
     }
 
     private func labeled(_ names: [String]) -> Bool {
