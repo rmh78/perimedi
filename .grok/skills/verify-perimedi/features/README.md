@@ -43,11 +43,11 @@ Practical test walk for that order:
 2. `PeriMediUITests/SymptomTrendsTests/testSymptomTrendsNoScores`, `testSymptomTrendsChart`, and `testCustomSymptomCreateScoreRenameChartAndDelete` — Trends and custom symptoms
 3. `PeriMediUITests/FirstUseJourneyTests/testMoreRemindersControls` — More, visit PDF, backup cancel
 4. `PeriMediUITests/FirstUseJourneyTests/testDoseReminderTaken` — reminders Taken
-5. `PeriMediUITests/WidgetJourneyTests/testWidgetTakenUntakenAndEmptyMessage` — signed medium Home Screen widget. Unsigned `verify` skips it.
-6. `PeriMediUITests/WidgetJourneyTests/testSmallWidgetTakeInEnglishAndGerman` — signed small widget in English and German. Unsigned `verify` skips it.
-7. `PeriMediUITests/WidgetJourneyTests/testGermanMediumCheckBesidePending` — signed German medium widget with two rows. Unsigned `verify` skips it.
+5. `PeriMediUITests/WidgetJourneyTests/testWidgetTakenUntakenAndEmptyMessage` — medium Home Screen widget
+6. `PeriMediUITests/WidgetJourneyTests/testSmallWidgetTakeInEnglishAndGerman` — small widget in English and German
+7. `PeriMediUITests/WidgetJourneyTests/testGermanMediumCheckBesidePending` — German medium widget with two rows
 
-PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verify`. Unsigned `verify` skips the widget journey.
+PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verify`. That run includes `WidgetJourneyTests` with the other UI tests.
 
 ## Features
 
@@ -59,7 +59,7 @@ PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verif
 - [Period sheet](./period-sheet.md) — log bleeds over Cycle
 - [Symptom sheet](./symptom-sheet.md) — scores 1–4 over Cycle
 - [Dose reminders](./reminders.md) — in-app banner Taken / Snooze
-- [Home Screen today's-meds widget](./home-dose-widget.md) — signed SpringBoard journey in `WidgetJourneyTests`. Unsigned `verify` skips it.
+- [Home Screen today's-meds widget](./home-dose-widget.md) — SpringBoard journey in `WidgetJourneyTests`, included in `verify`
 - [Doctor visit PDF](./doctor-visit.md) — More → range → in-app preview
 - [Backup / sample](./backup.md) — sample, export, import, clear (cancel in journeys)
 - [First-use journey](./journeys.md) — empty app through tracking and Month

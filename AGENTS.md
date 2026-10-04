@@ -73,10 +73,14 @@ xcodebuild -project ios/PeriMedi.xcodeproj -scheme PeriMedi \
   -destination 'platform=iOS Simulator,name=iPhone 17e' \
   -derivedDataPath ios/DerivedData CODE_SIGNING_ALLOWED=NO build
 
-# iOS UI tests (local default: iPhone 17e)
+# iOS UI tests, including WidgetJourneyTests (local default: iPhone 17e).
+# Do not pass CODE_SIGNING_ALLOWED=NO. That drops the App Group and the widget stays empty.
 xcodebuild test -project ios/PeriMedi.xcodeproj -scheme PeriMedi \
   -destination 'platform=iOS Simulator,name=iPhone 17e' \
-  -derivedDataPath ios/DerivedData CODE_SIGNING_ALLOWED=NO
+  -derivedDataPath ios/DerivedData \
+  DEVELOPMENT_TEAM=7H4A6PWSPS CODE_SIGN_STYLE=Automatic \
+  CODE_SIGN_ENTITLEMENTS=PeriMediDoseWidget/PeriMediDoseWidget.entitlements \
+  -allowProvisioningUpdates
 
 # Feature map ID coverage (fails CI)
 python3 ios/scripts/check-feature-map.py
@@ -100,7 +104,7 @@ python3 ios/scripts/check-ui-coverage.py --fail-uncovered
 python3 ios/scripts/check-screen-catalog.py
 ```
 
-UI tests are user-story journeys: `testFirstUseJourney` (empty → Trends empty → tracking → Month pager → period day on Cycle), `testMoreRemindersControls`, `testDoseReminderTaken`, plus Trends history (`testSymptomTrendsNoScores`, `testSymptomTrendsChart`) custom symptoms (`testCustomSymptomCreateScoreRenameChartAndDelete`), and period edit and delete (`testEditAndDeletePeriod`). They launch with `-en -clear -today=2026-03-15` and tap real controls. They type into fields the way a user does (`typeText`). Do not paste, use the clipboard menu, or test-only setters; that makes the journey synthetic. `clearAndType` taps the field, waits until the software keyboard exists, types, then asserts the exact value. Journey tests never pass `-journeyStep` or `-loadSample`. `ScreenCatalogTests` may pass `-loadSample` and switch language in-app to write `ios/docs/screens/` in a few launches (not one launch per PNG). CI skips rewriting those PNGs; the `ids` job still fails if a committed file is missing. Local `verify` writes them unless `SCREEN_CATALOG=0`. Watch **iPhone 17e** in Simulator when that device exists (Window → iPhone 17e).
+UI tests are user-story journeys: `testFirstUseJourney` (empty → Trends empty → tracking → Month pager → period day on Cycle), `testMoreRemindersControls`, `testDoseReminderTaken`, plus Trends history (`testSymptomTrendsNoScores`, `testSymptomTrendsChart`) custom symptoms (`testCustomSymptomCreateScoreRenameChartAndDelete`), period edit and delete (`testEditAndDeletePeriod`), and the Home Screen widget (`WidgetJourneyTests`). `verify` runs that widget class with the other UI tests. They launch with `-en -clear -today=2026-03-15` and tap real controls. They type into fields the way a user does (`typeText`). Do not paste, use the clipboard menu, or test-only setters; that makes the journey synthetic. `clearAndType` taps the field, waits until the software keyboard exists, types, then asserts the exact value. Journey tests never pass `-journeyStep` or `-loadSample`. `ScreenCatalogTests` may pass `-loadSample` and switch language in-app to write `ios/docs/screens/` in a few launches (not one launch per PNG). CI skips rewriting those PNGs; the `ids` job still fails if a committed file is missing. Local `verify` writes them unless `SCREEN_CATALOG=0`. Watch **iPhone 17e** in Simulator when that device exists (Window → iPhone 17e).
 
 Main-screen pictures for UX are `ios/docs/screens/` (written by `ScreenCatalogTests` on a local `verify`). `JourneyScript` / `ios/scripts/shot-journey.sh` remain optional extra capture. They are not the interaction proof.
 

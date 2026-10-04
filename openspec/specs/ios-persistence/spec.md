@@ -39,8 +39,8 @@ When iCloud is enabled for the app and the user is signed into the same Apple ID
 - **WHEN** the Simulator is not signed into iCloud
 - **THEN** on-device persistence still works and the app remains usable; device-switch restore is not required until iCloud is available
 
-#### Scenario: Unsigned CI does not prove already-running follow
-- **WHEN** unsigned Simulator CI (`CODE_SIGNING_ALLOWED=NO` / green `ui`) runs
+#### Scenario: Simulator UI job does not prove already-running follow
+- **WHEN** the simulator UI job signs the App Group and does not entitle the iCloud container
 - **THEN** that result proves local persistence only; it MUST NOT be treated as proof that an already-running second destination followed CloudKit imports
 
 #### Scenario: Two Simulators on one Mac may need relaunch
