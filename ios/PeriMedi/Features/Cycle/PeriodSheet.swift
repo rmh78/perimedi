@@ -87,6 +87,8 @@ struct PeriodSheet: View {
                             }
                             .buttonStyle(.plain)
                             .accessibilityIdentifier(A11yID.periodHistory(period.id))
+                            .accessibilityLabel(rangeLabel(period))
+                            .accessibilityValue(meta(period))
                             .padding(.vertical, 8)
                             if index < store.periods.count - 1 {
                                 Rectangle().fill(Theme.blush100).frame(height: 1)
@@ -331,6 +333,10 @@ struct PeriodSheet: View {
         let sameYear = cal.component(.year, from: start) == cal.component(.year, from: end)
         let sameMonth = sameYear && cal.component(.month, from: start) == cal.component(.month, from: end)
         if sameMonth {
+            if app.locale.language == .de {
+                let month = part(end, "MMMM yyyy")
+                return "\(cal.component(.day, from: start)).–\(cal.component(.day, from: end)). \(month)"
+            }
             return "\(cal.component(.day, from: start))–\(cal.component(.day, from: end)) \(part(end, "MMM yyyy"))"
         }
         if sameYear {

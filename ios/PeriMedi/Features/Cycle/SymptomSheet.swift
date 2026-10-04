@@ -124,7 +124,7 @@ struct SymptomSheet: View {
 
     private var editorFields: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(nameDraft == .create ? app.t("symptom.addAction") : app.t("symptom.rename"))
+            Text(nameDraft == .create ? app.t("symptom.addPlaceholder") : app.t("symptom.edit"))
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(Theme.ink)
             TextField(app.t("symptom.addPlaceholder"), text: $draft)
@@ -192,14 +192,14 @@ struct SymptomSheet: View {
         switch nameDraft {
         case .create:
             PillButton(
-                title: app.t("symptom.addAction"),
+                title: app.t("common.save"),
                 kind: .primary,
                 identifier: A11yID.symptomCustomCreate,
                 action: commitDraft
             )
         case .edit(let id):
             PillButton(
-                title: app.t("symptom.saveEdit"),
+                title: app.t("common.save"),
                 kind: .primary,
                 identifier: A11yID.symptomCustomSave(id.rawValue),
                 action: commitDraft
@@ -246,8 +246,6 @@ struct SymptomSheet: View {
                             .font(.footnote)
                             .underline()
                             .foregroundStyle(Theme.blush700)
-                            .lineLimit(2)
-                            .minimumScaleFactor(0.65)
                             .multilineTextAlignment(.leading)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
