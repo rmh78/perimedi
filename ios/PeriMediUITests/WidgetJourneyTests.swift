@@ -47,11 +47,13 @@ final class WidgetJourneyTests: PeriMediUITestCase {
     private func relaunchSpringBoard() {
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         springboard.terminate()
-        let deadline = Date().addingTimeInterval(45)
+        let deadline = Date().addingTimeInterval(60)
         while Date() < deadline {
-            let state = springboard.state
-            if state == .runningForeground || state == .runningBackground { return }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+            let maps = springboard.icons.matching(
+                NSPredicate(format: "identifier == 'Maps' OR identifier == 'Karten'")
+            ).firstMatch
+            if maps.exists { return }
+            RunLoop.current.run(until: Date().addingTimeInterval(1))
         }
     }
 
@@ -364,7 +366,7 @@ private final class HomeWidgets {
     }
 
     private func widgetIcon() -> XCUIElement {
-        springboard.icons.matching(
+        springboard.descendants(matching: .any).matching(
             NSPredicate(format: "identifier == 'PeriMedi' AND value == 'Widget'")
         ).firstMatch
     }
