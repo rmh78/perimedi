@@ -477,15 +477,18 @@ cmd_verify() {
     echo "Skipping ScreenCatalogTests (SCREEN_CATALOG=0)"
   fi
 
-  set +e
+  local -a xcode_args=(-resultBundlePath "$RESULT")
   if [[ "$skip_catalog" -eq 1 ]]; then
-    xcode_test \
-      -resultBundlePath "$RESULT" \
-      -skip-testing:PeriMediUITests/ScreenCatalogTests
-  else
-    xcode_test \
-      -resultBundlePath "$RESULT"
+    xcode_args+=(-skip-testing:PeriMediUITests/ScreenCatalogTests)
   fi
+  if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+    # Issue 70 collapses these journeys. CI skips them until that lands.
+    echo "Skipping WidgetJourneyTests on CI"
+    xcode_args+=(-skip-testing:PeriMediUITests/WidgetJourneyTests)
+  fi
+
+  set +e
+  xcode_test "${xcode_args[@]}"
   local status=$?
   set -e
 

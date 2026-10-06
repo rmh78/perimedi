@@ -102,6 +102,10 @@ The instrumented suite SHALL include separate journeys for jobs that are not a f
 - **WHEN** verification runs without the App Group signature
 - **THEN** the Home Screen widget journey is skipped
 
+#### Scenario: Continuous integration skips the widget journeys
+- **WHEN** verification runs in continuous integration
+- **THEN** the Home Screen widget journeys are not executed, and the other instrumented journeys still run
+
 #### Scenario: Trends with scored cycles
 - **WHEN** the suite opens Trends with several logged cycles that have scores
 - **THEN** the chart, series, a tapped dot, and a dose-change tick are identifiable

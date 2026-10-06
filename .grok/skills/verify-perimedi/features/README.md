@@ -47,7 +47,7 @@ Practical test walk for that order:
 6. `PeriMediUITests/WidgetJourneyTests/testSmallWidgetTakeInEnglishAndGerman` — small widget in English and German
 7. `PeriMediUITests/WidgetJourneyTests/testGermanMediumCheckBesidePending` — German medium widget with two rows
 
-PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verify`. That run includes `WidgetJourneyTests` with the other UI tests.
+PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verify`. A local run includes `WidgetJourneyTests` with the other UI tests. The GitHub `ui` job skips `WidgetJourneyTests`.
 
 ## Features
 
@@ -59,7 +59,7 @@ PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verif
 - [Period sheet](./period-sheet.md) — log bleeds over Cycle
 - [Symptom sheet](./symptom-sheet.md) — scores 1–4 over Cycle
 - [Dose reminders](./reminders.md) — in-app banner Taken / Snooze
-- [Home Screen today's-meds widget](./home-dose-widget.md) — SpringBoard journey in `WidgetJourneyTests`, included in `verify`
+- [Home Screen today's-meds widget](./home-dose-widget.md) — SpringBoard journey in `WidgetJourneyTests`. Local `verify` runs it. The GitHub `ui` job skips it.
 - [Doctor visit PDF](./doctor-visit.md) — More → range → in-app preview
 - [Backup / sample](./backup.md) — sample, export, import, clear (cancel in journeys)
 - [First-use journey](./journeys.md) — empty app through tracking and Month
