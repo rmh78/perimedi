@@ -47,6 +47,22 @@ final class AppModel: ObservableObject {
         locale.t(key, vars)
     }
 
+    func symptomTitle(_ storageId: String) -> String {
+        if let name = store.symptomDirectory.name(for: storageId) {
+            return name
+        }
+        guard SymptomId(rawValue: storageId) != nil else { return "" }
+        return t("symptom.id.\(storageId)")
+    }
+
+    func symptomLevelWord(_ storageId: String, severity: Int) -> String {
+        let key = CustomSymptomId(rawValue: storageId) == nil
+            ? "symptom.level.\(storageId).\(severity)"
+            : "symptom.level.custom.\(severity)"
+        let word = t(key)
+        return word == key ? "\(severity)" : word
+    }
+
     func closeDialog() {
         medSheet = nil
         showPeriod = false

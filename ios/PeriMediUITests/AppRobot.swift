@@ -216,7 +216,7 @@ struct AppRobot {
     /// `typeText` needs software-keyboard focus (Apple). The doctor turns
     /// Simulator hardware keyboard off before boot so this matches a phone.
     /// Do not paste: that is not how a user types.
-    func clearAndType(_ id: String, _ text: String, file: StaticString = #filePath, line: UInt = #line) {
+    func clearAndType(_ id: String, _ text: String, dismiss: Bool = true, file: StaticString = #filePath, line: UInt = #line) {
         waitFor(id: id, file: file, line: line)
         let field = element(id)
 
@@ -241,13 +241,31 @@ struct AppRobot {
             field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count + 1))
         }
         field.typeText(text)
+        if !spin(timeout: 2) { shown() == text } {
+            var tries = 0
+            let limit = text.count * 3 + 4
+            while shown() != text && tries < limit {
+                tries += 1
+                let have = shown()
+                if text.hasPrefix(have), let next = text.dropFirst(have.count).first {
+                    field.typeText(String(next))
+                } else if !have.isEmpty {
+                    field.typeText(XCUIKeyboardKey.delete.rawValue)
+                } else {
+                    field.typeText(text)
+                }
+                _ = spin(timeout: 1.5) { shown() != have }
+            }
+        }
         XCTAssertTrue(
             spin(timeout: 2) { shown() == text },
             "\(id) is \(shown().debugDescription), wanted \(text)",
             file: file,
             line: line
         )
-        dismissKeyboard()
+        if dismiss {
+            dismissKeyboard()
+        }
     }
 
     func dismissKeyboard() {

@@ -60,6 +60,7 @@ final class DoctorVisitLogicTests: XCTestCase {
         schedules: [Schedule]? = nil,
         doseLogs: [DoseLog] = [],
         changes: [MedicationChange] = [],
+        directory: SymptomDirectory = .catalogOnly,
         selectedCycles: [LoggedCycle] = []
     ) -> DoctorVisitReport {
         let meds = medications ?? [med()]
@@ -72,6 +73,7 @@ final class DoctorVisitLogicTests: XCTestCase {
             settings: settings ?? self.settings,
             scores: scores,
             changes: changes,
+            directory: directory,
             selectedCycles: selectedCycles
         )
     }
@@ -277,6 +279,7 @@ final class DoctorVisitLogicTests: XCTestCase {
             settings: settings,
             scores: [],
             changes: [],
+            directory: .catalogOnly,
             selectedCycles: [cycles[0]]
         )
         XCTAssertEqual(result.rangeKind, .completedCycles(1))
@@ -486,5 +489,41 @@ final class DoctorVisitLogicTests: XCTestCase {
             box.midY,
             "title must sit in the upper half (PDF Y-up); was flipped in Quick Look"
         )
+    }
+
+    func testVisitPdfPrintsTheTypedCustomName() throws {
+        let id = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-00000000000b")!
+        let directory = try SymptomDirectory.catalogOnly.adding("Gedankennebel", mint: id).get().0
+        let result = report(
+            periods: [
+                period("p1", start: "2026-02-01", end: "2026-02-05"),
+                period("p2", start: "2026-03-01", end: "2026-03-05"),
+            ],
+            scores: [
+                SymptomScore(id: id.rawValue, date: "2026-02-02", severity: 3, loggedAt: "t"),
+            ],
+            directory: directory
+        )
+        XCTAssertEqual(result.symptoms.map(\.id), [id.rawValue])
+        let typed = try XCTUnwrap(directory.name(for: result.symptoms[0].id))
+        XCTAssertEqual(typed, "Gedankennebel")
+        let mean = String(format: "%.1f", result.symptoms[0].meanIntensity)
+        let page = DoctorVisitPage(
+            title: "PeriMedi visit summary",
+            meta: ["Generated 15 Mar 2026"],
+            sections: [
+                DoctorVisitSection(
+                    heading: "Symptoms",
+                    rows: ["\(typed) · \(result.symptoms[0].dayCount) days · average \(mean)"]
+                ),
+            ],
+            disclaimer: "This PDF is not a medical record and not medical advice."
+        )
+        let data = DoctorVisitPDF.data(page: page)
+        let doc = try XCTUnwrap(PDFDocument(data: data))
+        let text = (0..<doc.pageCount).compactMap { doc.page(at: $0)?.string }.joined(separator: "\n")
+        XCTAssertTrue(text.contains("Gedankennebel"))
+        XCTAssertTrue(text.contains(mean))
+        XCTAssertFalse(text.contains(id.rawValue))
     }
 }

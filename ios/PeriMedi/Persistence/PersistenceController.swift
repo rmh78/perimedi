@@ -10,6 +10,7 @@ enum PersistenceController {
         SDDoseLog.self,
         SDRemark.self,
         SDSymptomScore.self,
+        SDCustomSymptom.self,
         SDPeriod.self,
         SDCycleSettings.self,
         SDMedicationChange.self,

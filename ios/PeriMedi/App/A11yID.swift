@@ -88,12 +88,31 @@ enum A11yID {
     static let periodStart = "period.start"
     static let periodEnd = "period.end"
     static let periodSave = "period.save"
+    static let periodDelete = "period.delete"
+
+    static func periodHistory(_ id: String) -> String {
+        "period.history.\(id)"
+    }
 
     static let dateDone = "date.done"
     static let timeDone = "time.done"
 
     static let symptomBody = "symptom.body"
     static let symptomSave = "symptom.save"
+    static let symptomCustomAdd = "symptom.custom.add"
+    static let symptomCustomCreate = "symptom.custom.create"
+
+    static func symptomCustomName(_ id: String) -> String {
+        "symptom.custom.name.\(id)"
+    }
+
+    static func symptomCustomSave(_ id: String) -> String {
+        "symptom.custom.save.\(id)"
+    }
+
+    static func symptomCustomDelete(_ id: String) -> String {
+        "symptom.custom.delete.\(id)"
+    }
 
     static func symptomScore(_ id: String, _ value: Int) -> String {
         "symptom.score.\(id).\(value)"

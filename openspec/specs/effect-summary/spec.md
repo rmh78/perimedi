@@ -18,7 +18,7 @@ The system SHALL compare **this cycle so far** with the **same cycle days of the
 - **THEN** those unmatched days are not treated as the comparison windows
 
 ### Requirement: Effect sentence on Cycle
-The system SHALL show one Effect sentence on the Cycle screen. The sentence SHALL use only catalog symptom ids that have at least one score in both comparison windows. Missing ids and missing days SHALL NOT be treated as 0. Higher severity SHALL mean worse. Copy SHALL be English and German according to the active language. The sentence SHALL NOT recommend changing a dose or otherwise give medical advice.
+The system SHALL show one Effect sentence on the Cycle screen. The sentence SHALL use only symptom ids, catalog or custom, that have at least one score in both comparison windows. Missing ids and missing days SHALL NOT be treated as 0. Higher severity SHALL mean worse. Copy SHALL be English and German according to the active language. The sentence SHALL NOT recommend changing a dose or otherwise give medical advice.
 
 #### Scenario: Two cycles of dummy scores
 - **WHEN** two consecutive logged cycles exist and overlapping ids have scores aligned by cycle day

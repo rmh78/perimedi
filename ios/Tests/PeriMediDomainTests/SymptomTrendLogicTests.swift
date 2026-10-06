@@ -19,6 +19,7 @@ final class SymptomTrendLogicTests: XCTestCase {
             settings: settings ?? self.settings,
             scores: scores ?? payload.symptomScores,
             changes: changes ?? payload.medicationChanges,
+            directory: .catalogOnly,
             selectedIds: selectedIds
         )
         guard case .chart(let chart) = result.kind else { return nil }
@@ -31,8 +32,8 @@ final class SymptomTrendLogicTests: XCTestCase {
             periods: [],
             settings: settings,
             scores: [],
-            changes: []
-        )
+            changes: [],
+            directory: .catalogOnly)
         XCTAssertEqual(result.kind, .needCycles)
     }
 
@@ -44,8 +45,8 @@ final class SymptomTrendLogicTests: XCTestCase {
             periods: TrendsFixture.payload().periods,
             settings: off,
             scores: TrendsFixture.payload().symptomScores,
-            changes: []
-        )
+            changes: [],
+            directory: .catalogOnly)
         XCTAssertEqual(result.kind, .hidden)
     }
 
@@ -55,8 +56,8 @@ final class SymptomTrendLogicTests: XCTestCase {
             periods: [Period(id: "p1", startDate: "2026-03-01", endDate: "2026-03-05")],
             settings: settings,
             scores: [],
-            changes: []
-        )
+            changes: [],
+            directory: .catalogOnly)
         XCTAssertEqual(result.kind, .noScores)
     }
 
@@ -128,11 +129,11 @@ final class SymptomTrendLogicTests: XCTestCase {
     func testToggleSelectsAndDeselects() {
         let ranked = ["hot_flash", "mood", "sleep"]
         XCTAssertEqual(
-            SymptomTrendLogic.toggling("sleep", in: ranked, ranked: ranked),
+            SymptomTrendLogic.toggling("sleep", in: ranked, ranked: ranked, directory: .catalogOnly),
             ["hot_flash", "mood"]
         )
         XCTAssertEqual(
-            SymptomTrendLogic.toggling("anxiety", in: ranked, ranked: ranked),
+            SymptomTrendLogic.toggling("anxiety", in: ranked, ranked: ranked, directory: .catalogOnly),
             ["hot_flash", "mood", "anxiety"]
         )
     }
@@ -272,8 +273,8 @@ final class SymptomTrendLogicTests: XCTestCase {
             periods: sample.periods,
             settings: sample.cycleSettings,
             scores: sample.symptomScores,
-            changes: sample.medicationChanges
-        )
+            changes: sample.medicationChanges,
+            directory: .catalogOnly)
         guard case .chart(let chart) = result.kind else {
             return XCTFail("expected chart, got \(result.kind)")
         }

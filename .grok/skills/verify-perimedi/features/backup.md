@@ -32,3 +32,4 @@ Journey tests never pass `-loadSample`. Sample load is a user action on More, no
 - Import/export go through the system document/share sheets (no PeriMedi IDs).
 - Invalid backup: existing data is left unchanged and More shows `more.importFailed`. A failed local save/import write shows `persist.saveFailed` and does not publish a snapshot that disagrees with disk.
 - Domain codec: `ios/Sources/PeriMediDomain` (`ExportPayload` v1). Persistence is the only writer of logs. iCloud device-switch is `Store.refresh()` on remote import and foreground; JSON export is the fallback when iCloud is off.
+- Custom symptoms travel in the same version-1 file under `customSymptoms` (id, name, sort). A file with no such key imports with none. A custom score whose id is missing from that list is dropped on import. Catalog scores stay. `SymptomDirectoryTests.testRoundTripKeepsCustomsAndDropsOrphanScores` encodes a payload, decodes it, and checks both.

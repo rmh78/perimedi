@@ -47,7 +47,6 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
 
     weak var store: Store?
     weak var app: AppModel?
-    private var testFire: DispatchWorkItem?
     private var previewPlayer: AVAudioPlayer?
 
     var masterEnabled: Bool {
@@ -127,8 +126,6 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
     }
 
     func clearAll() {
-        testFire?.cancel()
-        testFire = nil
         let center = UNUserNotificationCenter.current()
         center.removeAllPendingNotificationRequests()
         center.removeAllDeliveredNotifications()
@@ -238,16 +235,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         ) {
             try? await UNUserNotificationCenter.current().add(request)
         }
-        presentAfterDelay(soon, delay: delay)
-    }
-
-    private func presentAfterDelay(_ slot: ReminderSlot, delay: Int) {
-        testFire?.cancel()
-        let work = DispatchWorkItem { [weak self] in
-            self?.present(slot)
-        }
-        testFire = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(max(1, delay)), execute: work)
+        present(soon)
     }
 
     func presentFromUserInfo(_ info: [AnyHashable: Any]) {
@@ -284,9 +272,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
     }
 
     func take(reminder: PendingReminder) {
-        testFire?.cancel()
-        testFire = nil
-        try? markSlotTaken(reminder.identity)
+        _ = try? markSlotTaken(reminder.identity)
         app?.pendingReminder = nil
         refresh()
     }

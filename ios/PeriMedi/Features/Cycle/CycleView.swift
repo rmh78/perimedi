@@ -26,6 +26,7 @@ struct CycleView: View {
             doseLogs: store.doseLogs,
             remarks: store.remarks,
             symptomScores: store.symptomScores,
+            directory: store.symptomDirectory,
             periods: store.periods,
             settings: store.settings
         )
@@ -165,12 +166,11 @@ struct CycleView: View {
     }
 
     private func scoreChipName(_ score: SymptomScore) -> String {
-        app.t("symptom.id.\(score.id)")
+        app.symptomTitle(score.id)
     }
 
     private func scoreChipWord(_ score: SymptomScore) -> String {
-        let word = app.t("symptom.level.\(score.id).\(score.severity)")
-        return word == "symptom.level.\(score.id).\(score.severity)" ? "\(score.severity)" : word
+        app.symptomLevelWord(score.id, severity: score.severity)
     }
 
     private var medsTitleRow: some View {

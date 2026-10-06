@@ -168,13 +168,14 @@ struct DateKeyPicker: View {
             }
             showPicker = true
         } label: {
-            Text(key.isEmpty ? "YYYY-MM-DD" : key)
+            Text(displayText)
                 .font(.body)
                 .foregroundStyle(key.isEmpty ? Theme.inkMuted : Theme.ink)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .buttonStyle(.plain)
         .a11y(identifier)
+        .accessibilityLabel(displayText)
         .accessibilityValue(key)
         .sheet(isPresented: $showPicker) {
             VStack(spacing: 12) {
@@ -213,6 +214,21 @@ struct DateKeyPicker: View {
         .onChange(of: showPicker) { _, open in
             if open { syncFromKey() }
         }
+    }
+
+    private var displayText: String {
+        if key.isEmpty {
+            return locale.language.languageCode == .german ? "TT.MM.JJJJ" : "YYYY-MM-DD"
+        }
+        guard locale.language.languageCode == .german, let parsed = DateKeys.parseDateKey(key) else {
+            return key
+        }
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.calendar = DateKeys.calendar
+        formatter.timeZone = DateKeys.calendar.timeZone
+        formatter.dateFormat = "dd.MM.yyyy"
+        return formatter.string(from: parsed)
     }
 
     private func syncFromKey() {

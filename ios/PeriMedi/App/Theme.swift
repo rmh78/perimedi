@@ -57,25 +57,6 @@ struct GlassCard<Content: View>: View {
     }
 }
 
-struct IconCircleButton: View {
-    var systemName: String
-    var label: String
-    var tint: Color = Theme.blush700
-    var action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: systemName)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(tint)
-                .frame(width: 36, height: 36)
-                .background(Circle().fill(Theme.blush50))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(label)
-    }
-}
-
 struct PillButton: View {
     enum Kind {
         case primary, secondary, destructive
@@ -84,6 +65,7 @@ struct PillButton: View {
     var title: String
     var kind: Kind = .secondary
     var identifier: String? = nil
+    var fillsWidth = false
     var action: () -> Void
 
     var body: some View {
@@ -91,7 +73,10 @@ struct PillButton: View {
             Text(title)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(foreground)
+                .lineLimit(fillsWidth ? 1 : nil)
+                .minimumScaleFactor(fillsWidth ? 0.8 : 1)
                 .padding(.horizontal, 14)
+                .frame(maxWidth: fillsWidth ? .infinity : nil)
                 .frame(minHeight: 36)
                 .background(Capsule().fill(fill))
                 .overlay(Capsule().stroke(stroke, lineWidth: kind == .primary ? 0 : 1))

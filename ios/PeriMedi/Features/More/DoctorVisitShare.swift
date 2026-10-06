@@ -17,6 +17,7 @@ enum DoctorVisitShare {
             settings: store.settings,
             scores: store.symptomScores,
             changes: store.medicationChanges,
+            directory: store.symptomDirectory,
             selectedCycles: selectedCycles
         )
         let page = makePage(report, app: app)
@@ -30,7 +31,7 @@ enum DoctorVisitShare {
     static func makePage(_ report: DoctorVisitReport, app: AppModel) -> DoctorVisitPage {
         let locale = app.locale.language.locale
         var sections: [DoctorVisitSection] = []
-        if let effect = EffectCopy.sentence(report.effect, t: app.t) {
+        if let effect = EffectCopy.sentence(report.effect, t: app.t, symptomName: app.symptomTitle) {
             sections.append(DoctorVisitSection(heading: app.t("visit.effect"), rows: [effect]))
         }
         sections.append(
@@ -85,7 +86,7 @@ enum DoctorVisitShare {
             symptomRows = [app.t("visit.symptomHeader")]
             symptomRows += report.symptoms.map { row in
                 app.t("visit.symptomRow", [
-                    "name": app.t("symptom.id.\(row.id)"),
+                    "name": app.symptomTitle(row.id),
                     "days": String(row.dayCount),
                     "mean": String(format: "%.1f", row.meanIntensity),
                 ])

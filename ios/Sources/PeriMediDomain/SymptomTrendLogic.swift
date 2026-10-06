@@ -125,6 +125,7 @@ public enum SymptomTrendLogic {
         settings: CycleSettings,
         scores: [SymptomScore],
         changes: [MedicationChange],
+        directory: SymptomDirectory,
         selectedIds: [String]? = nil
     ) -> SymptomTrendResult {
         guard settings.tracksPeriods else {
@@ -138,7 +139,7 @@ public enum SymptomTrendLogic {
 
         let scored = windows.filter { cycle in
             scores.contains { score in
-                inCycle(score, cycle) && score.severity >= 1
+                inCycle(score, cycle) && score.severity >= 1 && directory.contains(score.id)
             }
         }
         guard !scored.isEmpty else {
@@ -149,27 +150,26 @@ public enum SymptomTrendLogic {
         let spanStart = cycles.first!.start
         let spanEnd = cycles.last!.end
         let dayCounts = dayCountsById(scores, from: spanStart, to: spanEnd)
-        let ranked = SymptomId.allCases
-            .map(\.rawValue)
+        let ranked = directory.rankedIds
             .filter { dayCounts[$0, default: 0] > 0 }
             .sorted { a, b in
                 let ca = dayCounts[a, default: 0]
                 let cb = dayCounts[b, default: 0]
                 if ca != cb { return ca > cb }
-                return catalogIndex(a) < catalogIndex(b)
+                return directoryIndex(a, directory) < directoryIndex(b, directory)
             }
         let defaultIds = Array(ranked.prefix(maxSeries))
 
         var selected: [String]
         if let selectedIds {
-            selected = selectedIds.filter { SymptomLog.isCatalogId($0) }
+            selected = selectedIds.filter { directory.contains($0) }
             if selected.count > maxSeries {
                 selected = Array(selected.prefix(maxSeries))
             }
         } else {
             selected = Array(defaultIds)
         }
-        selected.sort { catalogIndex($0) < catalogIndex($1) }
+        selected.sort { directoryIndex($0, directory) < directoryIndex($1, directory) }
 
         let series = selected.map { id in
             SymptomTrendSeries(
@@ -192,9 +192,16 @@ public enum SymptomTrendLogic {
 
     /// Toggle a catalog id in the current selection. At most `maxSeries` stay
     /// selected; a new pick replaces the least-logged of the current set.
-    public static func toggling(_ id: String, in current: [String], ranked: [String]) -> [String] {
-        guard SymptomLog.isCatalogId(id) else { return current }
-        var next = current.filter { SymptomLog.isCatalogId($0) }
+    public static func toggling(
+        _ id: String,
+        in current: [String],
+        ranked: [String],
+        directory: SymptomDirectory
+    ) -> [String] {
+        guard directory.contains(id) else {
+            return current.filter { directory.contains($0) }
+        }
+        var next = current.filter { directory.contains($0) }
         if let index = next.firstIndex(of: id) {
             next.remove(at: index)
             return next
@@ -250,8 +257,8 @@ public enum SymptomTrendLogic {
         return days.mapValues(\.count)
     }
 
-    private static func catalogIndex(_ id: String) -> Int {
-        SymptomId.allCases.firstIndex { $0.rawValue == id } ?? Int.max
+    private static func directoryIndex(_ id: String, _ directory: SymptomDirectory) -> Int {
+        directory.index(of: id) ?? Int.max
     }
 
     private static func ticks(

@@ -323,6 +323,23 @@ cmd_launch() {
   printf 'launch: ready udid=%s device=%s\n' "$UDID" "$DEVICE_LINE"
 }
 
+# Sign to Run Locally and stamp group.app.perimedi.ios. CODE_SIGNING_ALLOWED=NO
+# leaves containerURL nil, so the widget shows the empty card. The group-only
+# entitlements file keeps the iCloud container out of this signature.
+xcode_test() {
+  local team="${PERIMEDI_DEVELOPMENT_TEAM:-7H4A6PWSPS}"
+  xcodebuild test \
+    -project "$PROJECT" \
+    -scheme PeriMedi \
+    -destination "platform=iOS Simulator,id=$UDID" \
+    -derivedDataPath "$DERIVED" \
+    "$@" \
+    DEVELOPMENT_TEAM="$team" \
+    CODE_SIGN_STYLE=Automatic \
+    CODE_SIGN_ENTITLEMENTS=PeriMediDoseWidget/PeriMediDoseWidget.entitlements \
+    -allowProvisioningUpdates
+}
+
 cmd_drive() {
   [[ -n "$TEST" ]] || fail "drive needs --test PeriMediUITests/<Class>/<method>"
   if [[ "$TEST" != PeriMediUITests/* ]]; then
@@ -348,14 +365,9 @@ cmd_drive() {
   printf '%s\n' "$slot_name" >>"$EVIDENCE/drives.txt"
 
   set +e
-  xcodebuild test \
-    -project "$PROJECT" \
-    -scheme PeriMedi \
-    -destination "platform=iOS Simulator,id=$UDID" \
-    -derivedDataPath "$DERIVED" \
+  xcode_test \
     -resultBundlePath "$result" \
     -only-testing:"$TEST" \
-    CODE_SIGNING_ALLOWED=NO \
     2>&1 | tee "$log"
   local status=${PIPESTATUS[0]}
   set -e
@@ -465,27 +477,18 @@ cmd_verify() {
     echo "Skipping ScreenCatalogTests (SCREEN_CATALOG=0)"
   fi
 
-  set +e
+  local -a xcode_args=(-resultBundlePath "$RESULT")
   if [[ "$skip_catalog" -eq 1 ]]; then
-    xcodebuild test \
-      -project "$PROJECT" \
-      -scheme PeriMedi \
-      -destination "platform=iOS Simulator,id=$UDID" \
-      -derivedDataPath "$DERIVED" \
-      -resultBundlePath "$RESULT" \
-      -skip-testing:PeriMediUITests/ScreenCatalogTests \
-      -skip-testing:PeriMediUITests/WidgetJourneyTests \
-      CODE_SIGNING_ALLOWED=NO
-  else
-    xcodebuild test \
-      -project "$PROJECT" \
-      -scheme PeriMedi \
-      -destination "platform=iOS Simulator,id=$UDID" \
-      -derivedDataPath "$DERIVED" \
-      -resultBundlePath "$RESULT" \
-      -skip-testing:PeriMediUITests/WidgetJourneyTests \
-      CODE_SIGNING_ALLOWED=NO
+    xcode_args+=(-skip-testing:PeriMediUITests/ScreenCatalogTests)
   fi
+  if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+    # Issue 70 collapses these journeys. CI skips them until that lands.
+    echo "Skipping WidgetJourneyTests on CI"
+    xcode_args+=(-skip-testing:PeriMediUITests/WidgetJourneyTests)
+  fi
+
+  set +e
+  xcode_test "${xcode_args[@]}"
   local status=$?
   set -e
 
