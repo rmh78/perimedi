@@ -41,7 +41,18 @@ final class WidgetJourneyTests: PeriMediUITestCase {
         super.setUp()
         SpringboardIdleBypass.install()
         executionTimeAllowance = 480
-        XCUIApplication(bundleIdentifier: "com.apple.springboard").terminate()
+        relaunchSpringBoard()
+    }
+
+    private func relaunchSpringBoard() {
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        springboard.terminate()
+        let deadline = Date().addingTimeInterval(45)
+        while Date() < deadline {
+            let state = springboard.state
+            if state == .runningForeground || state == .runningBackground { return }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+        }
     }
 
     override func tearDown() {
@@ -358,9 +369,11 @@ private final class HomeWidgets {
         ).firstMatch
     }
 
-    static let smallSizeLabels = ["Kleines Widget", "Small Widget", "Small"]
-    private static let mediumSizeLabels = ["Mittelgroßes Widget", "Medium Widget", "Medium"]
-    private static let appIconLabels = ["App-Symbol", "App Icon"]
+    static let smallSizeLabels = ["Kleines Widget", "Small widget", "Small Widget", "Small"]
+    private static let mediumSizeLabels = [
+        "Mittelgroßes Widget", "Medium-sized widget", "Medium Widget", "Medium"
+    ]
+    private static let appIconLabels = ["App-Symbol", "App icon", "App Icon"]
 
     private func openSizeMenu(on target: XCUIElement) {
         let frame = target.frame
