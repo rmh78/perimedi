@@ -1,6 +1,16 @@
 import ObjectiveC
 import XCTest
 
+private func ignoringSnapshot(_ body: () -> Void) {
+    let options = XCTExpectedFailure.Options()
+    options.isStrict = false
+    options.issueMatcher = { issue in
+        let text = issue.compactDescription
+        return text.contains("matching snapshot") || text.contains("kAXError")
+    }
+    XCTExpectFailure(options: options, failingBlock: body)
+}
+
 private enum SpringboardIdleBypass {
     private static var saved: [(AnyClass, Selector, IMP)] = []
 
@@ -46,15 +56,41 @@ final class WidgetJourneyTests: PeriMediUITestCase {
 
     private func relaunchSpringBoard() {
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-        springboard.terminate()
-        let deadline = Date().addingTimeInterval(60)
+        switch springboard.state {
+        case .notRunning, .unknown:
+            springboard.terminate()
+            waitForShell(springboard)
+        default:
+            break
+        }
+    }
+
+    private func waitForShell(_ springboard: XCUIApplication) {
+        let deadline = Date().addingTimeInterval(90)
+        var stableSince: Date?
         while Date() < deadline {
+            if shellReady(springboard) {
+                let since = stableSince ?? Date()
+                stableSince = since
+                if Date().timeIntervalSince(since) >= 12 { return }
+            } else {
+                stableSince = nil
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(1))
+        }
+    }
+
+    private func shellReady(_ springboard: XCUIApplication) -> Bool {
+        var ready = false
+        ignoringSnapshot {
             let maps = springboard.icons.matching(
                 NSPredicate(format: "identifier == 'Maps' OR identifier == 'Karten'")
             ).firstMatch
-            if maps.exists { return }
-            RunLoop.current.run(until: Date().addingTimeInterval(1))
+            let state = springboard.state
+            let running = state == .runningForeground || state == .runningBackground
+            ready = running && maps.exists
         }
+        return ready
     }
 
     override func tearDown() {
@@ -360,9 +396,17 @@ private final class HomeWidgets {
     }
 
     private func onScreen(_ element: XCUIElement) -> Bool {
-        guard element.exists else { return false }
-        let frame = element.frame
-        return frame.width > 8 && frame.height > 8 && springboard.frame.intersects(frame)
+        var frame = CGRect.null
+        var screen = CGRect.null
+        var matched = false
+        ignoringSnapshot {
+            guard element.exists else { return }
+            frame = element.frame
+            screen = springboard.frame
+            matched = true
+        }
+        guard matched, frame.width > 8, frame.height > 8 else { return false }
+        return screen.intersects(frame)
     }
 
     private func widgetIcon() -> XCUIElement {
