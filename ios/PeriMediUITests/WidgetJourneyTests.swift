@@ -70,19 +70,15 @@ enum WidgetShell {
         waitForShell(springboard)
     }
 
-    /// Leave a running SpringBoard up; terminating it takes the shell down.
+    /// Leave a running SpringBoard up. Terminating it at launch took the shell
+    /// down on CI (SpringBoard stayed dead, "Host is down") and the app never opened.
     private static func relaunchSpringBoard() {
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         switch springboard.state {
         case .runningForeground, .runningBackground:
-            if shellReady(springboard) { return }
-            springboard.terminate()
-            waitForShell(springboard)
-        case .notRunning:
-            springboard.activate()
-            waitForShell(springboard)
+            return
         default:
-            springboard.terminate()
+            springboard.activate()
             waitForShell(springboard)
         }
     }
@@ -175,7 +171,7 @@ struct WidgetProof {
             home.spin(8) { home.hasMed(longName) && home.hasTake && home.hasStillToTake },
             "small widget did not show the remaining dose"
         )
-        home.tapTaken(beside: longName, direct: true)
+        home.tapTaken(beside: longName)
         XCTAssertTrue(
             home.spin(8) { home.hasCheck && !home.hasStillToTake },
             "small face did not show the check after Take"
@@ -412,18 +408,21 @@ final class HomeWidgets {
         springboard.staticTexts[name].exists
     }
 
-    private func take(beside name: String?, direct: Bool) -> Bool {
+    private func take(beside name: String?) -> Bool {
         let deadline = Date().addingTimeInterval(8)
         let screen = springboard.frame
         let query = springboard.buttons.matching(NSPredicate(format: "label == 'Take'"))
         repeat {
             // allElementsBoundByIndex fails the test when SpringBoard's
             // accessibility server is down. exists on one button does not.
+            // A stale frame can sit below the widget. Tapping its center
+            // lands on the wallpaper, so only a button inside the widget counts.
             var visible: [XCUIElement] = []
             for index in 0..<4 {
                 let button = query.element(boundBy: index)
                 guard button.exists else { break }
-                if capsule(button.frame, on: screen) { visible.append(button) }
+                guard capsule(button.frame, on: screen), insideWidget(button) else { continue }
+                visible.append(button)
             }
             let chosen: XCUIElement?
             if let name {
@@ -438,11 +437,7 @@ final class HomeWidgets {
                 chosen = visible.first
             }
             if let chosen {
-                if direct {
-                    chosen.tap()
-                } else {
-                    chosen.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-                }
+                chosen.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
                 return true
             }
             RunLoop.current.run(until: Date().addingTimeInterval(0.25))
@@ -450,11 +445,18 @@ final class HomeWidgets {
         return false
     }
 
-    func tapTaken(beside name: String? = nil, direct: Bool = false) {
-        if take(beside: name, direct: direct) { return }
+    func tapTaken(beside name: String? = nil) {
+        if take(beside: name) { return }
         WidgetShell.restart()
-        if take(beside: name, direct: direct) { return }
+        if take(beside: name) { return }
         XCTFail("Take missing beside \(name ?? "any")")
+    }
+
+    private func insideWidget(_ button: XCUIElement) -> Bool {
+        let widget = widgetIcon()
+        guard onScreen(widget) else { return false }
+        let host = widget.frame.insetBy(dx: -12, dy: -12)
+        return host.contains(CGPoint(x: button.frame.midX, y: button.frame.midY))
     }
 
     private func capsule(_ frame: CGRect, on screen: CGRect) -> Bool {
