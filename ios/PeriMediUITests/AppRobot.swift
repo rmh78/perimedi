@@ -77,13 +77,9 @@ class PeriMediUITestCase: XCTestCase {
     override func setUp() {
         super.setUp()
         continueAfterFailure = false
-        // -remindIn keeps the app from going idle. On CI that pre-tap wait was 340s.
-        // Banner and lane assertions still poll until the element exists.
-        SpringboardIdleBypass.install()
     }
 
     override func tearDown() {
-        SpringboardIdleBypass.restore()
         if let run = testRun, run.failureCount > 0 || run.unexpectedExceptionCount > 0 {
             let shot = XCUIScreen.main.screenshot()
             let attachment = XCTAttachment(screenshot: shot)
