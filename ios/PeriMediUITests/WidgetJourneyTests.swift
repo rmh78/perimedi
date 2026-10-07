@@ -69,7 +69,9 @@ enum WidgetShell {
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         switch springboard.state {
         case .runningForeground, .runningBackground:
-            return
+            if shellReady(springboard) { return }
+            springboard.terminate()
+            waitForShell(springboard)
         case .notRunning:
             springboard.activate()
             waitForShell(springboard)

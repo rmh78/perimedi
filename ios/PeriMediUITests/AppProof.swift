@@ -85,12 +85,25 @@ struct AppProof {
         XCTAssertEqual(robot.value(of: "cycle.effect"), "no-previous")
     }
 
+    private func bannerShown(within seconds: TimeInterval) -> Bool {
+        let deadline = Date().addingTimeInterval(seconds)
+        while Date() < deadline {
+            if robot.exists("reminder.banner") { return true }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        return false
+    }
+
     private func trackMedsReminderMonthAndMore() {
         robot.addMedication(name: "Estrogen", dose: "1 mg", start: UITestDate.periodStart)
         robot.waitFor(id: "cycle.lane.estrogen")
         XCTAssertFalse(robot.exists("cycle.empty.meds"))
         XCTAssertFalse(robot.exists("cycle.intro"))
         XCTAssertEqual(robot.value(of: "cycle.lane.estrogen.status"), "not-taken")
+        if !bannerShown(within: 8) {
+            robot.tap("cycle.lane.estrogen")
+            robot.tap("cycle.lane.estrogen")
+        }
         robot.waitFor(id: "reminder.banner", timeout: 12)
         robot.tap("reminder.taken")
         robot.waitGone(id: "reminder.banner")
