@@ -315,13 +315,32 @@ final class HomeWidgets {
         return screen.intersects(frame)
     }
 
+    private enum WidgetKind {
+        case unknown, icon, other
+    }
+
+    private var widgetKind: WidgetKind = .unknown
+
     private func widgetIcon() -> XCUIElement {
         let predicate = NSPredicate(format: "identifier == 'PeriMedi' AND value == 'Widget'")
-        let other = springboard.descendants(matching: .other).matching(predicate).firstMatch
-        if other.exists { return other }
         let icon = springboard.icons.matching(predicate).firstMatch
-        if icon.exists { return icon }
-        return other
+        let other = springboard.descendants(matching: .other).matching(predicate).firstMatch
+        switch widgetKind {
+        case .icon:
+            return icon
+        case .other:
+            return other
+        case .unknown:
+            if icon.exists {
+                widgetKind = .icon
+                return icon
+            }
+            if other.exists {
+                widgetKind = .other
+                return other
+            }
+            return icon
+        }
     }
 
     private static func labels(_ face: WidgetFace) -> [String] {
@@ -385,15 +404,15 @@ final class HomeWidgets {
     }
 
     var hasEmptyMessage: Bool {
-        springboard.descendants(matching: .staticText)["All taken for today"].exists
+        springboard.staticTexts["All taken for today"].exists
     }
 
     var hasStillToTake: Bool {
-        springboard.descendants(matching: .staticText)["Still to take today"].exists
+        springboard.staticTexts["Still to take today"].exists
     }
 
     var hasCheck: Bool {
-        springboard.descendants(matching: .staticText)["✓"].exists
+        springboard.staticTexts["✓"].exists
     }
 
     var hasTake: Bool {
@@ -401,7 +420,7 @@ final class HomeWidgets {
     }
 
     func hasMed(_ name: String) -> Bool {
-        springboard.descendants(matching: .staticText)[name].exists
+        springboard.staticTexts[name].exists
     }
 
     func tapTaken(beside name: String? = nil, direct: Bool = false) {
@@ -419,7 +438,7 @@ final class HomeWidgets {
             let visible = buttons.filter { capsule($0.frame, on: screen) }
             let chosen: XCUIElement?
             if let name {
-                let label = springboard.descendants(matching: .staticText)[name]
+                let label = springboard.staticTexts[name]
                 if label.exists {
                     let y = label.frame.midY
                     chosen = visible.min { abs($0.frame.midY - y) < abs($1.frame.midY - y) }
@@ -450,7 +469,10 @@ final class HomeWidgets {
 
     private func tapFirst(labels: [String]) -> Bool {
         for label in labels {
-            let match = springboard.descendants(matching: .any)[label].firstMatch
+            let button = springboard.buttons[label]
+            let text = springboard.staticTexts[label]
+            let any = springboard.descendants(matching: .any)[label].firstMatch
+            let match = button.exists ? button : (text.exists ? text : any)
             guard match.exists else { continue }
             let frame = match.frame
             let screen = springboard.frame

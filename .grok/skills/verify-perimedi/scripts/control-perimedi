@@ -397,6 +397,8 @@ xcode_test() {
     DEVELOPMENT_TEAM="$team" \
     CODE_SIGN_STYLE=Automatic \
     CODE_SIGN_ENTITLEMENTS=PeriMediDoseWidget/PeriMediDoseWidget.entitlements \
+    COMPILER_INDEX_STORE_ENABLE=NO \
+    ENABLE_PREVIEWS=NO \
     -allowProvisioningUpdates
 }
 

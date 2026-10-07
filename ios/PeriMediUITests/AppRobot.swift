@@ -94,10 +94,8 @@ class PeriMediUITestCase: XCTestCase {
 final class AppRobot {
     let app = XCUIApplication()
     private var lastJourney: JourneyLaunch?
-    private var resolvedType: [String: XCUIElement.ElementType] = [:]
 
-    /// Concrete types only. A full `.any` walk is the measured hierarchy cost.
-    /// `trends.plot` is a scroll view. The reminder card is a group.
+    /// Fallback when an id has no hint. `trends.plot` is a scroll view. The reminder card matches `.any`.
     private static let lookupTypes: [XCUIElement.ElementType] = [
         .button, .textField, .textView, .staticText, .switch, .scrollView, .group, .other, .image, .cell,
     ]
@@ -130,26 +128,71 @@ final class AppRobot {
     }
 
     func element(_ id: String) -> XCUIElement {
-        if let type = resolvedType[id] {
-            let cached = app.descendants(matching: type)[id]
-            if cached.exists { return cached }
+        let types = Self.hintedTypes(for: id) ?? Self.lookupTypes
+        var first: XCUIElement?
+        for type in types {
+            let match = Self.query(app, type, id)
+            if first == nil { first = match }
+            if match.exists { return match }
         }
-        for type in Self.types(for: id) {
-            let match = app.descendants(matching: type)[id]
-            if match.exists {
-                resolvedType[id] = type == .any ? match.elementType : type
-                return match
-            }
-        }
-        return app.buttons[id]
+        return first ?? app.buttons[id]
     }
 
-    private static func types(for id: String) -> [XCUIElement.ElementType] {
+    /// One or two control types, taken from the types XCTest actually resolved on the CI journey.
+    /// A missing hint falls back to the full list. A wrong single type would hide the control.
+    private static func hintedTypes(for id: String) -> [XCUIElement.ElementType]? {
         switch id {
-        case "reminder.banner", "trends.plot":
-            return [.group, .scrollView, .other, .any]
+        case "reminder.banner":
+            return [.any]
+        case "trends.plot":
+            return [.scrollView]
+        case "med.name", "med.dose":
+            return [.textField]
+        case "symptom.custom.add":
+            return [.textField, .button]
+        case "more.reminders":
+            return [.switch]
+        case "trends.detail", "trends.screen":
+            return [.other]
+        case "cycle.chip.period", "cycle.pager.label", "trends.status", "trends.empty",
+             "trends.axis", "trends.sizeKey", "trends.tickCopy", "visit.range":
+            return [.staticText]
+        case "sheet.med", "sheet.period", "sheet.symptom", "sheet.trends",
+             "cycle.empty.meds", "cycle.effect", "visit.pdf.preview":
+            return [.button, .staticText]
         default:
-            return lookupTypes
+            break
+        }
+        if id.hasSuffix(".status") || id.hasPrefix("trends.group.") {
+            return [.staticText]
+        }
+        if id.hasPrefix("trends.series.") {
+            return [.staticText, .button]
+        }
+        if id.hasPrefix("cycle.strip.") {
+            return [.other, .button]
+        }
+        if id.hasPrefix("tab.") || id.hasPrefix("cycle.") || id.hasPrefix("period.")
+            || id.hasPrefix("med.") || id.hasPrefix("month.") || id.hasPrefix("more.")
+            || id.hasPrefix("symptom.") || id.hasPrefix("trends.") || id.hasPrefix("visit.")
+            || id.hasPrefix("confirm.") || id.hasPrefix("reminder.")
+            || id == "date.done" || id == "time.done" || id == "sheet.close" {
+            return [.button]
+        }
+        return nil
+    }
+
+    private static func query(_ app: XCUIApplication, _ type: XCUIElement.ElementType, _ id: String) -> XCUIElement {
+        switch type {
+        case .button: return app.buttons[id]
+        case .staticText: return app.staticTexts[id]
+        case .textField: return app.textFields[id]
+        case .textView: return app.textViews[id]
+        case .switch: return app.switches[id]
+        case .scrollView: return app.scrollViews[id]
+        case .image: return app.images[id]
+        case .cell: return app.cells[id]
+        default: return app.descendants(matching: type)[id]
         }
     }
 
