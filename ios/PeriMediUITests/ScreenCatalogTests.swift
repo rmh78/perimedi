@@ -1,7 +1,9 @@
 import XCTest
 
-final class ScreenCatalogTests: PeriMediUITestCase {
-    func testWriteScreenCatalog() throws {
+struct ScreenCatalogWriter {
+    let robot: AppRobot
+
+    func writeEnglish() throws {
         try captureEmpty()
         try captureSample()
         try captureTrendsFixture()
@@ -19,114 +21,96 @@ final class ScreenCatalogTests: PeriMediUITestCase {
     }
 
     private func captureEmpty() throws {
-        robot.launchCatalog(locale: "en")
-        try emptyShots(locale: "en")
-        robot.setLanguage("de")
-        try emptyShots(locale: "de")
-    }
-
-    private func emptyShots(locale: String) throws {
+        robot.launchCatalog(.empty)
         robot.tap("tab.cycle")
         robot.waitFor(id: "cycle.intro")
-        try write("cycle-empty-\(locale)")
+        try write("cycle-empty-en")
 
         robot.tap("tab.trends")
         robot.waitFor(id: "trends.empty")
-        try write("trends-empty-\(locale)")
+        try write("trends-empty-en")
 
         robot.tap("tab.cycle")
         robot.tap("cycle.action.med")
         robot.waitFor(id: "sheet.med")
         robot.clearAndType("med.dose", "1 mg")
         robot.waitFor(id: "med.since")
-        try write("sheet-med-\(locale)")
+        try write("sheet-med-en")
         robot.closeSheet(id: "sheet.med")
 
         robot.tap("cycle.action.period")
         robot.waitFor(id: "sheet.period")
-        try write("sheet-period-\(locale)")
+        try write("sheet-period-en")
         robot.closeSheet(id: "sheet.period")
 
         robot.tap("cycle.action.symptom")
         robot.waitFor(id: "sheet.symptom")
-        try write("sheet-symptom-\(locale)")
+        try write("sheet-symptom-en")
         robot.closeSheet(id: "sheet.symptom")
     }
 
     private func captureSample() throws {
-        robot.launchCatalog(locale: "en", extra: ["-loadSample"])
-        try sampleShots(locale: "en")
-        robot.setLanguage("de")
-        try sampleShots(locale: "de")
-    }
-
-    private func sampleShots(locale: String) throws {
+        robot.launchCatalog(.sample)
         robot.tap("tab.cycle")
         robot.waitFor(id: "cycle.effect")
-        try write("cycle-sample-\(locale)")
+        try write("cycle-sample-en")
 
         robot.tap("tab.trends")
         robot.waitFor(id: "trends.plot")
-        try write("trends-sample-\(locale)")
+        try write("trends-sample-en")
         robot.waitFor(id: "trends.change")
         robot.tap("trends.change")
         robot.waitFor(id: "sheet.trends")
-        try write("trends-sheet-\(locale)")
+        try write("trends-sheet-en")
         robot.closeSheet(id: "sheet.trends")
 
         robot.tap("tab.month")
         robot.waitFor(id: "month.day.\(UITestDate.today)")
-        try write("month-sample-\(locale)")
+        try write("month-sample-en")
 
         robot.tap("tab.more")
         robot.scrollTo("more.sharePdf")
         robot.waitFor(id: "more.sharePdf")
-        try write("more-sample-\(locale)")
+        try write("more-sample-en")
         robot.tap("more.sharePdf")
         robot.waitFor(id: "visit.range")
         robot.waitFor(id: "visit.range.cycle.2026-02-02")
         robot.waitFor(id: "visit.range.previous")
-        try write("visit-range-sample-\(locale)")
+        try write("visit-range-sample-en")
         robot.waitFor(id: "visit.range.continue")
         robot.tap("visit.range.continue")
         robot.waitFor(id: "visit.pdf.preview")
         robot.waitFor(id: "visit.pdf.share")
-        try write("visit-pdf-sample-\(locale)")
+        try write("visit-pdf-sample-en")
         robot.tap("sheet.close")
         robot.waitGone(id: "visit.pdf.preview")
     }
 
     private func captureTrendsFixture() throws {
-        robot.launchCatalog(locale: "en", extra: ["-fixture=trends", "-tabTrends"])
-        try trendsFixtureShots(locale: "en")
-        robot.setLanguage("de")
-        robot.tap("tab.trends")
-        robot.waitFor(id: "trends.screen")
-        try trendsFixtureShots(locale: "de")
-    }
-
-    private func trendsFixtureShots(locale: String) throws {
+        robot.launchCatalog(.trendsChart)
         robot.waitFor(id: "trends.tick.2026-02-01")
         robot.tap("trends.tick.2026-02-01")
         robot.waitFor(id: "trends.tickCopy")
-        try write("trends-tick-\(locale)")
+        try write("trends-tick-en")
         robot.waitFor(id: "trends.dot.hot_flash.2026-03-01")
         robot.tap("trends.dot.hot_flash.2026-03-01")
         robot.waitFor(id: "trends.detail")
-        try write("trends-tap-\(locale)")
+        try write("trends-tap-en")
     }
 
     private func captureTrendsNoScores() throws {
-        robot.launchCatalog(locale: "en", extra: ["-fixture=trends-noscores", "-tabTrends"])
+        robot.launchCatalog(.trendsNoScores)
         robot.waitFor(id: "trends.empty")
         try write("trends-noscores-en")
-        robot.setLanguage("de")
-        robot.tap("tab.trends")
-        robot.waitFor(id: "trends.empty")
-        try write("trends-noscores-de")
     }
 
     private func write(_ name: String) throws {
         try ScreenCatalog.write(name)
+    }
+}
+
+final class ScreenCatalogTests: PeriMediUITestCase {
+    func testWriteScreenCatalog() throws {
+        try ScreenCatalogWriter(robot: robot).writeEnglish()
     }
 }

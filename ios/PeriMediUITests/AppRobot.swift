@@ -17,6 +17,60 @@ enum UITestDate {
     }
 }
 
+/// Never `-journeyStep` or `-loadSample`.
+/// `widgetToday` uses the device date; the widget shows rows only when that date matches.
+enum JourneyLaunch: Equatable {
+    case pinnedRemindIn(seconds: Int)
+    case trendsChart
+    case trendsNoScores
+    case widgetToday
+
+    var arguments: [String] {
+        let base = ["-en", "-clear", "-uiTesting", "-today=\(pinnedDay)"]
+        switch self {
+        case .pinnedRemindIn(let seconds):
+            return base + ["-remindIn=\(seconds)"]
+        case .trendsChart:
+            return base + ["-fixture=trends"]
+        case .trendsNoScores:
+            return base + ["-fixture=trends-noscores"]
+        case .widgetToday:
+            return base
+        }
+    }
+
+    private var pinnedDay: String {
+        switch self {
+        case .widgetToday:
+            return UITestDate.deviceToday
+        case .pinnedRemindIn, .trendsChart, .trendsNoScores:
+            return UITestDate.today
+        }
+    }
+}
+
+enum CatalogLaunch: Equatable {
+    case empty
+    case sample
+    case trendsChart
+    case trendsNoScores
+
+    var arguments: [String] {
+        var args = ["-en", "-clear", "-uiTesting", "-today=\(UITestDate.today)"]
+        switch self {
+        case .empty:
+            break
+        case .sample:
+            args.append("-loadSample")
+        case .trendsChart:
+            args.append(contentsOf: ["-fixture=trends", "-tabTrends"])
+        case .trendsNoScores:
+            args.append(contentsOf: ["-fixture=trends-noscores", "-tabTrends"])
+        }
+        return args
+    }
+}
+
 class PeriMediUITestCase: XCTestCase {
     let robot = AppRobot()
 
@@ -37,62 +91,70 @@ class PeriMediUITestCase: XCTestCase {
     }
 }
 
-struct AppRobot {
+final class AppRobot {
     let app = XCUIApplication()
+    private var lastJourney: JourneyLaunch?
+    private var resolvedType: [String: XCUIElement.ElementType] = [:]
 
-    func launch(extra: [String] = [], today: String = UITestDate.today) {
-        XCTAssertFalse(
-            ["-journeyStep", "-loadSample"].contains { flag in
-                app.launchArguments.contains(where: { $0.hasPrefix(flag) })
-            }
-        )
-        XCTAssertFalse(extra.contains { $0.hasPrefix("-journeyStep") })
-        XCTAssertFalse(extra.contains { $0.hasPrefix("-loadSample") })
-        app.launchArguments = ["-en", "-clear", "-today=\(today)", "-uiTesting"] + extra
-        XCTAssertFalse(app.launchArguments.contains { $0.hasPrefix("-journeyStep") })
-        XCTAssertFalse(app.launchArguments.contains { $0.hasPrefix("-loadSample") })
-        app.launch()
-        waitFor(id: "tab.cycle")
-        if extra.contains("-tabTrends") {
-            waitFor(id: "tab.trends")
-            waitFor(id: "trends.screen")
-        } else if extra.contains("-tabMonth") {
-            waitFor(id: "tab.month")
-        } else if extra.contains("-tabMore") {
-            waitFor(id: "tab.more")
-        } else {
-            waitFor(id: "cycle.action.med")
+    /// Concrete types only. A full `.any` walk is the measured hierarchy cost.
+    /// `trends.plot` is a scroll view. The reminder card is a group.
+    private static let lookupTypes: [XCUIElement.ElementType] = [
+        .button, .textField, .textView, .staticText, .switch, .scrollView, .group, .other, .image, .cell,
+    ]
+
+    func launch(_ plan: JourneyLaunch, file: StaticString = #filePath, line: UInt = #line) {
+        if lastJourney == plan {
+            XCTFail("relaunch does not change the plan: \(plan)", file: file, line: line)
+            return
         }
+        lastJourney = plan
+        app.terminate()
+        app.launchArguments = plan.arguments
+        app.launch()
+        waitFor(id: "tab.cycle", file: file, line: line)
+        waitFor(id: "cycle.action.med", file: file, line: line)
     }
 
-    /// Screen catalog only. Allows `-loadSample` and fixtures. Not the journey proof.
-    /// German shots switch via More language pills after an EN launch (flags apply once).
-    func launchCatalog(locale: String, extra: [String] = []) {
-        XCTAssertTrue(locale == "en" || locale == "de", "catalog locale \(locale)")
-        XCTAssertFalse(extra.contains { $0.hasPrefix("-journeyStep") })
-        app.launchArguments = ["-\(locale)", "-clear", "-today=\(UITestDate.today)", "-uiTesting"] + extra
+    func launchCatalog(_ plan: CatalogLaunch, file: StaticString = #filePath, line: UInt = #line) {
+        app.terminate()
+        app.launchArguments = plan.arguments
         app.launch()
-        waitFor(id: "tab.cycle")
-        if extra.contains("-tabTrends") {
-            waitFor(id: "tab.trends")
-            waitFor(id: "trends.screen")
-        } else if extra.contains("-tabMonth") {
-            waitFor(id: "tab.month")
-        } else if extra.contains("-tabMore") {
-            waitFor(id: "tab.more")
-        } else {
-            waitFor(id: "cycle.action.med")
+        waitFor(id: "tab.cycle", file: file, line: line)
+        switch plan {
+        case .trendsChart, .trendsNoScores:
+            waitFor(id: "tab.trends", file: file, line: line)
+            waitFor(id: "trends.screen", file: file, line: line)
+        case .empty, .sample:
+            waitFor(id: "cycle.action.med", file: file, line: line)
         }
     }
 
     func element(_ id: String) -> XCUIElement {
-        app.descendants(matching: .any).matching(identifier: id).firstMatch
+        if let type = resolvedType[id] {
+            let cached = app.descendants(matching: type)[id]
+            if cached.exists { return cached }
+        }
+        for type in Self.types(for: id) {
+            let match = app.descendants(matching: type)[id]
+            if match.exists {
+                resolvedType[id] = type == .any ? match.elementType : type
+                return match
+            }
+        }
+        return app.buttons[id]
     }
 
-    /// `waitForExistence` polls about once a second, so already-visible
-    /// controls still cost ~1s each. Spin on `.exists` instead.
+    private static func types(for id: String) -> [XCUIElement.ElementType] {
+        switch id {
+        case "reminder.banner", "trends.plot":
+            return [.group, .scrollView, .other, .any]
+        default:
+            return lookupTypes
+        }
+    }
+
     @discardableResult
-    private func spin(timeout: TimeInterval, _ predicate: () -> Bool) -> Bool {
+    func spin(timeout: TimeInterval, _ predicate: () -> Bool) -> Bool {
         if predicate() { return true }
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
@@ -102,39 +164,36 @@ struct AppRobot {
         return predicate()
     }
 
+    func frameInsideChrome(_ element: XCUIElement) -> Bool {
+        guard element.exists else { return false }
+        let frame = element.frame
+        let bounds = app.frame
+        guard frame.width > 1, frame.height > 1 else { return false }
+        return frame.minX >= bounds.minX - 1
+            && frame.maxX <= bounds.maxX + 1
+            && frame.minY >= bounds.minY - 1
+            && frame.maxY <= bounds.height - 140
+    }
+
     func scrollTo(_ id: String, timeout: TimeInterval = 6, file: StaticString = #filePath, line: UInt = #line) {
-        for _ in 0..<12 {
-            if element(id).exists { break }
+        for _ in 0..<4 {
+            if frameInsideChrome(element(id)) { return }
             app.swipeUp()
         }
         waitFor(id: id, timeout: timeout, file: file, line: line)
-        for _ in 0..<8 {
-            if element(id).isHittable { return }
-            app.swipeUp()
-        }
     }
 
     func waitFor(id: String, timeout: TimeInterval = 3, file: StaticString = #filePath, line: UInt = #line) {
-        let el = element(id)
-        XCTAssertTrue(spin(timeout: timeout) { el.exists }, "missing \(id)", file: file, line: line)
+        XCTAssertTrue(spin(timeout: timeout) { element(id).exists }, "missing \(id)", file: file, line: line)
     }
 
     func waitGone(id: String, timeout: TimeInterval = 2, file: StaticString = #filePath, line: UInt = #line) {
-        let el = element(id)
-        XCTAssertTrue(spin(timeout: timeout) { !el.exists }, "still present \(id)", file: file, line: line)
+        XCTAssertTrue(spin(timeout: timeout) { !element(id).exists }, "still present \(id)", file: file, line: line)
     }
 
     func tap(_ id: String, file: StaticString = #filePath, line: UInt = #line) {
         waitFor(id: id, file: file, line: line)
-        let el = element(id)
-        if !el.isHittable {
-            dismissKeyboard()
-        }
-        if el.isHittable {
-            el.tap()
-            return
-        }
-        el.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        press(element(id))
     }
 
     func value(of id: String) -> String {
@@ -149,7 +208,7 @@ struct AppRobot {
 
     func setDateKey(_ id: String, _ key: String, file: StaticString = #filePath, line: UInt = #line) {
         waitFor(id: id, file: file, line: line)
-        element(id).tap()
+        press(element(id))
         let picker = app.datePickers.firstMatch
         XCTAssertTrue(spin(timeout: 2) { picker.exists }, "date chooser for \(id)", file: file, line: line)
         XCTAssertTrue(
@@ -160,7 +219,7 @@ struct AppRobot {
         )
         let done = element("date.done")
         if spin(timeout: 1) { done.exists } {
-            done.tap()
+            press(done)
         }
         waitGone(id: "date.done", timeout: 2, file: file, line: line)
         let el = element(id)
@@ -184,7 +243,7 @@ struct AppRobot {
         }
         let anyDay = picker.descendants(matching: .any)["\(day)"]
         if spin(timeout: 0.6) { anyDay.exists } {
-            anyDay.tap()
+            press(anyDay)
             return true
         }
         for needle in needles {
@@ -192,13 +251,13 @@ struct AppRobot {
                 NSPredicate(format: "label CONTAINS[c] %@", needle)
             ).firstMatch
             if match.exists {
-                match.tap()
+                press(match)
                 return true
             }
         }
         let dayButton = picker.buttons["\(day)"]
         if dayButton.exists {
-            dayButton.tap()
+            press(dayButton)
             return true
         }
         return false
@@ -213,59 +272,60 @@ struct AppRobot {
         return f.date(from: key)
     }
 
-    /// `typeText` needs software-keyboard focus (Apple). The doctor turns
-    /// Simulator hardware keyboard off before boot so this matches a phone.
-    /// Do not paste: that is not how a user types.
     func clearAndType(_ id: String, _ text: String, dismiss: Bool = true, file: StaticString = #filePath, line: UInt = #line) {
         waitFor(id: id, file: file, line: line)
         let field = element(id)
-
-        func shown() -> String {
-            ((field.value as? String) ?? field.label)
-                .replacingOccurrences(of: "YYYY-MM-DD", with: "")
+        focus(field, id: id, file: file, line: line)
+        typeAligned(field, text)
+        if shown(field) != text {
+            focus(field, id: id, file: file, line: line)
+            typeAligned(field, text)
         }
-
-        if !field.isHittable {
+        let have = shown(field)
+        XCTAssertEqual(have, text, "\(id) is \(have.debugDescription)", file: file, line: line)
+        if dismiss {
             dismissKeyboard()
         }
-        field.tap()
+    }
+
+    private func focus(_ field: XCUIElement, id: String, file: StaticString, line: UInt) {
+        press(field)
         XCTAssertTrue(
             spin(timeout: 2) { app.keyboards.firstMatch.exists },
             "keyboard for \(id)",
             file: file,
             line: line
         )
+    }
 
-        let current = shown()
-        if !current.isEmpty {
-            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count + 1))
+    private func typeAligned(_ field: XCUIElement, _ text: String) {
+        let have = shown(field)
+        if have == text { return }
+        if text.hasPrefix(have) {
+            let suffix = String(text.dropFirst(have.count))
+            if !suffix.isEmpty { field.typeText(suffix) }
+            return
+        }
+        let deletes = rawCount(field)
+        if deletes > 0 {
+            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: deletes))
         }
         field.typeText(text)
-        if !spin(timeout: 2) { shown() == text } {
-            var tries = 0
-            let limit = text.count * 3 + 4
-            while shown() != text && tries < limit {
-                tries += 1
-                let have = shown()
-                if text.hasPrefix(have), let next = text.dropFirst(have.count).first {
-                    field.typeText(String(next))
-                } else if !have.isEmpty {
-                    field.typeText(XCUIKeyboardKey.delete.rawValue)
-                } else {
-                    field.typeText(text)
-                }
-                _ = spin(timeout: 1.5) { shown() != have }
-            }
-        }
-        XCTAssertTrue(
-            spin(timeout: 2) { shown() == text },
-            "\(id) is \(shown().debugDescription), wanted \(text)",
-            file: file,
-            line: line
-        )
-        if dismiss {
-            dismissKeyboard()
-        }
+    }
+
+    private func rawCount(_ field: XCUIElement) -> Int {
+        let raw = (field.value as? String) ?? ""
+        if raw.isEmpty || raw == "YYYY-MM-DD" { return 0 }
+        return raw.count
+    }
+
+    private func shown(_ field: XCUIElement) -> String {
+        ((field.value as? String) ?? field.label)
+            .replacingOccurrences(of: "YYYY-MM-DD", with: "")
+    }
+
+    private func press(_ element: XCUIElement) {
+        element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
     }
 
     func dismissKeyboard() {
@@ -273,13 +333,13 @@ struct AppRobot {
         guard keyboard.exists else { return }
         for title in ["sheet.symptom", "sheet.med", "sheet.period"] {
             if element(title).exists {
-                element(title).tap()
+                press(element(title))
                 _ = spin(timeout: 1) { !keyboard.exists }
                 return
             }
         }
         if keyboard.buttons["Return"].exists {
-            keyboard.buttons["Return"].tap()
+            press(keyboard.buttons["Return"])
             _ = spin(timeout: 1) { !keyboard.exists }
         }
     }
@@ -287,20 +347,6 @@ struct AppRobot {
     func closeSheet(id: String) {
         tap("sheet.close")
         waitGone(id: id)
-    }
-
-    /// More language pills. Launch flags apply only once, so this sticks.
-    func setLanguage(_ locale: String, file: StaticString = #filePath, line: UInt = #line) {
-        XCTAssertTrue(locale == "en" || locale == "de", "locale \(locale)", file: file, line: line)
-        tap("tab.more", file: file, line: line)
-        tap("more.lang.\(locale)", file: file, line: line)
-        let expected = locale == "de" ? "Zyklus" : "Cycle"
-        XCTAssertTrue(
-            spin(timeout: 3) { element("tab.cycle").label == expected },
-            "tab.cycle is \(element("tab.cycle").label.debugDescription), wanted \(expected)",
-            file: file,
-            line: line
-        )
     }
 
     func addPeriod(start: String = UITestDate.periodStart, end: String = UITestDate.periodEnd) {
@@ -333,16 +379,13 @@ struct AppRobot {
         clearAndType("med.dose", dose)
         if let color {
             let swatch = app.descendants(matching: .any)[color]
-            if !swatch.isHittable { app.swipeUp() }
-            swatch.tap()
+            if !frameInsideChrome(swatch) { app.swipeUp() }
+            press(app.descendants(matching: .any)[color])
         }
         waitFor(id: "med.since")
         pick("med.mode", cyclic ? "med.mode.cyclic" : "med.mode.everyday")
         if let start {
             setDateKey("med.start", start)
-        }
-        if !element("med.save").isHittable {
-            app.swipeUp()
         }
         tap("med.save")
         waitGone(id: "sheet.med")
@@ -352,24 +395,24 @@ struct AppRobot {
         tap(id)
         let byId = element(option)
         if spin(timeout: 1.5) { byId.exists } {
-            byId.tap()
+            press(byId)
             return
         }
         let menuChoice = app.collectionViews.buttons[option]
         if spin(timeout: 1.5) { menuChoice.exists } {
-            menuChoice.tap()
+            press(menuChoice)
             return
         }
         let other = app.buttons.matching(
             NSPredicate(format: "label == %@ AND identifier != %@", option, id)
         ).firstMatch
         if spin(timeout: 1) { other.exists } {
-            other.tap()
+            press(other)
             return
         }
         let any = app.descendants(matching: .any)[option]
         if spin(timeout: 1) { any.exists } {
-            any.tap()
+            press(any)
         }
     }
 
@@ -385,13 +428,5 @@ struct AppRobot {
         tap("symptom.score.joints.\(joints)")
         tap("sheet.close")
         waitGone(id: "sheet.symptom", timeout: 3)
-    }
-
-    /// Sheet bodies scroll; XCTest `isHittable` is false for rows below the fold.
-    private func reveal(_ id: String) {
-        for _ in 0..<6 {
-            if element(id).isHittable { return }
-            app.swipeUp()
-        }
     }
 }

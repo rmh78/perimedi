@@ -23,8 +23,8 @@ Cycle → cycle settings (`cycle.action.period`).
 | Start | `period.start` | In the card. `setDateKey`. First-use: `2026-03-07`. |
 | End | `period.end` | In the card. First-use: `2026-03-11`. |
 | Save | `period.save` | Right side of the card. Label is Save. Then close the sheet. |
-| History | `period.history.{id}` | One row. The underlined date range shares that line with the length and flow. Opens the same card filled in. Proof: testEditAndDeletePeriod. |
-| Delete | `period.delete` | On the edit card’s button row, between Cancel and Save. The card then asks `Delete {{name}}?` using that range. Confirm with `confirm.delete`. Proof: testEditAndDeletePeriod. |
+| History | `period.history.{id}` | One row. The underlined date range shares that line with the length and flow. Opens the same card filled in. Proof: `testEnglishAppJourney` reads `7–12 Mar 2026`. |
+| Delete | `period.delete` | On the edit card’s button row, between Cancel and Save. The card then asks `Delete {{name}}?` using that range. Confirm with `confirm.delete`. Proof: `testEnglishAppJourney` reads `Delete 7–12 Mar 2026?`, then the intro returns and the period is logged again. |
 | Date chooser done | `date.done` | Used by `setDateKey`. |
 
 After save, Cycle strip days `cycle.strip.day.2026-03-07` and `…-11` values contain `period`. Empty-meds chip drops `need-period` and becomes `need-med`. Intro is gone.

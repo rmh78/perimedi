@@ -13,13 +13,13 @@ Third bottom tab: Cycle · Month · Trends · More. Own screen under `Features/T
 
 Bottom bar → Trends. Launch flag `-tabTrends` (same pattern as `-tabMonth` / `-tabMore`).
 
-UI tests that need several cycles of scores launch with `-fixture=trends` (not `-loadSample`). Cycles with no scores use `-fixture=trends-noscores`. Empty store still shows the screen with a title then need-cycles copy. Choose Symptoms and the catalog sheet appear only when a chart can be drawn.
+`testEnglishAppJourney` launches `.trendsChart` (`-fixture=trends`, not `-loadSample`) for the chart and the custom symptom, then `.trendsNoScores` (`-fixture=trends-noscores`). Empty store still shows the screen with a title then need-cycles copy. Choose Symptoms and the catalog sheet appear only when a chart can be drawn. The catalog writer may pass `-tabTrends`. The app journey taps `tab.trends`.
 
 ## Driving it with A11yID / AppRobot
 
 | Control | ID | Proof |
 |---|---|---|
-| Trends tab | `tab.trends` | Exists on launch. First-use taps it on empty home. Chart journey may pass `-tabTrends`. |
+| Trends tab | `tab.trends` | Exists on launch. `testEnglishAppJourney` taps it on empty home, again after `.trendsChart`, and again after `.trendsNoScores`. |
 | Trends screen | `trends.screen` | Shown after the tab or `-tabTrends`. |
 | Status | `trends.status` | Empty home: `need-cycles`. Fixture: `ids:hot_flash,sleep,mood` (catalog order of the three most-logged ids). After selecting anxiety: `ids:hot_flash,mood,anxiety`. |
 | Empty copy | `trends.empty` | No periods: `need-cycles`. Logged cycles without scores (`-fixture=trends-noscores`): `no-scores`. A title sits above that copy. Empty journeys have no `trends.change` and no series chips. |
