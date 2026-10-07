@@ -60,6 +60,12 @@ enum WidgetShell {
     static func recover() {
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         if shellReady(springboard) { return }
+        restart()
+    }
+
+    /// The icon list can still answer while the widget's accessibility server is dead.
+    static func restart() {
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         springboard.terminate()
         waitForShell(springboard)
     }
@@ -170,13 +176,10 @@ struct WidgetProof {
             "small widget did not show the remaining dose"
         )
         home.tapTaken(beside: longName, direct: true)
-        // The widget intent finishes on the Home Screen. Opening the app early
-        // reads the lane before that write lands.
-        var took = home.spin(8) { home.hasCheck || !home.hasMed(longName) }
-        if !took {
-            home.tapTaken(beside: longName)
-            took = home.spin(8) { home.hasCheck || !home.hasMed(longName) }
-        }
+        XCTAssertTrue(
+            home.spin(8) { home.hasCheck && !home.hasStillToTake },
+            "small face did not show the check after Take"
+        )
         if robot.app.state != .runningForeground {
             robot.app.activate()
         }
@@ -257,6 +260,11 @@ final class HomeWidgets {
         case .small:
             open()
             revealPeriMedi()
+            if !onScreen(widgetIcon()), !onScreen(appIcon()) {
+                WidgetShell.restart()
+                open()
+                revealPeriMedi()
+            }
             let target: XCUIElement
             if onScreen(widgetIcon()) {
                 target = widgetIcon()

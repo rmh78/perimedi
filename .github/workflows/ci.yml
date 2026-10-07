@@ -56,6 +56,16 @@ jobs:
       SIM_OS: "27.0"
     steps:
       - uses: actions/checkout@v5
+      - name: Restore the UI test build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ios/DerivedData/Build
+            ios/DerivedData/SourcePackages
+            ios/DerivedData/ModuleCache.noindex
+          key: ui-derived-xcode27-${{ hashFiles('ios/**/*.swift', 'ios/**/*.pbxproj', 'ios/**/*.xcscheme', 'ios/Package.resolved') }}
+          restore-keys: |
+            ui-derived-xcode27-
       - name: UI tests
         run: .grok/skills/verify-perimedi/scripts/control-perimedi verify
       - name: Upload xcresult on failure

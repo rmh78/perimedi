@@ -21,8 +21,8 @@ Bottom bar → More.
 | Control | ID | Proof |
 |---|---|---|
 | More tab | `tab.more` | Exists on launch. |
-| English language pill | `more.lang.en` | `testEnglishAppJourney` waits for both pills and does not tap them. `tab.more` reads `More`. |
-| German language pill | `more.lang.de` | Same journey waits for the pill and does not tap it. German nav strings are the l10n table check, not a Simulator pass. |
+| English language pill | `more.lang.en` | `testEnglishAppJourney` taps it after German. `tab.more` reads `More` again. |
+| German language pill | `more.lang.de` | Same journey taps it and `tab.more` reads `Mehr`, then switches back. The rest of the German catalog stays the l10n table check. |
 | Reminders master switch | `more.reminders` | Toggle. On by default (`DoseReminderCenter.masterKey`). `testEnglishAppJourney` waits for it and taps it after both doses are taken. |
 | Reminder sound menu | `more.reminderSound` | Picker. `testEnglishAppJourney` waits for it after toggling reminders. |
 | Reminder sound preview | `more.reminderSoundPreview` | Speaker button. Journey taps it. |
@@ -31,7 +31,7 @@ Bottom bar → More.
 | Share visit PDF | `more.sharePdf` | See [doctor-visit.md](doctor-visit.md). |
 | Backup rows | `more.sample` / `more.export` / `more.import` / `more.clear` | See [backup.md](backup.md). |
 
-`RequiredJourneyTests.testEnglishAppJourney` is the More path, after both doses are taken: `tab.more`, both language pills on screen, `tab.more` reads More, wait/tap `more.reminders`, wait for `more.reminderSound`, tap `more.reminderSoundPreview`, wait for `more.sharePdf`, tap it through range Continue to the preview, wait `visit.pdf.share`, close, wait for `more.privacyPolicy` and backup row IDs, tap `more.sample` then `confirm.cancel`. Do not tap `more.lang.de`, export, import, clear, the privacy link, or the preview Share button. German nav strings (`Zyklus`, `Monat`, `Verlauf`, `Mehr`) are `check-l10n-layout.py`, not this journey.
+`RequiredJourneyTests.testEnglishAppJourney` is the More path, after both doses are taken: `tab.more`, tap `more.lang.de` until `tab.more` reads Mehr, tap `more.lang.en` until it reads More, wait/tap `more.reminders`, wait for `more.reminderSound`, tap `more.reminderSoundPreview`, wait for `more.sharePdf`, tap it through range Continue to the preview, wait `visit.pdf.share`, close, wait for `more.privacyPolicy` and backup row IDs, tap `more.sample` then `confirm.cancel`. Do not tap export, import, clear, the privacy link, or the preview Share button. The other German nav strings stay `check-l10n-layout.py`.
 
 Language pills call `LocaleController`. Preference is `AppStorage` `perimedi.locale`. Default German if device preferred languages include German. The required journey forces English with `-en` and does not switch. The whole More tab box is tappable, not only the ellipsis or the word More.
 
