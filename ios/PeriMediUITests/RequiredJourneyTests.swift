@@ -10,11 +10,10 @@ final class RequiredJourneyTests: PeriMediUITestCase {
     }
 
     override func tearDown() {
-        let widget = name.contains("testEnglishWidgetJourney")
-        super.tearDown()
-        if widget {
+        if name.contains("testEnglishWidgetJourney") {
             WidgetShell.finish()
         }
+        super.tearDown()
     }
 
     func testEnglishAppJourney() {

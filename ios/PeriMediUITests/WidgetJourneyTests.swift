@@ -11,7 +11,7 @@ private func ignoringSnapshot(_ body: () -> Void) {
     XCTExpectFailure(options: options, failingBlock: body)
 }
 
-private enum SpringboardIdleBypass {
+enum SpringboardIdleBypass {
     private static var saved: [(AnyClass, Selector, IMP)] = []
 
     static func install() {
@@ -69,9 +69,7 @@ enum WidgetShell {
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         switch springboard.state {
         case .runningForeground, .runningBackground:
-            if shellReady(springboard) { return }
-            springboard.terminate()
-            waitForShell(springboard)
+            return
         case .notRunning:
             springboard.activate()
             waitForShell(springboard)
