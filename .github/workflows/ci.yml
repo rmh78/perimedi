@@ -56,15 +56,22 @@ jobs:
       SIM_OS: "27.0"
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - name: Restore the UI test build
-        uses: actions/cache@v4
+        id: ui-build-cache
+        uses: actions/cache/restore@v4
         with:
           path: |
             ios/DerivedData/Build
             ios/DerivedData/SourcePackages
             ios/DerivedData/ModuleCache.noindex
-          key: ui-derived-xcode27-${{ hashFiles('ios/**/*.swift', 'ios/**/*.pbxproj', 'ios/**/*.xcscheme', 'ios/Package.resolved') }}
+            ios/DerivedData/CompilationCache.noindex
+            ios/DerivedData/SDKExplicitPrecompiledModules
+            ios/DerivedData/SDKStatCaches.noindex
+          key: ui-derived-xcode27-v2-${{ hashFiles('ios/**/*.swift', 'ios/**/*.pbxproj', 'ios/**/*.xcscheme', 'ios/Package.resolved') }}
           restore-keys: |
+            ui-derived-xcode27-v2-
             ui-derived-xcode27-
       - name: UI tests
         run: .grok/skills/verify-perimedi/scripts/control-perimedi verify
@@ -76,3 +83,18 @@ jobs:
           path: ios/DerivedData/PeriMedi.xcresult
           if-no-files-found: warn
           retention-days: 14
+      - name: Prune the UI test build
+        if: always() && steps.ui-build-cache.outputs.cache-hit != 'true'
+        run: rm -rf ios/DerivedData/Index.noindex ios/DerivedData/Logs ios/DerivedData/TestResults ios/DerivedData/PeriMedi.xcresult ios/DerivedData/build-for-testing.log
+      - name: Save the UI test build
+        if: always() && steps.ui-build-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ios/DerivedData/Build
+            ios/DerivedData/SourcePackages
+            ios/DerivedData/ModuleCache.noindex
+            ios/DerivedData/CompilationCache.noindex
+            ios/DerivedData/SDKExplicitPrecompiledModules
+            ios/DerivedData/SDKStatCaches.noindex
+          key: ${{ steps.ui-build-cache.outputs.cache-primary-key }}

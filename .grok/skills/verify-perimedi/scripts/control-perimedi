@@ -365,6 +365,36 @@ bundle_has_group() {
 
 BUILD_PID=""
 
+# A checkout stamps every file with 'now', so a restored DerivedData still
+# rebuilds the app. Put each tracked file back to the commit that changed it.
+restore_checkout_mtime() {
+  [[ -n "${GITHUB_ACTIONS:-}" ]] || return 0
+  python3 - "$ROOT" <<'PY'
+import os, subprocess, sys
+root = sys.argv[1]
+os.chdir(root)
+seen = set()
+stamp = None
+log = subprocess.check_output(
+    ["git", "log", "--pretty=format:%ct", "--name-only", "--no-renames"],
+    text=True,
+)
+for line in log.splitlines():
+    if not line:
+        continue
+    if line.isdigit():
+        stamp = int(line)
+        continue
+    if stamp is None or line in seen:
+        continue
+    path = os.path.join(root, line)
+    if os.path.isfile(path):
+        os.utime(path, (stamp, stamp))
+        seen.add(line)
+print(f"control-perimedi: restored mtimes for {len(seen)} files", flush=True)
+PY
+}
+
 stop_build() {
   local pid="${BUILD_PID:-}"
   BUILD_PID=""
@@ -519,6 +549,7 @@ cmd_verify() {
 
   mkdir -p "$DERIVED"
   rm -rf "$RESULT"
+  restore_checkout_mtime
   local build_log="$DERIVED/build-for-testing.log"
   set -m
   xcode_test build-for-testing >"$build_log" 2>&1 &
