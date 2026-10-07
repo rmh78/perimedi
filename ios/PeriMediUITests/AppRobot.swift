@@ -373,14 +373,10 @@ final class AppRobot {
             .replacingOccurrences(of: "YYYY-MM-DD", with: "")
     }
 
-    /// A coordinate tied to the element makes XCTest resolve that button again
-    /// three times after the touch. A point on the app is one event.
+    /// Tap the control itself. A raw point on the app missed Save: the touch
+    /// landed at (100.8, 740.7) and the medication sheet stayed open.
     func press(_ element: XCUIElement) {
-        let frame = element.frame
-        let origin = app.frame.origin
-        app.coordinate(withNormalizedOffset: .zero)
-            .withOffset(CGVector(dx: frame.midX - origin.x, dy: frame.midY - origin.y))
-            .tap()
+        element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
     }
 
     func dismissKeyboard() {
@@ -407,7 +403,7 @@ final class AppRobot {
     func addPeriod(start: String = UITestDate.periodStart, end: String = UITestDate.periodEnd) {
         tap("cycle.action.period")
         waitFor(id: "sheet.period")
-        if !element("period.add").exists {
+        if !exists("period.add") {
             app.swipeUp()
         }
         tap("period.add")
