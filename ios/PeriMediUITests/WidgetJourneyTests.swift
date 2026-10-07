@@ -315,32 +315,13 @@ final class HomeWidgets {
         return screen.intersects(frame)
     }
 
-    private enum WidgetKind {
-        case unknown, icon, other
-    }
-
-    private var widgetKind: WidgetKind = .unknown
-
     private func widgetIcon() -> XCUIElement {
         let predicate = NSPredicate(format: "identifier == 'PeriMedi' AND value == 'Widget'")
-        let icon = springboard.icons.matching(predicate).firstMatch
         let other = springboard.descendants(matching: .other).matching(predicate).firstMatch
-        switch widgetKind {
-        case .icon:
-            return icon
-        case .other:
-            return other
-        case .unknown:
-            if icon.exists {
-                widgetKind = .icon
-                return icon
-            }
-            if other.exists {
-                widgetKind = .other
-                return other
-            }
-            return icon
-        }
+        if other.exists { return other }
+        let icon = springboard.icons.matching(predicate).firstMatch
+        if icon.exists { return icon }
+        return other
     }
 
     private static func labels(_ face: WidgetFace) -> [String] {

@@ -167,7 +167,7 @@ final class AppRobot {
             return [.staticText]
         }
         if id.hasPrefix("trends.series.") {
-            return [.staticText, .button]
+            return [.button, .staticText]
         }
         if id.hasPrefix("cycle.strip.") {
             return [.other, .button]
@@ -183,17 +183,7 @@ final class AppRobot {
     }
 
     private static func query(_ app: XCUIApplication, _ type: XCUIElement.ElementType, _ id: String) -> XCUIElement {
-        switch type {
-        case .button: return app.buttons[id]
-        case .staticText: return app.staticTexts[id]
-        case .textField: return app.textFields[id]
-        case .textView: return app.textViews[id]
-        case .switch: return app.switches[id]
-        case .scrollView: return app.scrollViews[id]
-        case .image: return app.images[id]
-        case .cell: return app.cells[id]
-        default: return app.descendants(matching: type)[id]
-        }
+        app.descendants(matching: type)[id]
     }
 
     @discardableResult
