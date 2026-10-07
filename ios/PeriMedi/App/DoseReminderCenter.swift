@@ -224,7 +224,8 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         ).first else { return }
         var soon = slot
         soon.fireAt = Date().addingTimeInterval(TimeInterval(max(1, delay)))
-        // The card is in-app. Do not wait for the notification center to accept the request.
+        // The card is in-app. add() on the main actor froze the UI for
+        // 286s after Taken while XCTest waited for the app to go idle.
         present(soon)
         if let request = makeRequest(
             id: soon.id,
@@ -234,7 +235,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             fireAt: soon.fireAt,
             info: userInfo(for: soon)
         ) {
-            try? await UNUserNotificationCenter.current().add(request)
+            UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
         }
     }
 
