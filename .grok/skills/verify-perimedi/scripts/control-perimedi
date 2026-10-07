@@ -311,9 +311,7 @@ cmd_launch() {
   fi
   disable_hardware_keyboard
   xcrun simctl bootstatus "$UDID" -b
-  xcrun simctl status_bar "$UDID" override --time "9:41" --batteryState charged --batteryLevel 100 \
-    --wifiMode active --wifiBars 3 --cellularMode active --cellularBars 4 --dataNetwork wifi \
-    || echo "control-perimedi: status_bar override skipped" >&2
+  override_status_bar
 
   xcrun simctl uninstall "$UDID" "$BUNDLE" 2>/dev/null || true
   xcrun simctl uninstall "$UDID" "${BUNDLE}.uitests.xctrunner" 2>/dev/null || true
@@ -323,15 +321,77 @@ cmd_launch() {
   printf 'launch: ready udid=%s device=%s\n' "$UDID" "$DEVICE_LINE"
 }
 
-# Sign to Run Locally and stamp group.app.perimedi.ios. CODE_SIGNING_ALLOWED=NO
-# leaves containerURL nil, so the widget shows the empty card. The group-only
-# entitlements file keeps the iCloud container out of this signature.
+override_status_bar() {
+  # perl `alarm` then `exec` replaces the process and drops the alarm.
+  xcrun simctl status_bar "$UDID" override \
+    --time "9:41" --batteryState charged --batteryLevel 100 \
+    --wifiMode active --wifiBars 3 --cellularMode active --cellularBars 4 \
+    --dataNetwork wifi &
+  local pid=$!
+  local i
+  for i in 1 2 3 4 5; do
+    if ! kill -0 "$pid" 2>/dev/null; then
+      wait "$pid" 2>/dev/null || echo "control-perimedi: status_bar override failed" >&2
+      return 0
+    fi
+    sleep 1
+  done
+  kill -TERM "$pid" 2>/dev/null || true
+  wait "$pid" 2>/dev/null || true
+  echo "control-perimedi: status_bar override bounded" >&2
+}
+
+# Do not install a build that lacks group.app.perimedi.ios.
+# Simulator stamps that group into the binary's simulated entitlement section.
+# codesign -d is an empty dict for those ad-hoc signatures.
+product_has_app_group() {
+  local products="$DERIVED/Build/Products"
+  local app widget
+  app="$(find "$products" -type d -name 'PeriMedi.app' -path '*iphonesimulator*' 2>/dev/null | head -n 1)"
+  widget="$(find "$app/PlugIns" -type d -name 'PeriMediDoseWidget.appex' 2>/dev/null | head -n 1)"
+  [[ -n "$app" && -n "$widget" ]] || return 1
+  bundle_has_group "$app" "PeriMedi" && bundle_has_group "$widget" "PeriMediDoseWidget"
+}
+
+bundle_has_group() {
+  local bundle="$1"
+  local exe="$2"
+  local dump
+  dump="$(codesign -d --entitlements :- "$bundle" 2>/dev/null || true)"
+  [[ "$dump" == *"group.app.perimedi.ios"* ]] && return 0
+  [[ -f "$bundle/$exe" ]] || return 1
+  grep -a -q 'group.app.perimedi.ios' "$bundle/$exe"
+}
+
+BUILD_PID=""
+
+stop_build() {
+  local pid="${BUILD_PID:-}"
+  BUILD_PID=""
+  [[ -n "$pid" ]] || return 0
+  kill -TERM -- "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
+  wait "$pid" 2>/dev/null || true
+}
+
 xcode_test() {
+  local action="test"
+  local destination="platform=iOS Simulator,id=$UDID"
+  if [[ "${1:-}" == "build-for-testing" ]]; then
+    action="build-for-testing"
+    destination="generic/platform=iOS Simulator"
+    shift
+  elif [[ "${1:-}" == "build-for-testing-device" ]]; then
+    action="build-for-testing"
+    shift
+  elif [[ "${1:-}" == "test-without-building" ]]; then
+    action="test-without-building"
+    shift
+  fi
   local team="${PERIMEDI_DEVELOPMENT_TEAM:-7H4A6PWSPS}"
-  xcodebuild test \
+  xcodebuild "$action" \
     -project "$PROJECT" \
     -scheme PeriMedi \
-    -destination "platform=iOS Simulator,id=$UDID" \
+    -destination "$destination" \
     -derivedDataPath "$DERIVED" \
     "$@" \
     DEVELOPMENT_TEAM="$team" \
@@ -455,19 +515,50 @@ cmd_verify() {
 
   acquire_lock
   VERIFY_LOCK_HELD=1
-  trap 'if [[ "${VERIFY_LOCK_HELD:-0}" == 1 ]]; then uninstall_app; release_lock; VERIFY_LOCK_HELD=0; fi' EXIT
+  trap 'stop_build; if [[ "${VERIFY_LOCK_HELD:-0}" == 1 ]]; then uninstall_app; release_lock; VERIFY_LOCK_HELD=0; fi' EXIT
+
+  mkdir -p "$DERIVED"
+  rm -rf "$RESULT"
+  local build_log="$DERIVED/build-for-testing.log"
+  set -m
+  xcode_test build-for-testing >"$build_log" 2>&1 &
+  BUILD_PID=$!
+  set +m
+  echo "control-perimedi: build-for-testing started"
 
   disable_hardware_keyboard
   xcrun simctl shutdown "$UDID" 2>/dev/null || true
   xcrun simctl boot "$UDID"
   xcrun simctl bootstatus "$UDID" -b
-  xcrun simctl status_bar "$UDID" override --time "9:41" --batteryState charged --batteryLevel 100 \
-    --wifiMode active --wifiBars 3 --cellularMode active --cellularBars 4 --dataNetwork wifi \
-    || echo "control-perimedi: status_bar override skipped" >&2
+  override_status_bar
 
   uninstall_app
 
-  rm -rf "$RESULT"
+  set +e
+  wait "$BUILD_PID"
+  local build_status=$?
+  set -e
+  if [[ "$build_status" -ne 0 ]]; then
+    stop_build
+    tail -n 80 "$build_log" >&2 || true
+    fail "xcodebuild build-for-testing exited $build_status (log $build_log)"
+  fi
+  BUILD_PID=""
+  if ! product_has_app_group; then
+    echo "control-perimedi: generic product lacks group.app.perimedi.ios; rebuilding for $UDID" >&2
+    set +e
+    xcode_test build-for-testing-device >"$build_log" 2>&1
+    build_status=$?
+    set -e
+    if [[ "$build_status" -ne 0 ]]; then
+      tail -n 80 "$build_log" >&2 || true
+      fail "xcodebuild build-for-testing for $UDID exited $build_status (log $build_log)"
+    fi
+    if ! product_has_app_group; then
+      fail "built product lacks group.app.perimedi.ios (log $build_log)"
+    fi
+  fi
+
   local skip_catalog=0
   if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
     skip_catalog=1
@@ -477,24 +568,19 @@ cmd_verify() {
     echo "Skipping ScreenCatalogTests (SCREEN_CATALOG=0)"
   fi
 
-  local -a xcode_args=(-resultBundlePath "$RESULT")
+  local -a xcode_args=(-resultBundlePath "$RESULT" -collect-test-diagnostics never)
   if [[ "$skip_catalog" -eq 1 ]]; then
     xcode_args+=(-skip-testing:PeriMediUITests/ScreenCatalogTests)
   fi
-  if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
-    # Issue 70 collapses these journeys. CI skips them until that lands.
-    echo "Skipping WidgetJourneyTests on CI"
-    xcode_args+=(-skip-testing:PeriMediUITests/WidgetJourneyTests)
-  fi
 
   set +e
-  xcode_test "${xcode_args[@]}"
+  xcode_test test-without-building "${xcode_args[@]}"
   local status=$?
   set -e
 
   if [[ "$status" -ne 0 ]]; then
     dump_xcresult
-    fail "xcodebuild test exited $status"
+    fail "xcodebuild test-without-building exited $status"
   fi
 
   python3 "$ROOT/ios/scripts/check-screen-catalog.py"
