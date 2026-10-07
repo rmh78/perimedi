@@ -127,15 +127,19 @@ final class AppRobot {
         }
     }
 
-    func element(_ id: String) -> XCUIElement {
-        let types = Self.hintedTypes(for: id) ?? Self.lookupTypes
-        var first: XCUIElement?
-        for type in types {
+    /// One existence check per control type, and only until the first hit.
+    private func hit(_ id: String) -> XCUIElement? {
+        for type in Self.hintedTypes(for: id) ?? Self.lookupTypes {
             let match = Self.query(app, type, id)
-            if first == nil { first = match }
             if match.exists { return match }
         }
-        return first ?? app.buttons[id]
+        return nil
+    }
+
+    func element(_ id: String) -> XCUIElement {
+        if let found = hit(id) { return found }
+        let type = (Self.hintedTypes(for: id) ?? [.button])[0]
+        return Self.query(app, type, id)
     }
 
     /// One or two control types, taken from the types XCTest actually resolved on the CI journey.
@@ -221,12 +225,25 @@ final class AppRobot {
     }
 
     func waitGone(id: String, timeout: TimeInterval = 2, file: StaticString = #filePath, line: UInt = #line) {
-        XCTAssertTrue(spin(timeout: timeout) { !element(id).exists }, "still present \(id)", file: file, line: line)
+        XCTAssertTrue(spin(timeout: timeout) { hit(id) == nil }, "still present \(id)", file: file, line: line)
     }
 
     func tap(_ id: String, file: StaticString = #filePath, line: UInt = #line) {
-        waitFor(id: id, file: file, line: line)
-        press(element(id))
+        press(ready(id, file: file, line: line))
+    }
+
+    private func ready(_ id: String, timeout: TimeInterval = 3, file: StaticString = #filePath, line: UInt = #line) -> XCUIElement {
+        var found: XCUIElement?
+        XCTAssertTrue(
+            spin(timeout: timeout) {
+                found = hit(id)
+                return found != nil
+            },
+            "missing \(id)",
+            file: file,
+            line: line
+        )
+        return found ?? element(id)
     }
 
     func value(of id: String) -> String {
@@ -236,12 +253,11 @@ final class AppRobot {
     }
 
     func exists(_ id: String) -> Bool {
-        element(id).exists
+        hit(id) != nil
     }
 
     func setDateKey(_ id: String, _ key: String, file: StaticString = #filePath, line: UInt = #line) {
-        waitFor(id: id, file: file, line: line)
-        press(element(id))
+        press(ready(id, file: file, line: line))
         let picker = app.datePickers.firstMatch
         XCTAssertTrue(spin(timeout: 2) { picker.exists }, "date chooser for \(id)", file: file, line: line)
         XCTAssertTrue(
@@ -371,8 +387,8 @@ final class AppRobot {
         let keyboard = app.keyboards.firstMatch
         guard keyboard.exists else { return }
         for title in ["sheet.symptom", "sheet.med", "sheet.period"] {
-            if element(title).exists {
-                press(element(title))
+            if let sheet = hit(title) {
+                press(sheet)
                 _ = spin(timeout: 1) { !keyboard.exists }
                 return
             }
