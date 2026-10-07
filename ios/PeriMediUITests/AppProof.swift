@@ -62,7 +62,7 @@ struct AppProof {
         let edited = historyRow()
         XCTAssertTrue(edited.waitForExistence(timeout: 2))
         XCTAssertEqual(edited.label, "7–12 Mar 2026")
-        press(edited)
+        robot.press(edited)
         robot.tap("period.delete")
         XCTAssertTrue(robot.app.staticTexts["Delete 7–12 Mar 2026?"].waitForExistence(timeout: 2))
         robot.tap("confirm.delete")
@@ -363,7 +363,7 @@ struct AppProof {
         if !robot.frameInsideChrome(row) {
             robot.app.swipeUp()
         }
-        press(historyRow())
+        robot.press(historyRow())
     }
 
     private func assertNoHistoryRows() {
@@ -375,10 +375,6 @@ struct AppProof {
             RunLoop.current.run(until: Date().addingTimeInterval(0.05))
         }
         XCTAssertEqual(leftover.count, 0)
-    }
-
-    private func press(_ element: XCUIElement) {
-        element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
     }
 
     private func assertFieldAboveKeyboard(_ id: String, file: StaticString = #filePath, line: UInt = #line) {

@@ -217,7 +217,7 @@ final class AppRobot {
     }
 
     func waitFor(id: String, timeout: TimeInterval = 3, file: StaticString = #filePath, line: UInt = #line) {
-        XCTAssertTrue(spin(timeout: timeout) { element(id).exists }, "missing \(id)", file: file, line: line)
+        XCTAssertTrue(spin(timeout: timeout) { exists(id) }, "missing \(id)", file: file, line: line)
     }
 
     func waitGone(id: String, timeout: TimeInterval = 2, file: StaticString = #filePath, line: UInt = #line) {
@@ -357,8 +357,14 @@ final class AppRobot {
             .replacingOccurrences(of: "YYYY-MM-DD", with: "")
     }
 
-    private func press(_ element: XCUIElement) {
-        element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+    /// A coordinate tied to the element makes XCTest resolve that button again
+    /// three times after the touch. A point on the app is one event.
+    func press(_ element: XCUIElement) {
+        let frame = element.frame
+        let origin = app.frame.origin
+        app.coordinate(withNormalizedOffset: .zero)
+            .withOffset(CGVector(dx: frame.midX - origin.x, dy: frame.midY - origin.y))
+            .tap()
     }
 
     func dismissKeyboard() {
