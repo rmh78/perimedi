@@ -412,19 +412,19 @@ final class HomeWidgets {
         springboard.staticTexts[name].exists
     }
 
-    func tapTaken(beside name: String? = nil, direct: Bool = false) {
+    private func take(beside name: String?, direct: Bool) -> Bool {
         let deadline = Date().addingTimeInterval(8)
         let screen = springboard.frame
-        var seen: [String] = []
+        let query = springboard.buttons.matching(NSPredicate(format: "label == 'Take'"))
         repeat {
-            let buttons = springboard.buttons.matching(
-                NSPredicate(format: "label == 'Take'")
-            ).allElementsBoundByIndex
-            seen = buttons.map { button in
-                let frame = button.frame
-                return "\(Int(frame.minX)),\(Int(frame.minY)) \(Int(frame.width))x\(Int(frame.height))"
+            // allElementsBoundByIndex fails the test when SpringBoard's
+            // accessibility server is down. exists on one button does not.
+            var visible: [XCUIElement] = []
+            for index in 0..<4 {
+                let button = query.element(boundBy: index)
+                guard button.exists else { break }
+                if capsule(button.frame, on: screen) { visible.append(button) }
             }
-            let visible = buttons.filter { capsule($0.frame, on: screen) }
             let chosen: XCUIElement?
             if let name {
                 let label = springboard.staticTexts[name]
@@ -443,11 +443,18 @@ final class HomeWidgets {
                 } else {
                     chosen.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
                 }
-                return
+                return true
             }
             RunLoop.current.run(until: Date().addingTimeInterval(0.25))
         } while Date() < deadline
-        XCTFail("Take missing. frames: \(seen) buttons: \(buttonLabels)")
+        return false
+    }
+
+    func tapTaken(beside name: String? = nil, direct: Bool = false) {
+        if take(beside: name, direct: direct) { return }
+        WidgetShell.restart()
+        if take(beside: name, direct: direct) { return }
+        XCTFail("Take missing beside \(name ?? "any")")
     }
 
     private func capsule(_ frame: CGRect, on screen: CGRect) -> Bool {
