@@ -551,11 +551,17 @@ cmd_verify() {
   rm -rf "$RESULT"
   restore_checkout_mtime
   local build_log="$DERIVED/build-for-testing.log"
-  set -m
-  xcode_test build-for-testing >"$build_log" 2>&1 &
-  BUILD_PID=$!
-  set +m
-  echo "control-perimedi: build-for-testing started"
+  # An exact DerivedData hit already contains this SHA's simulator products.
+  # build-for-testing still took ~5 min on that hit (run 37677944971 attempt 2).
+  if [[ "${UI_BUILD_CACHE_HIT:-}" == "true" ]] && product_has_app_group; then
+    echo "control-perimedi: reused cached simulator build"
+  else
+    set -m
+    xcode_test build-for-testing >"$build_log" 2>&1 &
+    BUILD_PID=$!
+    set +m
+    echo "control-perimedi: build-for-testing started"
+  fi
 
   disable_hardware_keyboard
   xcrun simctl shutdown "$UDID" 2>/dev/null || true
@@ -565,16 +571,21 @@ cmd_verify() {
 
   uninstall_app
 
-  set +e
-  wait "$BUILD_PID"
-  local build_status=$?
-  set -e
-  if [[ "$build_status" -ne 0 ]]; then
-    stop_build
-    tail -n 80 "$build_log" >&2 || true
-    fail "xcodebuild build-for-testing exited $build_status (log $build_log)"
+  if [[ -n "${BUILD_PID:-}" ]]; then
+    set +e
+    wait "$BUILD_PID"
+    local build_status=$?
+    set -e
+    if [[ "$build_status" -ne 0 ]]; then
+      stop_build
+      tail -n 80 "$build_log" >&2 || true
+      fail "xcodebuild build-for-testing exited $build_status (log $build_log)"
+    fi
+    BUILD_PID=""
+    local swift_lines=0
+    swift_lines="$(grep -c -E 'SwiftCompile|CompileSwift' "$build_log" 2>/dev/null || true)"
+    echo "control-perimedi: swift compile lines ${swift_lines:-0}"
   fi
-  BUILD_PID=""
   if ! product_has_app_group; then
     echo "control-perimedi: generic product lacks group.app.perimedi.ios; rebuilding for $UDID" >&2
     set +e

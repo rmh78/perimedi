@@ -74,6 +74,8 @@ jobs:
             ui-derived-xcode27-v2-
             ui-derived-xcode27-
       - name: UI tests
+        env:
+          UI_BUILD_CACHE_HIT: ${{ steps.ui-build-cache.outputs.cache-hit }}
         run: .grok/skills/verify-perimedi/scripts/control-perimedi verify
       - name: Upload xcresult on failure
         if: failure()
