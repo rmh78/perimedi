@@ -287,16 +287,26 @@ final class HomeWidgets {
     func restoreAppIcon() {
         _ = tapLabel(["Abbrechen", "Cancel"], wait: 0.4)
         open()
+        if placeIcon() { return }
+        // A dead accessibility server reports neither the widget nor the icon.
+        // One SpringBoard restart, then the same restore.
+        WidgetShell.restart()
+        open()
+        _ = placeIcon()
+    }
+
+    private func placeIcon() -> Bool {
         revealPeriMedi()
         for _ in 0..<3 {
-            if onScreen(appIcon()) { return }
-            if tapLabel(Self.labels(.icon), wait: 0.6), spin(5, { onScreen(appIcon()) }) { return }
-            guard onScreen(widgetIcon()) else { return }
+            if onScreen(appIcon()) { return true }
+            if tapLabel(Self.labels(.icon), wait: 0.6), spin(5, { onScreen(appIcon()) }) { return true }
+            guard onScreen(widgetIcon()) else { return false }
             openSizeMenu(on: widgetIcon())
-            if tapLabel(Self.labels(.icon)), spin(6, { onScreen(appIcon()) }) { return }
+            if tapLabel(Self.labels(.icon)), spin(6, { onScreen(appIcon()) }) { return true }
             open()
             revealPeriMedi()
         }
+        return onScreen(appIcon())
     }
 
     func appIcon() -> XCUIElement {
