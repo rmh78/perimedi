@@ -30,7 +30,7 @@ Preconditions:
 - **Pager.** `cycle.pager.prev` changes `cycle.pager.label`; `cycle.pager.today` restores it. Period chip exists after paging back.
 - **Symptom.** `addSymptom()` then `cycle.chip.score.hot_flash` contains `strong`.
 - **Month.** Tap `tab.month`. Today contains `selected`, `taken`, `symptom`. Period start contains `period`. `month.pager.next` shows `month.day.2026-04-01`. Select period start, `tab.cycle`, strip day is hittable in the plot.
-- **Proof.** `control-perimedi --run-id "$RUN_ID" drive --test PeriMediUITests/FirstUseJourneyTests/testFirstUseJourney`. Evidence `TEST SUCCEEDED` plus the assertions above.
+- **Proof.** `control-perimedi --run-id "$RUN_ID" drive --test PeriMediUITests/RequiredJourneyTests/testEnglishAppJourney`. Evidence `TEST SUCCEEDED` plus the assertions above. That method also edits and deletes the period before the medications, takes both reminder banners, and continues through More. It does not switch to German.
 
 ## Gotchas
 

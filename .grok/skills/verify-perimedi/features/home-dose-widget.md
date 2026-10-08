@@ -17,23 +17,23 @@ Long-press the PeriMedi icon and choose one widget size. That replaces the icon 
 
 ## Driving it with A11yID / AppRobot
 
-`WidgetJourneyTests.testWidgetTakenUntakenAndEmptyMessage` drives the medium widget by visible labels (medication name, `Take`, `Still to take today`, the check, `All taken for today` / `Heute alles genommen`, `Mittelgroßes Widget`, `Medium-sized widget`, `App-Symbol`, `App icon`). `testSmallWidgetTakeInEnglishAndGerman` drives `Kleines Widget` / `Small` in English and German (`Nehmen`, `Heute noch einnehmen` before the tap) and asserts the check with the helper text blank. `testGermanMediumCheckBesidePending` drives a German medium card with two rows, a long name, `1 Hub`, and a light capsule. They press Home. If PeriMedi is not on that page, the suite looks one page toward the later icons and one page toward the first page, then stops. It does not swipe toward the App Library. SpringBoard still has no `A11yID`. Do not add widget identifiers. A signed run writes `ios/docs/widget-take/*.png`.
+`RequiredJourneyTests.testEnglishWidgetJourney` is the one proof. It launches with today pinned to the device date, turns the PeriMedi icon into a medium widget, saves `Estradiol gel morning dose` (`1 mg`, swatch `#f472b6`) and `Progesterone` (`200 mg`), and reads the visible labels: both names, `Take`, and `Still to take today`. Take on the long-name row leaves a check while `Still to take today` and Progesterone stay, and the long name leaves. Untake on Cycle brings the long name back. Take Progesterone on the widget, then long-press that same widget and choose the small face. No new app launch and no second XCTest method. The last Take shows a check, `Still to take today` is gone, the row leaves, and the card reads `All taken for today`. The journey then puts the app icon back. Tear-down calls that restore again and does not fail the test. German widget copy (`Nehmen`, `Heute noch einnehmen`, `Heute alles genommen`) is the l10n check, not this journey. Size menu labels stay inside the journey: `Small widget`, `Medium-sized widget`, `App icon`, plus the older aliases. It presses Home. If PeriMedi is not on that page, the suite looks one page toward the later icons and one page toward the first page, then stops. It does not swipe toward the App Library. SpringBoard still has no `A11yID`. Do not add widget identifiers.
 
-Local `control-perimedi verify` runs these journeys with the other UI tests. The GitHub `ui` job skips `WidgetJourneyTests` until issue 70 reworks them. The build signs the App Group. Do not pass `CODE_SIGNING_ALLOWED=NO`.
+Local and GitHub `control-perimedi verify` run this journey with the app journey. The build signs the App Group. Do not pass `CODE_SIGNING_ALLOWED=NO`.
 
 Proof is those journeys plus domain and the reminder Taken journey:
 
 - `TodayPendingMedsTests` for today's list (today not tomorrow, group two times, taken drops, reminder-off, pause, empty)
 - `DoseWidgetSnapshotTests` for the snapshot face (check window, blank helper after the last check, helper text while another medication remains, all-taken versus nothing planned, capsule contrast)
 - `NextPendingDoseTests` for reminder `resolve` (pending, already taken, missing)
-- `testDoseReminderTaken` for reminder Taken through `Store.setDoseStatus` and Cycle `taken`
+- `testEnglishAppJourney` for reminder Taken through `Store.setDoseStatus` and Cycle `taken`
 
 ## Gotchas
 
 - The widget reads App Group JSON only. It does not call `TodayPendingMeds.list` and does not open SwiftData.
 - Take is `medicationId` only on an App Intent. The tap may leave the Home Screen in front. If the intent is not hosted by the app it fails closed and does not write the log or the snapshot.
 - Today only: `visible(at:)` shows `meds` when the device date matches `date`, or `nextMeds` after midnight until the app republishes. It never shows a later day as the visible list. The brief check does not appear on tomorrow's rows.
-- `CODE_SIGNING_ALLOWED=NO` never stamps `group.app.perimedi.ios`. `containerURL` is nil, `publish` cannot write `next-dose.json`, and the widget shows the missing-file empty chrome (`Heute nichts zu nehmen` / `Nothing to take today`) even when Cycle has pending slots. Local `verify` signs that group and runs `WidgetJourneyTests` in the same `xcodebuild test` as the other UI tests. The GitHub `ui` job skips that class.
+- `CODE_SIGNING_ALLOWED=NO` never stamps `group.app.perimedi.ios`. `containerURL` is nil, `publish` cannot write `next-dose.json`, and the widget shows the missing-file empty chrome (`Heute nichts zu nehmen` / `Nothing to take today`) even when Cycle has pending slots. `verify` signs that group and runs `testEnglishWidgetJourney` on the booted iPhone 17e, including on GitHub.
 - No distinctive IDs on purpose. Coverage would fail `check-ui-coverage.py --fail-uncovered` if SpringBoard IDs were added and never tapped.
 - The widget is not a fifth tab. Bottom nav stays Cycle, Month, Trends, More.
 - Home can open the page that holds the test runner. If the PeriMedi icon or widget is not on that page, the journey looks one page toward the later icons and one page toward the first page, then stops. It does not continue to the App Library. Pressing an off-screen icon scrolls SpringBoard.

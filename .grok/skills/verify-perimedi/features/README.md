@@ -39,15 +39,10 @@ Walk this map top to bottom for a broad regression. Order is Cycle, Month, Trend
 
 Practical test walk for that order:
 
-1. `PeriMediUITests/FirstUseJourneyTests/testFirstUseJourney` — Cycle, period, med, symptom, Month
-2. `PeriMediUITests/SymptomTrendsTests/testSymptomTrendsNoScores`, `testSymptomTrendsChart`, and `testCustomSymptomCreateScoreRenameChartAndDelete` — Trends and custom symptoms
-3. `PeriMediUITests/FirstUseJourneyTests/testMoreRemindersControls` — More, visit PDF, backup cancel
-4. `PeriMediUITests/FirstUseJourneyTests/testDoseReminderTaken` — reminders Taken
-5. `PeriMediUITests/WidgetJourneyTests/testWidgetTakenUntakenAndEmptyMessage` — medium Home Screen widget
-6. `PeriMediUITests/WidgetJourneyTests/testSmallWidgetTakeInEnglishAndGerman` — small widget in English and German
-7. `PeriMediUITests/WidgetJourneyTests/testGermanMediumCheckBesidePending` — German medium widget with two rows
+1. `PeriMediUITests/RequiredJourneyTests/testEnglishAppJourney` — Cycle, period edit and delete, meds, reminder, symptom, Month, More, Trends chart, custom symptom, no-scores
+2. `PeriMediUITests/RequiredJourneyTests/testEnglishWidgetJourney` — medium Home Screen widget, then small, in the same process
 
-PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verify`. A local run includes `WidgetJourneyTests` with the other UI tests. The GitHub `ui` job skips `WidgetJourneyTests`.
+PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verify`. Local and GitHub both run the English widget journey. GitHub still skips `ScreenCatalogTests`.
 
 ## Features
 
@@ -59,7 +54,7 @@ PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verif
 - [Period sheet](./period-sheet.md) — log bleeds over Cycle
 - [Symptom sheet](./symptom-sheet.md) — scores 1–4 over Cycle
 - [Dose reminders](./reminders.md) — in-app banner Taken / Snooze
-- [Home Screen today's-meds widget](./home-dose-widget.md) — SpringBoard journey in `WidgetJourneyTests`. Local `verify` runs it. The GitHub `ui` job skips it.
+- [Home Screen today's-meds widget](./home-dose-widget.md) — one English SpringBoard journey. Local and GitHub `verify` run it.
 - [Doctor visit PDF](./doctor-visit.md) — More → range → in-app preview
 - [Backup / sample](./backup.md) — sample, export, import, clear (cancel in journeys)
 - [First-use journey](./journeys.md) — empty app through tracking and Month

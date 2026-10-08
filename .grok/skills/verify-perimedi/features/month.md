@@ -23,7 +23,7 @@ Bottom bar → Month.
 | Prev month | `month.pager.prev` | First-use pages back to the month that contains today. |
 | Next month | `month.pager.next` | First-use pages from March 2026 to April (`month.day.2026-04-01`). |
 
-`testFirstUseJourney` opens Month after logging, asserts today is selected, taps `month.pager.next`, waits for `month.day.2026-04-01`, taps `month.pager.prev`, asserts today selected again, taps the shared `cycle.pager.today`, then selects the period start and returns to Cycle.
+`testEnglishAppJourney` opens Month after logging, asserts today is selected, taps `month.pager.next`, waits for `month.day.2026-04-01`, taps `month.pager.prev`, asserts today selected again, taps the shared `cycle.pager.today`, then selects the period start and returns to Cycle.
 
 ## Gotchas
 

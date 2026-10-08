@@ -17,12 +17,12 @@ Bottom bar → More → Backup section.
 
 | Control | ID | Proof |
 |---|---|---|
-| Load sample | `more.sample` | `FirstUseJourneyTests.testMoreRemindersControls` waits, taps, then `confirm.cancel`. Sample confirm is not destructive (`confirm.action`, not `confirm.delete`). Do not tap `confirm.action`. |
+| Load sample | `more.sample` | `testEnglishAppJourney` waits, taps, then `confirm.cancel`. Sample confirm is not destructive (`confirm.action`, not `confirm.delete`). Do not tap `confirm.action`. |
 | Export | `more.export` | Journey waits. Do not tap — system share sheet has no PeriMedi IDs. |
 | Import | `more.import` | Journey waits. Do not tap — system document sheet has no PeriMedi IDs. |
 | Clear all | `more.clear` | Journey waits. Do not tap. Confirm is destructive (`confirm.delete`). |
 
-`testMoreRemindersControls` waits for all four row IDs (swipe up if below the fold), taps sample, then `confirm.cancel`, then `waitGone` for the confirm card. Do not confirm sample load or clear.
+`testEnglishAppJourney` waits for all four row IDs (swipe up if below the fold), taps sample, then `confirm.cancel`, then `waitGone` for the confirm card. Do not confirm sample load or clear.
 
 Journey tests never pass `-loadSample`. Sample load is a user action on More, not a launch flag. `ScreenCatalogTests` may pass `-loadSample` to write populated pictures.
 
