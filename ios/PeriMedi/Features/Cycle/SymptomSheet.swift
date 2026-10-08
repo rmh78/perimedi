@@ -140,21 +140,21 @@ struct SymptomSheet: View {
                     .foregroundStyle(Theme.blush800)
             }
             HStack(spacing: 8) {
-                PillButton(title: app.t("common.cancel"), kind: .secondary) {
+                PillButton(title: app.t("common.cancel"), kind: .secondary, fillsWidth: true) {
                     closeDraft()
                 }
-                Spacer(minLength: 0)
-                commitButton
-            }
-            if case .edit(let id) = nameDraft {
-                PillButton(
-                    title: app.t("common.delete"),
-                    kind: .destructive,
-                    identifier: A11yID.symptomCustomDelete(id.rawValue)
-                ) {
-                    nameFocused = false
-                    nameDraft = .confirmDelete(id)
+                if case .edit(let id) = nameDraft {
+                    PillButton(
+                        title: app.t("common.delete"),
+                        kind: .destructive,
+                        identifier: A11yID.symptomCustomDelete(id.rawValue),
+                        fillsWidth: true
+                    ) {
+                        nameFocused = false
+                        nameDraft = .confirmDelete(id)
+                    }
                 }
+                commitButton
             }
         }
     }
@@ -195,6 +195,7 @@ struct SymptomSheet: View {
                 title: app.t("common.save"),
                 kind: .primary,
                 identifier: A11yID.symptomCustomCreate,
+                fillsWidth: true,
                 action: commitDraft
             )
         case .edit(let id):
@@ -202,6 +203,7 @@ struct SymptomSheet: View {
                 title: app.t("common.save"),
                 kind: .primary,
                 identifier: A11yID.symptomCustomSave(id.rawValue),
+                fillsWidth: true,
                 action: commitDraft
             )
         case .confirmDelete, nil:

@@ -213,11 +213,34 @@ final class AppRobot {
     }
 
     func scrollTo(_ id: String, timeout: TimeInterval = 6, file: StaticString = #filePath, line: UInt = #line) {
+        // A sheet covers the tab bar, so a control in the lower part of the
+        // sheet is already tappable. The 140pt chrome inset kept scrolling it.
+        let bottomInset: CGFloat = sheetCoversChrome ? 24 : 140
+        var previous = CGRect.null
         for _ in 0..<4 {
-            if frameInsideChrome(element(id)) { return }
+            let match = element(id)
+            if placedForTap(match, bottomInset: bottomInset) { return }
+            let frame = match.exists ? match.frame : .null
+            if frame.width > 1, frame == previous { return }
+            previous = frame
             app.swipeUp()
         }
         waitFor(id: id, timeout: timeout, file: file, line: line)
+    }
+
+    private var sheetCoversChrome: Bool {
+        exists("sheet.symptom") || exists("sheet.period") || exists("sheet.med") || exists("sheet.trends")
+    }
+
+    private func placedForTap(_ element: XCUIElement, bottomInset: CGFloat) -> Bool {
+        guard element.exists else { return false }
+        let frame = element.frame
+        let bounds = app.frame
+        guard frame.width > 1, frame.height > 1 else { return false }
+        return frame.minX >= bounds.minX - 1
+            && frame.maxX <= bounds.maxX + 1
+            && frame.minY >= bounds.minY - 1
+            && frame.maxY <= bounds.height - bottomInset
     }
 
     func waitFor(id: String, timeout: TimeInterval = 3, file: StaticString = #filePath, line: UInt = #line) {

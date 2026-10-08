@@ -25,7 +25,7 @@ Cycle → + Symptom (`cycle.action.symptom`).
 | Custom name field | `symptom.custom.add` | In the dialog on top of the sheet, for a new name and for a rename. |
 | Custom name | `symptom.custom.name.{id}` | Underlined name on the row. The test taps it to open the same dialog, then types Fog. |
 | Rename save | `symptom.custom.save.{id}` | Primary pill in that dialog. The dialog title is Edit symptom. The chip then contains Fog. |
-| Delete | `symptom.custom.delete.{id}` | Delete in the name dialog. That dialog’s contents become `Delete Fog and all its past scores?`. Confirm with `confirm.delete`. The custom chip is gone. `cycle.chip.score.hot_flash` still contains `strong`, and reopening the sheet leaves `symptom.score.hot_flash.3` selected. |
+| Delete | `symptom.custom.delete.{id}` | On the edit dialog’s button row, between Cancel and Save, same as the period card. That dialog’s contents become `Delete Fog and all its past scores?`. Confirm with `confirm.delete`. The custom chip is gone. `cycle.chip.score.hot_flash` still contains `strong`, and reopening the sheet leaves `symptom.score.hot_flash.3` selected. |
 | Body / note | `symptom.body` | On the `A11yID` enum only; the sheet has no note field (`persist` always passes `note: nil`). Do not drive it. |
 | Save | `symptom.save` | On the `A11yID` enum only. First-use uses `sheet.close`. Do not drive it. |
 
