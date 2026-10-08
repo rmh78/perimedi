@@ -551,11 +551,13 @@ cmd_verify() {
   rm -rf "$RESULT"
   restore_checkout_mtime
   local build_log="$DERIVED/build-for-testing.log"
-  # An exact DerivedData hit already contains this SHA's simulator products.
-  # build-for-testing still took ~5 min on that hit (run 37677944971 attempt 2).
-  if [[ "${UI_BUILD_CACHE_HIT:-}" == "true" ]] && product_has_app_group; then
+  local build_ok="$DERIVED/build-ok"
+  # An exact hit is reusable only when this run's cache wrote build-ok after a
+  # successful build. A prefix restore of an older tree must not count.
+  if [[ "${UI_BUILD_CACHE_HIT:-}" == "true" && -f "$build_ok" ]] && product_has_app_group; then
     echo "control-perimedi: reused cached simulator build"
   else
+    rm -f "$build_ok"
     set -m
     xcode_test build-for-testing >"$build_log" 2>&1 &
     BUILD_PID=$!
@@ -599,6 +601,10 @@ cmd_verify() {
     if ! product_has_app_group; then
       fail "built product lacks group.app.perimedi.ios (log $build_log)"
     fi
+  fi
+  if [[ ! -f "$build_ok" ]]; then
+    git -C "$ROOT" rev-parse HEAD >"$build_ok"
+    echo "control-perimedi: build-ok"
   fi
 
   local skip_catalog=0

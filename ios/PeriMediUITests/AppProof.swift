@@ -50,6 +50,19 @@ struct AppProof {
         robot.addPeriod()
         robot.tap("cycle.action.period")
         robot.waitFor(id: "sheet.period")
+        if !robot.exists("period.add") {
+            robot.app.swipeUp()
+        }
+        robot.tap("period.add")
+        robot.waitFor(id: "period.end")
+        let end = robot.element("period.end")
+        let endValue = (end.value as? String) ?? ""
+        XCTAssertTrue(
+            endValue.isEmpty || endValue == "YYYY-MM-DD",
+            "period.end is \(endValue)"
+        )
+        robot.tap("confirm.cancel")
+        robot.waitGone(id: "period.end")
         tapHistory()
 
         let start = robot.element("period.start")

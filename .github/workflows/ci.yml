@@ -58,6 +58,9 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
+      - name: Xcode version for the build cache
+        id: xcode-ver
+        run: echo "hash=$(xcodebuild -version | shasum -a 256 | awk '{print $1}')" >> "$GITHUB_OUTPUT"
       - name: Restore the UI test build
         id: ui-build-cache
         uses: actions/cache/restore@v4
@@ -69,8 +72,10 @@ jobs:
             ios/DerivedData/CompilationCache.noindex
             ios/DerivedData/SDKExplicitPrecompiledModules
             ios/DerivedData/SDKStatCaches.noindex
-          key: ui-derived-xcode27-v2-${{ hashFiles('ios/**/*.swift', 'ios/**/*.pbxproj', 'ios/**/*.xcscheme', 'ios/Package.resolved') }}
+            ios/DerivedData/build-ok
+          key: ui-derived-xcode27-v3-${{ steps.xcode-ver.outputs.hash }}-${{ hashFiles('ios/PeriMedi*/**', 'ios/Sources/**', 'ios/PeriMediUITests/**', 'ios/Package.swift', 'ios/Package.resolved') }}
           restore-keys: |
+            ui-derived-xcode27-v3-
             ui-derived-xcode27-v2-
             ui-derived-xcode27-
       - name: UI tests
@@ -88,8 +93,17 @@ jobs:
       - name: Prune the UI test build
         if: always() && steps.ui-build-cache.outputs.cache-hit != 'true'
         run: rm -rf ios/DerivedData/Index.noindex ios/DerivedData/Logs ios/DerivedData/TestResults ios/DerivedData/PeriMedi.xcresult ios/DerivedData/build-for-testing.log
+      - name: Note a successful build
+        id: build-ok
+        if: always()
+        run: |
+          if [[ -f ios/DerivedData/build-ok ]]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Save the UI test build
-        if: always() && steps.ui-build-cache.outputs.cache-hit != 'true'
+        if: always() && steps.ui-build-cache.outputs.cache-hit != 'true' && steps.build-ok.outputs.ok == 'true'
         uses: actions/cache/save@v4
         with:
           path: |
@@ -99,4 +113,5 @@ jobs:
             ios/DerivedData/CompilationCache.noindex
             ios/DerivedData/SDKExplicitPrecompiledModules
             ios/DerivedData/SDKStatCaches.noindex
+            ios/DerivedData/build-ok
           key: ${{ steps.ui-build-cache.outputs.cache-primary-key }}

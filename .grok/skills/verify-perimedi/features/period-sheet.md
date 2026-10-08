@@ -23,6 +23,7 @@ Cycle → cycle settings (`cycle.action.period`).
 | Start | `period.start` | In the card. `setDateKey`. First-use: `2026-03-07`. |
 | End | `period.end` | In the card. First-use: `2026-03-11`. |
 | Save | `period.save` | Right side of the card. Label is Save. Then close the sheet. |
+| Cancel | `confirm.cancel` | Left side of the new-period card. Proof: `testEnglishAppJourney` opens the card, sees an empty `period.end`, taps Cancel, and the end field is gone. |
 | History | `period.history.{id}` | One row. The underlined date range shares that line with the length and flow. Opens the same card filled in. Proof: `testEnglishAppJourney` reads `7–12 Mar 2026`. |
 | Delete | `period.delete` | On the edit card’s button row, between Cancel and Save. The card then asks `Delete {{name}}?` using that range. Confirm with `confirm.delete`. Proof: `testEnglishAppJourney` reads `Delete 7–12 Mar 2026?`, then the intro returns and the period is logged again. |
 | Date chooser done | `date.done` | Used by `setDateKey`. |
