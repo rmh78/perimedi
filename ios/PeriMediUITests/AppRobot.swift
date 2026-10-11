@@ -154,7 +154,7 @@ final class AppRobot {
             return [.textField]
         case "symptom.custom.add":
             return [.textField, .button]
-        case "more.reminders":
+        case "more.reminders", "visit.range.previous":
             return [.switch]
         case "trends.detail", "trends.screen":
             return [.other]
