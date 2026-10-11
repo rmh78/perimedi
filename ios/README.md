@@ -74,7 +74,7 @@ xcodebuild test \
   -allowProvisioningUpdates
 ```
 
-Launch contract used by the suite: `-en -clear -today=2026-03-15 -uiTesting`. `-uiTesting` turns off UIView animations so XCTest is not blocked on springs. The reminder test also passes `-remindIn=2` so the next pending slot appears as a tappable in-app card (system banners are not asserted). Trends chart proof may pass `-fixture=trends` and `-tabTrends` (dummy multi-cycle scores; not sample data). Do not pass `-journeyStep` or `-loadSample` for these tests. The screen catalog test is the exception: it may pass `-loadSample` and switch language in-app to write `docs/screens/`. CI skips rewriting those PNGs.
+Launch contract used by the suite: `-en -clear -today=2026-03-15 -uiTesting`. `-uiTesting` turns off UIView animations so XCTest is not blocked on springs. The reminder test also passes `-remindIn=2` so the next pending slot appears as a tappable in-app card (system banners are not asserted). Trends chart proof may pass `-fixture=trends` and `-tabTrends` (dummy multi-cycle scores; not sample data). Do not pass `-journeyStep` or `-loadSample` for these tests. The screen catalog test is the exception for sample data: it may pass `-loadSample` and writes English pictures only. It must not switch language. CI skips rewriting those PNGs.
 
 Main-screen PNGs for UX review are `docs/screens/` (see [docs/screens.md](docs/screens.md)). `python3 ios/scripts/check-screen-catalog.py` fails only if an expected file is missing. Do not paste screenshot galleries on the PR. `JourneyScript` and `scripts/shot-journey.sh` remain optional extra capture, not the interaction proof.
 
