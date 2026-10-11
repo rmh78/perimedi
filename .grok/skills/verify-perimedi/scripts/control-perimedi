@@ -523,7 +523,9 @@ watch_taken_sample() {
       rm -f /tmp/perimedi-sample-now "$shared/perimedi-sample-now"
       sleep 6
       local pid
-      pid="$(ps -axo pid=,command= | awk '/PeriMedi\.app\/PeriMedi / && !/UITests/ {print $1; exit}')"
+      # awk exits after the first match, so ps gets SIGPIPE. pipefail would
+      # kill this background sampler before it writes the sample file.
+      pid="$(ps -axo pid=,command= 2>/dev/null | awk '/PeriMedi\.app\/PeriMedi / && !/UITests/ {print $1; exit}' || true)"
       if [[ -n "$pid" ]]; then
         /usr/bin/sample "$pid" 3 -file "$shared/perimedi-taken-sample.txt" || true
         echo "control-perimedi: sampled PeriMedi $pid"
