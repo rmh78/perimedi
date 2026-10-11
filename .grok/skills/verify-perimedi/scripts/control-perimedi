@@ -521,17 +521,18 @@ watch_taken_sample() {
   while true; do
     if [[ -f /tmp/perimedi-sample-now || -f "$shared/perimedi-sample-now" ]]; then
       rm -f /tmp/perimedi-sample-now "$shared/perimedi-sample-now"
+      local sample_file="$shared/perimedi-taken-sample.txt"
+      # The test stops polling once this file is non-empty. Symbolication
+      # finishes later. The call graph is printed below, after sample returns.
+      printf '%s\n' 'sample pending' >"$sample_file"
       sleep 6
       local pid
       # awk exits after the first match, so ps gets SIGPIPE. pipefail would
       # kill this background sampler before it writes the sample file.
       pid="$(ps -axo pid=,command= 2>/dev/null | awk '/PeriMedi\.app\/PeriMedi / && !/UITests/ {print $1; exit}' || true)"
       if [[ -n "$pid" ]]; then
-        local sample_file="$shared/perimedi-taken-sample.txt"
         /usr/bin/sample "$pid" 3 -file "$sample_file" || true
         echo "control-perimedi: sampled PeriMedi $pid"
-        # Symbolication can finish after the test's 35s poll. Copy the file
-        # into this log so the block does not depend on that poll.
         if [[ -s "$sample_file" ]]; then
           echo taken-sample-begin
           head -n 80 "$sample_file"
@@ -591,9 +592,11 @@ cmd_verify() {
   restore_checkout_mtime
   local build_log="$DERIVED/build-for-testing.log"
   local build_ok="$DERIVED/build-ok"
+  local group_ok=0
   # An exact hit is reusable only when this run's cache wrote build-ok after a
   # successful build. A prefix restore of an older tree must not count.
   if [[ "${UI_BUILD_CACHE_HIT:-}" == "true" && -f "$build_ok" ]] && product_has_app_group; then
+    group_ok=1
     echo "control-perimedi: reused cached simulator build"
   else
     rm -f "$build_ok"
@@ -605,12 +608,23 @@ cmd_verify() {
   fi
 
   disable_hardware_keyboard
-  xcrun simctl shutdown "$UDID" 2>/dev/null || true
+  # The device line is already Shutdown on a fresh runner. shutdown still
+  # talks to CoreSimulator. Boot is the part that has to run.
+  if [[ "$DEVICE_LINE" != *Shutdown* ]]; then
+    xcrun simctl shutdown "$UDID" 2>/dev/null || true
+  fi
   xcrun simctl boot "$UDID"
   xcrun simctl bootstatus "$UDID" -b
-  override_status_bar
-
-  uninstall_app
+  # CI skips the screen catalog. The status-bar override is for those PNGs.
+  # Killing it after 5s left the next simctl in a 104s to 166s hole on the
+  # three exact-cache logs. The pre-test uninstall is the call in that hole.
+  # A GitHub runner starts with no PeriMedi installed. The post-test uninstall stays.
+  if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
+    override_status_bar
+    uninstall_app
+  else
+    echo "control-perimedi: skip status bar and pre-test uninstall on CI"
+  fi
 
   if [[ -n "${BUILD_PID:-}" ]]; then
     set +e
@@ -627,7 +641,9 @@ cmd_verify() {
     swift_lines="$(grep -c -E 'SwiftCompile|CompileSwift' "$build_log" 2>/dev/null || true)"
     echo "control-perimedi: swift compile lines ${swift_lines:-0}"
   fi
-  if ! product_has_app_group; then
+  # The exact-hit path already checked the app group before boot. Walking
+  # DerivedData again sat in the same hole as the pre-test uninstall.
+  if [[ "$group_ok" != 1 ]] && ! product_has_app_group; then
     echo "control-perimedi: generic product lacks group.app.perimedi.ios; rebuilding for $UDID" >&2
     set +e
     xcode_test build-for-testing-device >"$build_log" 2>&1
