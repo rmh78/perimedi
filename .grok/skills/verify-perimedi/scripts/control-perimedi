@@ -511,6 +511,30 @@ dump_xcresult() {
   fi
 }
 
+# The UI-test runner is an iOS simulator process. It writes the marker into
+# the simulator shared directory, which is the same folder on the host.
+watch_taken_sample() {
+  local shared="$HOME/Library/Developer/CoreSimulator/Devices/${UDID}/data/Library/Shared"
+  mkdir -p "$shared"
+  rm -f /tmp/perimedi-sample-now "$shared/perimedi-sample-now" \
+    /tmp/perimedi-taken-sample.txt "$shared/perimedi-taken-sample.txt"
+  while true; do
+    if [[ -f /tmp/perimedi-sample-now || -f "$shared/perimedi-sample-now" ]]; then
+      rm -f /tmp/perimedi-sample-now "$shared/perimedi-sample-now"
+      sleep 6
+      local pid
+      pid="$(ps -axo pid=,command= | awk '/PeriMedi\.app\/PeriMedi / && !/UITests/ {print $1; exit}')"
+      if [[ -n "$pid" ]]; then
+        /usr/bin/sample "$pid" 3 -file "$shared/perimedi-taken-sample.txt" || true
+        echo "control-perimedi: sampled PeriMedi $pid"
+      else
+        echo "control-perimedi: PeriMedi pid not found for sample" >&2
+      fi
+    fi
+    sleep 1
+  done
+}
+
 cmd_verify() {
   if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
     python3 "$ROOT/ios/scripts/check-feature-map.py"
@@ -549,6 +573,11 @@ cmd_verify() {
 
   mkdir -p "$DERIVED"
   rm -rf "$RESULT"
+  if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
+    touch /tmp/perimedi-sample-taken
+  else
+    rm -f /tmp/perimedi-sample-taken
+  fi
   restore_checkout_mtime
   local build_log="$DERIVED/build-for-testing.log"
   local build_ok="$DERIVED/build-ok"
@@ -621,10 +650,22 @@ cmd_verify() {
     xcode_args+=(-skip-testing:PeriMediUITests/ScreenCatalogTests)
   fi
 
+  local sample_pid=""
+  if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+    set -m
+    watch_taken_sample &
+    sample_pid=$!
+    set +m
+  fi
+
   set +e
   xcode_test test-without-building "${xcode_args[@]}"
   local status=$?
   set -e
+  if [[ -n "$sample_pid" ]]; then
+    kill -TERM -- "-$sample_pid" 2>/dev/null || kill -TERM "$sample_pid" 2>/dev/null || true
+    wait "$sample_pid" 2>/dev/null || true
+  fi
 
   if [[ "$status" -ne 0 ]]; then
     dump_xcresult

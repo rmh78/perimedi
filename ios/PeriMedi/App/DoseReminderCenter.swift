@@ -193,7 +193,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
                 fireAt: slot.fireAt,
                 info: userInfo(for: slot)
             ) else { continue }
-            try? await center.add(request)
+            Self.enqueue(request)
         }
 
         let liveSnooze = ReminderLogic.pendingSnoozeIds(
@@ -235,7 +235,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             fireAt: soon.fireAt,
             info: userInfo(for: soon)
         ) {
-            UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+            Self.enqueue(request)
         }
     }
 
@@ -356,9 +356,22 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             ReminderSlot.doseId(scheduleId: identity.scheduleId, date: identity.date, timeOfDay: identity.timeOfDay),
             ReminderSlot.snoozeId(scheduleId: identity.scheduleId, date: identity.date, timeOfDay: identity.timeOfDay),
         ]
-        let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: ids)
-        center.removeDeliveredNotifications(withIdentifiers: ids)
+        Self.cancelNotifications(ids: ids)
+    }
+
+    /// Notification-center calls block the calling thread when the daemon is slow.
+    nonisolated private static func enqueue(_ request: UNNotificationRequest) {
+        DispatchQueue.global(qos: .utility).async {
+            UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+        }
+    }
+
+    nonisolated private static func cancelNotifications(ids: [String]) {
+        DispatchQueue.global(qos: .utility).async {
+            let center = UNUserNotificationCenter.current()
+            center.removePendingNotificationRequests(withIdentifiers: ids)
+            center.removeDeliveredNotifications(withIdentifiers: ids)
+        }
     }
 
     func snooze(reminder: PendingReminder) {
@@ -385,7 +398,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
                     doseLabel: reminder.doseLabel
                 )
             ) {
-                try? await UNUserNotificationCenter.current().add(request)
+                Self.enqueue(request)
             }
         }
     }

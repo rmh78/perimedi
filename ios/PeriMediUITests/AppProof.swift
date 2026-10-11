@@ -1,3 +1,4 @@
+import Foundation
 import XCTest
 
 struct AppProof {
@@ -108,8 +109,10 @@ struct AppProof {
             robot.spin(timeout: 12) { robot.exists("reminder.banner") },
             "reminder.banner late"
         )
+        sampleAppAfterTakenTap()
         robot.tap("reminder.taken")
         robot.waitGone(id: "reminder.banner")
+        logTakenSample()
         XCTAssertEqual(robot.value(of: "cycle.lane.estrogen.status"), "taken")
 
         robot.tap("cycle.lane.estrogen")
@@ -409,5 +412,49 @@ struct AppProof {
             file: file,
             line: line
         )
+    }
+
+    /// Simulator processes share this directory with the host. The Mac `/tmp`
+    /// is a different folder, so the marker and the sample file both live here.
+    private static var sampleDirectory: String {
+        ProcessInfo.processInfo.environment["SIMULATOR_SHARED_RESOURCES_DIRECTORY"] ?? "/tmp"
+    }
+
+    private static func samplePath(_ name: String) -> String {
+        (sampleDirectory as NSString).appendingPathComponent(name)
+    }
+
+    /// Asks the host script to `sample` the app. The UI-test process is built
+    /// for iOS, so it cannot spawn `sample` itself. The marker is written
+    /// before the tap because XCTest does not return until the app is idle.
+    private func sampleAppAfterTakenTap() {
+        guard Self.sampleTakenOnCI else { return }
+        let directory = Self.sampleDirectory
+        try? FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true)
+        FileManager.default.createFile(atPath: Self.samplePath("perimedi-sample-now"), contents: Data())
+        print("PERIMEDI_SAMPLE_NOW \(Self.samplePath("perimedi-sample-now"))")
+    }
+
+    private static var sampleTakenOnCI: Bool {
+        ProcessInfo.processInfo.environment["PERIMEDI_SAMPLE_TAKEN"] == "1"
+            || FileManager.default.fileExists(atPath: "/tmp/perimedi-sample-taken")
+    }
+
+    private func logTakenSample() {
+        guard Self.sampleTakenOnCI else { return }
+        let path = Self.samplePath("perimedi-taken-sample.txt")
+        let deadline = Date().addingTimeInterval(20)
+        var text = ""
+        while Date() < deadline {
+            if let loaded = try? String(contentsOfFile: path, encoding: .utf8), !loaded.isEmpty {
+                text = loaded
+                break
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+        }
+        let lines = text.split(separator: "\n", omittingEmptySubsequences: false).prefix(80)
+        print("taken-sample-begin")
+        for line in lines { print(line) }
+        print("taken-sample-end")
     }
 }

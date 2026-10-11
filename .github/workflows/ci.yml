@@ -78,9 +78,13 @@ jobs:
             ui-derived-xcode27-v3-
             ui-derived-xcode27-v2-
             ui-derived-xcode27-
+      - name: Drop a prefix-restored build marker
+        if: steps.ui-build-cache.outputs.cache-hit != 'true'
+        run: rm -f ios/DerivedData/build-ok
       - name: UI tests
         env:
           UI_BUILD_CACHE_HIT: ${{ steps.ui-build-cache.outputs.cache-hit }}
+          TEST_RUNNER_PERIMEDI_SAMPLE_TAKEN: "1"
         run: .grok/skills/verify-perimedi/scripts/control-perimedi verify
       - name: Upload xcresult on failure
         if: failure()
