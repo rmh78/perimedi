@@ -414,10 +414,12 @@ struct AppProof {
         )
     }
 
-    /// Simulator processes share this directory with the host. The Mac `/tmp`
-    /// is a different folder, so the marker and the sample file both live here.
+    /// The host watches `Devices/<udid>/data/Library/Shared`. On CI,
+    /// `SIMULATOR_SHARED_RESOURCES_DIRECTORY` is the parent `data` folder.
     private static var sampleDirectory: String {
-        ProcessInfo.processInfo.environment["SIMULATOR_SHARED_RESOURCES_DIRECTORY"] ?? "/tmp"
+        let base = ProcessInfo.processInfo.environment["SIMULATOR_SHARED_RESOURCES_DIRECTORY"] ?? "/tmp"
+        if base.hasSuffix("/Library/Shared") { return base }
+        return (base as NSString).appendingPathComponent("Library/Shared")
     }
 
     private static func samplePath(_ name: String) -> String {
