@@ -445,7 +445,9 @@ struct AppProof {
     private func logTakenSample() {
         guard Self.sampleTakenOnCI else { return }
         let path = Self.samplePath("perimedi-taken-sample.txt")
-        let deadline = Date().addingTimeInterval(20)
+        // `sample` writes the file after symbolication. On the aligned CI run
+        // that landed about 21s after this wait started, just past 20s.
+        let deadline = Date().addingTimeInterval(35)
         var text = ""
         while Date() < deadline {
             if let loaded = try? String(contentsOfFile: path, encoding: .utf8), !loaded.isEmpty {
