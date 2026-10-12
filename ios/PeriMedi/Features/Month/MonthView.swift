@@ -227,7 +227,7 @@ struct MonthView: View {
     }
 }
 
-private struct MonthDayCell: Identifiable {
+struct MonthDayCell: Identifiable {
     let date: Date
     let key: String
     var id: String { key }
@@ -241,7 +241,7 @@ private struct MonthDayCell: Identifiable {
     let isToday: Bool
 }
 
-private struct MonthGridModel {
+struct MonthGridModel {
     let cells: [MonthDayCell]
 
     static func build(

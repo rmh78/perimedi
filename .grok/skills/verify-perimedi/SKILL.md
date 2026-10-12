@@ -93,6 +93,8 @@ Do not commit `ios/DerivedData`, `ios/.build`, or secrets.
 
 Driver (executable): `.grok/skills/verify-perimedi/scripts/control-perimedi`
 
+Every `xcodebuild` call from this driver, including build and drive, passes `-collect-test-diagnostics never`. While that command runs, the driver kills a stray `simctl diagnose` for the simulator.
+
 ```bash
 .grok/skills/verify-perimedi/scripts/control-perimedi verify
 

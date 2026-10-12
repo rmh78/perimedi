@@ -37,6 +37,8 @@ this run-id holds the lock.
 Evidence: .grok/skills/verify-perimedi/evidence/<id>/
 Lock:     /tmp/perimedi-verify-<udid>.lock
 State:    .grok/skills/verify-perimedi/runs/<id>/state
+
+Every xcodebuild call from this driver, including build and drive, passes -collect-test-diagnostics never. While that command runs, the driver kills a stray simctl diagnose for the simulator.
 EOF
 }
 
