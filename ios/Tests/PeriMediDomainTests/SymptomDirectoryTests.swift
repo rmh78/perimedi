@@ -223,8 +223,8 @@ final class SymptomDirectoryTests: XCTestCase {
         XCTAssertEqual(
             plan.scores,
             [
-                SymptomScore(id: "hot_flash", date: "2026-03-15", severity: 3, loggedAt: "2026-03-15T08:00:00Z"),
                 SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 4, loggedAt: "2026-03-16T09:00:00Z"),
+                SymptomScore(id: "hot_flash", date: "2026-03-15", severity: 3, loggedAt: "2026-03-15T08:00:00Z"),
                 SymptomScore(id: fog.rawValue, date: "2026-03-16", severity: 1, loggedAt: "2026-03-16T09:00:00Z"),
             ]
         )

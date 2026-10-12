@@ -286,7 +286,7 @@ private struct MonthGridModel {
         let marks = CycleLogic.cycleBoundaryMarkers(from: from, to: to, periods: periods, settings: settings)
         var symptomDays = Set(remarks.map { DateKeys.toDateKey($0.occurredOn) })
         var scoresByDay: [String: [SymptomScore]] = [:]
-        for score in symptomScores {
+        for score in symptomScores where directory.contains(score.id) {
             symptomDays.insert(score.date)
             scoresByDay[score.date, default: []].append(score)
         }
