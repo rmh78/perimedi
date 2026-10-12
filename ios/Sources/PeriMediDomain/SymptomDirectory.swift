@@ -32,6 +32,25 @@ public struct CustomSymptom: Hashable, Sendable, Codable, Identifiable {
     }
 }
 
+public struct SymptomSync: Equatable, Sendable {
+    public var directory: SymptomDirectory
+    public var scores: [SymptomScore]
+    public var droppedIds: [CustomSymptomId]
+    public var scoreIdRewrites: [CustomSymptomId: CustomSymptomId]
+
+    public init(
+        directory: SymptomDirectory,
+        scores: [SymptomScore],
+        droppedIds: [CustomSymptomId],
+        scoreIdRewrites: [CustomSymptomId: CustomSymptomId]
+    ) {
+        self.directory = directory
+        self.scores = scores
+        self.droppedIds = droppedIds
+        self.scoreIdRewrites = scoreIdRewrites
+    }
+}
+
 public enum SymptomEditError: Error, Equatable, Sendable {
     case blankName
     case nameTooLong
@@ -156,6 +175,16 @@ public struct SymptomDirectory: Equatable, Sendable {
 
     public func index(of storageId: String) -> Int? {
         rankedIds.firstIndex(of: storageId)
+    }
+
+    public static func synced(rows: [CustomSymptom], scores: [SymptomScore]) -> SymptomSync {
+        let directory = restored(rows)
+        return SymptomSync(
+            directory: directory,
+            scores: scoresToStore(scores, directory: directory),
+            droppedIds: [],
+            scoreIdRewrites: [:]
+        )
     }
 
     /// Catalog scores stay. A custom id stays only when this directory still has it.

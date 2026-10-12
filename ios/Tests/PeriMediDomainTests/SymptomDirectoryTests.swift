@@ -194,4 +194,83 @@ final class SymptomDirectoryTests: XCTestCase {
         )
         XCTAssertEqual(stored.map(\.id), ["hot_flash", fog.rawValue])
     }
+
+    func testSyncedFoldAndExportMatchesImport() throws {
+        let later = ache
+        let other = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-000000000003")!
+        let orphan = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-000000000099")!
+        let rows = [
+            CustomSymptom(id: fog, name: "Fog", sort: 0),
+            CustomSymptom(id: later, name: " FOG ", sort: 1),
+            CustomSymptom(id: other, name: "Ache", sort: 2),
+        ]
+        let scores = [
+            SymptomScore(id: "hot_flash", date: "2026-03-15", severity: 3, loggedAt: "2026-03-15T08:00:00Z"),
+            SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 2, loggedAt: "2026-03-15T08:00:00Z"),
+            SymptomScore(id: later.rawValue, date: "2026-03-15", severity: 4, loggedAt: "2026-03-16T09:00:00Z"),
+            SymptomScore(id: later.rawValue, date: "2026-03-16", severity: 1, loggedAt: "2026-03-16T09:00:00Z"),
+            SymptomScore(id: orphan.rawValue, date: "2026-03-17", severity: 4, loggedAt: "2026-03-17T09:00:00Z"),
+        ]
+        let plan = SymptomDirectory.synced(rows: rows, scores: scores)
+        XCTAssertEqual(
+            plan.directory.customs,
+            [
+                CustomSymptom(id: fog, name: "Fog", sort: 0),
+                CustomSymptom(id: other, name: "Ache", sort: 2),
+            ]
+        )
+        XCTAssertEqual(plan.droppedIds, [later])
+        XCTAssertEqual(
+            plan.scores,
+            [
+                SymptomScore(id: "hot_flash", date: "2026-03-15", severity: 3, loggedAt: "2026-03-15T08:00:00Z"),
+                SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 4, loggedAt: "2026-03-16T09:00:00Z"),
+                SymptomScore(id: fog.rawValue, date: "2026-03-16", severity: 1, loggedAt: "2026-03-16T09:00:00Z"),
+            ]
+        )
+        let payload = BackupCodec.makeExport(
+            medications: [],
+            schedules: [],
+            doseLogs: [],
+            remarks: [],
+            cycleSettings: .default,
+            periods: [],
+            symptomScores: plan.scores,
+            customSymptoms: plan.directory.customs,
+            exportedAt: Date(timeIntervalSince1970: 0)
+        )
+        let decoded = try BackupCodec.decode(try BackupCodec.encode(payload))
+        let imported = SymptomDirectory.synced(rows: decoded.customSymptoms, scores: decoded.symptomScores)
+        XCTAssertEqual(imported.directory.customs, plan.directory.customs)
+        XCTAssertEqual(imported.scores, plan.scores)
+    }
+
+    func testSyncedSameOrderKeepsLowerId() {
+        let plan = SymptomDirectory.synced(
+            rows: [
+                CustomSymptom(id: ache, name: "Fog", sort: 3),
+                CustomSymptom(id: fog, name: "FOG", sort: 3),
+            ],
+            scores: []
+        )
+        XCTAssertEqual(plan.directory.customs, [CustomSymptom(id: fog, name: "FOG", sort: 3)])
+        XCTAssertEqual(plan.droppedIds, [ache])
+    }
+
+    func testSyncedSameTimestampKeepsHigherSeverity() {
+        let plan = SymptomDirectory.synced(
+            rows: [
+                CustomSymptom(id: fog, name: "Fog", sort: 0),
+                CustomSymptom(id: ache, name: "fog", sort: 1),
+            ],
+            scores: [
+                SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 2, loggedAt: "2026-03-15T08:00:00Z"),
+                SymptomScore(id: ache.rawValue, date: "2026-03-15", severity: 4, loggedAt: "2026-03-15T08:00:00Z"),
+            ]
+        )
+        XCTAssertEqual(
+            plan.scores,
+            [SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 4, loggedAt: "2026-03-15T08:00:00Z")]
+        )
+    }
 }
