@@ -311,9 +311,7 @@ cmd_launch() {
   fi
   disable_hardware_keyboard
   xcrun simctl bootstatus "$UDID" -b
-  xcrun simctl status_bar "$UDID" override --time "9:41" --batteryState charged --batteryLevel 100 \
-    --wifiMode active --wifiBars 3 --cellularMode active --cellularBars 4 --dataNetwork wifi \
-    || echo "control-perimedi: status_bar override skipped" >&2
+  override_status_bar
 
   xcrun simctl uninstall "$UDID" "$BUNDLE" 2>/dev/null || true
   xcrun simctl uninstall "$UDID" "${BUNDLE}.uitests.xctrunner" 2>/dev/null || true
@@ -323,15 +321,107 @@ cmd_launch() {
   printf 'launch: ready udid=%s device=%s\n' "$UDID" "$DEVICE_LINE"
 }
 
-# Sign to Run Locally and stamp group.app.perimedi.ios. CODE_SIGNING_ALLOWED=NO
-# leaves containerURL nil, so the widget shows the empty card. The group-only
-# entitlements file keeps the iCloud container out of this signature.
+override_status_bar() {
+  # perl `alarm` then `exec` replaces the process and drops the alarm.
+  xcrun simctl status_bar "$UDID" override \
+    --time "9:41" --batteryState charged --batteryLevel 100 \
+    --wifiMode active --wifiBars 3 --cellularMode active --cellularBars 4 \
+    --dataNetwork wifi &
+  local pid=$!
+  local i
+  for i in 1 2 3 4 5; do
+    if ! kill -0 "$pid" 2>/dev/null; then
+      wait "$pid" 2>/dev/null || echo "control-perimedi: status_bar override failed" >&2
+      return 0
+    fi
+    sleep 1
+  done
+  kill -TERM "$pid" 2>/dev/null || true
+  wait "$pid" 2>/dev/null || true
+  echo "control-perimedi: status_bar override bounded" >&2
+}
+
+# Do not install a build that lacks group.app.perimedi.ios.
+# Simulator stamps that group into the binary's simulated entitlement section.
+# codesign -d is an empty dict for those ad-hoc signatures.
+product_has_app_group() {
+  local products="$DERIVED/Build/Products"
+  local app widget
+  app="$(find "$products" -type d -name 'PeriMedi.app' -path '*iphonesimulator*' 2>/dev/null | head -n 1)"
+  widget="$(find "$app/PlugIns" -type d -name 'PeriMediDoseWidget.appex' 2>/dev/null | head -n 1)"
+  [[ -n "$app" && -n "$widget" ]] || return 1
+  bundle_has_group "$app" "PeriMedi" && bundle_has_group "$widget" "PeriMediDoseWidget"
+}
+
+bundle_has_group() {
+  local bundle="$1"
+  local exe="$2"
+  local dump
+  dump="$(codesign -d --entitlements :- "$bundle" 2>/dev/null || true)"
+  [[ "$dump" == *"group.app.perimedi.ios"* ]] && return 0
+  [[ -f "$bundle/$exe" ]] || return 1
+  grep -a -q 'group.app.perimedi.ios' "$bundle/$exe"
+}
+
+BUILD_PID=""
+
+# A checkout stamps every file with 'now', so a restored DerivedData still
+# rebuilds the app. Put each tracked file back to the commit that changed it.
+restore_checkout_mtime() {
+  [[ -n "${GITHUB_ACTIONS:-}" ]] || return 0
+  python3 - "$ROOT" <<'PY'
+import os, subprocess, sys
+root = sys.argv[1]
+os.chdir(root)
+seen = set()
+stamp = None
+log = subprocess.check_output(
+    ["git", "log", "--pretty=format:%ct", "--name-only", "--no-renames"],
+    text=True,
+)
+for line in log.splitlines():
+    if not line:
+        continue
+    if line.isdigit():
+        stamp = int(line)
+        continue
+    if stamp is None or line in seen:
+        continue
+    path = os.path.join(root, line)
+    if os.path.isfile(path):
+        os.utime(path, (stamp, stamp))
+        seen.add(line)
+print(f"control-perimedi: restored mtimes for {len(seen)} files", flush=True)
+PY
+}
+
+stop_build() {
+  local pid="${BUILD_PID:-}"
+  BUILD_PID=""
+  [[ -n "$pid" ]] || return 0
+  kill -TERM -- "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
+  wait "$pid" 2>/dev/null || true
+}
+
 xcode_test() {
+  local action="test"
+  local destination="platform=iOS Simulator,id=$UDID"
+  if [[ "${1:-}" == "build-for-testing" ]]; then
+    action="build-for-testing"
+    destination="generic/platform=iOS Simulator"
+    shift
+  elif [[ "${1:-}" == "build-for-testing-device" ]]; then
+    action="build-for-testing"
+    shift
+  elif [[ "${1:-}" == "test-without-building" ]]; then
+    action="test-without-building"
+    shift
+  fi
   local team="${PERIMEDI_DEVELOPMENT_TEAM:-7H4A6PWSPS}"
-  xcodebuild test \
+  xcodebuild "$action" \
     -project "$PROJECT" \
     -scheme PeriMedi \
-    -destination "platform=iOS Simulator,id=$UDID" \
+    -destination "$destination" \
     -derivedDataPath "$DERIVED" \
     "$@" \
     DEVELOPMENT_TEAM="$team" \
@@ -421,6 +511,41 @@ dump_xcresult() {
   fi
 }
 
+# The UI-test runner is an iOS simulator process. It writes the marker into
+# the simulator shared directory, which is the same folder on the host.
+watch_taken_sample() {
+  local shared="$HOME/Library/Developer/CoreSimulator/Devices/${UDID}/data/Library/Shared"
+  mkdir -p "$shared"
+  rm -f /tmp/perimedi-sample-now "$shared/perimedi-sample-now" \
+    /tmp/perimedi-taken-sample.txt "$shared/perimedi-taken-sample.txt"
+  while true; do
+    if [[ -f /tmp/perimedi-sample-now || -f "$shared/perimedi-sample-now" ]]; then
+      rm -f /tmp/perimedi-sample-now "$shared/perimedi-sample-now"
+      local sample_file="$shared/perimedi-taken-sample.txt"
+      # The test stops polling once this file is non-empty. Symbolication
+      # finishes later. The call graph is printed below, after sample returns.
+      printf '%s\n' 'sample pending' >"$sample_file"
+      sleep 6
+      local pid
+      # awk exits after the first match, so ps gets SIGPIPE. pipefail would
+      # kill this background sampler before it writes the sample file.
+      pid="$(ps -axo pid=,command= 2>/dev/null | awk '/PeriMedi\.app\/PeriMedi / && !/UITests/ {print $1; exit}' || true)"
+      if [[ -n "$pid" ]]; then
+        /usr/bin/sample "$pid" 3 -file "$sample_file" || true
+        echo "control-perimedi: sampled PeriMedi $pid"
+        if [[ -s "$sample_file" ]]; then
+          echo taken-sample-begin
+          head -n 80 "$sample_file"
+          echo taken-sample-end
+        fi
+      else
+        echo "control-perimedi: PeriMedi pid not found for sample" >&2
+      fi
+    fi
+    sleep 1
+  done
+}
+
 cmd_verify() {
   if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
     python3 "$ROOT/ios/scripts/check-feature-map.py"
@@ -455,19 +580,88 @@ cmd_verify() {
 
   acquire_lock
   VERIFY_LOCK_HELD=1
-  trap 'if [[ "${VERIFY_LOCK_HELD:-0}" == 1 ]]; then uninstall_app; release_lock; VERIFY_LOCK_HELD=0; fi' EXIT
+  trap 'stop_build; if [[ "${VERIFY_LOCK_HELD:-0}" == 1 ]]; then uninstall_app; release_lock; VERIFY_LOCK_HELD=0; fi' EXIT
+
+  mkdir -p "$DERIVED"
+  rm -rf "$RESULT"
+  if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
+    touch /tmp/perimedi-sample-taken
+  else
+    rm -f /tmp/perimedi-sample-taken
+  fi
+  restore_checkout_mtime
+  local build_log="$DERIVED/build-for-testing.log"
+  local build_ok="$DERIVED/build-ok"
+  local group_ok=0
+  # An exact hit is reusable only when this run's cache wrote build-ok after a
+  # successful build. A prefix restore of an older tree must not count.
+  if [[ "${UI_BUILD_CACHE_HIT:-}" == "true" && -f "$build_ok" ]] && product_has_app_group; then
+    group_ok=1
+    echo "control-perimedi: reused cached simulator build"
+  else
+    rm -f "$build_ok"
+    set -m
+    xcode_test build-for-testing >"$build_log" 2>&1 &
+    BUILD_PID=$!
+    set +m
+    echo "control-perimedi: build-for-testing started"
+  fi
 
   disable_hardware_keyboard
-  xcrun simctl shutdown "$UDID" 2>/dev/null || true
+  # The device line is already Shutdown on a fresh runner. shutdown still
+  # talks to CoreSimulator. Boot is the part that has to run.
+  if [[ "$DEVICE_LINE" != *Shutdown* ]]; then
+    xcrun simctl shutdown "$UDID" 2>/dev/null || true
+  fi
   xcrun simctl boot "$UDID"
   xcrun simctl bootstatus "$UDID" -b
-  xcrun simctl status_bar "$UDID" override --time "9:41" --batteryState charged --batteryLevel 100 \
-    --wifiMode active --wifiBars 3 --cellularMode active --cellularBars 4 --dataNetwork wifi \
-    || echo "control-perimedi: status_bar override skipped" >&2
+  # CI skips the screen catalog. The status-bar override is for those PNGs.
+  # Killing it after 5s left the next simctl in a 104s to 166s hole on the
+  # three exact-cache logs. The pre-test uninstall is the call in that hole.
+  # A GitHub runner starts with no PeriMedi installed. The post-test uninstall stays.
+  if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
+    override_status_bar
+    uninstall_app
+  else
+    echo "control-perimedi: skip status bar and pre-test uninstall on CI"
+  fi
 
-  uninstall_app
+  if [[ -n "${BUILD_PID:-}" ]]; then
+    set +e
+    wait "$BUILD_PID"
+    local build_status=$?
+    set -e
+    if [[ "$build_status" -ne 0 ]]; then
+      stop_build
+      tail -n 80 "$build_log" >&2 || true
+      fail "xcodebuild build-for-testing exited $build_status (log $build_log)"
+    fi
+    BUILD_PID=""
+    local swift_lines=0
+    swift_lines="$(grep -c -E 'SwiftCompile|CompileSwift' "$build_log" 2>/dev/null || true)"
+    echo "control-perimedi: swift compile lines ${swift_lines:-0}"
+  fi
+  # The exact-hit path already checked the app group before boot. Walking
+  # DerivedData again sat in the same hole as the pre-test uninstall.
+  if [[ "$group_ok" != 1 ]] && ! product_has_app_group; then
+    echo "control-perimedi: generic product lacks group.app.perimedi.ios; rebuilding for $UDID" >&2
+    set +e
+    xcode_test build-for-testing-device >"$build_log" 2>&1
+    build_status=$?
+    set -e
+    if [[ "$build_status" -ne 0 ]]; then
+      tail -n 80 "$build_log" >&2 || true
+      fail "xcodebuild build-for-testing for $UDID exited $build_status (log $build_log)"
+    fi
+    if ! product_has_app_group; then
+      fail "built product lacks group.app.perimedi.ios (log $build_log)"
+    fi
+  fi
+  if [[ ! -f "$build_ok" ]]; then
+    git -C "$ROOT" rev-parse HEAD >"$build_ok"
+    echo "control-perimedi: build-ok"
+  fi
 
-  rm -rf "$RESULT"
   local skip_catalog=0
   if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
     skip_catalog=1
@@ -477,24 +671,31 @@ cmd_verify() {
     echo "Skipping ScreenCatalogTests (SCREEN_CATALOG=0)"
   fi
 
-  local -a xcode_args=(-resultBundlePath "$RESULT")
+  local -a xcode_args=(-resultBundlePath "$RESULT" -collect-test-diagnostics never)
   if [[ "$skip_catalog" -eq 1 ]]; then
     xcode_args+=(-skip-testing:PeriMediUITests/ScreenCatalogTests)
   fi
+
+  local sample_pid=""
   if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
-    # Issue 70 collapses these journeys. CI skips them until that lands.
-    echo "Skipping WidgetJourneyTests on CI"
-    xcode_args+=(-skip-testing:PeriMediUITests/WidgetJourneyTests)
+    set -m
+    watch_taken_sample &
+    sample_pid=$!
+    set +m
   fi
 
   set +e
-  xcode_test "${xcode_args[@]}"
+  xcode_test test-without-building "${xcode_args[@]}"
   local status=$?
   set -e
+  if [[ -n "$sample_pid" ]]; then
+    kill -TERM -- "-$sample_pid" 2>/dev/null || kill -TERM "$sample_pid" 2>/dev/null || true
+    wait "$sample_pid" 2>/dev/null || true
+  fi
 
   if [[ "$status" -ne 0 ]]; then
     dump_xcresult
-    fail "xcodebuild test exited $status"
+    fail "xcodebuild test-without-building exited $status"
   fi
 
   python3 "$ROOT/ios/scripts/check-screen-catalog.py"

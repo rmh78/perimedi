@@ -126,9 +126,11 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
     }
 
     func clearAll() {
-        let center = UNUserNotificationCenter.current()
-        center.removeAllPendingNotificationRequests()
-        center.removeAllDeliveredNotifications()
+        Self.notificationQueue.async {
+            let center = UNUserNotificationCenter.current()
+            center.removeAllPendingNotificationRequests()
+            center.removeAllDeliveredNotifications()
+        }
     }
 
     func previewSound(_ sound: ReminderSound) {
@@ -149,18 +151,17 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
     }
 
     private func reschedule(using store: Store) async {
-        let center = UNUserNotificationCenter.current()
-        let pending = await center.pendingNotificationRequests()
-        if !masterEnabled {
-            let ours = pending.filter { $0.identifier.hasPrefix("dose.") || $0.identifier.hasPrefix("snooze.") }
-            center.removePendingNotificationRequests(withIdentifiers: ours.map(\.identifier))
-            return
-        }
         if let delay = remindInSeconds {
             await scheduleSoon(using: store, delay: delay)
             return
         }
-
+        let center = UNUserNotificationCenter.current()
+        let pending = await center.pendingNotificationRequests()
+        if !masterEnabled {
+            let ours = pending.filter { $0.identifier.hasPrefix("dose.") || $0.identifier.hasPrefix("snooze.") }
+            Self.removePending(ours.map(\.identifier))
+            return
+        }
         let settings = await center.notificationSettings()
         let status = ReminderAuthStatus(settings.authorizationStatus)
         let ours = pending.filter { $0.identifier.hasPrefix("dose.") || $0.identifier.hasPrefix("snooze.") }
@@ -168,7 +169,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             masterEnabled: true,
             status: status
         ) else {
-            center.removePendingNotificationRequests(withIdentifiers: ours.filter { $0.identifier.hasPrefix("dose.") }.map(\.identifier))
+            Self.removePending(ours.filter { $0.identifier.hasPrefix("dose.") }.map(\.identifier))
             return
         }
 
@@ -181,9 +182,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             settings: store.settings
         )
         // Rebuild every dose request so a broken trigger (no time zone) is not kept.
-        center.removePendingNotificationRequests(
-            withIdentifiers: ours.filter { $0.identifier.hasPrefix("dose.") }.map(\.identifier)
-        )
+        Self.removePending(ours.filter { $0.identifier.hasPrefix("dose.") }.map(\.identifier))
 
         for slot in slots {
             guard let request = makeRequest(
@@ -194,7 +193,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
                 fireAt: slot.fireAt,
                 info: userInfo(for: slot)
             ) else { continue }
-            try? await center.add(request)
+            Self.enqueue(request)
         }
 
         let liveSnooze = ReminderLogic.pendingSnoozeIds(
@@ -209,8 +208,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             .map(\.identifier)
             .filter { $0.hasPrefix("snooze.") && !liveSnooze.contains($0) }
         if !staleSnooze.isEmpty {
-            center.removePendingNotificationRequests(withIdentifiers: staleSnooze)
-            center.removeDeliveredNotifications(withIdentifiers: staleSnooze)
+            Self.removePendingAndDelivered(staleSnooze)
         }
     }
 
@@ -225,6 +223,9 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         ).first else { return }
         var soon = slot
         soon.fireAt = Date().addingTimeInterval(TimeInterval(max(1, delay)))
+        // The card is in-app. add() on the main actor froze the UI for
+        // 286s after Taken while XCTest waited for the app to go idle.
+        present(soon)
         if let request = makeRequest(
             id: soon.id,
             medicationName: soon.medicationName,
@@ -233,9 +234,8 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             fireAt: soon.fireAt,
             info: userInfo(for: soon)
         ) {
-            try? await UNUserNotificationCenter.current().add(request)
+            Self.enqueue(request)
         }
-        present(soon)
     }
 
     func presentFromUserInfo(_ info: [AnyHashable: Any]) {
@@ -355,9 +355,40 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             ReminderSlot.doseId(scheduleId: identity.scheduleId, date: identity.date, timeOfDay: identity.timeOfDay),
             ReminderSlot.snoozeId(scheduleId: identity.scheduleId, date: identity.date, timeOfDay: identity.timeOfDay),
         ]
-        let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: ids)
-        center.removeDeliveredNotifications(withIdentifiers: ids)
+        Self.cancelNotifications(ids: ids)
+    }
+
+    /// One serial queue. A concurrent queue let a slow add from an earlier
+    /// reschedule land after Taken's cancel, so a taken dose could fire again.
+    /// The calls still leave the main actor, because the daemon can block.
+    nonisolated private static let notificationQueue = DispatchQueue(
+        label: "app.perimedi.notifications",
+        qos: .utility
+    )
+
+    nonisolated private static func enqueue(_ request: UNNotificationRequest) {
+        notificationQueue.async {
+            UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+        }
+    }
+
+    nonisolated private static func removePending(_ ids: [String]) {
+        guard !ids.isEmpty else { return }
+        notificationQueue.async {
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ids)
+        }
+    }
+
+    nonisolated private static func removePendingAndDelivered(_ ids: [String]) {
+        notificationQueue.async {
+            let center = UNUserNotificationCenter.current()
+            center.removePendingNotificationRequests(withIdentifiers: ids)
+            center.removeDeliveredNotifications(withIdentifiers: ids)
+        }
+    }
+
+    nonisolated private static func cancelNotifications(ids: [String]) {
+        removePendingAndDelivered(ids)
     }
 
     func snooze(reminder: PendingReminder) {
@@ -384,7 +415,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
                     doseLabel: reminder.doseLabel
                 )
             ) {
-                try? await UNUserNotificationCenter.current().add(request)
+                Self.enqueue(request)
             }
         }
     }
@@ -547,7 +578,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             fireAt: fireAt,
             info: info
         ) {
-            try? await UNUserNotificationCenter.current().add(request)
+            Self.enqueue(request)
         }
     }
 }

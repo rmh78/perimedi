@@ -57,7 +57,7 @@ Simulator CLI builds can still pass `CODE_SIGNING_ALLOWED=NO`.
 
 ## UI tests (interaction proof)
 
-Instrumented XCUITests live in `PeriMediUITests/`. User-story journeys: first-use (empty home → empty Trends → log a period → add medications → mark taken → symptom → Month pager → period day on Cycle), More settings, a dose reminder (add a pending med, take it from the reminder card), Trends with history, and the Home Screen widget (`WidgetJourneyTests`). Tests start empty, pin English and today (`2026-03-15`), and tap Cycle / sheets. Watch **iPhone 17e** (Simulator → Window → iPhone 17e). **iPhone 17** is a different Simulator and will stay idle.
+Instrumented XCUITests live in `PeriMediUITests/`. The required suite is `testEnglishAppJourney` (empty home through tracking, the reminder, More, and Trends) and `testEnglishWidgetJourney` (medium, then small, on the device's today). Both are English. Tests start empty and tap Cycle / sheets. Watch **iPhone 17e** (Simulator → Window → iPhone 17e). **iPhone 17** is a different Simulator and will stay idle.
 
 The widget journeys run in this same `xcodebuild test`. Do not pass `CODE_SIGNING_ALLOWED=NO`. That build has no App Group, so the widget stays on the empty card.
 
@@ -74,7 +74,7 @@ xcodebuild test \
   -allowProvisioningUpdates
 ```
 
-Launch contract used by the suite: `-en -clear -today=2026-03-15 -uiTesting`. `-uiTesting` turns off UIView animations so XCTest is not blocked on springs. The reminder test also passes `-remindIn=2` so the next pending slot appears as a tappable in-app card (system banners are not asserted). Trends chart proof may pass `-fixture=trends` and `-tabTrends` (dummy multi-cycle scores; not sample data). Do not pass `-journeyStep` or `-loadSample` for these tests. The screen catalog test is the exception: it may pass `-loadSample` and switch language in-app to write `docs/screens/`. CI skips rewriting those PNGs.
+Launch contract used by the suite: `-en -clear -today=2026-03-15 -uiTesting`. `-uiTesting` turns off UIView animations so XCTest is not blocked on springs. The reminder test also passes `-remindIn=2` so the next pending slot appears as a tappable in-app card (system banners are not asserted). Trends chart proof may pass `-fixture=trends` and `-tabTrends` (dummy multi-cycle scores; not sample data). Do not pass `-journeyStep` or `-loadSample` for these tests. The screen catalog test is the exception for sample data: it may pass `-loadSample` and writes English pictures only. It must not switch language. CI skips rewriting those PNGs.
 
 Main-screen PNGs for UX review are `docs/screens/` (see [docs/screens.md](docs/screens.md)). `python3 ios/scripts/check-screen-catalog.py` fails only if an expected file is missing. Do not paste screenshot galleries on the PR. `JourneyScript` and `scripts/shot-journey.sh` remain optional extra capture, not the interaction proof.
 

@@ -67,8 +67,14 @@ enum DoseWidgetBridge {
             }
         }
         try? DoseWidgetSnapshotFile.write(snapshot)
-        WidgetCenter.shared.reloadTimelines(ofKind: DoseWidgetKind.id)
-        WidgetCenter.shared.reloadAllTimelines()
+        // reloadAllTimelines talks to the widget daemon. Calling it on the
+        // main actor froze the app for about 190s after Taken while XCTest
+        // waited for the run loop to go idle.
+        let kind = DoseWidgetKind.id
+        DispatchQueue.global(qos: .utility).async {
+            WidgetCenter.shared.reloadTimelines(ofKind: kind)
+            WidgetCenter.shared.reloadAllTimelines()
+        }
     }
 
     private static func pendingToday() -> [TodayPendingMedication] {

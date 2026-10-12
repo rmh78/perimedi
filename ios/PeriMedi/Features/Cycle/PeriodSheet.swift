@@ -184,7 +184,7 @@ struct PeriodSheet: View {
                 .pickerStyle(.menu)
             }
             HStack(spacing: 8) {
-                PillButton(title: app.t("common.cancel"), kind: .secondary, fillsWidth: true) {
+                PillButton(title: app.t("common.cancel"), kind: .secondary, identifier: A11yID.confirmCancel, fillsWidth: true) {
                     closeDraft()
                 }
                 if case .edit(let id) = draft {

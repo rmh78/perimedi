@@ -16,18 +16,18 @@ Turn reminders on in More. Enable remind on a medication. When a slot is due, a 
 
 | Control | ID | Proof |
 |---|---|---|
-| Banner | `reminder.banner` | `testDoseReminderTaken` waits up to 12s. Title “Time for your dose” (DE: “Zeit für deine Dosis”), medication name, then body with dose and planned time. |
-| Taken | `reminder.taken` | Primary action on the right. Banner gone; `cycle.lane.{slug}.status` becomes `taken`. Label “Taken” / “Genommen”. |
-| Snooze | `reminder.snooze` | Left of Taken. Banner dismisses without taking. Label “Snooze 10 min” / “10 Min. später”. |
+| Banner | `reminder.banner` | `testEnglishAppJourney` waits up to 12s after saving estrogen, and again after untaking that lane. Title “Time for your dose”, medication name, then body with dose and planned time. German title copy is the l10n check. |
+| Taken | `reminder.taken` | Primary action on the right. Banner gone; `cycle.lane.{slug}.status` becomes `taken`. The English journey takes estrogen, then progesterone, before Month. |
+| Snooze | `reminder.snooze` | Left of Taken. Banner dismisses without taking. The English journey taps it between the untake and the second estrogen take. |
 | More master | `more.reminders` | See [more.md](more.md). |
 | Per-med remind | `med.remind` | On [medication-sheet.md](medication-sheet.md). |
 
-Launch extra: `-remindIn=2` fires the next pending slot in-process (see `FirstUseJourneyTests.testDoseReminderTaken`). Add a med first so a lane exists with `not-taken`, then wait for the banner.
+`JourneyLaunch.pinnedRemindIn(seconds: 2)` fires the next pending slot in-process on `testEnglishAppJourney`. Save estrogen first so a lane exists with `not-taken`, then wait for the banner. Do not launch a second process for the reminder.
 
 ## Gotchas
 
 - Springboard banners are unreliable in XCTest. Use `-remindIn`, not a real notification.
-- Banner proof is on iPhone 17e only. `testDoseReminderTaken` can save the med and still miss `reminder.banner` within 12s (`-remindIn=2`) on any other phone. Do not treat that miss as coverage.
+- Banner proof is on iPhone 17e only. `testEnglishAppJourney` can save the med and still miss `reminder.banner` within 12s (`-remindIn=2`) on any other phone. Do not treat that miss as coverage.
 - Taken on the banner uses the same path as the notification action. System banners use title/subtitle/body (medication name is subtitle, not title). Springboard copy is not XCTest-asserted.
 - German Taken is “Genommen” so it matches the body (“Tippe auf Genommen”).
 - Master switch off on More means no banner, even if `med.remind` is on.

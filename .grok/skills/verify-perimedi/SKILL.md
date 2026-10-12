@@ -22,7 +22,7 @@ Ready when stdout contains `launch: ready udid=`. The helper boots that UDID if 
 
 Teardown is `cleanup` on the same `--run-id`.
 
-`AppRobot.launch()` always uses `-en -clear -today=2026-03-15 -uiTesting`. Never pass `-journeyStep` or `-loadSample` on journey tests. `ScreenCatalogTests` may pass `-loadSample`. Frozen dates in `UITestDate`: today `2026-03-15`, yesterday `2026-03-14`, period `2026-03-07`–`2026-03-11`.
+`AppRobot.launch` takes a `JourneyLaunch`: `.pinnedRemindIn(seconds: 2)` (today `2026-03-15`), `.trendsChart`, `.trendsNoScores`, or `.widgetToday` (device date). Each is `-en -clear -uiTesting` plus `-today` and that case's one flag. Never `-journeyStep` or `-loadSample` on a journey. A second launch with the same case fails. `launchCatalog` is the only path that may pass `-loadSample`, and it writes English catalog names only. Frozen dates in `UITestDate`: today `2026-03-15`, yesterday `2026-03-14`, period `2026-03-07`–`2026-03-11`.
 
 ## Doctor
 
@@ -41,23 +41,20 @@ PR-wide proof is `control-perimedi verify`. Do not use `doctor` as the product U
 1. Open the matching file under `features/`.
 2. Get there the way a user would (bottom tabs, Cycle action buttons, sheets).
 3. Tap `A11yID` strings through `AppRobot` (`tap`, `waitFor`, `value(of:)`, `exists`).
-4. Type with `clearAndType` / `typeText`: tap, wait until the software keyboard exists, type once, assert the exact value. Do not paste, retry-loop `typeText`, use the clipboard menu, or test-only setters.
+4. Type with `clearAndType`: tap, wait until the software keyboard exists, send the whole string in one `typeText`, refocus once if the value is wrong, assert the exact value. Do not paste, type one character per `typeText`, use the clipboard menu, or test-only setters.
 5. Assert the observable state listed in that file.
 
 ```bash
 .grok/skills/verify-perimedi/scripts/control-perimedi --run-id "$RUN_ID" \
-  drive --test PeriMediUITests/FirstUseJourneyTests/testFirstUseJourney
+  drive --test PeriMediUITests/RequiredJourneyTests/testEnglishAppJourney
 ```
 
 Mapped tests:
 
 | Surface | `--test` |
 |---|---|
-| Cycle, period, med, symptom, Month | `PeriMediUITests/FirstUseJourneyTests/testFirstUseJourney` |
-| More, visit PDF, backup rows (cancel) | `PeriMediUITests/FirstUseJourneyTests/testMoreRemindersControls` |
-| Dose reminder Taken | `PeriMediUITests/FirstUseJourneyTests/testDoseReminderTaken` |
-| Trends empty / chart | `PeriMediUITests/SymptomTrendsTests/testSymptomTrendsNoScores` and `testSymptomTrendsChart` |
-| Custom symptoms | `PeriMediUITests/SymptomTrendsTests/testCustomSymptomCreateScoreRenameChartAndDelete` |
+| English app journey (Cycle, period edit/delete, meds, reminder, symptom, Month, More, Trends chart, custom symptom, no-scores) | `PeriMediUITests/RequiredJourneyTests/testEnglishAppJourney` |
+| English Home Screen widget (medium, then small, same process) | `PeriMediUITests/RequiredJourneyTests/testEnglishWidgetJourney` |
 
 `AppRobot.pick` tries an accessibility identifier first, then a visible label. Tests launch `-en`. `addMedication` uses `med.mode.everyday` / `med.mode.cyclic`.
 
@@ -78,9 +75,9 @@ PR-wide UI proof is `verify: ok` from `.grok/skills/verify-perimedi/scripts/cont
 
 Named location: `.grok/skills/verify-perimedi/evidence/<run-id>/`
 
-Each `drive` writes a subdirectory named after the `--test` path (slashes become dashes), for example `…/evidence/<run-id>/PeriMediUITests-SymptomTrendsTests-testSymptomTrendsNoScores/`. That slot holds `xcodebuild.log` (`TEST SUCCEEDED`), `summary.txt`, `test.txt`, `command.txt`, and `PeriMedi.xcresult`. Later drives on the same run-id must not delete earlier slots. `drives.txt` lists slot names in order. Exercise the real user path (`AppRobot` taps and `typeText`), not `-loadSample`, `-journeyStep`, or test-only setters. Journey tests never pass those flags.
+Each `drive` writes a subdirectory named after the `--test` path (slashes become dashes), for example `…/evidence/<run-id>/PeriMediUITests-RequiredJourneyTests-testEnglishAppJourney/`. That slot holds `xcodebuild.log` (`TEST SUCCEEDED`), `summary.txt`, `test.txt`, `command.txt`, and `PeriMedi.xcresult`. Later drives on the same run-id must not delete earlier slots. `drives.txt` lists slot names in order. Exercise the real user path (`AppRobot` taps and `clearAndType`), not `-loadSample`, `-journeyStep`, or test-only setters. Journey tests never pass those flags.
 
-Main-screen PNGs for UX review are `ios/docs/screens/` (written by `ScreenCatalogTests` on a local `control-perimedi verify` unless `SCREEN_CATALOG=0`). Commit those after UI changes. UX reviews the Files changed image diff. Do not paste screenshot galleries into PR comments. `control-perimedi drive` does not rewrite that catalog.
+Main-screen PNGs for UX review are the fifteen English files in `ios/docs/screens/` (written by `ScreenCatalogTests` on a local `control-perimedi verify` unless `SCREEN_CATALOG=0`). Commit those after UI changes. UX reviews the Files changed image diff. Do not paste screenshot galleries into PR comments. `control-perimedi drive` does not rewrite that catalog. GitHub skips the catalog writer. It runs the English widget journey.
 
 ## Cleanup
 
@@ -102,6 +99,6 @@ Driver (executable): `.grok/skills/verify-perimedi/scripts/control-perimedi`
 .grok/skills/verify-perimedi/scripts/control-perimedi --run-id "$RUN_ID" doctor
 .grok/skills/verify-perimedi/scripts/control-perimedi --run-id "$RUN_ID" launch
 .grok/skills/verify-perimedi/scripts/control-perimedi --run-id "$RUN_ID" \
-  drive --test PeriMediUITests/FirstUseJourneyTests/testFirstUseJourney
+  drive --test PeriMediUITests/RequiredJourneyTests/testEnglishAppJourney
 .grok/skills/verify-perimedi/scripts/control-perimedi --run-id "$RUN_ID" cleanup
 ```
