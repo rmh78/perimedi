@@ -75,10 +75,10 @@ struct AppProof {
 
         let edited = historyRow()
         XCTAssertTrue(edited.waitForExistence(timeout: 2))
-        XCTAssertEqual(edited.label, "7–12 Mar 2026")
+        XCTAssertEqual(edited.label, "Mar 7, 2026 \u{2013} Mar 12, 2026")
         robot.press(edited)
         robot.tap("period.delete")
-        XCTAssertTrue(robot.app.staticTexts["Delete 7–12 Mar 2026?"].waitForExistence(timeout: 2))
+        XCTAssertTrue(robot.app.staticTexts["Delete Mar 7, 2026 \u{2013} Mar 12, 2026?"].waitForExistence(timeout: 2))
         robot.tap("confirm.delete")
         assertNoHistoryRows()
 

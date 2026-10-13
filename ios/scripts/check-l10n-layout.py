@@ -148,10 +148,17 @@ def main() -> int:
         print(f"{DIALOG.relative_to(ROOT)}: missing TT.MM.JJJJ", file=sys.stderr)
 
     period = PERIOD.read_text(encoding="utf-8")
-    if "language == .de" not in period or ".–" not in period:
+    dates = (ROOT / "ios/PeriMedi/Features/More/VisitDateRange.swift").read_text(encoding="utf-8")
+    if "VisitDateRange.periodHistory" not in period or "language ==" in period:
         failed = True
         print(
-            f"{PERIOD.relative_to(ROOT)}: .de same-month branch must keep the .– range",
+            f"{PERIOD.relative_to(ROOT)}: history must call VisitDateRange.periodHistory with no language branch",
+            file=sys.stderr,
+        )
+    if "\\u{2013}" not in dates or "\\u{2192}" not in dates:
+        failed = True
+        print(
+            "ios/PeriMedi/Features/More/VisitDateRange.swift: closed join and open period arrow are missing",
             file=sys.stderr,
         )
 

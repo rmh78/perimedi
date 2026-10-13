@@ -44,7 +44,7 @@ An instrumented UI suite SHALL include one English app journey that drives the r
 - **THEN** Trends explains that cycles are needed, no series chips are shown, and the suite returns to Cycle to continue tracking
 
 #### Scenario: Edit and delete a period, then log it again
-- **WHEN** the suite logs a period, changes its end so the history label is exactly `7–12 Mar 2026`, and confirms `Delete 7–12 Mar 2026?`
+- **WHEN** the suite logs a period, changes its end so the history label is exactly `Mar 7, 2026 – Mar 12, 2026`, and confirms `Delete Mar 7, 2026 – Mar 12, 2026?`
 - **THEN** that history row is gone, the PeriMedi intro card returns, the requirements card names the missing period, and the suite logs the period again from eight days before the pinned today through four days before it before any medication is saved
 
 #### Scenario: Add a period through the UI

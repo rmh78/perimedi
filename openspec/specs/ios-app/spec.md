@@ -152,7 +152,7 @@ The medication, period-settings, and symptom editors SHALL use an inset rounded 
 
 #### Scenario: Period history opens one card
 - **WHEN** the user views period history and activates a date range or Add
-- **THEN** one card opens on top of the settings, titled Edit period or New period (German: Periode bearbeiten or Neue Periode), with Cancel on the left and Save on the right
+- **THEN** one card opens on top of the settings, titled Edit period or New period (German: Periode bearbeiten or Neue Periode), with Cancel on the left and Save on the right, and a closed period uses the same date-range format as a cycle in the doctor’s visit dialog
 
 #### Scenario: Dialog backdrop
 - **WHEN** a medication, period, or symptom dialog is open
