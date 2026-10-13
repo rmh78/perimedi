@@ -56,6 +56,7 @@ enum DoseWidgetTheme {
 
 struct DoseWidgetView: View {
     var face: DoseWidgetFace
+    var entryDate: Date
     @Environment(\.widgetFamily) private var family
 
     var body: some View {
@@ -195,39 +196,18 @@ struct DoseWidgetView: View {
     @ViewBuilder
     private func control(for row: DoseWidgetFace.Row) -> some View {
         switch row.control {
-        case .take(let label):
-            Button(intent: MarkTodayMedicationTakenIntent(medicationId: row.medicationId)) {
-                capsule(label, widthOf: face.actionLabel, color: row.color)
-            }
-            .buttonStyle(.plain)
+        case .take:
+            TakeControl(row: row, actionLabel: face.actionLabel, entryDate: entryDate)
         case .check:
-            capsule("✓", widthOf: face.actionLabel, color: row.color)
+            doseCapsule("✓", widthOf: face.actionLabel, color: row.color)
         }
-    }
-
-    private func capsule(_ text: String, widthOf match: String, color: String) -> some View {
-        let sizing = match.isEmpty ? text : match
-        return ZStack {
-            Text(sizing)
-                .font(.caption.weight(.semibold))
-                .lineLimit(1)
-                .hidden()
-                .accessibilityHidden(true)
-            Text(text)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.white)
-                .lineLimit(1)
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(Capsule().fill(Color(widgetHex: WidgetCapsuleFill.hex(color)) ?? DoseWidgetTheme.blush500))
     }
 }
 
 struct PeriMediDoseWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: DoseWidgetKind.id, provider: DoseWidgetTimeline()) { entry in
-            DoseWidgetView(face: entry.face)
+            DoseWidgetView(face: entry.face, entryDate: entry.date)
         }
         .configurationDisplayName(LocalizedStringResource("widget.gallery.name", defaultValue: "PeriMedi"))
         .description(LocalizedStringResource("widget.gallery.description", defaultValue: "Today's medications"))
@@ -239,6 +219,79 @@ struct PeriMediDoseWidget: Widget {
 struct PeriMediDoseWidgetBundle: WidgetBundle {
     var body: some Widget {
         PeriMediDoseWidget()
+    }
+}
+
+private func doseCapsule(_ text: String, widthOf match: String, color: String) -> some View {
+    let sizing = match.isEmpty ? text : match
+    return ZStack {
+        Text(sizing)
+            .font(.caption.weight(.semibold))
+            .lineLimit(1)
+            .hidden()
+            .accessibilityHidden(true)
+        Text(text)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.white)
+            .lineLimit(1)
+    }
+    .padding(.horizontal, 10)
+    .padding(.vertical, 6)
+    .background(Capsule().fill(Color(widgetHex: WidgetCapsuleFill.hex(color)) ?? DoseWidgetTheme.blush500))
+}
+
+private struct TakeControl: View {
+    var row: DoseWidgetFace.Row
+    var actionLabel: String
+    var entryDate: Date
+    @State private var tapped = false
+
+    var body: some View {
+        let glyph = TakeGlyph.merged(control: row.control, tapped: tapped)
+        ZStack {
+            if case .take(let label) = row.control {
+                Button(intent: MarkTodayMedicationTakenIntent(medicationId: row.medicationId)) {
+                    doseCapsule(label, widthOf: actionLabel, color: row.color)
+                }
+                .buttonStyle(LatchCheckStyle(tapped: $tapped))
+                .opacity(glyph == .check ? 0 : 1)
+                .accessibilityHidden(glyph == .check)
+            }
+            if glyph == .check {
+                doseCapsule("✓", widthOf: actionLabel, color: row.color)
+                    .contentShape(Capsule())
+            }
+        }
+        .onChange(of: entryDate) { _, _ in
+            if case .take = row.control {
+                tapped = false
+            }
+        }
+    }
+}
+
+private struct LatchCheckStyle: ButtonStyle {
+    @Binding var tapped: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .onChange(of: configuration.isPressed) { _, pressed in
+                if pressed { tapped = true }
+            }
+    }
+}
+
+private enum TakeGlyph: Equatable {
+    case take(String)
+    case check
+
+    static func merged(control: DoseWidgetControl, tapped: Bool) -> TakeGlyph {
+        switch control {
+        case .check:
+            return .check
+        case .take(let label):
+            return tapped ? .check : .take(label)
+        }
     }
 }
 

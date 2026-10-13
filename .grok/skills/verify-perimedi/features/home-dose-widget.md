@@ -1,12 +1,12 @@
 # Home Screen today's-meds widget
 
-Home Screen widget for today's untaken medications. The capsule says Take or Nehmen. While a medication is still to take, the helper reads "Still to take today" or "Heute noch einnehmen". After the last dose is the brief check, that line keeps its height and the text is blank. The check capsule stays as wide as Take or Nehmen. After a widget tap the capsule shows a check briefly, then the row leaves. A Cycle take or a reminder take does not show that check.
+Home Screen widget for today's untaken medications. The capsule says Take or Nehmen. While a medication is still to take, the helper reads "Still to take today" or "Heute noch einnehmen". After the last dose is the brief check, that line keeps its height and the text is blank. The check capsule stays as wide as Take or Nehmen. The check is visible at the Take tap, before the doses finish recording, then the row leaves. A Cycle take or a reminder take does not show that check.
 
 ## Sub-features
 
 - Occupied card: today's pending medications (overdue included, reminder-off included), each with its form icon in a medication-color ring and a white Take or Nehmen label on that medication color, stacked with `+N` when more than one remains
 - Helper under the PeriMedi title while a medication is still to take. After the last dose is the brief check, the line keeps its height and the text is blank
-- Brief check on that same capsule after a widget tap. The check stays as wide as Take or Nehmen, then the row leaves. The check is not a button and does not say Taken or Genommen
+- Check visible at the Take tap, before the doses finish recording. It stays as wide as Take or Nehmen, then the row leaves. The check is not a button and does not say Taken or Genommen. A Cycle take or a reminder take does not show it
 - Empty card when nothing is pending today. "All taken for today" / "Heute alles genommen" when today had doses. "Nothing to take today" / "Heute nichts zu nehmen" when nothing was planned. No helper.
 - Take marks every remaining pending slot for that medication on today
 - Chrome follows the in-app language (en/de); medication name and dose label stay user text
