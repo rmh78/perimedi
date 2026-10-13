@@ -247,8 +247,6 @@ struct SymptomSheet: View {
                             .underline()
                             .foregroundStyle(Theme.blush700)
                             .multilineTextAlignment(.leading)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.72)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .buttonStyle(.plain)

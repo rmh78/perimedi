@@ -13,3 +13,4 @@ visit-pdf-sample-en.png
 sheet-med-en.png
 sheet-period-en.png
 sheet-symptom-en.png
+sheet-symptom-wrap-en.png

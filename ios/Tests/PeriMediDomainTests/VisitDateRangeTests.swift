@@ -1,5 +1,5 @@
 import XCTest
-@testable import PeriMedi
+@testable import PeriMediDomain
 
 final class VisitDateRangeTests: XCTestCase {
     func testClosedAndOpenRanges() {
@@ -19,6 +19,18 @@ final class VisitDateRangeTests: XCTestCase {
         )
         XCTAssertEqual(
             VisitDateRange.periodHistory(startKey: "2026-03-07", endKey: nil, locale: en),
+            "Mar 7, 2026 \u{2192} \u{2026}"
+        )
+        XCTAssertEqual(
+            VisitDateRange.periodHistory(startKey: "2026-03-07", endKey: nil, locale: de),
+            "7. März 2026 \u{2192} \u{2026}"
+        )
+        XCTAssertEqual(
+            VisitDateRange.periodHistory(startKey: "not-a-date", endKey: "2026-03-12", locale: en),
+            "not-a-date"
+        )
+        XCTAssertEqual(
+            VisitDateRange.periodHistory(startKey: "2026-03-07", endKey: "not-a-date", locale: en),
             "Mar 7, 2026 \u{2192} \u{2026}"
         )
     }

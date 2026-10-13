@@ -33,7 +33,6 @@
 		6F39F1704BA7696AA214B80C /* Features/More/DoctorVisitShare.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA815B35A5A674898C295466 /* Features/More/DoctorVisitShare.swift */; };
 		509CD2A2375F2202BAEAB82B /* Features/More/MoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 827B3968E8F819815BE355EA /* Features/More/MoreView.swift */; };
 		BFCE4246E08FC9F7A4EBD816 /* Features/More/VisitStrings.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8CB5909C20F02206B1E0BDA /* Features/More/VisitStrings.swift */; };
-		F1A75D8E01C0DE0000000002 /* Features/More/VisitDateRange.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A75D8E01C0DE0000000001 /* Features/More/VisitDateRange.swift */; };
 		ACE731121577B9A356303D1A /* Features/Sheets/DialogChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 957780ADFD525A78BAA2F7CF /* Features/Sheets/DialogChrome.swift */; };
 		D638B4AE03469DEC352F0BD9 /* Features/Trends/TrendsPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C59E6BB7692766581BEC15F /* Features/Trends/TrendsPickerSheet.swift */; };
 		6211768B14E85F259F060B4C /* Features/Trends/TrendsStrings.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0F9B3FD4CF264C907F5C454 /* Features/Trends/TrendsStrings.swift */; };
@@ -68,7 +67,7 @@
 		0FB10F802041E610F5CF0A0F /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 8D70415C7B86CE40507110F1 /* Localizable.xcstrings */; };
 		FD129F476E0BE8B7B6F2B6AE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E9DCABA0F941C89A68E28B8A /* Assets.xcassets */; };
 		A11C0DE00000000000000002 /* CustomSymptomSyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11C0DE00000000000000001 /* CustomSymptomSyncTests.swift */; };
-		E2B75D8E01C0DE0000000002 /* VisitDateRangeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2B75D8E01C0DE0000000001 /* VisitDateRangeTests.swift */; };
+		B2F75D8E01C0DE0000000002 /* DoseWidgetBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2F75D8E01C0DE0000000001 /* DoseWidgetBridgeTests.swift */; };
 		A11C0DE0000000000000000E /* PeriMediDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A11C0DE0000000000000000F /* PeriMediDomain */; };
 /* End PBXBuildFile section */
 
@@ -106,7 +105,6 @@
 		FA815B35A5A674898C295466 /* Features/More/DoctorVisitShare.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/More/DoctorVisitShare.swift; sourceTree = "<group>"; };
 		827B3968E8F819815BE355EA /* Features/More/MoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/More/MoreView.swift; sourceTree = "<group>"; };
 		F8CB5909C20F02206B1E0BDA /* Features/More/VisitStrings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/More/VisitStrings.swift; sourceTree = "<group>"; };
-		F1A75D8E01C0DE0000000001 /* Features/More/VisitDateRange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/More/VisitDateRange.swift; sourceTree = "<group>"; };
 		957780ADFD525A78BAA2F7CF /* Features/Sheets/DialogChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Sheets/DialogChrome.swift; sourceTree = "<group>"; };
 		8C59E6BB7692766581BEC15F /* Features/Trends/TrendsPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Trends/TrendsPickerSheet.swift; sourceTree = "<group>"; };
 		E0F9B3FD4CF264C907F5C454 /* Features/Trends/TrendsStrings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Trends/TrendsStrings.swift; sourceTree = "<group>"; };
@@ -135,7 +133,7 @@
 		8D70415C7B86CE40507110F1 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		A9C0D9A8934B171D57086D95 /* DoseWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseWidget.swift; sourceTree = "<group>"; };
 		A11C0DE00000000000000001 /* CustomSymptomSyncTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomSymptomSyncTests.swift; sourceTree = "<group>"; };
-		E2B75D8E01C0DE0000000001 /* VisitDateRangeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisitDateRangeTests.swift; sourceTree = "<group>"; };
+		B2F75D8E01C0DE0000000001 /* DoseWidgetBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseWidgetBridgeTests.swift; sourceTree = "<group>"; };
 		A11C0DE00000000000000003 /* PeriMediTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PeriMediTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -259,7 +257,6 @@
 				FA815B35A5A674898C295466 /* Features/More/DoctorVisitShare.swift */,
 				827B3968E8F819815BE355EA /* Features/More/MoreView.swift */,
 				F8CB5909C20F02206B1E0BDA /* Features/More/VisitStrings.swift */,
-				F1A75D8E01C0DE0000000001 /* Features/More/VisitDateRange.swift */,
 				957780ADFD525A78BAA2F7CF /* Features/Sheets/DialogChrome.swift */,
 				8C59E6BB7692766581BEC15F /* Features/Trends/TrendsPickerSheet.swift */,
 				E0F9B3FD4CF264C907F5C454 /* Features/Trends/TrendsStrings.swift */,
@@ -312,7 +309,7 @@
 			isa = PBXGroup;
 			children = (
 				A11C0DE00000000000000001 /* CustomSymptomSyncTests.swift */,
-				E2B75D8E01C0DE0000000001 /* VisitDateRangeTests.swift */,
+				B2F75D8E01C0DE0000000001 /* DoseWidgetBridgeTests.swift */,
 			);
 			path = PeriMediTests;
 			sourceTree = "<group>";
@@ -528,7 +525,6 @@
 				6F39F1704BA7696AA214B80C /* Features/More/DoctorVisitShare.swift in Sources */,
 				509CD2A2375F2202BAEAB82B /* Features/More/MoreView.swift in Sources */,
 				BFCE4246E08FC9F7A4EBD816 /* Features/More/VisitStrings.swift in Sources */,
-				F1A75D8E01C0DE0000000002 /* Features/More/VisitDateRange.swift in Sources */,
 				ACE731121577B9A356303D1A /* Features/Sheets/DialogChrome.swift in Sources */,
 				D638B4AE03469DEC352F0BD9 /* Features/Trends/TrendsPickerSheet.swift in Sources */,
 				6211768B14E85F259F060B4C /* Features/Trends/TrendsStrings.swift in Sources */,
@@ -561,7 +557,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A11C0DE00000000000000002 /* CustomSymptomSyncTests.swift in Sources */,
-				E2B75D8E01C0DE0000000002 /* VisitDateRangeTests.swift in Sources */,
+				B2F75D8E01C0DE0000000002 /* DoseWidgetBridgeTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

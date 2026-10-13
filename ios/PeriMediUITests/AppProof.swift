@@ -300,6 +300,16 @@ struct AppProof {
         ).firstMatch
         XCTAssertTrue(nameButton.waitForExistence(timeout: 3))
         let raw = nameButton.identifier.replacingOccurrences(of: "symptom.custom.name.", with: "")
+        robot.scrollTo("symptom.score.vaginal_dryness.1")
+        robot.scrollTo("symptom.score.\(raw).1")
+        let catalogScore = robot.element("symptom.score.vaginal_dryness.1").frame.minX
+        let customScore = robot.element("symptom.score.\(raw).1").frame.minX
+        XCTAssertEqual(catalogScore, customScore, accuracy: 1)
+        XCTAssertEqual(
+            robot.element("symptom.score.vaginal_dryness.4").frame.minX,
+            robot.element("symptom.score.\(raw).4").frame.minX,
+            accuracy: 1
+        )
 
         robot.scrollTo("symptom.score.hot_flash.3")
         robot.tap("symptom.score.hot_flash.3")

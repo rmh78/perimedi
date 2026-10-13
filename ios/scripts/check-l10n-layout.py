@@ -148,7 +148,7 @@ def main() -> int:
         print(f"{DIALOG.relative_to(ROOT)}: missing TT.MM.JJJJ", file=sys.stderr)
 
     period = PERIOD.read_text(encoding="utf-8")
-    dates = (ROOT / "ios/PeriMedi/Features/More/VisitDateRange.swift").read_text(encoding="utf-8")
+    dates = (ROOT / "ios/Sources/PeriMediDomain/VisitDateRange.swift").read_text(encoding="utf-8")
     if "VisitDateRange.periodHistory" not in period or "language ==" in period:
         failed = True
         print(
@@ -158,7 +158,7 @@ def main() -> int:
     if "\\u{2013}" not in dates or "\\u{2192}" not in dates:
         failed = True
         print(
-            "ios/PeriMedi/Features/More/VisitDateRange.swift: closed join and open period arrow are missing",
+            "ios/Sources/PeriMediDomain/VisitDateRange.swift: closed join and open period arrow are missing",
             file=sys.stderr,
         )
 

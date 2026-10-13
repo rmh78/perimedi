@@ -255,12 +255,23 @@ struct TrendsView: View {
                         selectedTick = tick
                         selected = nil
                     } label: {
-                        Image(systemName: "triangle.fill")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundStyle(on ? Theme.blush800 : Theme.blush600)
-                            .rotationEffect(.degrees(180))
-                            .frame(width: side, height: side)
-                            .contentShape(Rectangle())
+                        ZStack {
+                            if on {
+                                Circle()
+                                    .stroke(Theme.ink, lineWidth: 3)
+                                    .frame(width: 26, height: 26)
+                                Circle()
+                                    .stroke(Color.white, lineWidth: 2)
+                                    .frame(width: 18, height: 18)
+                            }
+                            Image(systemName: "triangle.fill")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(on ? Theme.blush800 : Theme.blush600)
+                                .rotationEffect(.degrees(180))
+                        }
+                        .frame(width: side, height: side)
+                        .shadow(color: on ? Theme.blush600.opacity(0.5) : .clear, radius: on ? 5 : 0)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .position(x: x, y: plot.maxY - side / 2)

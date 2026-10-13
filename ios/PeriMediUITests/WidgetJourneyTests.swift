@@ -142,7 +142,13 @@ struct WidgetProof {
             },
             "rows, Take, or Still to take today missing. buttons: \(home.buttonLabels)"
         )
+        shot("widget-medium-before-en")
         home.tapTaken(beside: longName)
+        XCTAssertTrue(
+            home.spin(1) { home.hasCheck },
+            "check was not visible within 1s of Take"
+        )
+        shot("widget-medium-after-en")
         XCTAssertTrue(
             home.spin(6) { home.hasCheck && home.hasStillToTake && home.hasMed("Progesterone") },
             "check beside the remaining row missing"
@@ -173,6 +179,10 @@ struct WidgetProof {
         )
         home.tapTaken(beside: longName)
         XCTAssertTrue(
+            home.spin(1) { home.hasCheck },
+            "small face check was not visible within 1s of Take"
+        )
+        XCTAssertTrue(
             home.spin(8) { home.hasCheck && !home.hasStillToTake },
             "small face did not show the check after Take"
         )
@@ -199,6 +209,10 @@ struct WidgetProof {
         let alert = robot.app.alerts.firstMatch
         guard alert.waitForExistence(timeout: 2) else { return }
         alert.buttons.firstMatch.tap()
+    }
+
+    private func shot(_ name: String, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertNoThrow(try ScreenCatalog.write(name), file: file, line: line)
     }
 }
 
