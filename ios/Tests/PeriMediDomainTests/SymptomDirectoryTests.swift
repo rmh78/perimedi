@@ -194,4 +194,172 @@ final class SymptomDirectoryTests: XCTestCase {
         )
         XCTAssertEqual(stored.map(\.id), ["hot_flash", fog.rawValue])
     }
+
+    func testSyncedFoldAndExportMatchesImport() throws {
+        let later = ache
+        let other = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-000000000003")!
+        let orphan = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-000000000099")!
+        let rows = [
+            CustomSymptom(id: fog, name: "Fog", sort: 0),
+            CustomSymptom(id: later, name: " FOG ", sort: 1),
+            CustomSymptom(id: other, name: "Ache", sort: 2),
+        ]
+        let scores = [
+            SymptomScore(id: "hot_flash", date: "2026-03-15", severity: 3, loggedAt: "2026-03-15T08:00:00Z"),
+            SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 2, loggedAt: "2026-03-15T08:00:00Z"),
+            SymptomScore(id: later.rawValue, date: "2026-03-15", severity: 4, loggedAt: "2026-03-16T09:00:00Z"),
+            SymptomScore(id: later.rawValue, date: "2026-03-16", severity: 1, loggedAt: "2026-03-16T09:00:00Z"),
+            SymptomScore(id: orphan.rawValue, date: "2026-03-17", severity: 4, loggedAt: "2026-03-17T09:00:00Z"),
+        ]
+        let plan = SymptomDirectory.synced(rows: rows, scores: scores)
+        XCTAssertEqual(
+            plan.directory.customs,
+            [
+                CustomSymptom(id: fog, name: "Fog", sort: 0),
+                CustomSymptom(id: other, name: "Ache", sort: 2),
+            ]
+        )
+        XCTAssertEqual(plan.droppedIds, [later])
+        XCTAssertEqual(
+            plan.scores,
+            [
+                SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 4, loggedAt: "2026-03-16T09:00:00Z"),
+                SymptomScore(id: "hot_flash", date: "2026-03-15", severity: 3, loggedAt: "2026-03-15T08:00:00Z"),
+                SymptomScore(id: fog.rawValue, date: "2026-03-16", severity: 1, loggedAt: "2026-03-16T09:00:00Z"),
+            ]
+        )
+        let payload = BackupCodec.makeExport(
+            medications: [],
+            schedules: [],
+            doseLogs: [],
+            remarks: [],
+            cycleSettings: .default,
+            periods: [],
+            symptomScores: plan.scores,
+            customSymptoms: plan.directory.customs,
+            exportedAt: Date(timeIntervalSince1970: 0)
+        )
+        let decoded = try BackupCodec.decode(try BackupCodec.encode(payload))
+        let imported = SymptomDirectory.synced(rows: decoded.customSymptoms, scores: decoded.symptomScores)
+        XCTAssertEqual(imported.directory.customs, plan.directory.customs)
+        XCTAssertEqual(imported.scores, plan.scores)
+    }
+
+    func testSyncedSameOrderKeepsLowerId() {
+        let plan = SymptomDirectory.synced(
+            rows: [
+                CustomSymptom(id: ache, name: "Fog", sort: 3),
+                CustomSymptom(id: fog, name: "FOG", sort: 3),
+            ],
+            scores: []
+        )
+        XCTAssertEqual(plan.directory.customs, [CustomSymptom(id: fog, name: "FOG", sort: 3)])
+        XCTAssertEqual(plan.droppedIds, [ache])
+    }
+
+    func testSyncedSameDayTieBreakIgnoresArrivalOrder() {
+        let third = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-000000000003")!
+        let rows = [
+            CustomSymptom(id: fog, name: "Fog", sort: 0),
+            CustomSymptom(id: ache, name: "FOG", sort: 1),
+            CustomSymptom(id: third, name: "fog", sort: 2),
+        ]
+        let tied = "2026-03-15T08:00:00Z"
+        let byCount = [
+            SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 2, count: 1, note: "a", loggedAt: tied),
+            SymptomScore(id: ache.rawValue, date: "2026-03-15", severity: 2, count: 1, note: "b", loggedAt: tied),
+            SymptomScore(id: third.rawValue, date: "2026-03-15", severity: 2, count: 4, note: "a", loggedAt: tied),
+        ]
+        let counted = SymptomScore(
+            id: fog.rawValue, date: "2026-03-15", severity: 2, count: 4, note: "a", loggedAt: tied
+        )
+        for order in orders(of: byCount) {
+            XCTAssertEqual(SymptomDirectory.synced(rows: rows, scores: order).scores, [counted])
+        }
+
+        let byNote = [
+            SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 2, count: 1, note: "a", loggedAt: tied),
+            SymptomScore(id: ache.rawValue, date: "2026-03-15", severity: 2, count: 1, note: "b", loggedAt: tied),
+        ]
+        let noted = SymptomScore(
+            id: fog.rawValue, date: "2026-03-15", severity: 2, count: 1, note: "b", loggedAt: tied
+        )
+        for order in orders(of: byNote) {
+            XCTAssertEqual(SymptomDirectory.synced(rows: rows, scores: order).scores, [noted])
+        }
+
+        let byId = [
+            SymptomScore(
+                id: ache.rawValue, date: "2026-03-15", severity: 2, count: 1, note: "m",
+                loggedAt: tied, higherIsWorse: true
+            ),
+            SymptomScore(
+                id: fog.rawValue, date: "2026-03-15", severity: 2, count: 1, note: "m",
+                loggedAt: tied, higherIsWorse: false
+            ),
+        ]
+        let lowerId = SymptomScore(
+            id: fog.rawValue, date: "2026-03-15", severity: 2, count: 1, note: "m",
+            loggedAt: tied, higherIsWorse: false
+        )
+        for order in orders(of: byId) {
+            XCTAssertEqual(SymptomDirectory.synced(rows: rows, scores: order).scores, [lowerId])
+        }
+
+        let sameId = [
+            SymptomScore(
+                id: fog.rawValue, date: "2026-03-15", severity: 2, count: 1, note: "m",
+                loggedAt: tied, higherIsWorse: false
+            ),
+            SymptomScore(
+                id: fog.rawValue, date: "2026-03-15", severity: 2, count: 1, note: "m",
+                loggedAt: tied, higherIsWorse: true
+            ),
+        ]
+        let worse = SymptomScore(
+            id: fog.rawValue, date: "2026-03-15", severity: 2, count: 1, note: "m",
+            loggedAt: tied, higherIsWorse: true
+        )
+        for order in orders(of: sameId) {
+            XCTAssertEqual(SymptomDirectory.synced(rows: rows, scores: order).scores, [worse])
+        }
+
+        let laterLog = SymptomDirectory.synced(
+            rows: rows,
+            scores: [
+                SymptomScore(id: third.rawValue, date: "2026-03-15", severity: 2, count: 9, note: "z", loggedAt: tied),
+                SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 1, loggedAt: "2026-03-16T09:00:00Z"),
+            ]
+        )
+        XCTAssertEqual(
+            laterLog.scores,
+            [SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 1, loggedAt: "2026-03-16T09:00:00Z")]
+        )
+    }
+
+    func testSyncedSameTimestampKeepsHigherSeverity() {
+        let plan = SymptomDirectory.synced(
+            rows: [
+                CustomSymptom(id: fog, name: "Fog", sort: 0),
+                CustomSymptom(id: ache, name: "fog", sort: 1),
+            ],
+            scores: [
+                SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 2, loggedAt: "2026-03-15T08:00:00Z"),
+                SymptomScore(id: ache.rawValue, date: "2026-03-15", severity: 4, loggedAt: "2026-03-15T08:00:00Z"),
+            ]
+        )
+        XCTAssertEqual(
+            plan.scores,
+            [SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 4, loggedAt: "2026-03-15T08:00:00Z")]
+        )
+    }
+
+    private func orders<T>(of items: [T]) -> [[T]] {
+        guard items.count > 1 else { return [items] }
+        return items.indices.flatMap { index -> [[T]] in
+            var rest = items
+            let item = rest.remove(at: index)
+            return orders(of: rest).map { [item] + $0 }
+        }
+    }
 }

@@ -227,7 +227,7 @@ struct MonthView: View {
     }
 }
 
-private struct MonthDayCell: Identifiable {
+struct MonthDayCell: Identifiable {
     let date: Date
     let key: String
     var id: String { key }
@@ -241,7 +241,7 @@ private struct MonthDayCell: Identifiable {
     let isToday: Bool
 }
 
-private struct MonthGridModel {
+struct MonthGridModel {
     let cells: [MonthDayCell]
 
     static func build(
@@ -286,7 +286,7 @@ private struct MonthGridModel {
         let marks = CycleLogic.cycleBoundaryMarkers(from: from, to: to, periods: periods, settings: settings)
         var symptomDays = Set(remarks.map { DateKeys.toDateKey($0.occurredOn) })
         var scoresByDay: [String: [SymptomScore]] = [:]
-        for score in symptomScores {
+        for score in directory.scoresOnCalendar(symptomScores) {
             symptomDays.insert(score.date)
             scoresByDay[score.date, default: []].append(score)
         }

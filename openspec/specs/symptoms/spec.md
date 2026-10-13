@@ -66,3 +66,34 @@ The system SHALL keep version-1 JSON export and import working. Older backups th
 #### Scenario: Import older backup
 - **WHEN** the user imports a valid version-1 backup that has remarks and no symptom scores
 - **THEN** medications, periods, remarks, and other payload fields restore and symptom scores are empty
+
+### Requirement: Synced custom symptoms stay one list
+When custom symptom rows are combined, the system SHALL keep one row for each name compared without regard to case. The kept row SHALL be the earlier order, and the lower id when the order is the same. Scores that used a removed row's id SHALL remain on the kept id. A calendar day SHALL keep one score for that id: the later logged time, then the higher severity, then the higher episode count (a missing count loses), then the note that sorts later (a missing note loses), then the lower original id. The system SHALL NOT remove a custom symptom with a distinct name because the list is past eight. A score whose id is a custom symptom id that is not in the combined list SHALL NOT mark a symptom day on Cycle or Month and SHALL NOT appear in an export. An export of the combined rows SHALL contain the same custom symptoms and the same scores that an import of that export would keep.
+
+#### Scenario: Two devices add the same name
+- **WHEN** combined rows include Fog with a score on 15 March and fog with a score on 16 March
+- **THEN** one Fog symptom remains, both scores stay on that symptom, and the export lists that symptom and both scores
+
+#### Scenario: Same day from both devices
+- **WHEN** both rows scored that shared name on 15 March and the later logged time has severity 4
+- **THEN** 15 March keeps severity 4 and does not keep a second score
+
+#### Scenario: Same logged time and severity
+- **WHEN** two scores for one day share a logged time and a severity, and the episode counts are 4 and 1
+- **THEN** the day keeps count 4 whichever score is read first
+
+#### Scenario: Same count
+- **WHEN** those scores also share an episode count and the notes differ
+- **THEN** the note that sorts later is kept
+
+#### Scenario: Same note
+- **WHEN** those scores also share a note and the original ids differ
+- **THEN** the lower original id supplies the kept score
+
+#### Scenario: Score for a missing custom symptom
+- **WHEN** a score's custom id is not in the combined custom symptom list
+- **THEN** that score does not mark the day on Cycle or Month and is absent from the export
+
+#### Scenario: Import of that export
+- **WHEN** the user imports the export of the combined rows
+- **THEN** the custom symptoms and scores match the export

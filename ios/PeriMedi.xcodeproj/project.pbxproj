@@ -66,6 +66,8 @@
 		17D257423BA22E7A59C1D25E /* DoseWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9C0D9A8934B171D57086D95 /* DoseWidget.swift */; };
 		0FB10F802041E610F5CF0A0F /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 8D70415C7B86CE40507110F1 /* Localizable.xcstrings */; };
 		FD129F476E0BE8B7B6F2B6AE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E9DCABA0F941C89A68E28B8A /* Assets.xcassets */; };
+		A11C0DE00000000000000002 /* CustomSymptomSyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11C0DE00000000000000001 /* CustomSymptomSyncTests.swift */; };
+		A11C0DE0000000000000000E /* PeriMediDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A11C0DE0000000000000000F /* PeriMediDomain */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -129,6 +131,8 @@
 		6500DA8D0AB8FECDA36044F7 /* PeriMediDoseWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PeriMediDoseWidget.entitlements; sourceTree = "<group>"; };
 		8D70415C7B86CE40507110F1 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		A9C0D9A8934B171D57086D95 /* DoseWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseWidget.swift; sourceTree = "<group>"; };
+		A11C0DE00000000000000001 /* CustomSymptomSyncTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomSymptomSyncTests.swift; sourceTree = "<group>"; };
+		A11C0DE00000000000000003 /* PeriMediTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PeriMediTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXContainerItemProxy section */
@@ -145,6 +149,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = ADEAF5E167D4943BE484764E;
 			remoteInfo = PeriMediDoseWidget;
+		};
+		A11C0DE00000000000000009 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 98F54143AB4E86B28C3AFEE0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CCD1BDFE40AA20836710EC01;
+			remoteInfo = PeriMedi;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -186,6 +197,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A11C0DE00000000000000007 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A11C0DE0000000000000000E /* PeriMediDomain in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -196,6 +215,7 @@
 				546CD4D0A54E7DAFD1A9F0F6 /* PeriMediDoseWidgetSupport */,
 				237ED2667819882798ED7400 /* PeriMediDoseWidget */,
 				88189ACCA3913C501CCC3799 /* PeriMediUITests */,
+				A11C0DE00000000000000004 /* PeriMediTests */,
 				4FDE57E4B72FFCEE306CEB0F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -258,6 +278,7 @@
 				595C479D7AC91F29089D5228 /* PeriMedi.app */,
 				7E8C6E6A7CE57809166DFBF0 /* PeriMediDoseWidget.appex */,
 				75902C37BB4D4EC5B0F09F3C /* PeriMediUITests.xctest */,
+				A11C0DE00000000000000003 /* PeriMediTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -280,6 +301,14 @@
 				C22F254059DF4D8BD043D91A /* WidgetJourneyTests.swift */,
 			);
 			path = PeriMediUITests;
+			sourceTree = "<group>";
+		};
+		A11C0DE00000000000000004 /* PeriMediTests */ = {
+			isa = PBXGroup;
+			children = (
+				A11C0DE00000000000000001 /* CustomSymptomSyncTests.swift */,
+			);
+			path = PeriMediTests;
 			sourceTree = "<group>";
 		};
 		546CD4D0A54E7DAFD1A9F0F6 /* PeriMediDoseWidgetSupport */ = {
@@ -345,6 +374,27 @@
 			productReference = 75902C37BB4D4EC5B0F09F3C /* PeriMediUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		A11C0DE00000000000000005 /* PeriMediTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A11C0DE0000000000000000B /* Build configuration list for PBXNativeTarget "PeriMediTests" */;
+			buildPhases = (
+				A11C0DE00000000000000006 /* Sources */,
+				A11C0DE00000000000000007 /* Frameworks */,
+				A11C0DE00000000000000008 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A11C0DE0000000000000000A /* PBXTargetDependency */,
+			);
+			name = PeriMediTests;
+			packageProductDependencies = (
+				A11C0DE0000000000000000F /* PeriMediDomain */,
+			);
+			productName = PeriMediTests;
+			productReference = A11C0DE00000000000000003 /* PeriMediTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		ADEAF5E167D4943BE484764E /* PeriMediDoseWidget */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C89FDED2BAF45AD6268E8473 /* Build configuration list for PBXNativeTarget "PeriMediDoseWidget" */;
@@ -395,6 +445,7 @@
 				CCD1BDFE40AA20836710EC01 /* PeriMedi */,
 				ADEAF5E167D4943BE484764E /* PeriMediDoseWidget */,
 				5B5330F45E919B349BFE3A6A /* PeriMediUITests */,
+				A11C0DE00000000000000005 /* PeriMediTests */,
 			);
 		};
 /* End PBXProject section */
@@ -416,6 +467,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		6A76B0B35624E5E8575959F5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A11C0DE00000000000000008 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -491,6 +549,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A11C0DE00000000000000006 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A11C0DE00000000000000002 /* CustomSymptomSyncTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		51794DA74A5DB6ECA49425DA /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -513,6 +579,11 @@
 			isa = PBXTargetDependency;
 			target = ADEAF5E167D4943BE484764E /* PeriMediDoseWidget */;
 			targetProxy = 518976148E3D94EBAFBCC323 /* PBXContainerItemProxy */;
+		};
+		A11C0DE0000000000000000A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CCD1BDFE40AA20836710EC01 /* PeriMedi */;
+			targetProxy = A11C0DE00000000000000009 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -701,6 +772,46 @@
 			};
 			name = Release;
 		};
+		A11C0DE0000000000000000C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_STYLE = Manual;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = app.perimedi.ios.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PeriMedi.app/PeriMedi";
+			};
+			name = Debug;
+		};
+		A11C0DE0000000000000000D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_STYLE = Manual;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = app.perimedi.ios.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PeriMedi.app/PeriMedi";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -740,6 +851,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		A11C0DE0000000000000000B /* Build configuration list for PBXNativeTarget "PeriMediTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A11C0DE0000000000000000C /* Debug */,
+				A11C0DE0000000000000000D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
@@ -756,6 +876,11 @@
 			productName = PeriMediDomain;
 		};
 		14300107B9E3EB1D420E4B3B /* PeriMediDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0B2C5848BF186D63E30F5575 /* XCLocalSwiftPackageReference "." */;
+			productName = PeriMediDomain;
+		};
+		A11C0DE0000000000000000F /* PeriMediDomain */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 0B2C5848BF186D63E30F5575 /* XCLocalSwiftPackageReference "." */;
 			productName = PeriMediDomain;

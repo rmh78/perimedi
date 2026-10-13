@@ -37,6 +37,8 @@ this run-id holds the lock.
 Evidence: .grok/skills/verify-perimedi/evidence/<id>/
 Lock:     /tmp/perimedi-verify-<udid>.lock
 State:    .grok/skills/verify-perimedi/runs/<id>/state
+
+Every xcodebuild call from this driver, including build and drive, passes -collect-test-diagnostics never. While that command runs, the driver kills a stray simctl diagnose for the simulator.
 EOF
 }
 
@@ -403,6 +405,24 @@ stop_build() {
   wait "$pid" 2>/dev/null || true
 }
 
+# xcodebuild still launches `simctl diagnose` for the result bundle and waits
+# out its 600s timeout, including after a green run. Never ask for that dump,
+# and stop it if it starts.
+stop_sim_diagnose() {
+  [[ -n "${UDID:-}" ]] || return 0
+  local pid cmd
+  local pids
+  pids=$(pgrep -f "simctl diagnose" || true)
+  for pid in $pids; do
+    cmd=$(ps -p "$pid" -o command= 2>/dev/null || true)
+    case "$cmd" in
+      *simctl\ diagnose*"$UDID"*)
+        kill "$pid" 2>/dev/null || true
+        ;;
+    esac
+  done
+}
+
 xcode_test() {
   local action="test"
   local destination="platform=iOS Simulator,id=$UDID"
@@ -423,11 +443,20 @@ xcode_test() {
     -scheme PeriMedi \
     -destination "$destination" \
     -derivedDataPath "$DERIVED" \
+    -collect-test-diagnostics never \
     "$@" \
     DEVELOPMENT_TEAM="$team" \
     CODE_SIGN_STYLE=Automatic \
     CODE_SIGN_ENTITLEMENTS=PeriMediDoseWidget/PeriMediDoseWidget.entitlements \
-    -allowProvisioningUpdates
+    -allowProvisioningUpdates &
+  local xb=$!
+  while kill -0 "$xb" 2>/dev/null; do
+    stop_sim_diagnose
+    sleep 2
+  done
+  local status=0
+  wait "$xb" || status=$?
+  return "$status"
 }
 
 cmd_drive() {
@@ -671,7 +700,7 @@ cmd_verify() {
     echo "Skipping ScreenCatalogTests (SCREEN_CATALOG=0)"
   fi
 
-  local -a xcode_args=(-resultBundlePath "$RESULT" -collect-test-diagnostics never)
+  local -a xcode_args=(-resultBundlePath "$RESULT")
   if [[ "$skip_catalog" -eq 1 ]]; then
     xcode_args+=(-skip-testing:PeriMediUITests/ScreenCatalogTests)
   fi

@@ -32,6 +32,25 @@ public struct CustomSymptom: Hashable, Sendable, Codable, Identifiable {
     }
 }
 
+public struct SymptomSync: Equatable, Sendable {
+    public var directory: SymptomDirectory
+    public var scores: [SymptomScore]
+    public var droppedIds: [CustomSymptomId]
+    public var scoreIdRewrites: [CustomSymptomId: CustomSymptomId]
+
+    public init(
+        directory: SymptomDirectory,
+        scores: [SymptomScore],
+        droppedIds: [CustomSymptomId],
+        scoreIdRewrites: [CustomSymptomId: CustomSymptomId]
+    ) {
+        self.directory = directory
+        self.scores = scores
+        self.droppedIds = droppedIds
+        self.scoreIdRewrites = scoreIdRewrites
+    }
+}
+
 public enum SymptomEditError: Error, Equatable, Sendable {
     case blankName
     case nameTooLong
@@ -77,6 +96,18 @@ public struct SymptomDirectory: Equatable, Sendable {
     }
 
     public static func restored(_ rows: [CustomSymptom]) -> SymptomDirectory {
+        SymptomDirectory(customs: folded(deduped(rows)))
+    }
+
+    static func accepted(from wires: [CustomSymptomWire]) -> [CustomSymptom] {
+        let rows: [CustomSymptom] = wires.compactMap { wire in
+            guard let id = CustomSymptomId(rawValue: wire.id) else { return nil }
+            return CustomSymptom(id: id, name: wire.name, sort: wire.sort)
+        }
+        return deduped(rows)
+    }
+
+    private static func deduped(_ rows: [CustomSymptom]) -> [CustomSymptom] {
         var best: [CustomSymptomId: CustomSymptom] = [:]
         for row in rows {
             let name = clipped(row.name)
@@ -88,19 +119,22 @@ public struct SymptomDirectory: Equatable, Sendable {
                 best[row.id] = symptom
             }
         }
-        let ordered = best.values.sorted { a, b in
+        return best.values.sorted { a, b in
             if a.sort != b.sort { return a.sort < b.sort }
             return a.id.rawValue < b.id.rawValue
         }
-        return SymptomDirectory(customs: ordered)
     }
 
-    static func restored(from wires: [CustomSymptomWire]) -> SymptomDirectory {
-        let rows: [CustomSymptom] = wires.compactMap { wire in
-            guard let id = CustomSymptomId(rawValue: wire.id) else { return nil }
-            return CustomSymptom(id: id, name: wire.name, sort: wire.sort)
+    private static func folded(_ rows: [CustomSymptom]) -> [CustomSymptom] {
+        var kept: [String: CustomSymptom] = [:]
+        var order: [String] = []
+        for row in rows {
+            let key = fold(row.name)
+            guard kept[key] == nil else { continue }
+            kept[key] = row
+            order.append(key)
         }
-        return restored(rows)
+        return order.compactMap { kept[$0] }
     }
 
     public func adding(
@@ -154,8 +188,104 @@ public struct SymptomDirectory: Equatable, Sendable {
         index(of: storageId) != nil
     }
 
+    public func scoresOnCalendar(_ scores: [SymptomScore]) -> [SymptomScore] {
+        scores.filter { contains($0.id) }
+    }
+
     public func index(of storageId: String) -> Int? {
         rankedIds.firstIndex(of: storageId)
+    }
+
+    public static func synced(rows: [CustomSymptom], scores: [SymptomScore]) -> SymptomSync {
+        let cleaned = deduped(rows)
+        let customs = folded(cleaned)
+        let directory = SymptomDirectory(customs: customs)
+        var winnerByFold: [String: CustomSymptomId] = [:]
+        for symptom in customs {
+            winnerByFold[fold(symptom.name)] = symptom.id
+        }
+        var rewrites: [CustomSymptomId: CustomSymptomId] = [:]
+        for symptom in cleaned {
+            guard let winner = winnerByFold[fold(symptom.name)], winner != symptom.id else { continue }
+            rewrites[symptom.id] = winner
+        }
+        let kept = Set(customs.map(\.id))
+        var best: [String: RankedScore] = [:]
+        for score in scores {
+            guard let mapped = map(score, rewrites: rewrites, kept: kept) else { continue }
+            let key = "\(mapped.date)#\(mapped.id)"
+            let incoming = RankedScore(score: mapped, originalId: score.id)
+            if let existing = best[key] {
+                best[key] = prefer(existing, incoming)
+            } else {
+                best[key] = incoming
+            }
+        }
+        let ordered = best.values.map(\.score).sorted { a, b in
+            if a.date != b.date { return a.date < b.date }
+            return a.id < b.id
+        }
+        let dropped = cleaned.map(\.id).filter { !kept.contains($0) }.sorted { $0.rawValue < $1.rawValue }
+        return SymptomSync(
+            directory: directory,
+            scores: ordered,
+            droppedIds: dropped,
+            scoreIdRewrites: rewrites
+        )
+    }
+
+    private static func map(
+        _ score: SymptomScore,
+        rewrites: [CustomSymptomId: CustomSymptomId],
+        kept: Set<CustomSymptomId>
+    ) -> SymptomScore? {
+        guard let custom = CustomSymptomId(rawValue: score.id) else { return score }
+        if let winner = rewrites[custom] {
+            return SymptomScore(
+                id: winner.rawValue,
+                date: score.date,
+                severity: score.severity,
+                count: score.count,
+                note: score.note,
+                loggedAt: score.loggedAt,
+                higherIsWorse: score.higherIsWorse
+            )
+        }
+        guard kept.contains(custom) else { return nil }
+        return score
+    }
+
+    private struct RankedScore {
+        var score: SymptomScore
+        var originalId: String
+    }
+
+    private static func prefer(_ current: RankedScore, _ incoming: RankedScore) -> RankedScore {
+        let kept = current.score
+        let next = incoming.score
+        if kept.loggedAt != next.loggedAt {
+            return kept.loggedAt > next.loggedAt ? current : incoming
+        }
+        if kept.severity != next.severity {
+            return kept.severity > next.severity ? current : incoming
+        }
+        let keptCount = kept.count ?? Int.min
+        let nextCount = next.count ?? Int.min
+        if keptCount != nextCount {
+            return keptCount > nextCount ? current : incoming
+        }
+        let keptNote = kept.note ?? ""
+        let nextNote = next.note ?? ""
+        if keptNote != nextNote {
+            return keptNote > nextNote ? current : incoming
+        }
+        if current.originalId != incoming.originalId {
+            return current.originalId < incoming.originalId ? current : incoming
+        }
+        if kept.higherIsWorse != next.higherIsWorse {
+            return kept.higherIsWorse ? current : incoming
+        }
+        return current
     }
 
     /// Catalog scores stay. A custom id stays only when this directory still has it.
@@ -220,7 +350,7 @@ enum CustomSymptomBackup {
     static func symptoms<K: CodingKey>(from container: KeyedDecodingContainer<K>, key: K) -> [CustomSymptom] {
         guard container.contains(key) else { return [] }
         let boxes = (try? container.decode([LenientCustomSymptom].self, forKey: key)) ?? []
-        return SymptomDirectory.restored(from: boxes.compactMap(\.wire)).customs
+        return SymptomDirectory.accepted(from: boxes.compactMap(\.wire))
     }
 }
 

@@ -59,6 +59,7 @@ final class Store: ObservableObject {
 
     func refresh() {
         do {
+            try reconcileCustomSymptomsIfNeeded()
             let next = try loadSnapshot()
             if next != snapshot {
                 snapshot = next
@@ -76,8 +77,11 @@ final class Store: ObservableObject {
         next.schedules = try fetchAll(SDSchedule.self).map { $0.toDomain() }
         next.doseLogs = try fetchAll(SDDoseLog.self).map { $0.toDomain() }
         next.remarks = try fetchAll(SDRemark.self).map { $0.toDomain() }
-        next.symptomScores = try fetchAll(SDSymptomScore.self).map { $0.toDomain() }
-        next.customSymptoms = try fetchAll(SDCustomSymptom.self).compactMap { $0.toDomain() }
+        let customRows = try fetchAll(SDCustomSymptom.self).compactMap { $0.toDomain() }
+        let scoreRows = try fetchAll(SDSymptomScore.self).map { $0.toDomain() }
+        let plan = SymptomDirectory.synced(rows: customRows, scores: scoreRows)
+        next.symptomScores = plan.scores
+        next.customSymptoms = plan.directory.customs
         next.periods = try fetchAll(SDPeriod.self).map { $0.toDomain() }
             .sorted { $0.startDate > $1.startDate }
         var settingsDesc = FetchDescriptor<SDCycleSettings>()
@@ -90,6 +94,58 @@ final class Store: ObservableObject {
         next.medicationChanges = try fetchAll(SDMedicationChange.self).map { $0.toDomain() }
             .sorted { $0.loggedAt < $1.loggedAt }
         return next
+    }
+
+    private func reconcileCustomSymptomsIfNeeded() throws {
+        let customModels = try fetchAll(SDCustomSymptom.self)
+        let scoreModels = try fetchAll(SDSymptomScore.self)
+        let rows = customModels.compactMap { $0.toDomain() }
+        let stored = scoreModels.map { $0.toDomain() }
+        let plan = SymptomDirectory.synced(rows: rows, scores: stored)
+        let drop = Set(plan.droppedIds.map(\.rawValue))
+        let inputIds = Set(rows.map(\.id.rawValue))
+        var changed = false
+        for model in customModels where drop.contains(model.id) {
+            context.delete(model)
+            changed = true
+        }
+        var groups: [String: [SDSymptomScore]] = [:]
+        for model in scoreModels {
+            guard participates(model.symptomId, inputIds: inputIds) else { continue }
+            let mapped = rewritten(model.symptomId, plan: plan)
+            groups["\(model.date)#\(mapped)", default: []].append(model)
+        }
+        for (key, group) in groups {
+            guard let winner = plan.scores.first(where: { "\($0.date)#\($0.id)" == key }) else { continue }
+            guard let keeper = group.min(by: { $0.recordId < $1.recordId }) else { continue }
+            if keeper.toDomain() != winner {
+                keeper.apply(winner)
+                changed = true
+            }
+            for model in group where model !== keeper {
+                context.delete(model)
+                changed = true
+            }
+        }
+        guard changed else { return }
+        do {
+            try context.save()
+        } catch {
+            context.rollback()
+            lastError = .saveFailed
+        }
+    }
+
+    private func participates(_ symptomId: String, inputIds: Set<String>) -> Bool {
+        guard CustomSymptomId(rawValue: symptomId) != nil else { return true }
+        return inputIds.contains(symptomId)
+    }
+
+    private func rewritten(_ symptomId: String, plan: SymptomSync) -> String {
+        guard let custom = CustomSymptomId(rawValue: symptomId), let winner = plan.scoreIdRewrites[custom] else {
+            return symptomId
+        }
+        return winner.rawValue
     }
 
     private func save() throws {
@@ -423,9 +479,8 @@ final class Store: ObservableObject {
             for item in payload.remarks {
                 let row = SDRemark(); row.apply(item); context.insert(row)
             }
-            let customs = SymptomDirectory.restored(payload.customSymptoms)
-            let scores = SymptomDirectory.scoresToStore(payload.symptomScores, directory: customs)
-            for item in scores {
+            let plan = SymptomDirectory.synced(rows: payload.customSymptoms, scores: payload.symptomScores)
+            for item in plan.scores {
                 let row = SDSymptomScore()
                 row.recordId = item.rowId
                 row.apply(SymptomLog.normalized(item))
@@ -437,7 +492,7 @@ final class Store: ObservableObject {
             for item in payload.medicationChanges {
                 let row = SDMedicationChange(); row.apply(item); context.insert(row)
             }
-            for item in customs.customs {
+            for item in plan.directory.customs {
                 let row = SDCustomSymptom()
                 row.apply(item)
                 context.insert(row)
@@ -458,16 +513,17 @@ final class Store: ObservableObject {
     }
 
     func exportPayload() -> ExportPayload {
-        BackupCodec.makeExport(
+        let plan = SymptomDirectory.synced(rows: customSymptoms, scores: symptomScores)
+        return BackupCodec.makeExport(
             medications: medications,
             schedules: schedules,
             doseLogs: doseLogs,
             remarks: remarks,
             cycleSettings: settings,
             periods: periods,
-            symptomScores: symptomScores,
+            symptomScores: plan.scores,
             medicationChanges: medicationChanges,
-            customSymptoms: symptomDirectory.customs
+            customSymptoms: plan.directory.customs
         )
     }
 
