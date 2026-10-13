@@ -94,7 +94,7 @@ Activating a dot SHALL show that symptom’s name, the cycle’s date range, the
 - **THEN** the selection highlight and detail are gone
 
 ### Requirement: Dose-change ticks are context only
-When a stored dose or schedule change has an effective date in a visible cycle, the system SHALL mark that cycle with a distinct, easy-to-tap mark on the plot, not a sentence under the chart. Activating the mark SHALL show the medication name snapshot and the new value. That mark SHALL NOT claim the change caused a symptom difference and SHALL NOT advise a treatment change. German copy SHALL use Hub for a pump unit; the medication name may stay as stored.
+When a stored dose or schedule change has an effective date in a visible cycle, the system SHALL mark that cycle with a triangle on the plot, not a sentence under the chart. The triangle SHALL have the same padding as the symptom circle and SHALL stay on that cycle’s horizontal position. Selecting the triangle SHALL NOT draw a ring. Activating the mark SHALL show the medication name snapshot and the new value. That mark SHALL NOT claim the change caused a symptom difference and SHALL NOT advise a treatment change. German copy SHALL use Hub for a pump unit; the medication name may stay as stored.
 
 #### Scenario: Change in a visible cycle
 - **WHEN** a stored dose change for a named medication is effective in a visible cycle

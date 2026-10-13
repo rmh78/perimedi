@@ -232,7 +232,7 @@ struct TrendsView: View {
                                     .fill(color)
                                     .frame(width: d, height: d)
                             }
-                            .frame(width: max(d + 16, 28), height: max(d + 16, 28))
+                            .frame(width: hitSide(mark: d), height: hitSide(mark: d))
                             .shadow(color: on ? color.opacity(0.5) : .clear, radius: on ? 5 : 0)
                             .contentShape(Rectangle())
                         }
@@ -250,6 +250,7 @@ struct TrendsView: View {
             ForEach(chart.ticks, id: \.cycleStart) { tick in
                 if let x = xs[tick.cycleStart] {
                     let on = selectedTick?.cycleStart == tick.cycleStart
+                    let side = hitSide(mark: 12)
                     Button {
                         selectedTick = tick
                         selected = nil
@@ -258,11 +259,11 @@ struct TrendsView: View {
                             .font(.system(size: 12, weight: .bold))
                             .foregroundStyle(on ? Theme.blush800 : Theme.blush600)
                             .rotationEffect(.degrees(180))
-                            .frame(width: 32, height: 24)
+                            .frame(width: side, height: side)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .position(x: x, y: plot.maxY - 8)
+                    .position(x: x, y: plot.maxY - side / 2)
                     .zIndex(1)
                     .accessibilityLabel(tick.nameSnapshot)
                     .accessibilityIdentifier(A11yID.trendsTick(tick.cycleStart))
@@ -367,6 +368,10 @@ struct TrendsView: View {
         case .chart(let chart):
             return "ids:" + chart.series.map(\.id).joined(separator: ",")
         }
+    }
+
+    private func hitSide(mark: CGFloat) -> CGFloat {
+        max(mark + 16, 28)
     }
 
     private func xPositions(cycles: [LoggedCycle], in plot: CGRect) -> [String: CGFloat] {
