@@ -289,6 +289,7 @@ struct AppProof {
         robot.tap("cycle.action.symptom")
         robot.waitFor(id: "sheet.symptom")
         robot.scrollTo("symptom.custom.create")
+        XCTAssertEqual(robot.element("symptom.custom.create").label, "New symptom")
         robot.tap("symptom.custom.create")
         robot.clearAndType("symptom.custom.add", "Brain fog", dismiss: false)
         assertFieldAboveKeyboard("symptom.custom.add")

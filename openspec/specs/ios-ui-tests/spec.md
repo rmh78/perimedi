@@ -112,7 +112,7 @@ The instrumented suite SHALL be two English journeys. The app journey SHALL cove
 
 #### Scenario: Custom symptom on the scored Trends launch
 - **WHEN** the app journey, still on the scored Trends launch, adds a custom symptom named Brain fog, renames it to Fog, and confirms deleting Fog and all its past scores
-- **THEN** the delete question names Fog, the Fog chip is gone, and the hot-flush score stays selected
+- **THEN** the create control reads New symptom, the delete question names Fog, the Fog chip is gone, and the hot-flush score stays selected
 
 #### Scenario: German chrome is the string table
 - **WHEN** verification checks product strings
