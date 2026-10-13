@@ -188,6 +188,10 @@ public struct SymptomDirectory: Equatable, Sendable {
         index(of: storageId) != nil
     }
 
+    public func scoresOnCalendar(_ scores: [SymptomScore]) -> [SymptomScore] {
+        scores.filter { contains($0.id) }
+    }
+
     public func index(of storageId: String) -> Int? {
         rankedIds.firstIndex(of: storageId)
     }
@@ -206,17 +210,18 @@ public struct SymptomDirectory: Equatable, Sendable {
             rewrites[symptom.id] = winner
         }
         let kept = Set(customs.map(\.id))
-        var best: [String: SymptomScore] = [:]
+        var best: [String: RankedScore] = [:]
         for score in scores {
             guard let mapped = map(score, rewrites: rewrites, kept: kept) else { continue }
             let key = "\(mapped.date)#\(mapped.id)"
+            let incoming = RankedScore(score: mapped, originalId: score.id)
             if let existing = best[key] {
-                best[key] = prefer(existing, mapped)
+                best[key] = prefer(existing, incoming)
             } else {
-                best[key] = mapped
+                best[key] = incoming
             }
         }
-        let ordered = best.values.sorted { a, b in
+        let ordered = best.values.map(\.score).sorted { a, b in
             if a.date != b.date { return a.date < b.date }
             return a.id < b.id
         }
@@ -250,12 +255,35 @@ public struct SymptomDirectory: Equatable, Sendable {
         return score
     }
 
-    private static func prefer(_ current: SymptomScore, _ incoming: SymptomScore) -> SymptomScore {
-        if current.loggedAt != incoming.loggedAt {
-            return current.loggedAt > incoming.loggedAt ? current : incoming
+    private struct RankedScore {
+        var score: SymptomScore
+        var originalId: String
+    }
+
+    private static func prefer(_ current: RankedScore, _ incoming: RankedScore) -> RankedScore {
+        let kept = current.score
+        let next = incoming.score
+        if kept.loggedAt != next.loggedAt {
+            return kept.loggedAt > next.loggedAt ? current : incoming
         }
-        if current.severity != incoming.severity {
-            return current.severity > incoming.severity ? current : incoming
+        if kept.severity != next.severity {
+            return kept.severity > next.severity ? current : incoming
+        }
+        let keptCount = kept.count ?? Int.min
+        let nextCount = next.count ?? Int.min
+        if keptCount != nextCount {
+            return keptCount > nextCount ? current : incoming
+        }
+        let keptNote = kept.note ?? ""
+        let nextNote = next.note ?? ""
+        if keptNote != nextNote {
+            return keptNote > nextNote ? current : incoming
+        }
+        if current.originalId != incoming.originalId {
+            return current.originalId < incoming.originalId ? current : incoming
+        }
+        if kept.higherIsWorse != next.higherIsWorse {
+            return kept.higherIsWorse ? current : incoming
         }
         return current
     }

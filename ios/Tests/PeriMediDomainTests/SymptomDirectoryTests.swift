@@ -257,6 +257,86 @@ final class SymptomDirectoryTests: XCTestCase {
         XCTAssertEqual(plan.droppedIds, [ache])
     }
 
+    func testSyncedSameDayTieBreakIgnoresArrivalOrder() {
+        let third = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-000000000003")!
+        let rows = [
+            CustomSymptom(id: fog, name: "Fog", sort: 0),
+            CustomSymptom(id: ache, name: "FOG", sort: 1),
+            CustomSymptom(id: third, name: "fog", sort: 2),
+        ]
+        let tied = "2026-03-15T08:00:00Z"
+        let byCount = [
+            SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 2, count: 1, note: "a", loggedAt: tied),
+            SymptomScore(id: ache.rawValue, date: "2026-03-15", severity: 2, count: 1, note: "b", loggedAt: tied),
+            SymptomScore(id: third.rawValue, date: "2026-03-15", severity: 2, count: 4, note: "a", loggedAt: tied),
+        ]
+        let counted = SymptomScore(
+            id: fog.rawValue, date: "2026-03-15", severity: 2, count: 4, note: "a", loggedAt: tied
+        )
+        for order in orders(of: byCount) {
+            XCTAssertEqual(SymptomDirectory.synced(rows: rows, scores: order).scores, [counted])
+        }
+
+        let byNote = [
+            SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 2, count: 1, note: "a", loggedAt: tied),
+            SymptomScore(id: ache.rawValue, date: "2026-03-15", severity: 2, count: 1, note: "b", loggedAt: tied),
+        ]
+        let noted = SymptomScore(
+            id: fog.rawValue, date: "2026-03-15", severity: 2, count: 1, note: "b", loggedAt: tied
+        )
+        for order in orders(of: byNote) {
+            XCTAssertEqual(SymptomDirectory.synced(rows: rows, scores: order).scores, [noted])
+        }
+
+        let byId = [
+            SymptomScore(
+                id: ache.rawValue, date: "2026-03-15", severity: 2, count: 1, note: "m",
+                loggedAt: tied, higherIsWorse: true
+            ),
+            SymptomScore(
+                id: fog.rawValue, date: "2026-03-15", severity: 2, count: 1, note: "m",
+                loggedAt: tied, higherIsWorse: false
+            ),
+        ]
+        let lowerId = SymptomScore(
+            id: fog.rawValue, date: "2026-03-15", severity: 2, count: 1, note: "m",
+            loggedAt: tied, higherIsWorse: false
+        )
+        for order in orders(of: byId) {
+            XCTAssertEqual(SymptomDirectory.synced(rows: rows, scores: order).scores, [lowerId])
+        }
+
+        let sameId = [
+            SymptomScore(
+                id: fog.rawValue, date: "2026-03-15", severity: 2, count: 1, note: "m",
+                loggedAt: tied, higherIsWorse: false
+            ),
+            SymptomScore(
+                id: fog.rawValue, date: "2026-03-15", severity: 2, count: 1, note: "m",
+                loggedAt: tied, higherIsWorse: true
+            ),
+        ]
+        let worse = SymptomScore(
+            id: fog.rawValue, date: "2026-03-15", severity: 2, count: 1, note: "m",
+            loggedAt: tied, higherIsWorse: true
+        )
+        for order in orders(of: sameId) {
+            XCTAssertEqual(SymptomDirectory.synced(rows: rows, scores: order).scores, [worse])
+        }
+
+        let laterLog = SymptomDirectory.synced(
+            rows: rows,
+            scores: [
+                SymptomScore(id: third.rawValue, date: "2026-03-15", severity: 2, count: 9, note: "z", loggedAt: tied),
+                SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 1, loggedAt: "2026-03-16T09:00:00Z"),
+            ]
+        )
+        XCTAssertEqual(
+            laterLog.scores,
+            [SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 1, loggedAt: "2026-03-16T09:00:00Z")]
+        )
+    }
+
     func testSyncedSameTimestampKeepsHigherSeverity() {
         let plan = SymptomDirectory.synced(
             rows: [
@@ -272,5 +352,14 @@ final class SymptomDirectoryTests: XCTestCase {
             plan.scores,
             [SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 4, loggedAt: "2026-03-15T08:00:00Z")]
         )
+    }
+
+    private func orders<T>(of items: [T]) -> [[T]] {
+        guard items.count > 1 else { return [items] }
+        return items.indices.flatMap { index -> [[T]] in
+            var rest = items
+            let item = rest.remove(at: index)
+            return orders(of: rest).map { [item] + $0 }
+        }
     }
 }

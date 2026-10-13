@@ -54,7 +54,7 @@ struct CycleSnapshot: Equatable {
         var symptomDays = Set(
             remarks.map { DateKeys.toDateKey($0.occurredOn) }
         )
-        for score in symptomScores where directory.contains(score.id) {
+        for score in directory.scoresOnCalendar(symptomScores) {
             symptomDays.insert(score.date)
         }
         let strip = days.enumerated().map { index, day in

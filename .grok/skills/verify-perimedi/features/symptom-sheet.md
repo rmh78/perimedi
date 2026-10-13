@@ -36,6 +36,6 @@ After logging, Cycle shows `cycle.chip.score.{id}` via `A11yID.chipScore(_:)`. H
 ## Gotchas
 
 - Catalog ids are snake_case (`hot_flash`), not the display name.
-- Combined custom rows with the same name, ignoring case, become one symptom. The earlier order wins, then the lower id. Scores from the removed id stay on the kept id. The sheet layout does not change. A custom score whose id is absent from that list does not mark the day. `CustomSymptomSyncTests` builds Cycle and Month with that score and asserts the day is unmarked.
+- Combined custom rows with the same name, ignoring case, become one symptom. The earlier order wins, then the lower id. Scores from the removed id stay on the kept id. A shared day keeps the later log, then the higher severity, then the higher count, then the note that sorts later, then the lower original id. The sheet layout does not change. A custom score whose id is absent from that list does not mark the day. `CustomSymptomSyncTests` builds Cycle and Month with that score and asserts the day is unmarked.
 - Severity 1–4. Do not write 0 for "untouched".
 - Keep the `cycle.chip.score.` literal in this map so check-feature-map still sees `A11yID.chipScore`.
