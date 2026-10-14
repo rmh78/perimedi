@@ -166,7 +166,22 @@ class GhBoard:
         return red_issue_numbers(text)
 
     def create(self, body: str) -> int:
-        _gh(
+        args = [
+            "issue",
+            "create",
+            "--repo",
+            self.repo,
+            "--title",
+            TITLE,
+        ]
+        if self._label_ready():
+            args.extend(["--label", LABEL])
+        args.append("--body-file")
+        text = _gh_body(args, body)
+        return _issue_number(text)
+
+    def _label_ready(self) -> bool:
+        completed = _run_gh(
             [
                 "label",
                 "create",
@@ -180,21 +195,12 @@ class GhBoard:
                 "--force",
             ]
         )
-        text = _gh_body(
-            [
-                "issue",
-                "create",
-                "--repo",
-                self.repo,
-                "--title",
-                TITLE,
-                "--label",
-                LABEL,
-                "--body-file",
-            ],
-            body,
-        )
-        return _issue_number(text)
+        if completed.returncode == 0:
+            return True
+        detail = completed.stderr.strip() or f"exit {completed.returncode}"
+        sys.stderr.write(f"warning: gh label create {LABEL} failed: {detail}\n")
+        probe = _run_gh(["api", "--silent", f"repos/{self.repo}/labels/{LABEL}"])
+        return probe.returncode == 0
 
     def edit(self, number: int, body: str) -> None:
         _gh_body(
@@ -216,9 +222,9 @@ def _gh_body(args: list[str], body: str) -> str:
         os.remove(path)
 
 
-def _gh(args: list[str]) -> str:
+def _run_gh(args: list[str]) -> subprocess.CompletedProcess[str]:
     try:
-        completed = subprocess.run(
+        return subprocess.run(
             ["gh", *args],
             check=False,
             capture_output=True,
@@ -226,6 +232,10 @@ def _gh(args: list[str]) -> str:
         )
     except FileNotFoundError:
         raise SystemExit("gh not found") from None
+
+
+def _gh(args: list[str]) -> str:
+    completed = _run_gh(args)
     if completed.returncode != 0:
         sys.stderr.write(completed.stderr)
         raise SystemExit(completed.returncode or 1)

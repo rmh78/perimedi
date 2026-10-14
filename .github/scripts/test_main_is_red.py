@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import re
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -163,16 +166,17 @@ class BoardCallTest(unittest.TestCase):
 
         def fake(args):
             calls.append(list(args))
+            stdout = ""
             if list(args)[:2] == ["issue", "create"]:
-                return "https://github.com/acme/perimedi/issues/12\n"
-            return ""
+                stdout = "https://github.com/acme/perimedi/issues/12\n"
+            return subprocess.CompletedProcess(args, 0, stdout, "")
 
-        original = red._gh
-        red._gh = fake
+        original = red._run_gh
+        red._run_gh = fake
         try:
             number = red.GhBoard("acme/perimedi").create("Failing jobs: ids\n")
         finally:
-            red._gh = original
+            red._run_gh = original
         self.assertEqual(number, 12)
         self.assertEqual(
             calls[0],
@@ -193,6 +197,68 @@ class BoardCallTest(unittest.TestCase):
         self.assertIn("--label", calls[1])
         label_at = calls[1].index("--label")
         self.assertEqual(calls[1][label_at + 1], "main-red")
+
+    def test_label_create_failure_still_opens_the_issue(self) -> None:
+        calls = []
+
+        def fake(args):
+            listed = list(args)
+            calls.append(listed)
+            if listed[:2] == ["label", "create"]:
+                return subprocess.CompletedProcess(args, 1, "", "permission denied\n")
+            if listed[:2] == ["api", "--silent"]:
+                return subprocess.CompletedProcess(args, 1, "", "not found\n")
+            if listed[:2] == ["issue", "create"]:
+                return subprocess.CompletedProcess(
+                    args, 0, "https://github.com/acme/perimedi/issues/12\n", ""
+                )
+            if listed[:2] == ["api", "--paginate"]:
+                return subprocess.CompletedProcess(args, 0, "[]", "")
+            raise AssertionError(listed)
+
+        original = red._run_gh
+        red._run_gh = fake
+        stderr = io.StringIO()
+        try:
+            with contextlib.redirect_stderr(stderr):
+                end = red.transition(("failure", "success", "success", "success"), False, [], URL)
+                red.apply(end, URL, red.GhBoard("acme/perimedi"))
+        finally:
+            red._run_gh = original
+        creates = [call for call in calls if call[:2] == ["issue", "create"]]
+        self.assertEqual(len(creates), 1)
+        self.assertNotIn("--label", creates[0])
+        self.assertFalse(any(call[:2] == ["issue", "close"] for call in calls))
+        self.assertIn("warning: gh label create main-red failed: permission denied", stderr.getvalue())
+
+    def test_label_create_failure_keeps_the_label_when_it_exists(self) -> None:
+        calls = []
+
+        def fake(args):
+            listed = list(args)
+            calls.append(listed)
+            if listed[:2] == ["label", "create"]:
+                return subprocess.CompletedProcess(args, 1, "", "already exists\n")
+            if listed[:2] == ["api", "--silent"]:
+                return subprocess.CompletedProcess(args, 0, "", "")
+            if listed[:2] == ["issue", "create"]:
+                return subprocess.CompletedProcess(
+                    args, 0, "https://github.com/acme/perimedi/issues/12\n", ""
+                )
+            raise AssertionError(listed)
+
+        original = red._run_gh
+        red._run_gh = fake
+        stderr = io.StringIO()
+        try:
+            with contextlib.redirect_stderr(stderr):
+                number = red.GhBoard("acme/perimedi").create("Failing jobs: ids\n")
+        finally:
+            red._run_gh = original
+        self.assertEqual(number, 12)
+        creates = [call for call in calls if call[:2] == ["issue", "create"]]
+        self.assertEqual(creates[0][creates[0].index("--label") + 1], "main-red")
+        self.assertIn("warning: gh label create main-red failed: already exists", stderr.getvalue())
 
 
 class WorkflowTest(unittest.TestCase):
