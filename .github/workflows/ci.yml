@@ -2,18 +2,30 @@ name: ci
 
 on:
   pull_request:
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+    inputs:
+      force_red:
+        description: Fail ids on purpose and skip the other three jobs
+        type: boolean
+        default: false
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
 jobs:
   ids:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
+      - name: Forced red drill
+        if: github.event_name == 'workflow_dispatch' && (github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')
+        run: exit 1
       - uses: actions/checkout@v5
       - name: Every A11yID is named in the feature map
         run: python3 ios/scripts/check-feature-map.py
@@ -27,8 +39,11 @@ jobs:
         run: python3 ios/scripts/check-l10n-layout.py
       - name: Domain owns math; persistence writes logs
         run: python3 ios/scripts/check-domain-boundary.py
+      - name: Decision script
+        run: python3 .github/scripts/test_main_is_red.py
 
   openspec:
+    if: github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && !(github.event_name == 'workflow_dispatch' && (github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -36,6 +51,7 @@ jobs:
         run: python3 ios/scripts/check-openspec-sync.py
 
   domain:
+    if: github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && !(github.event_name == 'workflow_dispatch' && (github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')))
     runs-on: macos-26
     timeout-minutes: 20
     env:
@@ -46,6 +62,7 @@ jobs:
         run: swift test --package-path ios
 
   ui:
+    if: github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && !(github.event_name == 'workflow_dispatch' && (github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')))
     runs-on: xcode-27
     timeout-minutes: 45
     permissions:
@@ -119,3 +136,28 @@ jobs:
             ios/DerivedData/SDKStatCaches.noindex
             ios/DerivedData/build-ok
           key: ${{ steps.ui-build-cache.outputs.cache-primary-key }}
+
+  main-status:
+    needs: [ids, openspec, domain, ui]
+    if: always() && !cancelled() && github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Fetch the decision script
+        run: |
+          curl --fail --silent --show-error \
+            --retry 5 --retry-delay 2 --retry-all-errors \
+            --output /tmp/main_is_red.py \
+            "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_SHA}/.github/scripts/main_is_red.py"
+      - name: Apply the main is red decision
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MAIN_IDS: ${{ needs.ids.result }}
+          MAIN_OPENSPEC: ${{ needs.openspec.result }}
+          MAIN_DOMAIN: ${{ needs.domain.result }}
+          MAIN_UI: ${{ needs.ui.result }}
+          FORCE_RED: ${{ (github.event_name == 'workflow_dispatch' && (github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')) && 'true' || 'false' }}
+          MAIN_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python3 /tmp/main_is_red.py
