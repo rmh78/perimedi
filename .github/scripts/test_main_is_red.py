@@ -83,14 +83,21 @@ class TransitionTest(unittest.TestCase):
                 json.dumps(
                     [
                         {"number": 3, "title": "main is red"},
-                        {"number": 8, "title": "main is green"},
-                        {"number": 2, "title": "main is red", "pull_request": {"url": "x"}},
+                        {"number": 8, "title": "main is green", "labels": [{"name": "main-red"}]},
+                        {
+                            "number": 2,
+                            "title": "main is red",
+                            "labels": [{"name": "main-red"}],
+                            "pull_request": {"url": "x"},
+                        },
+                        {"number": 5, "title": "main is red", "labels": [{"name": "main-red"}]},
+                        {"number": 6, "title": "main is red", "labels": ["main-red"]},
                     ]
                 ),
-                json.dumps([{"number": 11, "title": "Main is red"}]),
+                json.dumps([{"number": 11, "title": "Main is red", "labels": [{"name": "main-red"}]}]),
             ]
         )
-        self.assertEqual(red.red_issue_numbers(pages), [3])
+        self.assertEqual(red.red_issue_numbers(pages), [5, 6])
 
     def test_absent_and_hold_write_nothing(self) -> None:
         board = Board()
@@ -130,6 +137,62 @@ class TransitionTest(unittest.TestCase):
         red.apply(end, URL, board)
         self.assertEqual(board.edits, [(7, IDS_BODY)])
         self.assertEqual(board.closes, [(41, "Duplicate of #7.")])
+
+
+class BoardCallTest(unittest.TestCase):
+    def test_list_asks_for_the_label(self) -> None:
+        calls = []
+
+        def fake(args):
+            calls.append(list(args))
+            return "[]"
+
+        original = red._gh
+        red._gh = fake
+        try:
+            self.assertEqual(red.GhBoard("acme/perimedi").list_open(), [])
+        finally:
+            red._gh = original
+        self.assertEqual(
+            calls,
+            [["api", "--paginate", "repos/acme/perimedi/issues?state=open&labels=main-red&per_page=100"]],
+        )
+
+    def test_create_makes_the_label_then_the_issue(self) -> None:
+        calls = []
+
+        def fake(args):
+            calls.append(list(args))
+            if list(args)[:2] == ["issue", "create"]:
+                return "https://github.com/acme/perimedi/issues/12\n"
+            return ""
+
+        original = red._gh
+        red._gh = fake
+        try:
+            number = red.GhBoard("acme/perimedi").create("Failing jobs: ids\n")
+        finally:
+            red._gh = original
+        self.assertEqual(number, 12)
+        self.assertEqual(
+            calls[0],
+            [
+                "label",
+                "create",
+                "main-red",
+                "--repo",
+                "acme/perimedi",
+                "--color",
+                "B60205",
+                "--description",
+                "CI owns this issue",
+                "--force",
+            ],
+        )
+        self.assertEqual(calls[1][:2], ["issue", "create"])
+        self.assertIn("--label", calls[1])
+        label_at = calls[1].index("--label")
+        self.assertEqual(calls[1][label_at + 1], "main-red")
 
 
 class WorkflowTest(unittest.TestCase):

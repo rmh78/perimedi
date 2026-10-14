@@ -13,6 +13,7 @@ JOBS = ("ids", "openspec", "domain", "ui")
 VERDICTS = frozenset({"success", "failure", "skipped", "cancelled"})
 FAILED = frozenset({"failure", "cancelled"})
 TITLE = "main is red"
+LABEL = "main-red"
 ENV_RESULTS = ("MAIN_IDS", "MAIN_OPENSPEC", "MAIN_DOMAIN", "MAIN_UI")
 ENV_REQUIRED = ENV_RESULTS + ("FORCE_RED", "MAIN_RUN_URL", "GITHUB_REPOSITORY", "GH_TOKEN")
 
@@ -70,13 +71,23 @@ def red_issue_numbers(payload: str) -> list[int]:
         except json.JSONDecodeError as exc:
             raise SystemExit(f"bad issue list: {exc}") from exc
         for row in _rows(value):
-            if "pull_request" in row or row.get("title") != TITLE:
+            if "pull_request" in row or row.get("title") != TITLE or not _has_label(row):
                 continue
             number = row.get("number")
             if type(number) is int:
                 numbers.append(number)
     numbers.sort()
     return numbers
+
+
+def _has_label(row: dict) -> bool:
+    labels = row.get("labels")
+    if not isinstance(labels, list):
+        return False
+    for label in labels:
+        if label == LABEL or (isinstance(label, dict) and label.get("name") == LABEL):
+            return True
+    return False
 
 
 def _rows(value: object) -> list[dict]:
@@ -145,12 +156,42 @@ class GhBoard:
         self.repo = repo
 
     def list_open(self) -> list[int]:
-        text = _gh(["api", "--paginate", f"repos/{self.repo}/issues?state=open&per_page=100"])
+        text = _gh(
+            [
+                "api",
+                "--paginate",
+                f"repos/{self.repo}/issues?state=open&labels={LABEL}&per_page=100",
+            ]
+        )
         return red_issue_numbers(text)
 
     def create(self, body: str) -> int:
+        _gh(
+            [
+                "label",
+                "create",
+                LABEL,
+                "--repo",
+                self.repo,
+                "--color",
+                "B60205",
+                "--description",
+                "CI owns this issue",
+                "--force",
+            ]
+        )
         text = _gh_body(
-            ["issue", "create", "--repo", self.repo, "--title", TITLE, "--body-file"],
+            [
+                "issue",
+                "create",
+                "--repo",
+                self.repo,
+                "--title",
+                TITLE,
+                "--label",
+                LABEL,
+                "--body-file",
+            ],
             body,
         )
         return _issue_number(text)
