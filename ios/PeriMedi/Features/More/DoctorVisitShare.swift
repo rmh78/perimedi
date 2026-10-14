@@ -58,7 +58,7 @@ enum DoctorVisitShare {
                     : report.changes.map { change in
                         let key = change.field == .dose ? "visit.change.dose" : "visit.change.schedule"
                         return app.t(key, [
-                            "date": formatDate(change.effectiveDate, locale: locale),
+                            "date": VisitDateRange.day(change.effectiveDate, locale: locale),
                             "name": change.nameSnapshot,
                             "previous": DoseUnitCopy.display(change.previousValue, languageCode: app.locale.language.rawValue),
                             "new": DoseUnitCopy.display(change.newValue, languageCode: app.locale.language.rawValue),
@@ -72,10 +72,7 @@ enum DoctorVisitShare {
                 rows: report.periods.isEmpty
                     ? [app.t("visit.noPeriods")]
                     : report.periods.map { row in
-                        app.t("visit.periodRow", [
-                            "start": formatDate(row.start, locale: locale),
-                            "end": formatDate(row.end, locale: locale),
-                        ])
+                        VisitDateRange.closed(startKey: row.start, endKey: row.end, locale: locale)
                     }
             )
         )
@@ -97,7 +94,7 @@ enum DoctorVisitShare {
         return DoctorVisitPage(
             title: app.t("visit.title"),
             meta: [
-                app.t("visit.generated", ["date": formatDate(report.generatedOn, locale: locale)]),
+                app.t("visit.generated", ["date": VisitDateRange.day(report.generatedOn, locale: locale)]),
                 rangeLine(report, app: app, locale: locale),
             ],
             sections: sections,
@@ -110,8 +107,8 @@ enum DoctorVisitShare {
         app: AppModel,
         locale: Locale
     ) -> String {
-        let start = formatDate(report.rangeStart, locale: locale)
-        let end = formatDate(report.rangeEnd, locale: locale)
+        let start = VisitDateRange.day(report.rangeStart, locale: locale)
+        let end = VisitDateRange.day(report.rangeEnd, locale: locale)
         let key: String
         switch report.rangeKind {
         case .completedCycles(let n) where n >= 2:
@@ -124,14 +121,6 @@ enum DoctorVisitShare {
             key = "visit.range.twelveWeeks"
         }
         return app.t(key, ["start": start, "end": end])
-    }
-
-    private static func formatDate(_ key: String, locale: Locale) -> String {
-        guard let date = DateKeys.parseDateKey(key) else { return key }
-        let formatter = DateFormatter()
-        formatter.locale = locale
-        formatter.setLocalizedDateFormatFromTemplate("yMMMd")
-        return formatter.string(from: date)
     }
 }
 

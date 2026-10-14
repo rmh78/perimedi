@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Prove that a person can perform PeriMedi’s real-world jobs on iOS by driving the real controls from a cleared store and asserting UI elements and resulting state. The required suite is one English app journey and one English widget journey. The app journey is the empty-to-tracking first session, then settings, a due dose reminder, and Trends once several cycles exist. The widget journey changes size in the same process and runs in continuous integration. Screenshots are failure evidence and a committed English UX catalog, not the pass/fail oracle. German product chrome is covered by the string-table check rather than a second Simulator pass.
+Prove that a person can perform PeriMedi’s real-world jobs on iOS by driving the real controls from a cleared store and asserting UI elements and resulting state. The required suite is one English app journey and one English widget journey. The app journey is the empty-to-tracking first session, then settings, a due dose reminder, and Trends once several cycles exist. The widget journey changes size in the same process and runs in continuous integration. Screenshots are failure evidence and a committed English UX catalog, plus one German picture of the New symptom control, not the pass/fail oracle. German product chrome is covered by the string-table check rather than a second Simulator pass.
 
 ## Requirements
 
@@ -44,7 +44,7 @@ An instrumented UI suite SHALL include one English app journey that drives the r
 - **THEN** Trends explains that cycles are needed, no series chips are shown, and the suite returns to Cycle to continue tracking
 
 #### Scenario: Edit and delete a period, then log it again
-- **WHEN** the suite logs a period, changes its end so the history label is exactly `7–12 Mar 2026`, and confirms `Delete 7–12 Mar 2026?`
+- **WHEN** the suite logs a period, changes its end so the history label is exactly `Mar 7, 2026 – Mar 12, 2026`, and confirms `Delete Mar 7, 2026 – Mar 12, 2026?`
 - **THEN** that history row is gone, the PeriMedi intro card returns, the requirements card names the missing period, and the suite logs the period again from eight days before the pinned today through four days before it before any medication is saved
 
 #### Scenario: Add a period through the UI
@@ -112,7 +112,7 @@ The instrumented suite SHALL be two English journeys. The app journey SHALL cove
 
 #### Scenario: Custom symptom on the scored Trends launch
 - **WHEN** the app journey, still on the scored Trends launch, adds a custom symptom named Brain fog, renames it to Fog, and confirms deleting Fog and all its past scores
-- **THEN** the delete question names Fog, the Fog chip is gone, and the hot-flush score stays selected
+- **THEN** the create control reads New symptom, the delete question names Fog, the Fog chip is gone, and the hot-flush score stays selected
 
 #### Scenario: German chrome is the string table
 - **WHEN** verification checks product strings
@@ -130,10 +130,10 @@ A failed instrumented step SHALL retain a screenshot (or equivalent visual attac
 - **THEN** the instrumented suite still passes
 
 ### Requirement: Committed catalog of main screens
-A dedicated catalog capture SHALL write a small committed catalog of English Simulator pictures of the main destinations: Cycle empty, Cycle with data, Trends empty, Trends with data, Month, and More, plus the medication, period, and symptom sheets. The catalog SHALL NOT require German pictures. The capture SHALL navigate those destinations in a small number of English launches (tabs and Cycle sheet actions) rather than launching once per picture, and SHALL NOT switch language. Sample data and Trends fixtures MAY seed catalog pictures; they SHALL NOT be the first-use proof. Verification SHALL fail if an expected English catalog picture is missing from the committed files. Verification SHALL NOT fail because pixels differ from a previous capture. Visual review SHALL use those committed pictures (the pull-request file diff), not a gallery of images pasted into pull-request comments. Continuous integration MAY skip rewriting the pictures; it SHALL still fail when a committed English file is missing, and it SHALL still run the English widget journey.
+A dedicated catalog capture SHALL write a small committed catalog of English Simulator pictures of the main destinations: Cycle empty, Cycle with data, Trends empty, Trends with data, Month, and More, plus the medication, period, and symptom sheets. The only German catalog picture SHALL be one picture of the New symptom control reading Neues Symptom. The capture SHALL navigate the English destinations in a small number of English launches (tabs and Cycle sheet actions) rather than launching once per picture. It MAY switch to German only long enough to write that one picture, then return to English, and SHALL NOT switch language for any other catalog picture. Sample data and Trends fixtures MAY seed catalog pictures; they SHALL NOT be the first-use proof. Verification SHALL fail if an expected catalog picture is missing from the committed files, including that German picture and the two medium-widget pictures taken around Take. Verification SHALL NOT fail because pixels differ from a previous capture. Visual review SHALL use those committed pictures (the pull-request file diff), not a gallery of images pasted into pull-request comments. Continuous integration MAY skip rewriting the catalog pictures. The English widget journey SHALL rewrite those two medium pictures on every run, including continuous integration. Verification SHALL still fail when a committed catalog file is missing, and it SHALL still run the English widget journey.
 
 #### Scenario: Missing catalog picture fails
-- **WHEN** an expected English main-screen catalog picture is not present in the committed catalog
+- **WHEN** an expected catalog picture is not present in the committed catalog
 - **THEN** verification fails
 
 #### Scenario: Pixel drift does not fail the catalog
@@ -142,7 +142,7 @@ A dedicated catalog capture SHALL write a small committed catalog of English Sim
 
 #### Scenario: Catalog capture is one English empty session
 - **WHEN** the catalog capture writes English pictures of empty Cycle, empty Trends, and the add sheets
-- **THEN** those pictures come from navigating one empty-store English session, not from a separate app launch for each file and not from a German pass
+- **THEN** those pictures come from navigating one empty-store English session, not from a separate app launch for each file, and the only catalog picture that switches to German is the New symptom control reading Neues Symptom
 
 ### Requirement: Visit share control is identifiable
 The More visit PDF action SHALL expose a language-independent accessibility identifier. The English app journey SHALL wait for that control. Catalog pictures of More SHALL include the visit entry. Verification SHALL NOT paste screenshot galleries into pull-request comments.

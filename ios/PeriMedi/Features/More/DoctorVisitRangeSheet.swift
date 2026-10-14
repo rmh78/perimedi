@@ -89,7 +89,11 @@ struct DoctorVisitRangeSheet: View {
         } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(rangeLabel(cycle))
+                    Text(VisitDateRange.closed(
+                        startKey: cycle.start,
+                        endKey: cycle.end,
+                        locale: app.locale.language.locale
+                    ))
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.ink)
                     Text(app.t("visit.range.completed"))
@@ -105,18 +109,6 @@ struct DoctorVisitRangeSheet: View {
         .buttonStyle(.plain)
         .accessibilityIdentifier(A11yID.visitRangeCycle(cycle.start))
         .accessibilityValue(selected ? "on" : "off")
-    }
-
-    private func rangeLabel(_ cycle: LoggedCycle) -> String {
-        "\(format(cycle.start)) – \(format(cycle.end))"
-    }
-
-    private func format(_ key: String) -> String {
-        guard let date = DateKeys.parseDateKey(key) else { return key }
-        let formatter = DateFormatter()
-        formatter.locale = app.locale.language.locale
-        formatter.setLocalizedDateFormatFromTemplate("yMMMd")
-        return formatter.string(from: date)
     }
 
     private func continueToPreview() {

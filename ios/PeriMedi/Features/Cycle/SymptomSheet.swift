@@ -20,6 +20,7 @@ struct SymptomSheet: View {
     @State private var nameError: SymptomEditError?
     @State private var nameDraft: NameDraft?
     @FocusState private var nameFocused: Bool
+    private let nameColumn: CGFloat = 108
 
     private var dayScores: [SymptomScore] {
         store.symptomScores.filter { $0.date == dateKey }
@@ -85,7 +86,7 @@ struct SymptomSheet: View {
                     .foregroundStyle(Theme.blush800)
             } else if nameDraft == nil {
                 PillButton(
-                    title: app.t("symptom.addAction"),
+                    title: app.t("symptom.addPlaceholder"),
                     kind: .secondary,
                     identifier: A11yID.symptomCustomCreate
                 ) {
@@ -210,7 +211,7 @@ struct SymptomSheet: View {
     }
 
     private func customRow(_ symptom: CustomSymptom) -> some View {
-        scoreRow(ref: .custom(symptom.id), title: symptom.name, nameWidth: 136) {
+        scoreRow(ref: .custom(symptom.id), title: symptom.name) {
             openDraft(.edit(symptom.id), name: symptom.name)
         }
     }
@@ -233,7 +234,6 @@ struct SymptomSheet: View {
     private func scoreRow(
         ref: SymptomRef,
         title: String,
-        nameWidth: CGFloat = 108,
         onName: (() -> Void)? = nil
     ) -> some View {
         let key = ref.storageId
@@ -260,7 +260,7 @@ struct SymptomSheet: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            .frame(width: nameWidth, alignment: .leading)
+            .frame(width: nameColumn, alignment: .leading)
             HStack(spacing: 5) {
                 ForEach(1...4, id: \.self) { value in
                     let selected = chosen == value

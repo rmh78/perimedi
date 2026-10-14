@@ -6,6 +6,7 @@ enum DoseWidgetBridge {
     private static weak var store: Store?
     private static weak var locale: LocaleController?
     private static var stagedAck: DoseWidgetAck?
+    private static var suppressSnapshot = false
 
     static func install(store: Store, locale: LocaleController) {
         self.store = store
@@ -19,6 +20,11 @@ enum DoseWidgetBridge {
     }
 
     static func takeFromWidget(_ medicationId: String) throws -> MarkMedicationTakenResult {
+        suppressSnapshot = true
+        defer {
+            suppressSnapshot = false
+            publish()
+        }
         let before = pendingToday()
         let result = try DoseReminderCenter.shared.markMedicationTaken(medicationId: medicationId)
         guard result == .taken,
@@ -32,11 +38,11 @@ enum DoseWidgetBridge {
             index: index,
             until: Date().addingTimeInterval(DoseWidgetAck.duration)
         )
-        publish()
         return result
     }
 
     static func publish() {
+        guard !suppressSnapshot else { return }
         guard let store, let locale else { return }
         let today = DateKeys.todayKey()
         guard let todayDate = DateKeys.parseDateKey(today) else { return }

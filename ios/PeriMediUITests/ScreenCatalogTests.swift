@@ -8,6 +8,7 @@ struct ScreenCatalogWriter {
         try captureSample()
         try captureTrendsFixture()
         try captureTrendsNoScores()
+        try captureGermanNewSymptomPill()
 
         let expected = ScreenCatalog.expectedNames
         XCTAssertFalse(expected.isEmpty, "ios/docs/screens/expected.txt")
@@ -46,7 +47,46 @@ struct ScreenCatalogWriter {
         robot.tap("cycle.action.symptom")
         robot.waitFor(id: "sheet.symptom")
         try write("sheet-symptom-en")
+        try captureWrappedCustomName()
         robot.closeSheet(id: "sheet.symptom")
+    }
+
+    private func captureWrappedCustomName() throws {
+        let longName = "Night sweats that return after waking up"
+        XCTAssertEqual(longName.count, 40)
+        robot.scrollTo("symptom.custom.create")
+        robot.tap("symptom.custom.create")
+        robot.clearAndType("symptom.custom.add", longName, dismiss: false)
+        robot.tap("symptom.custom.create")
+        let nameButton = robot.app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", "symptom.custom.name.c.")
+        ).firstMatch
+        XCTAssertTrue(nameButton.waitForExistence(timeout: 3))
+        let raw = nameButton.identifier.replacingOccurrences(of: "symptom.custom.name.", with: "")
+        robot.scrollTo("symptom.score.vaginal_dryness.1")
+        robot.scrollTo("symptom.score.\(raw).1")
+        let catalog = robot.element("symptom.score.vaginal_dryness.1")
+        let custom = robot.element("symptom.score.\(raw).1")
+        XCTAssertEqual(catalog.frame.minX, custom.frame.minX, accuracy: 1)
+        XCTAssertGreaterThan(nameButton.frame.height, 28, "40-character name stayed on one line")
+        try write("sheet-symptom-wrap-en")
+    }
+
+    private func captureGermanNewSymptomPill() throws {
+        robot.launchCatalog(.empty)
+        robot.tap("tab.more")
+        robot.waitFor(id: "more.lang.de")
+        robot.tap("more.lang.de")
+        robot.tap("tab.cycle")
+        robot.tap("cycle.action.symptom")
+        robot.waitFor(id: "sheet.symptom")
+        robot.scrollTo("symptom.custom.create")
+        let label = robot.element("symptom.custom.create").label
+        try write("sheet-symptom-pill-de")
+        robot.closeSheet(id: "sheet.symptom")
+        robot.tap("tab.more")
+        robot.tap("more.lang.en")
+        XCTAssertEqual(label, "Neues Symptom")
     }
 
     private func captureSample() throws {
@@ -112,5 +152,18 @@ struct ScreenCatalogWriter {
 final class ScreenCatalogTests: PeriMediUITestCase {
     func testWriteScreenCatalog() throws {
         try ScreenCatalogWriter(robot: robot).writeEnglish()
+    }
+
+    override func tearDown() {
+        super.tearDown()
+        guard robot.app.state == .runningForeground else { return }
+        if robot.exists("sheet.close") {
+            robot.element("sheet.close").tap()
+        }
+        guard robot.exists("tab.more"), robot.element("tab.more").label == "Mehr" else { return }
+        robot.element("tab.more").tap()
+        if robot.exists("more.lang.en") {
+            robot.element("more.lang.en").tap()
+        }
     }
 }

@@ -75,10 +75,10 @@ struct AppProof {
 
         let edited = historyRow()
         XCTAssertTrue(edited.waitForExistence(timeout: 2))
-        XCTAssertEqual(edited.label, "7–12 Mar 2026")
+        XCTAssertEqual(edited.label, "Mar 7, 2026 \u{2013} Mar 12, 2026")
         robot.press(edited)
         robot.tap("period.delete")
-        XCTAssertTrue(robot.app.staticTexts["Delete 7–12 Mar 2026?"].waitForExistence(timeout: 2))
+        XCTAssertTrue(robot.app.staticTexts["Delete Mar 7, 2026 \u{2013} Mar 12, 2026?"].waitForExistence(timeout: 2))
         robot.tap("confirm.delete")
         assertNoHistoryRows()
 
@@ -289,6 +289,7 @@ struct AppProof {
         robot.tap("cycle.action.symptom")
         robot.waitFor(id: "sheet.symptom")
         robot.scrollTo("symptom.custom.create")
+        XCTAssertEqual(robot.element("symptom.custom.create").label, "New symptom")
         robot.tap("symptom.custom.create")
         robot.clearAndType("symptom.custom.add", "Brain fog", dismiss: false)
         assertFieldAboveKeyboard("symptom.custom.add")
@@ -299,6 +300,16 @@ struct AppProof {
         ).firstMatch
         XCTAssertTrue(nameButton.waitForExistence(timeout: 3))
         let raw = nameButton.identifier.replacingOccurrences(of: "symptom.custom.name.", with: "")
+        robot.scrollTo("symptom.score.vaginal_dryness.1")
+        robot.scrollTo("symptom.score.\(raw).1")
+        let catalogScore = robot.element("symptom.score.vaginal_dryness.1").frame.minX
+        let customScore = robot.element("symptom.score.\(raw).1").frame.minX
+        XCTAssertEqual(catalogScore, customScore, accuracy: 1)
+        XCTAssertEqual(
+            robot.element("symptom.score.vaginal_dryness.4").frame.minX,
+            robot.element("symptom.score.\(raw).4").frame.minX,
+            accuracy: 1
+        )
 
         robot.scrollTo("symptom.score.hot_flash.3")
         robot.tap("symptom.score.hot_flash.3")

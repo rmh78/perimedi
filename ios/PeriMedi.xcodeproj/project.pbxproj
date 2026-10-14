@@ -67,6 +67,7 @@
 		0FB10F802041E610F5CF0A0F /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 8D70415C7B86CE40507110F1 /* Localizable.xcstrings */; };
 		FD129F476E0BE8B7B6F2B6AE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E9DCABA0F941C89A68E28B8A /* Assets.xcassets */; };
 		A11C0DE00000000000000002 /* CustomSymptomSyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11C0DE00000000000000001 /* CustomSymptomSyncTests.swift */; };
+		B2F75D8E01C0DE0000000002 /* DoseWidgetBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2F75D8E01C0DE0000000001 /* DoseWidgetBridgeTests.swift */; };
 		A11C0DE0000000000000000E /* PeriMediDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A11C0DE0000000000000000F /* PeriMediDomain */; };
 /* End PBXBuildFile section */
 
@@ -132,6 +133,7 @@
 		8D70415C7B86CE40507110F1 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		A9C0D9A8934B171D57086D95 /* DoseWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseWidget.swift; sourceTree = "<group>"; };
 		A11C0DE00000000000000001 /* CustomSymptomSyncTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomSymptomSyncTests.swift; sourceTree = "<group>"; };
+		B2F75D8E01C0DE0000000001 /* DoseWidgetBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseWidgetBridgeTests.swift; sourceTree = "<group>"; };
 		A11C0DE00000000000000003 /* PeriMediTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PeriMediTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -307,6 +309,7 @@
 			isa = PBXGroup;
 			children = (
 				A11C0DE00000000000000001 /* CustomSymptomSyncTests.swift */,
+				B2F75D8E01C0DE0000000001 /* DoseWidgetBridgeTests.swift */,
 			);
 			path = PeriMediTests;
 			sourceTree = "<group>";
@@ -554,6 +557,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A11C0DE00000000000000002 /* CustomSymptomSyncTests.swift in Sources */,
+				B2F75D8E01C0DE0000000002 /* DoseWidgetBridgeTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

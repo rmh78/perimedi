@@ -144,7 +144,7 @@ The medication, period-settings, and symptom editors SHALL use an inset rounded 
 
 #### Scenario: Period and symptom dialogs
 - **WHEN** the user opens period settings or the symptom editor
-- **THEN** each is an inset closable panel (period: settings, an Add control, then history whose underlined range opens one card for a new or existing period; symptoms: the eleven 1–4 rows in Body / Mood / Intimacy groups with words that fit each name, then a Custom group (Eigene in German) whose underlined names and Add control open one name card, no daily note, closed with the header close control)
+- **THEN** each is an inset closable panel (period: settings, an Add control, then history whose underlined range opens one card for a new or existing period; symptoms: the eleven 1–4 rows in Body / Mood / Intimacy groups with words that fit each name, then a Custom group (Eigene in German) whose underlined names and a control labeled New symptom (German: Neues Symptom) open one name card, no daily note, closed with the header close control)
 
 #### Scenario: Dialog actions are capsule buttons
 - **WHEN** the user sees add, save, or cancel in a medication, period, or symptom dialog
@@ -152,7 +152,7 @@ The medication, period-settings, and symptom editors SHALL use an inset rounded 
 
 #### Scenario: Period history opens one card
 - **WHEN** the user views period history and activates a date range or Add
-- **THEN** one card opens on top of the settings, titled Edit period or New period (German: Periode bearbeiten or Neue Periode), with Cancel on the left and Save on the right
+- **THEN** one card opens on top of the settings, titled Edit period or New period (German: Periode bearbeiten or Neue Periode), with Cancel on the left and Save on the right, and a closed period uses the same date-range format as a cycle in the doctor’s visit dialog
 
 #### Scenario: Dialog backdrop
 - **WHEN** a medication, period, or symptom dialog is open

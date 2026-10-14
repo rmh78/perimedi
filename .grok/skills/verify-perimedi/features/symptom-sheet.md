@@ -6,7 +6,7 @@ Structured scores (1–4). Untouched catalog ids stay missing (not stored as 0).
 
 - Per-symptom score buttons (tap again clears; persist on each tap)
 - Close (does not write; each score tap already saved)
-- Add control `symptom.custom.create` opens one dialog titled New symptom. The name field in that dialog is `symptom.custom.add`. The commit button on that id reads Save
+- Create pill `symptom.custom.create` reads New symptom (German: Neues Symptom) and opens one dialog titled New symptom. The name field in that dialog is `symptom.custom.add`. The commit button on that id reads Save. Custom and catalog names share one 108pt column. A long custom name wraps in that column at full size. Their 1–4 numbers share one column
 - Underlined custom name `symptom.custom.name.{id}` opens the same dialog titled Edit symptom. Save is `symptom.custom.save.{id}`. Delete is `symptom.custom.delete.{id}`
 - `symptom.body` / `symptom.save` exist on the `A11yID` enum only — **not attached**
 
@@ -21,7 +21,7 @@ Cycle → + Symptom (`cycle.action.symptom`).
 | Sheet | `sheet.symptom` | Present after `cycle.action.symptom`. |
 | Close | `sheet.close` | First-use path: tap scores, then close. Sheet gone. |
 | Score | `symptom.score.{id}.{1-4}` | First-use: `hot_flash` 3, `sleep` 2, `joints` 1. Custom rows use the same id shape. |
-| Add | `symptom.custom.create` | Secondary pill below the custom names. The test taps it, types Brain fog into `symptom.custom.add`, and taps Save on the same `symptom.custom.create` id. The dialog title is New symptom. The field stays above the keyboard. |
+| Add | `symptom.custom.create` | Secondary pill below the custom names. Its label is New symptom (German: Neues Symptom). The test asserts that label, taps it, types Brain fog into `symptom.custom.add`, and taps Save on the same `symptom.custom.create` id. The dialog title is New symptom. The field stays above the keyboard. `symptom.score.vaginal_dryness.1` and the custom row’s `.1` share `minX`, and so do the `.4` buttons. Catalog `sheet-symptom-wrap-en` shows a 40-character custom name wrapping in the 108pt column. |
 | Custom name field | `symptom.custom.add` | In the dialog on top of the sheet, for a new name and for a rename. |
 | Custom name | `symptom.custom.name.{id}` | Underlined name on the row. The test taps it to open the same dialog, then types Fog. |
 | Rename save | `symptom.custom.save.{id}` | Primary pill in that dialog. The dialog title is Edit symptom. The chip then contains Fog. |

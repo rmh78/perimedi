@@ -142,12 +142,26 @@ struct WidgetProof {
             },
             "rows, Take, or Still to take today missing. buttons: \(home.buttonLabels)"
         )
+        shot("widget-medium-before-en")
         home.tapTaken(beside: longName)
+        XCTAssertTrue(
+            home.spin(1) { home.hasCheck },
+            "check was not visible within 1s of Take"
+        )
+        shot("widget-medium-after-en")
         XCTAssertTrue(
             home.spin(6) { home.hasCheck && home.hasStillToTake && home.hasMed("Progesterone") },
             "check beside the remaining row missing"
         )
-        XCTAssertTrue(home.spin(15) { !home.hasMed(longName) }, "taken long name still on the widget")
+        // The after-shot can leave SpringBoard's snapshot on the latched check.
+        // The long name still has to leave, and Progesterone has to stay, so a
+        // Home press onto another page cannot satisfy the wait.
+        home.rebind()
+        let longNameLeft = { !home.hasMed(longName) && home.hasMed("Progesterone") }
+        if !home.spin(25, longNameLeft) {
+            home.open()
+        }
+        XCTAssertTrue(home.spin(15, longNameLeft), "taken long name still on the widget")
 
         if robot.app.state != .runningForeground {
             robot.app.activate()
@@ -172,6 +186,10 @@ struct WidgetProof {
             "small widget did not show the remaining dose"
         )
         home.tapTaken(beside: longName)
+        XCTAssertTrue(
+            home.spin(1) { home.hasCheck },
+            "small face check was not visible within 1s of Take"
+        )
         XCTAssertTrue(
             home.spin(8) { home.hasCheck && !home.hasStillToTake },
             "small face did not show the check after Take"
@@ -200,6 +218,10 @@ struct WidgetProof {
         guard alert.waitForExistence(timeout: 2) else { return }
         alert.buttons.firstMatch.tap()
     }
+
+    private func shot(_ name: String, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertNoThrow(try ScreenCatalog.write(name), file: file, line: line)
+    }
 }
 
 final class HomeWidgets {
@@ -207,6 +229,10 @@ final class HomeWidgets {
 
     func open() {
         XCUIDevice.shared.press(.home)
+        rebind()
+    }
+
+    func rebind() {
         springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
     }
 

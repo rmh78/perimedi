@@ -322,31 +322,11 @@ struct PeriodSheet: View {
     }
 
     private func rangeLabel(_ period: Period) -> String {
-        guard let start = DateKeys.parseDateKey(period.startDate) else { return period.startDate }
-        let cal = DateKeys.calendar
-        func part(_ date: Date, _ template: String) -> String {
-            let f = DateFormatter()
-            f.locale = app.locale.language.locale
-            f.calendar = cal
-            f.setLocalizedDateFormatFromTemplate(template)
-            return f.string(from: date)
-        }
-        guard let end = period.endDate.flatMap(DateKeys.parseDateKey) else {
-            return "\(part(start, "d MMM yyyy")) → …"
-        }
-        let sameYear = cal.component(.year, from: start) == cal.component(.year, from: end)
-        let sameMonth = sameYear && cal.component(.month, from: start) == cal.component(.month, from: end)
-        if sameMonth {
-            if app.locale.language == .de {
-                let month = part(end, "MMMM yyyy")
-                return "\(cal.component(.day, from: start)).–\(cal.component(.day, from: end)). \(month)"
-            }
-            return "\(cal.component(.day, from: start))–\(cal.component(.day, from: end)) \(part(end, "MMM yyyy"))"
-        }
-        if sameYear {
-            return "\(part(start, "d MMM")) – \(part(end, "d MMM yyyy"))"
-        }
-        return "\(part(start, "d MMM yyyy")) – \(part(end, "d MMM yyyy"))"
+        VisitDateRange.periodHistory(
+            startKey: period.startDate,
+            endKey: period.endDate,
+            locale: app.locale.language.locale
+        )
     }
 
     private func formatted(_ key: String?) -> String? {
