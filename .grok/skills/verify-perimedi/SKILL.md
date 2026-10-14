@@ -22,7 +22,7 @@ Ready when stdout contains `launch: ready udid=`. The helper boots that UDID if 
 
 Teardown is `cleanup` on the same `--run-id`.
 
-`AppRobot.launch` takes a `JourneyLaunch`: `.pinnedRemindIn(seconds: 2)` (today `2026-03-15`), `.trendsChart`, `.trendsNoScores`, or `.widgetToday` (device date). Each is `-en -clear -uiTesting` plus `-today` and that case's one flag. Never `-journeyStep` or `-loadSample` on a journey. A second launch with the same case fails. `launchCatalog` is the only path that may pass `-loadSample`, and it writes English catalog names only. Frozen dates in `UITestDate`: today `2026-03-15`, yesterday `2026-03-14`, period `2026-03-07`–`2026-03-11`.
+`AppRobot.launch` takes a `JourneyLaunch`: `.pinnedRemindIn(seconds: 2)` (today `2026-03-15`), `.trendsChart`, `.trendsNoScores`, or `.widgetToday` (device date). Each is `-en -clear -uiTesting` plus `-today` and that case's one flag. Never `-journeyStep` or `-loadSample` on a journey. A second launch with the same case fails. `launchCatalog` is the only path that may pass `-loadSample`. It writes the sixteen English catalog names and may switch to German only to write `sheet-symptom-pill-de.png`. Frozen dates in `UITestDate`: today `2026-03-15`, yesterday `2026-03-14`, period `2026-03-07`–`2026-03-11`.
 
 ## Doctor
 
@@ -77,7 +77,7 @@ Named location: `.grok/skills/verify-perimedi/evidence/<run-id>/`
 
 Each `drive` writes a subdirectory named after the `--test` path (slashes become dashes), for example `…/evidence/<run-id>/PeriMediUITests-RequiredJourneyTests-testEnglishAppJourney/`. That slot holds `xcodebuild.log` (`TEST SUCCEEDED`), `summary.txt`, `test.txt`, `command.txt`, and `PeriMedi.xcresult`. Later drives on the same run-id must not delete earlier slots. `drives.txt` lists slot names in order. Exercise the real user path (`AppRobot` taps and `clearAndType`), not `-loadSample`, `-journeyStep`, or test-only setters. Journey tests never pass those flags.
 
-Main-screen PNGs for UX review are the fifteen English files in `ios/docs/screens/` (written by `ScreenCatalogTests` on a local `control-perimedi verify` unless `SCREEN_CATALOG=0`). Commit those after UI changes. UX reviews the Files changed image diff. Do not paste screenshot galleries into PR comments. `control-perimedi drive` does not rewrite that catalog. GitHub skips the catalog writer. It runs the English widget journey.
+Main-screen PNGs for UX review are the sixteen English files in `ios/docs/screens/`, plus `sheet-symptom-pill-de.png` and the two widget pictures in `expected.txt`. `ScreenCatalogTests` writes the English files and that one German pill on a local `control-perimedi verify` unless `SCREEN_CATALOG=0`. Commit those after UI changes. UX reviews the Files changed image diff. Do not paste screenshot galleries into PR comments. `control-perimedi drive` does not rewrite that catalog. GitHub skips the catalog writer. The English widget journey rewrites `widget-medium-before-en.png` and `widget-medium-after-en.png` on every run, including `drive` and GitHub.
 
 ## Cleanup
 

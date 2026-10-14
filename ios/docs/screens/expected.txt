@@ -14,3 +14,6 @@ sheet-med-en.png
 sheet-period-en.png
 sheet-symptom-en.png
 sheet-symptom-wrap-en.png
+sheet-symptom-pill-de.png
+widget-medium-before-en.png
+widget-medium-after-en.png
