@@ -27,6 +27,21 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && (github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')
         run: exit 1
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: One-way door
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch --no-tags origin "${{ github.base_ref }}"
+          out=$(python3 ios/scripts/check-one-way-door.py --base "origin/${{ github.base_ref }}")
+          printf '%s\n' "$out"
+          first=${out%%$'\n'*}
+          if [ "$first" = "one-way door: yes" ]; then
+            reason=${out#*$'\n'reason: }
+            reason=${reason//$'\n'/ }
+            reason=${reason//::/}
+            echo "::notice title=One-way door::${reason:0:400}"
+          fi
       - name: Every A11yID is named in the feature map
         run: python3 ios/scripts/check-feature-map.py
       - name: Feature map vs UITest coverage

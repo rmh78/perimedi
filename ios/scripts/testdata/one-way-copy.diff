@@ -1,0 +1,6 @@
+diff --git a/ios/PeriMedi/Persistence/SwiftDataModels.swift b/ios/PeriMedi/Persistence/SwiftDataModels.swift
+--- a/ios/PeriMedi/Persistence/SwiftDataModels.swift
++++ b/ios/PeriMedi/Persistence/SwiftDataModels.swift
+@@ -20,3 +20,3 @@
+-            name: name,
++            name: name, // copy

@@ -584,6 +584,7 @@ cmd_verify() {
     python3 "$ROOT/ios/scripts/check-openspec-sync.py"
     python3 "$ROOT/ios/scripts/check-ui-coverage.py" --fail-uncovered
     python3 "$ROOT/ios/scripts/check-screen-catalog.py"
+    python3 "$ROOT/ios/scripts/check-one-way-door.py" --base origin/main
   fi
 
   [[ "$(uname -s)" == "Darwin" ]] || fail "domain and UI tests need macOS with Xcode and an iPhone Simulator"
