@@ -33,6 +33,10 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           git fetch --no-tags origin "${{ github.base_ref }}"
+          echo 'sample model diff'
+          python3 ios/scripts/check-one-way-door.py --diff-file ios/scripts/testdata/one-way-model.diff
+          echo 'sample copy diff'
+          python3 ios/scripts/check-one-way-door.py --diff-file ios/scripts/testdata/one-way-copy.diff
           out=$(python3 ios/scripts/check-one-way-door.py --base "origin/${{ github.base_ref }}")
           printf '%s\n' "$out"
           first=${out%%$'\n'*}

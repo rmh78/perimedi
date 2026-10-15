@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Warn when a diff crosses a one-way door. Report mode exits 0."""
 
 from __future__ import annotations
 
@@ -43,6 +42,10 @@ _SIGNING = (
     "DEVELOPMENT_TEAM",
     "PROVISIONING_PROFILE",
 )
+_SIGNING_QUOTE_PATHS = {
+    "ios/docs/one-way-doors.md",
+    "ios/scripts/check-one-way-door.py",
+}
 
 
 @dataclass(frozen=True)
@@ -330,6 +333,8 @@ def widget_snapshot(diff: Diff) -> str | None:
 def entitlements_privacy_manifest_release_and_signing(diff: Diff) -> str | None:
     hits: list[str] = []
     for file in diff.files:
+        if file.path in _SIGNING_QUOTE_PATHS:
+            continue
         for kind, lines in (("added", file.added), ("removed", file.removed)):
             for line in lines:
                 for needle in _SIGNING:

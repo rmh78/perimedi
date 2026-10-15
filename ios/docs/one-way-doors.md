@@ -27,4 +27,4 @@ An added or removed line in any file is a door when it contains one of these str
 - `DEVELOPMENT_TEAM`
 - `PROVISIONING_PROFILE`
 
-`CODE_SIGN` also matches `CODE_SIGNING_ALLOWED`, because that name contains `CODE_SIGN`. Context lines do not count.
+`CODE_SIGN` also matches `CODE_SIGNING_ALLOWED`, because that name contains `CODE_SIGN`. Context lines do not count. The checker skips this file and `ios/scripts/check-one-way-door.py`, because both quote these strings.

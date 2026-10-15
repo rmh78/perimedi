@@ -104,7 +104,6 @@ python3 ios/scripts/check-ui-coverage.py --fail-uncovered
 # Screen catalog files exist (no pixel compare)
 python3 ios/scripts/check-screen-catalog.py
 
-# One-way door warning. Exits 0. Does not fail ids.
 python3 ios/scripts/check-one-way-door.py --base origin/main
 
 # ids job only. verify does not run this.
