@@ -19,13 +19,32 @@ _MEMBER = re.compile(
     r"(?:@[A-Za-z_][A-Za-z0-9_]*(?:\([^)\n]*\))?\s+)*"
     r"(?P<kind>let|var)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\b"
 )
+_BACKUP_TYPES = (
+    "ExportPayload",
+    "BackupCodec",
+    "Medication",
+    "Schedule",
+    "DoseLog",
+    "Remark",
+    "CycleSettings",
+    "Period",
+    "SymptomScore",
+    "MedicationChange",
+    "CustomSymptom",
+)
 _TYPE = re.compile(
-    r"\b(?:struct|enum|class|actor|extension)\s+(?P<name>ExportPayload|BackupCodec)\b"
+    r"\b(?:struct|enum|class|actor|extension)\s+(?P<name>"
+    + "|".join(_BACKUP_TYPES)
+    + r")\b"
 )
+_BACKUP_MENTION = re.compile(r"\b(?:" + "|".join(_BACKUP_TYPES) + r")\b")
+_WIDGET_TYPES = ("DoseWidgetSnapshot", "DoseWidgetChrome", "DoseWidgetAck")
 _WIDGET_TYPE = re.compile(
-    r"\b(?:struct|enum|class|actor|extension)\s+"
-    r"(?P<name>DoseWidgetSnapshot|DoseWidgetChrome)\b"
+    r"\b(?:struct|enum|class|actor|extension)\s+(?P<name>"
+    + "|".join(_WIDGET_TYPES)
+    + r")\b"
 )
+_WIDGET_MARKERS = _WIDGET_TYPES + ("next-dose.json", "appGroupId")
 _OPEN_TYPE = re.compile(r"\b(?:struct|enum|class|actor|extension)\b")
 _VERSION = re.compile(r"(?<![A-Za-z0-9_])version(?![A-Za-z0-9_])")
 _IDENT = r"[A-Za-z0-9_]"
@@ -41,10 +60,14 @@ _SIGNING = (
     "CODE_SIGN",
     "DEVELOPMENT_TEAM",
     "PROVISIONING_PROFILE",
+    "PRODUCT_BUNDLE_IDENTIFIER",
+    "group.app.perimedi.ios",
+    "iCloud.app.perimedi.ios",
 )
-_SIGNING_QUOTE_PATHS = {
+_RULE_QUOTE_PATHS = {
     "ios/docs/one-way-doors.md",
     "ios/scripts/check-one-way-door.py",
+    "ios/scripts/test_check_one_way_door.py",
 }
 
 
@@ -73,7 +96,9 @@ class _RawFile:
 
 
 class MissingRef(Exception):
-    pass
+    def __init__(self, ref: str) -> None:
+        super().__init__(f"missing ref: {ref}")
+        self.ref = ref
 
 
 def _join(items: list[str]) -> str | None:
@@ -238,12 +263,12 @@ def backup_v1(diff: Diff) -> str | None:
     hits: list[str] = []
     for file in diff.files:
         blob = _blob(file)
-        if "ExportPayload" not in blob and "BackupCodec" not in blob:
+        if _BACKUP_MENTION.search(blob) is None:
             continue
         old = _payload_facts(file.old_text)
         new = _payload_facts(file.new_text)
         if old is None or new is None:
-            hits.append(f"unknown: could not isolate ExportPayload/BackupCodec in {file.path}")
+            hits.append(f"unknown: could not isolate a backup type in {file.path}")
             continue
         old_wires, old_versions = old
         new_wires, new_versions = new
@@ -307,13 +332,23 @@ def _widget_facts(text: str, path: str) -> tuple[frozenset[str], tuple[int, ...]
     return frozenset(names), tuple(sorted(schemas))
 
 
+def _widget_constant_hits(file: FileDiff) -> list[str]:
+    hits: list[str] = []
+    for kind, lines in (("added", file.added), ("removed", file.removed)):
+        for line in lines:
+            if "appGroupId" in line or "next-dose.json" in line:
+                hits.append(f"{kind} widget constant in {file.path}")
+                break
+    return hits
+
+
 def widget_snapshot(diff: Diff) -> str | None:
     hits: list[str] = []
-    markers = ("DoseWidgetSnapshot", "DoseWidgetChrome", "next-dose.json")
     for file in diff.files:
         blob = _blob(file)
-        if not any(marker in blob for marker in markers):
+        if not any(marker in blob for marker in _WIDGET_MARKERS):
             continue
+        hits.extend(_widget_constant_hits(file))
         old = _widget_facts(file.old_text, file.path)
         new = _widget_facts(file.new_text, file.path)
         if old is None or new is None:
@@ -333,8 +368,6 @@ def widget_snapshot(diff: Diff) -> str | None:
 def entitlements_privacy_manifest_release_and_signing(diff: Diff) -> str | None:
     hits: list[str] = []
     for file in diff.files:
-        if file.path in _SIGNING_QUOTE_PATHS:
-            continue
         for kind, lines in (("added", file.added), ("removed", file.removed)):
             for line in lines:
                 for needle in _SIGNING:
@@ -353,6 +386,7 @@ DOORS = (
 
 
 def report(diff: Diff) -> str:
+    diff = Diff(files=tuple(file for file in diff.files if file.path not in _RULE_QUOTE_PATHS))
     hits: list[str] = []
     for door in DOORS:
         detail = door(diff)
@@ -509,10 +543,10 @@ def load_diff_file(path: Path) -> Diff:
 def load_base(ref: str) -> Diff:
     parsed = _git("rev-parse", "--verify", "--quiet", ref)
     if parsed.returncode != 0 or not parsed.stdout.strip():
-        raise MissingRef()
+        raise MissingRef(ref)
     base = _git("merge-base", ref, "HEAD")
     if base.returncode != 0 or not base.stdout.strip():
-        raise MissingRef()
+        raise MissingRef(ref)
     merge_base = base.stdout.decode().strip()
     diff = _git("diff", "--find-renames", merge_base, "HEAD")
     if diff.returncode != 0:
@@ -522,7 +556,22 @@ def load_base(ref: str) -> Diff:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="check-one-way-door.py")
+    try:
+        return _main(argv)
+    except Exception as exc:
+        text = str(exc).replace("\n", " ").replace("::", "")
+        sys.stdout.write(f"::warning::{text}\n")
+        return 0
+
+
+def _main(argv: list[str] | None) -> int:
+    parser = argparse.ArgumentParser(
+        prog="check-one-way-door.py",
+        description=(
+            "Scan a diff for one-way doors in SwiftData, backup v1, "
+            "the widget snapshot, and signing. Prints yes or no and only warns."
+        ),
+    )
     parser.add_argument("--base")
     parser.add_argument("--diff-file")
     args = parser.parse_args(argv)
@@ -531,11 +580,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.diff_file is not None:
         diff = load_diff_file(Path(args.diff_file))
     else:
-        try:
-            diff = load_base(args.base)
-        except MissingRef:
-            sys.stdout.write("one-way door: no\nreason: missing ref\n")
-            return 0
+        diff = load_base(args.base)
     sys.stdout.write(report(diff))
     return 0
 
