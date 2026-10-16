@@ -69,7 +69,7 @@ Do not submit "look, it opens." Proof is a production user path plus an observab
 - A proof that drives one convenient entry point is incomplete when the map lists others.
 - For a broad regression, walk `features/README.md` top to bottom (Full sweep). Driving one feature is not a sweep.
 
-PR-wide UI proof is `verify: ok` from `.grok/skills/verify-perimedi/scripts/control-perimedi verify` (or CI job `ui`). Domain `swift test --package-path ios` alone is not UI proof.
+PR-wide UI proof is `verify: ok` from `.grok/skills/verify-perimedi/scripts/control-perimedi verify` (or CI job `ui`). Domain `swift test --package-path ios` alone is not UI proof. The same `verify` command runs `ios/scripts/check-one-way-door.py --base origin/main`. That check warns and exits 0. `doctor` does not run it.
 
 ## Evidence
 

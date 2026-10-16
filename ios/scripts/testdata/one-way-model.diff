@@ -1,0 +1,11 @@
+diff --git a/ios/Fixtures/NotInTheDoorTable.swift b/ios/Fixtures/NotInTheDoorTable.swift
+new file mode 100644
+--- /dev/null
++++ b/ios/Fixtures/NotInTheDoorTable.swift
+@@ -0,0 +1,6 @@
++import SwiftData
++
++@Model
++final class SDExtra {
++    var nickname: String = ""
++}
