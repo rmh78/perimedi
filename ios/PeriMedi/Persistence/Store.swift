@@ -38,12 +38,14 @@ final class Store: ObservableObject {
     var medicationChanges: [MedicationChange] { snapshot.medicationChanges }
 
     private let context: ModelContext
+    private let foldDefaults: UserDefaults
     private var afterChangeHandlers: [() -> Void] = []
     private var observerTokens: [NSObjectProtocol] = []
     private var remoteRefreshTask: Task<Void, Never>?
 
-    init(container: ModelContainer) {
+    init(container: ModelContainer, foldDefaults: UserDefaults = .standard) {
         self.context = container.mainContext
+        self.foldDefaults = foldDefaults
         refresh()
         ensureSettings()
         startObservingRemoteChanges()
@@ -101,7 +103,12 @@ final class Store: ObservableObject {
         let scoreModels = try fetchAll(SDSymptomScore.self)
         let rows = customModels.compactMap { $0.toDomain() }
         let stored = scoreModels.map { $0.toDomain() }
-        let plan = SymptomDirectory.synced(rows: rows, scores: stored)
+        let memory = SymptomFoldDefaults.load(foldDefaults)
+        let plan = SymptomDirectory.synced(rows: rows, scores: stored, memory: memory)
+        let grown = memory.remembering(plan.scoreIdRewrites)
+        if grown != memory {
+            SymptomFoldDefaults.save(grown, foldDefaults)
+        }
         let drop = Set(plan.droppedIds.map(\.rawValue))
         let inputIds = Set(rows.map(\.id.rawValue))
         var changed = false
@@ -111,7 +118,7 @@ final class Store: ObservableObject {
         }
         var groups: [String: [SDSymptomScore]] = [:]
         for model in scoreModels {
-            guard participates(model.symptomId, inputIds: inputIds) else { continue }
+            guard participates(model.symptomId, inputIds: inputIds, rewrites: plan.scoreIdRewrites) else { continue }
             let mapped = rewritten(model.symptomId, plan: plan)
             groups["\(model.date)#\(mapped)", default: []].append(model)
         }
@@ -136,9 +143,14 @@ final class Store: ObservableObject {
         }
     }
 
-    private func participates(_ symptomId: String, inputIds: Set<String>) -> Bool {
-        guard CustomSymptomId(rawValue: symptomId) != nil else { return true }
-        return inputIds.contains(symptomId)
+    private func participates(
+        _ symptomId: String,
+        inputIds: Set<String>,
+        rewrites: [CustomSymptomId: CustomSymptomId]
+    ) -> Bool {
+        guard let custom = CustomSymptomId(rawValue: symptomId) else { return true }
+        if inputIds.contains(symptomId) { return true }
+        return rewrites[custom] != nil
     }
 
     private func rewritten(_ symptomId: String, plan: SymptomSync) -> String {
@@ -570,5 +582,25 @@ final class Store: ObservableObject {
             row.apply(.default)
             context.insert(row)
         }
+    }
+}
+
+private enum SymptomFoldDefaults {
+    static let key = "perimedi.rememberedScoreRewrites"
+
+    static func load(_ defaults: UserDefaults = .standard) -> RememberedScoreRewrites {
+        guard let raw = defaults.object(forKey: key) else { return .none }
+        guard let dictionary = raw as? [String: Any] else { return .none }
+        var wire: [String: String] = [:]
+        wire.reserveCapacity(dictionary.count)
+        for (key, value) in dictionary {
+            guard let value = value as? String else { return .none }
+            wire[key] = value
+        }
+        return RememberedScoreRewrites(wire: wire)
+    }
+
+    static func save(_ memory: RememberedScoreRewrites, _ defaults: UserDefaults = .standard) {
+        defaults.set(memory.wire, forKey: key)
     }
 }

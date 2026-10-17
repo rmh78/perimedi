@@ -68,7 +68,7 @@ The system SHALL keep version-1 JSON export and import working. Older backups th
 - **THEN** medications, periods, remarks, and other payload fields restore and symptom scores are empty
 
 ### Requirement: Synced custom symptoms stay one list
-When custom symptom rows are combined, the system SHALL keep one row for each name compared without regard to case. The kept row SHALL be the earlier order, and the lower id when the order is the same. Scores that used a removed row's id SHALL remain on the kept id. A calendar day SHALL keep one score for that id: the later logged time, then the higher severity, then the higher episode count (a missing count loses), then the note that sorts later (a missing note loses), then the lower original id. The system SHALL NOT remove a custom symptom with a distinct name because the list is past eight. A score whose id is a custom symptom id that is not in the combined list SHALL NOT mark a symptom day on Cycle or Month and SHALL NOT appear in an export. An export of the combined rows SHALL contain the same custom symptoms and the same scores that an import of that export would keep.
+When custom symptom rows are combined, the system SHALL keep one row for each name compared without regard to case. The kept row SHALL be the earlier order, and the lower id when the order is the same. Scores that used a removed row's id SHALL remain on the kept id. A score that arrives after a duplicate this device combined was removed SHALL stay on the kept symptom while that symptom remains, SHALL mark that day on Cycle and Month, and SHALL appear in an export on the kept id. This device stores that pair under the key perimedi.rememberedScoreRewrites. A device that never combined the pair SHALL leave the score hidden, SHALL NOT mark the day, and SHALL omit the score from the export. When a kept id later loses to another row this device combines, a score for the earlier removed id SHALL stay on the symptom that remains. When that kept symptom is also gone, the score SHALL NOT mark the day and SHALL be absent from the export. A calendar day SHALL keep one score for that id: the later logged time, then the higher severity, then the higher episode count (a missing count loses), then the note that sorts later (a missing note loses), then the lower original id. The system SHALL NOT remove a custom symptom with a distinct name because the list is past eight. A score whose custom id was never a removed duplicate and is not in the combined list SHALL NOT mark a symptom day on Cycle or Month and SHALL NOT appear in an export. An export of the combined rows SHALL contain the same custom symptoms and the same scores that an import of that export would keep.
 
 #### Scenario: Two devices add the same name
 - **WHEN** combined rows include Fog with a score on 15 March and fog with a score on 16 March
@@ -90,8 +90,24 @@ When custom symptom rows are combined, the system SHALL keep one row for each na
 - **WHEN** those scores also share a note and the original ids differ
 - **THEN** the lower original id supplies the kept score
 
+#### Scenario: Late score for a duplicate this device combined
+- **WHEN** a duplicate this device combined is already gone and a score arrives for that removed id while the kept symptom remains
+- **THEN** the score stays on the kept symptom, Cycle and Month mark the day, and the export includes it
+
+#### Scenario: Late score on a device that never combined the pair
+- **WHEN** a score arrives for a removed duplicate id and this device never combined that pair
+- **THEN** the score stays hidden, Cycle and Month do not mark the day, and the export omits it
+
+#### Scenario: Late score after the kept symptom is gone
+- **WHEN** this device combined the duplicate, the kept symptom is also gone, and a score arrives for the removed id
+- **THEN** that score does not mark the day and is absent from the export
+
+#### Scenario: Late score follows a winner that later loses
+- **WHEN** this device combined a duplicate into a kept symptom and later combined that symptom into an earlier row of the same name, and a score arrives for the first removed id while the earlier row remains
+- **THEN** the score stays on that earlier row
+
 #### Scenario: Score for a missing custom symptom
-- **WHEN** a score's custom id is not in the combined custom symptom list
+- **WHEN** a score uses a custom id that was never a removed duplicate and is not in the combined custom symptom list
 - **THEN** that score does not mark the day on Cycle or Month and is absent from the export
 
 #### Scenario: Import of that export
