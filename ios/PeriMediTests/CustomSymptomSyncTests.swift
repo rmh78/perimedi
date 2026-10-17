@@ -107,6 +107,88 @@ final class CustomSymptomSyncTests: XCTestCase {
         XCTAssertNil(store.lastError)
     }
 
+    func testLateScoreForDeletedDuplicateLandsOnKeptSymptom() throws {
+        let container = try ModelContainer(
+            for: PersistenceController.schema,
+            configurations: [
+                ModelConfiguration(
+                    "late-score",
+                    schema: PersistenceController.schema,
+                    isStoredInMemoryOnly: true,
+                    cloudKitDatabase: .none
+                ),
+            ]
+        )
+        let context = container.mainContext
+        for symptom in [
+            CustomSymptom(id: fog, name: "Fog", sort: 0),
+            CustomSymptom(id: later, name: " FOG ", sort: 1),
+        ] {
+            let row = SDCustomSymptom()
+            row.apply(symptom)
+            context.insert(row)
+        }
+        let store = Store(container: container)
+        XCTAssertEqual(store.customSymptoms, [CustomSymptom(id: fog, name: "Fog", sort: 0)])
+
+        let late = SymptomScore(
+            id: later.rawValue,
+            date: "2026-03-17",
+            severity: 4,
+            loggedAt: "2026-03-17T09:00:00Z"
+        )
+        let row = SDSymptomScore()
+        row.apply(late)
+        context.insert(row)
+        store.refresh()
+
+        let kept = SymptomScore(
+            id: fog.rawValue,
+            date: "2026-03-17",
+            severity: 4,
+            loggedAt: "2026-03-17T09:00:00Z"
+        )
+        XCTAssertEqual(store.symptomScores, [kept])
+        XCTAssertFalse(store.symptomScores.contains { $0.id == later.rawValue })
+
+        let directory = store.symptomDirectory
+        let cycle = CycleSnapshot.build(
+            selectedDate: "2026-03-15",
+            today: "2026-03-15",
+            medications: [],
+            schedules: [],
+            doseLogs: [],
+            remarks: [],
+            symptomScores: store.symptomScores,
+            directory: directory,
+            periods: [],
+            settings: store.settings
+        )
+        XCTAssertEqual(marked(cycle.strip, "2026-03-17"), true)
+
+        let month = MonthGridModel.build(
+            monthAnchor: DateKeys.parseDateKey("2026-03-15")!,
+            selectedDate: "2026-03-15",
+            today: "2026-03-15",
+            medications: [],
+            schedules: [],
+            doseLogs: [],
+            remarks: [],
+            symptomScores: store.symptomScores,
+            directory: directory,
+            periods: [],
+            settings: store.settings
+        )
+        let lateDay = monthCell(month, "2026-03-17")
+        XCTAssertEqual(lateDay?.hasSymptom, true)
+        XCTAssertFalse(lateDay?.scoreSummary.isEmpty ?? true)
+
+        let payload = store.exportPayload()
+        XCTAssertEqual(payload.customSymptoms, [CustomSymptom(id: fog, name: "Fog", sort: 0)])
+        XCTAssertEqual(payload.symptomScores, [kept])
+        XCTAssertNil(store.lastError)
+    }
+
     private func marked(_ strip: [StripDay], _ key: String) -> Bool? {
         strip.first { $0.dateKey == key }?.hasSymptom
     }
