@@ -17,6 +17,10 @@ The system SHALL allow the user to export all app data as a JSON file and import
 - **WHEN** the user exports after two custom symptoms with the same name, ignoring case, were combined, and a score remains whose custom id is not in that list
 - **THEN** the file contains one of those symptoms, the scores kept for it, and not the unknown custom score, and importing that file yields those same custom symptoms and scores
 
+#### Scenario: Export includes a late score for a removed duplicate
+- **WHEN** a duplicate custom symptom was already removed, the kept symptom remains, and a score then arrives for the removed id
+- **THEN** the export includes that score on the kept symptom
+
 #### Scenario: Import
 - **WHEN** the user imports a valid backup file
 - **THEN** local data is replaced with the imported payload

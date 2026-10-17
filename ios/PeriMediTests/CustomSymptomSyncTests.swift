@@ -5,9 +5,16 @@ import PeriMediDomain
 
 @MainActor
 final class CustomSymptomSyncTests: XCTestCase {
+    private nonisolated static let foldSuiteName = "perimedi.late-score"
+
     private let fog = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-000000000001")!
     private let later = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-000000000002")!
     private let orphan = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-000000000099")!
+
+    override func tearDown() {
+        UserDefaults(suiteName: Self.foldSuiteName)?.removePersistentDomain(forName: Self.foldSuiteName)
+        super.tearDown()
+    }
 
     func testCycleAndMonthLeaveOrphanScoreUnmarked() {
         let directory = SymptomDirectory.restored([
@@ -128,7 +135,9 @@ final class CustomSymptomSyncTests: XCTestCase {
             row.apply(symptom)
             context.insert(row)
         }
-        let store = Store(container: container)
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: Self.foldSuiteName))
+        defaults.removePersistentDomain(forName: Self.foldSuiteName)
+        let store = Store(container: container, foldDefaults: defaults)
         XCTAssertEqual(store.customSymptoms, [CustomSymptom(id: fog, name: "Fog", sort: 0)])
 
         let late = SymptomScore(

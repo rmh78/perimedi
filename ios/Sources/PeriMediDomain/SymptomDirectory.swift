@@ -51,6 +51,52 @@ public struct SymptomSync: Equatable, Sendable {
     }
 }
 
+public struct RememberedScoreRewrites: Equatable, Sendable {
+    public static let none = RememberedScoreRewrites(pairs: [:])
+
+    var pairs: [CustomSymptomId: CustomSymptomId]
+
+    init(pairs: [CustomSymptomId: CustomSymptomId]) {
+        self.pairs = pairs
+    }
+
+    public init(wire: [String: String]) {
+        var pairs: [CustomSymptomId: CustomSymptomId] = [:]
+        for (key, value) in wire {
+            guard
+                let loser = CustomSymptomId(rawValue: key),
+                let winner = CustomSymptomId(rawValue: value),
+                loser != winner
+            else { continue }
+            pairs[loser] = winner
+        }
+        self.pairs = pairs
+    }
+
+    public var wire: [String: String] {
+        var encoded: [String: String] = [:]
+        encoded.reserveCapacity(pairs.count)
+        for (loser, winner) in pairs {
+            encoded[loser.rawValue] = winner.rawValue
+        }
+        return encoded
+    }
+
+    public func remembering(
+        _ scoreIdRewrites: [CustomSymptomId: CustomSymptomId]
+    ) -> RememberedScoreRewrites {
+        var next = pairs
+        for (loser, winner) in scoreIdRewrites where loser != winner {
+            next[loser] = winner
+        }
+        return RememberedScoreRewrites(pairs: next)
+    }
+
+    public static func == (lhs: RememberedScoreRewrites, rhs: RememberedScoreRewrites) -> Bool {
+        lhs.pairs == rhs.pairs
+    }
+}
+
 public enum SymptomEditError: Error, Equatable, Sendable {
     case blankName
     case nameTooLong
@@ -196,7 +242,11 @@ public struct SymptomDirectory: Equatable, Sendable {
         rankedIds.firstIndex(of: storageId)
     }
 
-    public static func synced(rows: [CustomSymptom], scores: [SymptomScore]) -> SymptomSync {
+    public static func synced(
+        rows: [CustomSymptom],
+        scores: [SymptomScore],
+        memory: RememberedScoreRewrites = .none
+    ) -> SymptomSync {
         let cleaned = deduped(rows)
         let customs = folded(cleaned)
         let directory = SymptomDirectory(customs: customs)
@@ -204,12 +254,13 @@ public struct SymptomDirectory: Equatable, Sendable {
         for symptom in customs {
             winnerByFold[fold(symptom.name)] = symptom.id
         }
-        var rewrites: [CustomSymptomId: CustomSymptomId] = [:]
+        var fresh: [CustomSymptomId: CustomSymptomId] = [:]
         for symptom in cleaned {
             guard let winner = winnerByFold[fold(symptom.name)], winner != symptom.id else { continue }
-            rewrites[symptom.id] = winner
+            fresh[symptom.id] = winner
         }
         let kept = Set(customs.map(\.id))
+        let rewrites = merging(fresh: fresh, memory: memory, kept: kept)
         var best: [String: RankedScore] = [:]
         for score in scores {
             guard let mapped = map(score, rewrites: rewrites, kept: kept) else { continue }
@@ -232,6 +283,22 @@ public struct SymptomDirectory: Equatable, Sendable {
             droppedIds: dropped,
             scoreIdRewrites: rewrites
         )
+    }
+
+    private static func merging(
+        fresh: [CustomSymptomId: CustomSymptomId],
+        memory: RememberedScoreRewrites,
+        kept: Set<CustomSymptomId>
+    ) -> [CustomSymptomId: CustomSymptomId] {
+        var rewrites = fresh
+        for (loser, winner) in memory.pairs {
+            if rewrites[loser] != nil { continue }
+            if loser == winner { continue }
+            if !kept.contains(winner) { continue }
+            if kept.contains(loser) { continue }
+            rewrites[loser] = winner
+        }
+        return rewrites
     }
 
     private static func map(
