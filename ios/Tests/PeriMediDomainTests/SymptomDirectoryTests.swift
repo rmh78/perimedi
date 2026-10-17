@@ -436,7 +436,7 @@ final class SymptomDirectoryTests: XCTestCase {
         XCTAssertEqual(memory.remembering(plan.scoreIdRewrites).wire, memory.wire)
     }
 
-    func testRememberedPairDoesNotHopPastAMissingWinner() {
+    func testRememberedChainRepointsALateScoreOntoTheFinalSymptom() {
         let later = ache
         let older = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-000000000003")!
         let memory = RememberedScoreRewrites.none
@@ -452,9 +452,12 @@ final class SymptomDirectoryTests: XCTestCase {
         )
         XCTAssertEqual(
             plan.scores,
-            [SymptomScore(id: older.rawValue, date: "2026-03-18", severity: 2, loggedAt: "2026-03-18T09:00:00Z")]
+            [
+                SymptomScore(id: older.rawValue, date: "2026-03-17", severity: 4, loggedAt: "2026-03-17T09:00:00Z"),
+                SymptomScore(id: older.rawValue, date: "2026-03-18", severity: 2, loggedAt: "2026-03-18T09:00:00Z"),
+            ]
         )
-        XCTAssertEqual(plan.scoreIdRewrites, [fog: older])
+        XCTAssertEqual(plan.scoreIdRewrites, [later: older, fog: older])
     }
 
     func testRememberedPairPrefersLowerOriginalId() {

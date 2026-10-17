@@ -11,8 +11,16 @@ final class CustomSymptomSyncTests: XCTestCase {
     private let later = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-000000000002")!
     private let orphan = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-000000000099")!
 
+    private nonisolated static let extraSuites = [
+        "perimedi.late-score-stable",
+        "perimedi.late-score-survive",
+        "perimedi.late-score-malformed",
+    ]
+
     override func tearDown() {
-        UserDefaults(suiteName: Self.foldSuiteName)?.removePersistentDomain(forName: Self.foldSuiteName)
+        for name in [Self.foldSuiteName] + Self.extraSuites {
+            UserDefaults(suiteName: name)?.removePersistentDomain(forName: name)
+        }
         super.tearDown()
     }
 
@@ -196,6 +204,116 @@ final class CustomSymptomSyncTests: XCTestCase {
         XCTAssertEqual(payload.customSymptoms, [CustomSymptom(id: fog, name: "Fog", sort: 0)])
         XCTAssertEqual(payload.symptomScores, [kept])
         XCTAssertNil(store.lastError)
+    }
+
+    func testSecondRefreshKeepsTheRetargetedScore() throws {
+        let harness = try foldedPair(name: "late-score-stable", suite: "perimedi.late-score-stable")
+        let kept = insertLateScore(harness.container)
+        harness.store.refresh()
+        XCTAssertEqual(harness.store.symptomScores, [kept])
+        harness.store.refresh()
+        XCTAssertEqual(harness.store.symptomScores, [kept])
+        XCTAssertEqual(harness.store.customSymptoms, [CustomSymptom(id: fog, name: "Fog", sort: 0)])
+        XCTAssertEqual(harness.store.exportPayload().symptomScores, [kept])
+        XCTAssertNil(harness.store.lastError)
+    }
+
+    func testRememberedPairsSurviveANewStore() throws {
+        let harness = try foldedPair(name: "late-score-survive", suite: "perimedi.late-score-survive")
+        XCTAssertEqual(harness.store.customSymptoms, [CustomSymptom(id: fog, name: "Fog", sort: 0)])
+        let second = Store(container: harness.container, foldDefaults: harness.defaults)
+        let kept = insertLateScore(harness.container)
+        second.refresh()
+        XCTAssertEqual(second.symptomScores, [kept])
+        XCTAssertEqual(second.exportPayload().symptomScores, [kept])
+        XCTAssertNil(second.lastError)
+    }
+
+    func testMalformedRememberedPairsFallBackToNone() throws {
+        let container = try inMemoryContainer(name: "late-score-malformed")
+        let context = container.mainContext
+        let symptom = SDCustomSymptom()
+        symptom.apply(CustomSymptom(id: fog, name: "Fog", sort: 0))
+        context.insert(symptom)
+        let kept = SymptomScore(
+            id: fog.rawValue,
+            date: "2026-03-15",
+            severity: 2,
+            loggedAt: "2026-03-15T08:00:00Z"
+        )
+        let late = SymptomScore(
+            id: later.rawValue,
+            date: "2026-03-17",
+            severity: 4,
+            loggedAt: "2026-03-17T09:00:00Z"
+        )
+        for score in [kept, late] {
+            let row = SDSymptomScore()
+            row.apply(score)
+            context.insert(row)
+        }
+        let suite = "perimedi.late-score-malformed"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defaults.removePersistentDomain(forName: suite)
+        defaults.set(
+            [later.rawValue: fog.rawValue, "c.00000000-0000-0000-0000-000000000003": 1] as [String: Any],
+            forKey: "perimedi.rememberedScoreRewrites"
+        )
+        let store = Store(container: container, foldDefaults: defaults)
+        XCTAssertEqual(store.symptomScores, [kept])
+        XCTAssertNil(store.lastError)
+    }
+
+    private func foldedPair(
+        name: String,
+        suite: String
+    ) throws -> (container: ModelContainer, store: Store, defaults: UserDefaults) {
+        let container = try inMemoryContainer(name: name)
+        let context = container.mainContext
+        for symptom in [
+            CustomSymptom(id: fog, name: "Fog", sort: 0),
+            CustomSymptom(id: later, name: " FOG ", sort: 1),
+        ] {
+            let row = SDCustomSymptom()
+            row.apply(symptom)
+            context.insert(row)
+        }
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defaults.removePersistentDomain(forName: suite)
+        let store = Store(container: container, foldDefaults: defaults)
+        return (container, store, defaults)
+    }
+
+    private func inMemoryContainer(name: String) throws -> ModelContainer {
+        try ModelContainer(
+            for: PersistenceController.schema,
+            configurations: [
+                ModelConfiguration(
+                    name,
+                    schema: PersistenceController.schema,
+                    isStoredInMemoryOnly: true,
+                    cloudKitDatabase: .none
+                ),
+            ]
+        )
+    }
+
+    private func insertLateScore(_ container: ModelContainer) -> SymptomScore {
+        let late = SymptomScore(
+            id: later.rawValue,
+            date: "2026-03-17",
+            severity: 4,
+            loggedAt: "2026-03-17T09:00:00Z"
+        )
+        let row = SDSymptomScore()
+        row.apply(late)
+        container.mainContext.insert(row)
+        return SymptomScore(
+            id: fog.rawValue,
+            date: "2026-03-17",
+            severity: 4,
+            loggedAt: "2026-03-17T09:00:00Z"
+        )
     }
 
     private func marked(_ strip: [StripDay], _ key: String) -> Bool? {

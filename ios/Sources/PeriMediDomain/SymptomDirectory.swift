@@ -298,6 +298,11 @@ public struct SymptomDirectory: Equatable, Sendable {
             if kept.contains(loser) { continue }
             rewrites[loser] = winner
         }
+        for (loser, winner) in memory.pairs {
+            guard rewrites[loser] == nil, !kept.contains(loser) else { continue }
+            guard let via = rewrites[winner], via != loser, kept.contains(via) else { continue }
+            rewrites[loser] = via
+        }
         return rewrites
     }
 
