@@ -370,7 +370,7 @@ final class SymptomDirectoryTests: XCTestCase {
             [SymptomScore(id: fog.rawValue, date: "2026-03-17", severity: 4, loggedAt: "2026-03-17T09:00:00Z")]
         )
         XCTAssertEqual(plan.droppedIds, [])
-        XCTAssertEqual(plan.scoreIdRewrites, [later: fog])
+        XCTAssertEqual(plan.memory, memory)
     }
 
     func testUnknownIdWithEmptyMemoryStaysOutOfScores() {
@@ -385,7 +385,7 @@ final class SymptomDirectoryTests: XCTestCase {
             plan.scores,
             [SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 2, loggedAt: "2026-03-15T08:00:00Z")]
         )
-        XCTAssertEqual(plan.scoreIdRewrites, [:])
+        XCTAssertEqual(plan.memory, .none)
     }
 
     func testPairWhoseWinnerIsAbsentStaysOutOfScores() {
@@ -405,9 +405,8 @@ final class SymptomDirectoryTests: XCTestCase {
         let memory = RememberedScoreRewrites.none.remembering([later: fog])
         let plan = SymptomDirectory.synced(rows: [], scores: [late, catalog], memory: memory)
         XCTAssertEqual(plan.scores, [catalog])
-        XCTAssertEqual(plan.scoreIdRewrites, [:])
         XCTAssertEqual(memory.wire, [later.rawValue: fog.rawValue])
-        XCTAssertEqual(memory.remembering(plan.scoreIdRewrites).wire, memory.wire)
+        XCTAssertEqual(plan.memory, memory)
     }
 
     func testRememberingEmptyMapKeepsDormantPair() {
@@ -432,8 +431,7 @@ final class SymptomDirectoryTests: XCTestCase {
             plan.scores,
             [SymptomScore(id: ache.rawValue, date: "2026-03-17", severity: 4, loggedAt: "2026-03-17T09:00:00Z")]
         )
-        XCTAssertEqual(plan.scoreIdRewrites, [:])
-        XCTAssertEqual(memory.remembering(plan.scoreIdRewrites).wire, memory.wire)
+        XCTAssertEqual(plan.memory, memory)
     }
 
     func testRememberedChainRepointsALateScoreOntoTheFinalSymptom() {
@@ -457,7 +455,125 @@ final class SymptomDirectoryTests: XCTestCase {
                 SymptomScore(id: older.rawValue, date: "2026-03-18", severity: 2, loggedAt: "2026-03-18T09:00:00Z"),
             ]
         )
-        XCTAssertEqual(plan.scoreIdRewrites, [later: older, fog: older])
+        XCTAssertEqual(plan.memory, memory)
+    }
+
+    func testThreeHopChainResolvesOnFirstSyncedForEveryInsertionOrder() {
+        let a = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-00000000000a")!
+        let b = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-00000000000b")!
+        let c = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-00000000000c")!
+        let d = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-00000000000d")!
+        let late = SymptomScore(
+            id: a.rawValue, date: "2026-03-17", severity: 4, loggedAt: "2026-03-17T09:00:00Z"
+        )
+        let onFinal = SymptomScore(
+            id: d.rawValue, date: "2026-03-17", severity: 4, loggedAt: "2026-03-17T09:00:00Z"
+        )
+        let flat = RememberedScoreRewrites(wire: [
+            a.rawValue: d.rawValue,
+            b.rawValue: d.rawValue,
+            c.rawValue: d.rawValue,
+        ])
+        let edges = [(a, b), (b, c), (c, d)]
+        for order in orders(of: edges) {
+            var memory = RememberedScoreRewrites.none
+            for edge in order {
+                memory = memory.remembering([edge.0: edge.1])
+            }
+            XCTAssertEqual(memory, flat)
+            let plan = SymptomDirectory.synced(
+                rows: [CustomSymptom(id: d, name: "Fog", sort: 0)],
+                scores: [late],
+                memory: memory
+            )
+            XCTAssertEqual(plan.scores, [onFinal])
+            XCTAssertEqual(plan.memory, flat)
+        }
+        let stored = RememberedScoreRewrites(wire: [
+            a.rawValue: b.rawValue,
+            b.rawValue: c.rawValue,
+            c.rawValue: d.rawValue,
+        ])
+        let fromDisk = SymptomDirectory.synced(
+            rows: [CustomSymptom(id: d, name: "Fog", sort: 0)],
+            scores: [late],
+            memory: stored
+        )
+        XCTAssertEqual(fromDisk.scores, [onFinal])
+        XCTAssertEqual(fromDisk.memory, flat)
+    }
+
+    func testKeeperIsLowestRecordIdAndWritesPreferWinner() {
+        let blank = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-000000000099")!
+        let unknown = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-000000000088")!
+        let low = ScoreRecordId(rawValue: "a")
+        let high = ScoreRecordId(rawValue: "b")
+        let omitted = ScoreRecordId(rawValue: "z")
+        let tied = "2026-03-15T08:00:00Z"
+        let winner = SymptomScore(
+            id: fog.rawValue, date: "2026-03-15", severity: 4, loggedAt: tied
+        )
+        let plan = SymptomDirectory.synced(
+            rows: [
+                CustomSymptom(id: fog, name: "Fog", sort: 0),
+                CustomSymptom(id: ache, name: "fog", sort: 1),
+                CustomSymptom(id: blank, name: "   ", sort: 9),
+            ],
+            records: [
+                ScoredRecord(
+                    id: high,
+                    score: SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 4, loggedAt: tied)
+                ),
+                ScoredRecord(
+                    id: low,
+                    score: SymptomScore(id: ache.rawValue, date: "2026-03-15", severity: 2, loggedAt: tied)
+                ),
+                ScoredRecord(
+                    id: omitted,
+                    score: SymptomScore(id: unknown.rawValue, date: "2026-03-17", severity: 4, loggedAt: tied)
+                ),
+            ]
+        )
+        XCTAssertEqual(plan.scores, [winner])
+        XCTAssertEqual(plan.droppedIds, [ache])
+        XCTAssertEqual(
+            plan.instructions,
+            [
+                .deleteCustom(ache),
+                .keep(ScoreKeep(recordId: low, score: winner)),
+                .deleteScore(high),
+            ]
+        )
+        XCTAssertEqual(plan.memory, RememberedScoreRewrites.none.remembering([ache: fog]))
+    }
+
+    func testRememberedEdgeStopsAtTheKeptSymptom() {
+        let gone = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-00000000000b")!
+        let still = ache
+        let other = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-00000000000d")!
+        let memory = RememberedScoreRewrites(wire: [
+            gone.rawValue: still.rawValue,
+            still.rawValue: other.rawValue,
+        ])
+        let plan = SymptomDirectory.synced(
+            rows: [
+                CustomSymptom(id: still, name: "Ache", sort: 0),
+                CustomSymptom(id: other, name: "Other", sort: 1),
+            ],
+            scores: [
+                SymptomScore(
+                    id: gone.rawValue, date: "2026-03-17", severity: 4, loggedAt: "2026-03-17T09:00:00Z"
+                ),
+            ],
+            memory: memory
+        )
+        XCTAssertEqual(
+            plan.scores,
+            [SymptomScore(
+                id: still.rawValue, date: "2026-03-17", severity: 4, loggedAt: "2026-03-17T09:00:00Z"
+            )]
+        )
+        XCTAssertEqual(plan.memory, memory)
     }
 
     func testRememberedPairPrefersLowerOriginalId() {

@@ -15,6 +15,8 @@ final class CustomSymptomSyncTests: XCTestCase {
         "perimedi.late-score-stable",
         "perimedi.late-score-survive",
         "perimedi.late-score-malformed",
+        "perimedi.export-fold",
+        "perimedi.refresh-keep",
     ]
 
     override func tearDown() {
@@ -80,10 +82,7 @@ final class CustomSymptomSyncTests: XCTestCase {
     }
 
     func testExportPayloadFoldsNamesAndOmitsOrphan() throws {
-        let container = try ModelContainer(
-            for: PersistenceController.schema,
-            configurations: [ModelConfiguration(schema: PersistenceController.schema, isStoredInMemoryOnly: true)]
-        )
+        let container = try inMemoryContainer(name: "export-fold")
         let context = container.mainContext
         for symptom in [
             CustomSymptom(id: fog, name: "Fog", sort: 0),
@@ -104,7 +103,10 @@ final class CustomSymptomSyncTests: XCTestCase {
             context.insert(row)
         }
 
-        let store = Store(container: container)
+        let suite = "perimedi.export-fold"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defaults.removePersistentDomain(forName: suite)
+        let store = Store(container: container, foldDefaults: defaults)
         let payload = store.exportPayload()
 
         XCTAssertEqual(
@@ -227,6 +229,75 @@ final class CustomSymptomSyncTests: XCTestCase {
         XCTAssertEqual(second.symptomScores, [kept])
         XCTAssertEqual(second.exportPayload().symptomScores, [kept])
         XCTAssertNil(second.lastError)
+    }
+
+    func testRefreshKeepsLowestRecordAndLeavesOmittedRows() throws {
+        let suite = "perimedi.refresh-keep"
+        let blank = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-000000000099")!
+        let unknown = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-000000000088")!
+        let container = try inMemoryContainer(name: "refresh-keep")
+        let context = container.mainContext
+        let fogRow = SDCustomSymptom()
+        fogRow.apply(CustomSymptom(id: fog, name: "Fog", sort: 0))
+        let folded = SDCustomSymptom()
+        folded.apply(CustomSymptom(id: later, name: "fog", sort: 1))
+        let blankRow = SDCustomSymptom()
+        blankRow.apply(CustomSymptom(id: blank, name: "   ", sort: 9))
+        let invalid = SDCustomSymptom()
+        invalid.id = "not-a-custom"
+        invalid.name = "Nope"
+        invalid.sort = 4
+        let secondKept = SDCustomSymptom()
+        secondKept.apply(CustomSymptom(id: fog, name: "Fog", sort: 0))
+        for row in [fogRow, folded, blankRow, invalid, secondKept] {
+            context.insert(row)
+        }
+        let tied = "2026-03-15T08:00:00Z"
+        let low = SDSymptomScore()
+        low.recordId = "a"
+        low.apply(SymptomScore(id: later.rawValue, date: "2026-03-15", severity: 2, loggedAt: tied))
+        let high = SDSymptomScore()
+        high.recordId = "b"
+        high.apply(SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 4, loggedAt: tied))
+        let omitted = SDSymptomScore()
+        omitted.recordId = "z"
+        omitted.apply(SymptomScore(id: unknown.rawValue, date: "2026-03-17", severity: 4, loggedAt: tied))
+        for row in [low, high, omitted] {
+            context.insert(row)
+        }
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defaults.removePersistentDomain(forName: suite)
+        let store = Store(container: container, foldDefaults: defaults)
+
+        func assertRows() throws {
+            let scores = try context.fetch(FetchDescriptor<SDSymptomScore>())
+            XCTAssertEqual(scores.count, 2)
+            let keptScore = try XCTUnwrap(scores.first { $0.recordId == "a" })
+            XCTAssertEqual(keptScore.symptomId, fog.rawValue)
+            XCTAssertEqual(keptScore.severity, 4)
+            XCTAssertEqual(keptScore.loggedAt, tied)
+            XCTAssertEqual(keptScore.date, "2026-03-15")
+            XCTAssertEqual(keptScore.recordId, "a")
+            XCTAssertNil(keptScore.count)
+            XCTAssertNil(keptScore.note)
+            XCTAssertTrue(keptScore.higherIsWorse)
+            XCTAssertFalse(scores.contains { $0.recordId == "b" })
+            let omittedScore = try XCTUnwrap(scores.first { $0.recordId == "z" })
+            XCTAssertEqual(omittedScore.symptomId, unknown.rawValue)
+            XCTAssertEqual(omittedScore.severity, 4)
+
+            let customs = try context.fetch(FetchDescriptor<SDCustomSymptom>())
+            XCTAssertEqual(customs.count, 4)
+            XCTAssertFalse(customs.contains { $0.id == later.rawValue })
+            XCTAssertTrue(customs.contains { $0.id == blank.rawValue && $0.name == "   " })
+            XCTAssertTrue(customs.contains { $0.id == "not-a-custom" })
+            XCTAssertEqual(customs.filter { $0.id == fog.rawValue }.count, 2)
+        }
+
+        try assertRows()
+        store.refresh()
+        try assertRows()
+        XCTAssertNil(store.lastError)
     }
 
     func testMalformedRememberedPairsFallBackToNone() throws {

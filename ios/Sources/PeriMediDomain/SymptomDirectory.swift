@@ -32,29 +32,74 @@ public struct CustomSymptom: Hashable, Sendable, Codable, Identifiable {
     }
 }
 
+public struct ScoreRecordId: Hashable, Sendable, Comparable {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public static func < (lhs: ScoreRecordId, rhs: ScoreRecordId) -> Bool {
+        lhs.rawValue < rhs.rawValue
+    }
+}
+
+public struct ScoredRecord: Equatable, Sendable {
+    public var id: ScoreRecordId
+    public var score: SymptomScore
+
+    public init(id: ScoreRecordId, score: SymptomScore) {
+        self.id = id
+        self.score = score
+    }
+}
+
+public struct ScoreKeep: Equatable, Sendable {
+    public var recordId: ScoreRecordId
+    public var score: SymptomScore
+
+    public init(recordId: ScoreRecordId, score: SymptomScore) {
+        self.recordId = recordId
+        self.score = score
+    }
+}
+
+public enum RepairInstruction: Equatable, Sendable {
+    case deleteCustom(CustomSymptomId)
+    case keep(ScoreKeep)
+    case deleteScore(ScoreRecordId)
+}
+
 public struct SymptomSync: Equatable, Sendable {
     public var directory: SymptomDirectory
     public var scores: [SymptomScore]
-    public var droppedIds: [CustomSymptomId]
-    public var scoreIdRewrites: [CustomSymptomId: CustomSymptomId]
+    public var instructions: [RepairInstruction]
+    public var memory: RememberedScoreRewrites
 
     public init(
         directory: SymptomDirectory,
         scores: [SymptomScore],
-        droppedIds: [CustomSymptomId],
-        scoreIdRewrites: [CustomSymptomId: CustomSymptomId]
+        instructions: [RepairInstruction],
+        memory: RememberedScoreRewrites
     ) {
         self.directory = directory
         self.scores = scores
-        self.droppedIds = droppedIds
-        self.scoreIdRewrites = scoreIdRewrites
+        self.instructions = instructions
+        self.memory = memory
+    }
+
+    public var droppedIds: [CustomSymptomId] {
+        instructions.compactMap { instruction in
+            guard case .deleteCustom(let id) = instruction else { return nil }
+            return id
+        }
     }
 }
 
 public struct RememberedScoreRewrites: Equatable, Sendable {
     public static let none = RememberedScoreRewrites(pairs: [:])
 
-    var pairs: [CustomSymptomId: CustomSymptomId]
+    public let pairs: [CustomSymptomId: CustomSymptomId]
 
     init(pairs: [CustomSymptomId: CustomSymptomId]) {
         self.pairs = pairs
@@ -83,17 +128,37 @@ public struct RememberedScoreRewrites: Equatable, Sendable {
     }
 
     public func remembering(
-        _ scoreIdRewrites: [CustomSymptomId: CustomSymptomId]
+        _ additions: [CustomSymptomId: CustomSymptomId],
+        stoppingAt kept: Set<CustomSymptomId> = []
     ) -> RememberedScoreRewrites {
-        var next = pairs
-        for (loser, winner) in scoreIdRewrites where loser != winner {
-            next[loser] = winner
+        var overlaid = pairs
+        for (loser, winner) in additions where loser != winner {
+            overlaid[loser] = winner
         }
-        return RememberedScoreRewrites(pairs: next)
+        var flat: [CustomSymptomId: CustomSymptomId] = [:]
+        flat.reserveCapacity(overlaid.count)
+        for loser in overlaid.keys {
+            guard let winner = Self.terminal(of: loser, in: overlaid, stoppingAt: kept) else { continue }
+            flat[loser] = winner
+        }
+        return RememberedScoreRewrites(pairs: flat)
     }
 
-    public static func == (lhs: RememberedScoreRewrites, rhs: RememberedScoreRewrites) -> Bool {
-        lhs.pairs == rhs.pairs
+    private static func terminal(
+        of loser: CustomSymptomId,
+        in edges: [CustomSymptomId: CustomSymptomId],
+        stoppingAt kept: Set<CustomSymptomId>
+    ) -> CustomSymptomId? {
+        guard let direct = edges[loser], direct != loser else { return nil }
+        if kept.contains(loser) { return direct }
+        var seen: Set<CustomSymptomId> = [loser]
+        var current = direct
+        while !kept.contains(current), let next = edges[current] {
+            if !seen.insert(current).inserted { return nil }
+            current = next
+        }
+        guard current != loser else { return nil }
+        return current
     }
 }
 
@@ -247,6 +312,45 @@ public struct SymptomDirectory: Equatable, Sendable {
         scores: [SymptomScore],
         memory: RememberedScoreRewrites = .none
     ) -> SymptomSync {
+        fold(
+            rows: rows,
+            incoming: scores.map { Incoming(recordId: nil, score: $0) },
+            memory: memory
+        )
+    }
+
+    public static func synced(
+        rows: [CustomSymptom],
+        records: [ScoredRecord],
+        memory: RememberedScoreRewrites = .none
+    ) -> SymptomSync {
+        fold(
+            rows: rows,
+            incoming: records.map { Incoming(recordId: $0.id, score: $0.score) },
+            memory: memory
+        )
+    }
+
+    private struct Incoming {
+        var recordId: ScoreRecordId?
+        var score: SymptomScore
+    }
+
+    private struct Slot: Hashable {
+        var date: String
+        var symptomId: String
+    }
+
+    private struct Bucket {
+        var ranked: RankedScore
+        var recordIds: [ScoreRecordId]
+    }
+
+    private static func fold(
+        rows: [CustomSymptom],
+        incoming: [Incoming],
+        memory: RememberedScoreRewrites
+    ) -> SymptomSync {
         let cleaned = deduped(rows)
         let customs = folded(cleaned)
         let directory = SymptomDirectory(customs: customs)
@@ -260,48 +364,54 @@ public struct SymptomDirectory: Equatable, Sendable {
             fresh[symptom.id] = winner
         }
         let kept = Set(customs.map(\.id))
-        let rewrites = merging(fresh: fresh, memory: memory, kept: kept)
-        var best: [String: RankedScore] = [:]
-        for score in scores {
-            guard let mapped = map(score, rewrites: rewrites, kept: kept) else { continue }
-            let key = "\(mapped.date)#\(mapped.id)"
-            let incoming = RankedScore(score: mapped, originalId: score.id)
-            if let existing = best[key] {
-                best[key] = prefer(existing, incoming)
-            } else {
-                best[key] = incoming
+        let nextMemory = memory.remembering(fresh, stoppingAt: kept)
+        let rewrites = merging(nextMemory, kept: kept)
+        var buckets: [Slot: Bucket] = [:]
+        for item in incoming {
+            guard let mapped = map(item.score, rewrites: rewrites, kept: kept) else { continue }
+            let slot = Slot(date: mapped.date, symptomId: mapped.id)
+            let ranked = RankedScore(score: mapped, originalId: item.score.id)
+            var bucket = buckets[slot] ?? Bucket(ranked: ranked, recordIds: [])
+            if buckets[slot] != nil {
+                bucket.ranked = prefer(bucket.ranked, ranked)
             }
+            if let recordId = item.recordId {
+                bucket.recordIds.append(recordId)
+            }
+            buckets[slot] = bucket
         }
-        let ordered = best.values.map(\.score).sorted { a, b in
-            if a.date != b.date { return a.date < b.date }
-            return a.id < b.id
+        let orderedBuckets = buckets.values.sorted { a, b in
+            let left = a.ranked.score
+            let right = b.ranked.score
+            if left.date != right.date { return left.date < right.date }
+            return left.id < right.id
         }
         let dropped = cleaned.map(\.id).filter { !kept.contains($0) }.sorted { $0.rawValue < $1.rawValue }
+        var instructions = dropped.map { RepairInstruction.deleteCustom($0) }
+        for bucket in orderedBuckets {
+            guard let keeper = bucket.recordIds.min() else { continue }
+            instructions.append(.keep(ScoreKeep(recordId: keeper, score: bucket.ranked.score)))
+            let extras = Set(bucket.recordIds).subtracting([keeper]).sorted()
+            instructions.append(contentsOf: extras.map { .deleteScore($0) })
+        }
         return SymptomSync(
             directory: directory,
-            scores: ordered,
-            droppedIds: dropped,
-            scoreIdRewrites: rewrites
+            scores: orderedBuckets.map(\.ranked.score),
+            instructions: instructions,
+            memory: nextMemory
         )
     }
 
     private static func merging(
-        fresh: [CustomSymptomId: CustomSymptomId],
-        memory: RememberedScoreRewrites,
+        _ memory: RememberedScoreRewrites,
         kept: Set<CustomSymptomId>
     ) -> [CustomSymptomId: CustomSymptomId] {
-        var rewrites = fresh
+        var rewrites: [CustomSymptomId: CustomSymptomId] = [:]
         for (loser, winner) in memory.pairs {
-            if rewrites[loser] != nil { continue }
             if loser == winner { continue }
-            if !kept.contains(winner) { continue }
             if kept.contains(loser) { continue }
+            if !kept.contains(winner) { continue }
             rewrites[loser] = winner
-        }
-        for (loser, winner) in memory.pairs {
-            guard rewrites[loser] == nil, !kept.contains(loser) else { continue }
-            guard let via = rewrites[winner], via != loser, kept.contains(via) else { continue }
-            rewrites[loser] = via
         }
         return rewrites
     }
