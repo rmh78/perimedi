@@ -5,15 +5,31 @@ import PeriMediDomain
 
 @MainActor
 final class DoseWidgetBridgeTests: XCTestCase {
+    private nonisolated static let foldSuiteName = "perimedi.widget-bridge"
+
+    override func tearDown() {
+        UserDefaults(suiteName: Self.foldSuiteName)?.removePersistentDomain(forName: Self.foldSuiteName)
+        super.tearDown()
+    }
+
     func testFailedTakeRepublishesTakeWithoutAck() throws {
         let prior = DoseWidgetSnapshotFile.read()
         defer { try? DoseWidgetSnapshotFile.write(prior) }
 
         let container = try ModelContainer(
             for: PersistenceController.schema,
-            configurations: [ModelConfiguration(schema: PersistenceController.schema, isStoredInMemoryOnly: true)]
+            configurations: [
+                ModelConfiguration(
+                    "widget-bridge",
+                    schema: PersistenceController.schema,
+                    isStoredInMemoryOnly: true,
+                    cloudKitDatabase: .none
+                ),
+            ]
         )
-        let store = Store(container: container)
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: Self.foldSuiteName))
+        defaults.removePersistentDomain(forName: Self.foldSuiteName)
+        let store = Store(container: container, foldDefaults: defaults)
         let medicationId = "bridge-fail"
         try store.upsertMedication(
             Medication(
