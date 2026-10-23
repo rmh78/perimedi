@@ -25,7 +25,7 @@ Cycle → cycle settings (`cycle.action.period`).
 | Save | `period.save` | Right side of the card. Label is Save. Then close the sheet. |
 | Cancel | `confirm.cancel` | Left side of the new-period card. Proof: `testEnglishAppJourney` opens the card, sees an empty `period.end`, taps Cancel, and the end field is gone. |
 | History | `period.history.{id}` | One row. The underlined date range shares that line with the length and flow. A closed period uses the same date-range format as a cycle in the doctor’s visit dialog. Opens the same card filled in. Proof: `testEnglishAppJourney` reads `Mar 7, 2026 – Mar 12, 2026`. |
-| Delete | `period.delete` | On the edit card’s button row, between Cancel and Save. Those labels share one type size. If one must shrink, they all shrink together. The card then asks `Delete {{name}}?` using that range. Confirm with `confirm.delete`. Proof: `testEnglishAppJourney` reads `Delete Mar 7, 2026 – Mar 12, 2026?`, then the intro returns and the period is logged again. |
+| Delete | `period.delete` | On the edit card’s button row, between Cancel and Save. Those labels share one type size. If one must shrink, they all shrink together. The row grows with the text size. The card then asks `Delete {{name}}?` using that range. Confirm with `confirm.delete`. Proof: `testEnglishAppJourney` reads `Delete Mar 7, 2026 – Mar 12, 2026?`, then the intro returns and the period is logged again. |
 | Date chooser done | `date.done` | Used by `setDateKey`. |
 
 After save, Cycle strip days `cycle.strip.day.2026-03-07` and `…-11` values contain `period`. Empty-meds chip drops `need-period` and becomes `need-med`. Intro is gone.

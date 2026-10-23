@@ -63,6 +63,11 @@ struct PillButton: View {
         case primary, secondary, destructive
     }
 
+    static let horizontalPadding: CGFloat = 14
+    static let minHeight: CGFloat = 36
+    static let fillsWidthFloor: CGFloat = 0.8
+    static let strokeWidth: CGFloat = 1
+
     var title: String
     var kind: Kind = .secondary
     var identifier: String? = nil
@@ -78,12 +83,12 @@ struct PillButton: View {
                 .font(labelFont)
                 .foregroundStyle(foreground)
                 .lineLimit(fillsWidth ? 1 : nil)
-                .minimumScaleFactor(labelScale == nil && fillsWidth ? 0.8 : 1)
-                .padding(.horizontal, 14)
+                .minimumScaleFactor(fillsWidth ? Self.fillsWidthFloor : 1)
+                .padding(.horizontal, Self.horizontalPadding)
                 .frame(maxWidth: fillsWidth ? .infinity : nil)
-                .frame(minHeight: 36)
+                .frame(minHeight: Self.minHeight)
                 .background(Capsule().fill(fill))
-                .overlay(Capsule().stroke(stroke, lineWidth: kind == .primary ? 0 : 1))
+                .overlay(Capsule().stroke(stroke, lineWidth: kind == .primary ? 0 : Self.strokeWidth))
         }
         .buttonStyle(.plain)
         .a11y(identifier)
@@ -135,18 +140,30 @@ struct EqualWidthPillRow: View {
         var action: () -> Void
     }
 
+    static let spacing: CGFloat = 8
+    static let minLabelScale: CGFloat = 0.2
+    static let fitSlack: CGFloat = 4
+
     var items: [Item]
 
     @ScaledMetric(relativeTo: .subheadline) private var subheadlineSize: CGFloat = 15
+    @Environment(\.legibilityWeight) private var legibilityWeight
+    @State private var rowHeight: CGFloat = 0
 
     var body: some View {
+        let bold = legibilityWeight == .bold
+        let open = rowHeight > 1
+            ? rowHeight
+            : Self.rowHeight(scale: 1, base: subheadlineSize, bold: bold)
         GeometryReader { geo in
             let scale = Self.scale(
                 titles: items.map(\.title),
                 rowWidth: geo.size.width,
-                base: subheadlineSize
+                base: subheadlineSize,
+                bold: bold
             )
-            HStack(spacing: 8) {
+            let height = Self.rowHeight(scale: scale, base: subheadlineSize, bold: bold)
+            HStack(spacing: Self.spacing) {
                 ForEach(items) { item in
                     PillButton(
                         title: item.title,
@@ -158,19 +175,37 @@ struct EqualWidthPillRow: View {
                     )
                 }
             }
+            .preference(key: EqualWidthRowHeightKey.self, value: height)
         }
-        .frame(height: 37)
+        .frame(height: open)
+        .onPreferenceChange(EqualWidthRowHeightKey.self) { newValue in
+            if abs(newValue - rowHeight) > 0.5 {
+                rowHeight = newValue
+            }
+        }
     }
 
-    static func scale(titles: [String], rowWidth: CGFloat, base: CGFloat) -> CGFloat {
+    static func scale(titles: [String], rowWidth: CGFloat, base: CGFloat, bold: Bool = false) -> CGFloat {
         guard rowWidth > 1, !titles.isEmpty else { return 1 }
-        let slot = (rowWidth - 8 * CGFloat(titles.count - 1)) / CGFloat(titles.count)
-        let available = slot - 28
-        guard available > 1 else { return 0.5 }
-        let font = UIFont.systemFont(ofSize: base, weight: .semibold)
+        let slot = (rowWidth - spacing * CGFloat(titles.count - 1)) / CGFloat(titles.count)
+        let available = slot - PillButton.horizontalPadding * 2
+        guard available > 1 else { return minLabelScale }
+        let font = UIFont.systemFont(ofSize: base, weight: bold ? .bold : .semibold)
         let widest = titles.map { ($0 as NSString).size(withAttributes: [.font: font]).width }.max() ?? 0
         guard widest > available + 0.5 else { return 1 }
-        return max(0.5, (available - 1) / widest)
+        return max(minLabelScale, (available - fitSlack) / widest)
+    }
+
+    static func rowHeight(scale: CGFloat, base: CGFloat, bold: Bool) -> CGFloat {
+        let font = UIFont.systemFont(ofSize: base * scale, weight: bold ? .bold : .semibold)
+        return max(PillButton.minHeight, ceil(font.lineHeight)) + PillButton.strokeWidth
+    }
+}
+
+private struct EqualWidthRowHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }
 
