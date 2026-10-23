@@ -183,29 +183,42 @@ struct PeriodSheet: View {
                 .labelsHidden()
                 .pickerStyle(.menu)
             }
-            HStack(spacing: 8) {
-                PillButton(title: app.t("common.cancel"), kind: .secondary, identifier: A11yID.confirmCancel, fillsWidth: true) {
-                    closeDraft()
-                }
-                if case .edit(let id) = draft {
-                    PillButton(
-                        title: app.t("common.delete"),
-                        kind: .destructive,
-                        identifier: A11yID.periodDelete,
-                        fillsWidth: true
-                    ) {
-                        draft = .confirmDelete(id)
-                    }
-                }
-                PillButton(
-                    title: app.t("common.save"),
-                    kind: .primary,
-                    identifier: A11yID.periodSave,
-                    fillsWidth: true,
-                    action: saveDraft
-                )
-            }
+            EqualWidthPillRow(items: periodActions)
         }
+    }
+
+    private var periodActions: [EqualWidthPillRow.Item] {
+        var items = [
+            EqualWidthPillRow.Item(
+                id: "cancel",
+                title: app.t("common.cancel"),
+                kind: .secondary,
+                identifier: A11yID.confirmCancel,
+                action: closeDraft
+            )
+        ]
+        if case .edit(let id) = draft {
+            items.append(
+                EqualWidthPillRow.Item(
+                    id: "delete",
+                    title: app.t("common.delete"),
+                    kind: .destructive,
+                    identifier: A11yID.periodDelete
+                ) {
+                    draft = .confirmDelete(id)
+                }
+            )
+        }
+        items.append(
+            EqualWidthPillRow.Item(
+                id: "save",
+                title: app.t("common.save"),
+                kind: .primary,
+                identifier: A11yID.periodSave,
+                action: saveDraft
+            )
+        )
+        return items
     }
 
     private func periodDeletePrompt(_ id: String) -> some View {

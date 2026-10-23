@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import PeriMediDomain
 
 enum Theme {
@@ -66,15 +67,18 @@ struct PillButton: View {
     var kind: Kind = .secondary
     var identifier: String? = nil
     var fillsWidth = false
+    var labelScale: CGFloat? = nil
     var action: () -> Void
+
+    @ScaledMetric(relativeTo: .subheadline) private var subheadlineSize: CGFloat = 15
 
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.subheadline.weight(.semibold))
+                .font(labelFont)
                 .foregroundStyle(foreground)
                 .lineLimit(fillsWidth ? 1 : nil)
-                .minimumScaleFactor(fillsWidth ? 0.8 : 1)
+                .minimumScaleFactor(labelScale == nil && fillsWidth ? 0.8 : 1)
                 .padding(.horizontal, 14)
                 .frame(maxWidth: fillsWidth ? .infinity : nil)
                 .frame(minHeight: 36)
@@ -83,6 +87,13 @@ struct PillButton: View {
         }
         .buttonStyle(.plain)
         .a11y(identifier)
+    }
+
+    private var labelFont: Font {
+        if let labelScale {
+            return .system(size: subheadlineSize * labelScale, weight: .semibold)
+        }
+        return .subheadline.weight(.semibold)
     }
 
     private var foreground: Color {
@@ -112,6 +123,54 @@ struct PillButton: View {
         case .secondary: return Theme.blush200
         case .destructive: return Theme.blush300
         }
+    }
+}
+
+struct EqualWidthPillRow: View {
+    struct Item: Identifiable {
+        let id: String
+        var title: String
+        var kind: PillButton.Kind
+        var identifier: String? = nil
+        var action: () -> Void
+    }
+
+    var items: [Item]
+
+    @ScaledMetric(relativeTo: .subheadline) private var subheadlineSize: CGFloat = 15
+
+    var body: some View {
+        GeometryReader { geo in
+            let scale = Self.scale(
+                titles: items.map(\.title),
+                rowWidth: geo.size.width,
+                base: subheadlineSize
+            )
+            HStack(spacing: 8) {
+                ForEach(items) { item in
+                    PillButton(
+                        title: item.title,
+                        kind: item.kind,
+                        identifier: item.identifier,
+                        fillsWidth: true,
+                        labelScale: scale,
+                        action: item.action
+                    )
+                }
+            }
+        }
+        .frame(height: 37)
+    }
+
+    static func scale(titles: [String], rowWidth: CGFloat, base: CGFloat) -> CGFloat {
+        guard rowWidth > 1, !titles.isEmpty else { return 1 }
+        let slot = (rowWidth - 8 * CGFloat(titles.count - 1)) / CGFloat(titles.count)
+        let available = slot - 28
+        guard available > 1 else { return 0.5 }
+        let font = UIFont.systemFont(ofSize: base, weight: .semibold)
+        let widest = titles.map { ($0 as NSString).size(withAttributes: [.font: font]).width }.max() ?? 0
+        guard widest > available + 0.5 else { return 1 }
+        return max(0.5, (available - 1) / widest)
     }
 }
 
