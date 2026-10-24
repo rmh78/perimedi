@@ -28,7 +28,7 @@ PDF contents (range, taken rate, symptom table, Effect vs in-range changes, disc
 
 ## Gotchas
 
-- Cycle rows and PDF period rows use `VisitDateRange.closed`, the same medium date pair as period history. Single dates in the PDF and the range-header words use `VisitDateRange.day`.
+- Cycle rows and PDF period rows use `DateCopy.closed`, the same medium date pair as period history. Single dates in the PDF and the range-header words use `DateCopy.day`.
 - Do not tap `visit.pdf.share` in journeys (system share sheet).
 - Empty store: range sheet copy says 4-week / 12-week fallback; Continue still opens a preview.
 - Screen catalog: `more-sample-en`, `visit-range-sample-en`, `visit-pdf-sample-en`. Review Files changed, not PR comment galleries.

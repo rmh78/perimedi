@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail if Trends or Visit keys live in L10n.swift, or en/de tables disagree."""
+"""Fail if Trends or Visit keys live in L10n.swift, en/de tables disagree, or a user-facing DateFormatter sits outside DateCopy.swift."""
 from __future__ import annotations
 
 import re
@@ -32,6 +32,34 @@ PINS = (
     (WIDGET, "widget.done.title", "Heute alles genommen", False),
     (WIDGET, "widget.empty.title", "Heute nichts zu nehmen", False),
 )
+
+
+FORMATTER = re.compile(r"(?<![A-Za-z0-9])DateFormatter\(")
+TEMPLATE = "setLocalizedDateFormatFromTemplate"
+PRESENTATION_ROOTS = (
+    ROOT / "ios/PeriMedi",
+    ROOT / "ios/PeriMediDoseWidget",
+    ROOT / "ios/PeriMediDoseWidgetSupport",
+    ROOT / "ios/Sources/PeriMediDomain",
+)
+
+
+def presentation_formatter_leaks() -> list[str]:
+    leaks: list[str] = []
+    for root in PRESENTATION_ROOTS:
+        if not root.is_dir():
+            continue
+        for path in sorted(root.rglob("*.swift")):
+            text = path.read_text(encoding="utf-8")
+            if path.name == "DateCopy.swift":
+                continue
+            if path.name == "DateKeys.swift":
+                if TEMPLATE in text:
+                    leaks.append(path.relative_to(ROOT).as_posix())
+                continue
+            if FORMATTER.search(text) or TEMPLATE in text:
+                leaks.append(path.relative_to(ROOT).as_posix())
+    return leaks
 
 
 def unescape(value: str) -> str:
@@ -148,19 +176,28 @@ def main() -> int:
         print(f"{DIALOG.relative_to(ROOT)}: missing TT.MM.JJJJ", file=sys.stderr)
 
     period = PERIOD.read_text(encoding="utf-8")
-    dates = (ROOT / "ios/Sources/PeriMediDomain/VisitDateRange.swift").read_text(encoding="utf-8")
-    if "VisitDateRange.periodHistory" not in period or "language ==" in period:
+    date_copy = ROOT / "ios/Sources/PeriMediDomain/DateCopy.swift"
+    if not date_copy.is_file():
+        failed = True
+        print("ios/Sources/PeriMediDomain/DateCopy.swift: missing", file=sys.stderr)
+        dates = ""
+    else:
+        dates = date_copy.read_text(encoding="utf-8")
+    if "DateCopy.periodHistory" not in period or "language ==" in period:
         failed = True
         print(
-            f"{PERIOD.relative_to(ROOT)}: history must call VisitDateRange.periodHistory with no language branch",
+            f"{PERIOD.relative_to(ROOT)}: history must call DateCopy.periodHistory with no language branch",
             file=sys.stderr,
         )
     if "\\u{2013}" not in dates or "\\u{2192}" not in dates:
         failed = True
         print(
-            "ios/Sources/PeriMediDomain/VisitDateRange.swift: closed join and open period arrow are missing",
+            "ios/Sources/PeriMediDomain/DateCopy.swift: closed join and open period arrow are missing",
             file=sys.stderr,
         )
+    for path in presentation_formatter_leaks():
+        failed = True
+        print(f"{path}: user-facing DateFormatter outside DateCopy.swift", file=sys.stderr)
 
     if failed:
         return 1

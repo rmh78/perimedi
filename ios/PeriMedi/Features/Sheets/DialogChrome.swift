@@ -220,15 +220,7 @@ struct DateKeyPicker: View {
         if key.isEmpty {
             return locale.language.languageCode == .german ? "TT.MM.JJJJ" : "YYYY-MM-DD"
         }
-        guard locale.language.languageCode == .german, let parsed = DateKeys.parseDateKey(key) else {
-            return key
-        }
-        let formatter = DateFormatter()
-        formatter.locale = locale
-        formatter.calendar = DateKeys.calendar
-        formatter.timeZone = DateKeys.calendar.timeZone
-        formatter.dateFormat = "dd.MM.yyyy"
-        return formatter.string(from: parsed)
+        return DateCopy.field(key, locale: locale)
     }
 
     private func syncFromKey() {

@@ -326,16 +326,8 @@ struct PeriodSheet: View {
         return ["~\(days)d", flow].filter { !$0.isEmpty }.joined(separator: " · ")
     }
 
-    private func pretty(_ key: String) -> String {
-        guard let date = DateKeys.parseDateKey(key) else { return key }
-        let f = DateFormatter()
-        f.locale = app.locale.language.locale
-        f.setLocalizedDateFormatFromTemplate("MMMMd yyyy")
-        return f.string(from: date)
-    }
-
     private func rangeLabel(_ period: Period) -> String {
-        VisitDateRange.periodHistory(
+        DateCopy.periodHistory(
             startKey: period.startDate,
             endKey: period.endDate,
             locale: app.locale.language.locale
@@ -343,6 +335,6 @@ struct PeriodSheet: View {
     }
 
     private func formatted(_ key: String?) -> String? {
-        key.map(pretty)
+        key.map { DateCopy.longDay($0, locale: app.locale.language.locale) }
     }
 }

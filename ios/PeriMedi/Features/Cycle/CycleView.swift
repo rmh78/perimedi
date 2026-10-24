@@ -703,7 +703,7 @@ struct CycleView: View {
     }
 
     private func formatted(_ key: String) -> String {
-        DateFormatCache.weekdayMonth(key, locale: app.locale.language.locale)
+        DateCopy.weekdayMonth(key, locale: app.locale.language.locale)
     }
 }
 
