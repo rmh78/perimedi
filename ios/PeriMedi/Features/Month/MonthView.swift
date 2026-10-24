@@ -339,7 +339,7 @@ private struct FlowLegend: View {
                     Text(app.t("legend.cycleDay")).font(.caption2).foregroundStyle(Theme.inkSoft)
                 }
             }
-            HStack(spacing: 10) {
+            WrappingHStack(spacing: 10, lineSpacing: 6) {
                 legend(app.t("legend.period"), Color.red)
                 legend(app.t("legend.predicted"), Color.pink.opacity(0.6))
                 HStack(spacing: 4) {
