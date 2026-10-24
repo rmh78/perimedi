@@ -71,11 +71,13 @@ struct TrendsPickerSheet: View {
 
     private func chip(_ id: String, title: String, selectedIds: [String], ranked: [String]) -> some View {
         let on = selectedIds.contains(id)
+        let wide = title.count > 22
         return PillButton(
             title: title,
             kind: on ? .primary : .secondary,
             identifier: A11yID.trendsSeries(id),
-            // Default 36pt pills cover the chart legend on this sheet.
+            fillsWidth: wide,
+            lines: wide ? 2 : 1,
             barHeight: 28,
             labelScale: 0.8
         ) {
@@ -87,6 +89,7 @@ struct TrendsPickerSheet: View {
             )
             selectedStorage = next.isEmpty ? "-" : next.joined(separator: ",")
         }
+        .frame(width: wide ? 220 : nil, alignment: .leading)
         .accessibilityValue(on ? "on" : "off")
     }
 }
