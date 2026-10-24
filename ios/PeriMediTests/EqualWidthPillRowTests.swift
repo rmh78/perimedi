@@ -27,12 +27,13 @@ final class EqualWidthPillRowTests: XCTestCase {
     }
 
     func testFloorWhenTheSlotIsTooNarrow() {
-        let scale = EqualWidthPillRow.scale(
+        let fit = EqualWidthPillRow.fit(
             titles: ["Abbrechen", "Löschen", "Speichern"],
             rowWidth: 80,
             base: 15
         )
-        XCTAssertEqual(scale, EqualWidthPillRow.minLabelScale)
+        XCTAssertEqual(fit.scale, EqualWidthPillRow.minLabelScale)
+        XCTAssertEqual(fit.lines, 2)
     }
 
     func testSingleItemUsesTheWholeRow() {
@@ -45,20 +46,43 @@ final class EqualWidthPillRowTests: XCTestCase {
         XCTAssertGreaterThan(one, EqualWidthPillRow.minLabelScale)
         XCTAssertEqual(three, EqualWidthPillRow.minLabelScale)
         XCTAssertGreaterThan(one, three)
+        XCTAssertEqual(
+            EqualWidthPillRow.fit(titles: ["Abbrechen"], rowWidth: 90, base: 15).lines,
+            1
+        )
+        XCTAssertEqual(
+            EqualWidthPillRow.fit(
+                titles: ["Abbrechen", "Löschen", "Speichern"],
+                rowWidth: 90,
+                base: 15
+            ).lines,
+            2
+        )
     }
 
-    func testLargestTextSizeFitsTheGermanRow() {
+    func testGermanRowWrapsInsteadOfShrinkingBelowHalf() {
         let titles = ["Abbrechen", "Löschen", "Speichern"]
         let width: CGFloat = 318
         let base: CGFloat = 49
-        let scale = EqualWidthPillRow.scale(titles: titles, rowWidth: width, base: base)
-        XCTAssertGreaterThan(scale, EqualWidthPillRow.minLabelScale)
-        XCTAssertLessThan(scale, 1)
+        let fit = EqualWidthPillRow.fit(titles: titles, rowWidth: width, base: base)
+        XCTAssertEqual(fit.lines, 2)
+        XCTAssertEqual(fit.scale, EqualWidthPillRow.minLabelScale)
+        XCTAssertGreaterThanOrEqual(fit.scale, 0.5)
+        let height = EqualWidthPillRow.rowHeight(scale: fit.scale, lines: fit.lines, base: base, bold: false)
+        let line = UIFont.systemFont(ofSize: base * fit.scale, weight: .semibold).lineHeight
+        XCTAssertGreaterThanOrEqual(height, ceil(line))
+        XCTAssertGreaterThanOrEqual(height, ceil(line) * 2)
         let slot = (width - EqualWidthPillRow.spacing * 2) / 3
         let available = slot - PillButton.horizontalPadding * 2
-        let font = UIFont.systemFont(ofSize: base * scale, weight: .semibold)
-        let widest = titles.map { ($0 as NSString).size(withAttributes: [.font: font]).width }.max() ?? 0
-        XCTAssertLessThanOrEqual(widest, available + 1)
+        let font = UIFont.systemFont(ofSize: base * fit.scale, weight: .semibold)
+        for title in titles {
+            let shown = EqualWidthPillRow.wrapped(title, width: available, font: font)
+            XCTAssertEqual(shown.replacingOccurrences(of: "\n", with: ""), title)
+            for part in shown.split(separator: "\n") {
+                let partWidth = (String(part) as NSString).size(withAttributes: [.font: font]).width
+                XCTAssertLessThanOrEqual(partWidth, available + 1)
+            }
+        }
     }
 
     func testBoldTextShrinksAtLeastAsMuch() {

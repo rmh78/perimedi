@@ -72,7 +72,10 @@ struct PillButton: View {
     var kind: Kind = .secondary
     var identifier: String? = nil
     var fillsWidth = false
+    var lines = 1
+    var barHeight: CGFloat? = nil
     var labelScale: CGFloat? = nil
+    var spokenTitle: String? = nil
     var action: () -> Void
 
     @ScaledMetric(relativeTo: .subheadline) private var subheadlineSize: CGFloat = 15
@@ -82,15 +85,17 @@ struct PillButton: View {
             Text(title)
                 .font(labelFont)
                 .foregroundStyle(foreground)
-                .lineLimit(fillsWidth ? 1 : nil)
-                .minimumScaleFactor(fillsWidth ? Self.fillsWidthFloor : 1)
+                .lineLimit(fillsWidth ? lines : nil)
+                .minimumScaleFactor(labelScale == nil && fillsWidth ? Self.fillsWidthFloor : 1)
+                .multilineTextAlignment(.center)
                 .padding(.horizontal, Self.horizontalPadding)
                 .frame(maxWidth: fillsWidth ? .infinity : nil)
-                .frame(minHeight: Self.minHeight)
+                .frame(minHeight: barHeight ?? Self.minHeight)
                 .background(Capsule().fill(fill))
                 .overlay(Capsule().stroke(stroke, lineWidth: kind == .primary ? 0 : Self.strokeWidth))
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(spokenTitle ?? title)
         .a11y(identifier)
     }
 
@@ -140,8 +145,13 @@ struct EqualWidthPillRow: View {
         var action: () -> Void
     }
 
+    struct Fit {
+        var scale: CGFloat
+        var lines: Int
+    }
+
     static let spacing: CGFloat = 8
-    static let minLabelScale: CGFloat = 0.2
+    static let minLabelScale: CGFloat = 0.5
     static let fitSlack: CGFloat = 4
 
     var items: [Item]
@@ -154,23 +164,34 @@ struct EqualWidthPillRow: View {
         let bold = legibilityWeight == .bold
         let open = rowHeight > 1
             ? rowHeight
-            : Self.rowHeight(scale: 1, base: subheadlineSize, bold: bold)
+            : max(
+                Self.rowHeight(scale: 1, lines: 1, base: subheadlineSize, bold: bold),
+                Self.rowHeight(scale: Self.minLabelScale, lines: 2, base: subheadlineSize, bold: bold)
+            )
         GeometryReader { geo in
-            let scale = Self.scale(
-                titles: items.map(\.title),
+            let titles = items.map(\.title)
+            let fit = Self.fit(
+                titles: titles,
                 rowWidth: geo.size.width,
                 base: subheadlineSize,
                 bold: bold
             )
-            let height = Self.rowHeight(scale: scale, base: subheadlineSize, bold: bold)
+            let height = Self.rowHeight(scale: fit.scale, lines: fit.lines, base: subheadlineSize, bold: bold)
+            let font = UIFont.systemFont(ofSize: subheadlineSize * fit.scale, weight: bold ? .bold : .semibold)
+            let available = Self.textWidth(rowWidth: geo.size.width, count: titles.count)
             HStack(spacing: Self.spacing) {
                 ForEach(items) { item in
                     PillButton(
-                        title: item.title,
+                        title: fit.lines > 1
+                            ? Self.wrapped(item.title, width: available, font: font)
+                            : item.title,
                         kind: item.kind,
                         identifier: item.identifier,
                         fillsWidth: true,
-                        labelScale: scale,
+                        lines: fit.lines,
+                        barHeight: height - PillButton.strokeWidth,
+                        labelScale: fit.scale,
+                        spokenTitle: item.title,
                         action: item.action
                     )
                 }
@@ -186,19 +207,65 @@ struct EqualWidthPillRow: View {
     }
 
     static func scale(titles: [String], rowWidth: CGFloat, base: CGFloat, bold: Bool = false) -> CGFloat {
+        fit(titles: titles, rowWidth: rowWidth, base: base, bold: bold).scale
+    }
+
+    static func fit(titles: [String], rowWidth: CGFloat, base: CGFloat, bold: Bool = false) -> Fit {
+        let single = oneLineScale(titles: titles, rowWidth: rowWidth, base: base, bold: bold)
+        if single >= minLabelScale {
+            return Fit(scale: single, lines: 1)
+        }
+        return Fit(scale: minLabelScale, lines: 2)
+    }
+
+    static func rowHeight(scale: CGFloat, lines: Int, base: CGFloat, bold: Bool) -> CGFloat {
+        let font = UIFont.systemFont(ofSize: base * scale, weight: bold ? .bold : .semibold)
+        let text = ceil(font.lineHeight) * CGFloat(max(lines, 1))
+        return max(PillButton.minHeight, text) + PillButton.strokeWidth
+    }
+
+    static func wrapped(_ title: String, width: CGFloat, font: UIFont) -> String {
+        let full = (title as NSString).size(withAttributes: [.font: font]).width
+        guard full > width + 0.5 else { return title }
+        let chars = Array(title)
+        guard chars.count > 1 else { return title }
+        var best = chars.count / 2
+        var bestGap = CGFloat.greatestFiniteMagnitude
+        var found = false
+        for index in 1..<chars.count {
+            let left = String(chars.prefix(index))
+            let right = String(chars.suffix(chars.count - index))
+            let leftWidth = (left as NSString).size(withAttributes: [.font: font]).width
+            let rightWidth = (right as NSString).size(withAttributes: [.font: font]).width
+            guard leftWidth <= width + 0.5, rightWidth <= width + 0.5 else { continue }
+            let gap = abs(leftWidth - rightWidth)
+            if gap < bestGap {
+                bestGap = gap
+                best = index
+                found = true
+            }
+        }
+        if !found {
+            best = chars.count / 2
+        }
+        let left = String(chars.prefix(best))
+        let right = String(chars.suffix(chars.count - best))
+        return "\(left)\n\(right)"
+    }
+
+    private static func oneLineScale(titles: [String], rowWidth: CGFloat, base: CGFloat, bold: Bool) -> CGFloat {
         guard rowWidth > 1, !titles.isEmpty else { return 1 }
-        let slot = (rowWidth - spacing * CGFloat(titles.count - 1)) / CGFloat(titles.count)
-        let available = slot - PillButton.horizontalPadding * 2
-        guard available > 1 else { return minLabelScale }
+        let available = textWidth(rowWidth: rowWidth, count: titles.count)
+        guard available > 1 else { return 0 }
         let font = UIFont.systemFont(ofSize: base, weight: bold ? .bold : .semibold)
         let widest = titles.map { ($0 as NSString).size(withAttributes: [.font: font]).width }.max() ?? 0
         guard widest > available + 0.5 else { return 1 }
-        return max(minLabelScale, (available - fitSlack) / widest)
+        return (available - fitSlack) / widest
     }
 
-    static func rowHeight(scale: CGFloat, base: CGFloat, bold: Bool) -> CGFloat {
-        let font = UIFont.systemFont(ofSize: base * scale, weight: bold ? .bold : .semibold)
-        return max(PillButton.minHeight, ceil(font.lineHeight)) + PillButton.strokeWidth
+    private static func textWidth(rowWidth: CGFloat, count: Int) -> CGFloat {
+        let slot = (rowWidth - spacing * CGFloat(max(count - 1, 0))) / CGFloat(max(count, 1))
+        return slot - PillButton.horizontalPadding * 2
     }
 }
 
