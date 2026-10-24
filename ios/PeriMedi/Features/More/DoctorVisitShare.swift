@@ -58,7 +58,7 @@ enum DoctorVisitShare {
                     : report.changes.map { change in
                         let key = change.field == .dose ? "visit.change.dose" : "visit.change.schedule"
                         return app.t(key, [
-                            "date": VisitDateRange.day(change.effectiveDate, locale: locale),
+                            "date": DateCopy.day(change.effectiveDate, locale: locale),
                             "name": change.nameSnapshot,
                             "previous": DoseUnitCopy.display(change.previousValue, languageCode: app.locale.language.rawValue),
                             "new": DoseUnitCopy.display(change.newValue, languageCode: app.locale.language.rawValue),
@@ -72,7 +72,7 @@ enum DoctorVisitShare {
                 rows: report.periods.isEmpty
                     ? [app.t("visit.noPeriods")]
                     : report.periods.map { row in
-                        VisitDateRange.closed(startKey: row.start, endKey: row.end, locale: locale)
+                        DateCopy.closed(startKey: row.start, endKey: row.end, locale: locale)
                     }
             )
         )
@@ -94,7 +94,7 @@ enum DoctorVisitShare {
         return DoctorVisitPage(
             title: app.t("visit.title"),
             meta: [
-                app.t("visit.generated", ["date": VisitDateRange.day(report.generatedOn, locale: locale)]),
+                app.t("visit.generated", ["date": DateCopy.day(report.generatedOn, locale: locale)]),
                 rangeLine(report, app: app, locale: locale),
             ],
             sections: sections,
@@ -107,8 +107,8 @@ enum DoctorVisitShare {
         app: AppModel,
         locale: Locale
     ) -> String {
-        let start = VisitDateRange.day(report.rangeStart, locale: locale)
-        let end = VisitDateRange.day(report.rangeEnd, locale: locale)
+        let start = DateCopy.day(report.rangeStart, locale: locale)
+        let end = DateCopy.day(report.rangeEnd, locale: locale)
         let key: String
         switch report.rangeKind {
         case .completedCycles(let n) where n >= 2:

@@ -139,33 +139,3 @@ struct CycleSnapshot: Equatable {
         )
     }
 }
-
-enum DateFormatCache {
-    private static var weekdayMonth: DateFormatter?
-    private static var weekdayMonthLocale: Locale?
-    private static var monthYear: DateFormatter?
-    private static var monthYearLocale: Locale?
-
-    static func weekdayMonth(_ key: String, locale: Locale) -> String {
-        if weekdayMonth == nil || weekdayMonthLocale != locale {
-            let formatter = DateFormatter()
-            formatter.locale = locale
-            formatter.setLocalizedDateFormatFromTemplate("EEE MMMd")
-            weekdayMonth = formatter
-            weekdayMonthLocale = locale
-        }
-        guard let date = DateKeys.parseDateKey(key) else { return key }
-        return weekdayMonth?.string(from: date) ?? key
-    }
-
-    static func monthYear(_ date: Date, locale: Locale) -> String {
-        if monthYear == nil || monthYearLocale != locale {
-            let formatter = DateFormatter()
-            formatter.locale = locale
-            formatter.setLocalizedDateFormatFromTemplate("MMMM yyyy")
-            monthYear = formatter
-            monthYearLocale = locale
-        }
-        return monthYear?.string(from: date) ?? ""
-    }
-}
