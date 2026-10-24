@@ -85,6 +85,37 @@ final class EqualWidthPillRowTests: XCTestCase {
         }
     }
 
+    func testGermanWrapBreaksOnAHyphenAndVoiceOverStaysWhole() {
+        let titles = ["Abbrechen", "Löschen", "Speichern"]
+        let width: CGFloat = 318
+        let base: CGFloat = 49
+        let locale = Locale(identifier: "de")
+        let slot = (width - EqualWidthPillRow.spacing * 2) / 3
+        let available = slot - PillButton.horizontalPadding * 2
+        let font = UIFont.systemFont(ofSize: base * EqualWidthPillRow.minLabelScale, weight: .semibold)
+        let expected = [
+            "Abbrechen": "Abbre-\nchen",
+            "Löschen": "Lö-\nschen",
+            "Speichern": "Spei-\nchern",
+        ]
+        for title in titles {
+            let shown = EqualWidthPillRow.wrapped(title, width: available, font: font, locale: locale)
+            XCTAssertEqual(shown, expected[title])
+            let spoken = EqualWidthPillRow.spokenLabel(for: title)
+            XCTAssertEqual(spoken, title)
+            XCTAssertFalse(spoken.contains("\n"))
+            XCTAssertFalse(spoken.contains("-"))
+            for part in shown.split(separator: "\n") {
+                let partWidth = (String(part) as NSString).size(withAttributes: [.font: font]).width
+                XCTAssertLessThanOrEqual(partWidth, available + 1, title)
+            }
+        }
+        let phraseFont = UIFont.systemFont(ofSize: 15, weight: .semibold)
+        let phrase = EqualWidthPillRow.wrapped("Not taken", width: 60, font: phraseFont, locale: locale)
+        XCTAssertEqual(phrase, "Not\ntaken")
+        XCTAssertEqual(EqualWidthPillRow.spokenLabel(for: "Not taken"), "Not taken")
+    }
+
     func testBoldTextShrinksAtLeastAsMuch() {
         let titles = ["Abbrechen", "Löschen", "Speichern"]
         let regular = EqualWidthPillRow.scale(titles: titles, rowWidth: 280, base: 15)

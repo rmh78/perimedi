@@ -224,7 +224,11 @@ struct EqualWidthPillRow: View {
         return max(PillButton.minHeight, text) + PillButton.strokeWidth
     }
 
-    static func wrapped(_ title: String, width: CGFloat, font: UIFont) -> String {
+    static func spokenLabel(for title: String) -> String {
+        title
+    }
+
+    static func wrapped(_ title: String, width: CGFloat, font: UIFont, locale: Locale = .current) -> String {
         let full = (title as NSString).size(withAttributes: [.font: font]).width
         guard full > width + 0.5 else { return title }
         let chars = Array(title)
