@@ -89,7 +89,7 @@ struct DoctorVisitRangeSheet: View {
         } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(VisitDateRange.closed(
+                    Text(DateCopy.closed(
                         startKey: cycle.start,
                         endKey: cycle.end,
                         locale: app.locale.language.locale

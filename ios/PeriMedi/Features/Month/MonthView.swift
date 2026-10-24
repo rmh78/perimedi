@@ -223,7 +223,7 @@ struct MonthView: View {
     }
 
     private var monthTitle: String {
-        DateFormatCache.monthYear(monthAnchor, locale: app.locale.language.locale)
+        DateCopy.monthYear(monthAnchor, locale: app.locale.language.locale)
     }
 }
 

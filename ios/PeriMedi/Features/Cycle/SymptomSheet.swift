@@ -35,7 +35,9 @@ struct SymptomSheet: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 4) {
                         Text(app.t("symptom.date")).foregroundStyle(Theme.inkSoft)
-                        Text(pretty(dateKey)).fontWeight(.semibold).foregroundStyle(Theme.ink)
+                        Text(DateCopy.longDay(dateKey, locale: app.locale.language.locale))
+                            .fontWeight(.semibold)
+                            .foregroundStyle(Theme.ink)
                     }
                     .font(.subheadline)
 
@@ -359,11 +361,4 @@ struct SymptomSheet: View {
         severity = next
     }
 
-    private func pretty(_ key: String) -> String {
-        guard let date = DateKeys.parseDateKey(key) else { return key }
-        let f = DateFormatter()
-        f.locale = app.locale.language.locale
-        f.setLocalizedDateFormatFromTemplate("MMMMd yyyy")
-        return f.string(from: date)
-    }
 }

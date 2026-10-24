@@ -283,7 +283,7 @@ struct TrendsView: View {
             }
             ForEach(chart.cycles, id: \.start) { cycle in
                 if let x = xs[cycle.start] {
-                    Text(shortDate(cycle.start))
+                    Text(DateCopy.shortDay(cycle.start, locale: app.locale.language.locale))
                         .font(.system(size: 9))
                         .foregroundStyle(Theme.inkMuted)
                         .position(x: x, y: plot.maxY + 12)
@@ -332,8 +332,8 @@ struct TrendsView: View {
         let color = TrendsStyle.seriesColors[selected.colorIndex % TrendsStyle.seriesColors.count]
         let text = app.t("trends.detail", [
             "name": name,
-            "start": pretty(point.cycleStart),
-            "end": pretty(point.cycleEnd),
+            "start": DateCopy.longDay(point.cycleStart, locale: app.locale.language.locale),
+            "end": DateCopy.longDay(point.cycleEnd, locale: app.locale.language.locale),
             "count": "\(point.dayCount)",
             "mean": formatMean(point.meanIntensity),
         ])
@@ -360,7 +360,7 @@ struct TrendsView: View {
         let text = app.t(key, [
             "name": tick.nameSnapshot,
             "value": DoseUnitCopy.display(tick.newValue, languageCode: app.locale.language.rawValue),
-            "date": tickDate(tick.effectiveDate),
+            "date": DateCopy.shortDay(tick.effectiveDate, locale: app.locale.language.locale),
         ])
         return Text(text)
             .font(.caption)
@@ -444,27 +444,4 @@ struct TrendsView: View {
         return String(format: "%.1f", rounded)
     }
 
-    private func pretty(_ key: String) -> String {
-        guard let date = DateKeys.parseDateKey(key) else { return key }
-        let f = DateFormatter()
-        f.locale = app.locale.language.locale
-        f.setLocalizedDateFormatFromTemplate("MMMMd yyyy")
-        return f.string(from: date)
-    }
-
-    private func shortDate(_ key: String) -> String {
-        guard let date = DateKeys.parseDateKey(key) else { return key }
-        let f = DateFormatter()
-        f.locale = app.locale.language.locale
-        f.setLocalizedDateFormatFromTemplate("d MMM")
-        return f.string(from: date)
-    }
-
-    private func tickDate(_ key: String) -> String {
-        guard let date = DateKeys.parseDateKey(key) else { return key }
-        let f = DateFormatter()
-        f.locale = app.locale.language.locale
-        f.setLocalizedDateFormatFromTemplate("d MMM")
-        return f.string(from: date)
-    }
 }
