@@ -71,8 +71,14 @@ struct TrendsPickerSheet: View {
 
     private func chip(_ id: String, title: String, selectedIds: [String], ranked: [String]) -> some View {
         let on = selectedIds.contains(id)
-        let color = seriesColor(for: id, selectedIds: selectedIds)
-        return Button {
+        return PillButton(
+            title: title,
+            kind: on ? .primary : .secondary,
+            identifier: A11yID.trendsSeries(id),
+            // Default 36pt pills cover the chart legend on this sheet.
+            barHeight: 28,
+            labelScale: 0.8
+        ) {
             let next = SymptomTrendLogic.toggling(
                 id,
                 in: selectedIds,
@@ -80,44 +86,7 @@ struct TrendsPickerSheet: View {
                 directory: store.symptomDirectory
             )
             selectedStorage = next.isEmpty ? "-" : next.joined(separator: ",")
-        } label: {
-            HStack(spacing: 4) {
-                if on {
-                    Circle()
-                        .fill(color)
-                        .frame(width: 8, height: 8)
-                }
-                chipTitle(title, on: on)
-            }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Capsule().fill(on ? color.opacity(0.16) : Theme.blush50))
-            .overlay(Capsule().stroke(on ? color.opacity(0.45) : Color.clear, lineWidth: 1))
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(title)
-        .accessibilityIdentifier(A11yID.trendsSeries(id))
         .accessibilityValue(on ? "on" : "off")
-    }
-
-    @ViewBuilder
-    private func chipTitle(_ title: String, on: Bool) -> some View {
-        let text = Text(title)
-            .font(.caption)
-            .foregroundStyle(on ? Theme.ink : Theme.inkSoft)
-            .multilineTextAlignment(.leading)
-        if title.count > 22 {
-            text
-                .lineLimit(2)
-                .frame(width: 220, alignment: .leading)
-        } else {
-            text.lineLimit(1)
-        }
-    }
-
-    private func seriesColor(for id: String, selectedIds: [String]) -> Color {
-        let ordered = store.symptomDirectory.rankedIds.filter { selectedIds.contains($0) }
-        let index = ordered.firstIndex(of: id) ?? 0
-        return TrendsStyle.seriesColors[index % TrendsStyle.seriesColors.count]
     }
 }
