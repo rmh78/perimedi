@@ -140,23 +140,7 @@ struct SymptomSheet: View {
                     .font(.caption2)
                     .foregroundStyle(Theme.blush800)
             }
-            HStack(spacing: 8) {
-                PillButton(title: app.t("common.cancel"), kind: .secondary, fillsWidth: true) {
-                    closeDraft()
-                }
-                if case .edit(let id) = nameDraft {
-                    PillButton(
-                        title: app.t("common.delete"),
-                        kind: .destructive,
-                        identifier: A11yID.symptomCustomDelete(id.rawValue),
-                        fillsWidth: true
-                    ) {
-                        nameFocused = false
-                        nameDraft = .confirmDelete(id)
-                    }
-                }
-                commitButton
-            }
+            EqualWidthPillRow(items: nameActions)
         }
     }
 
@@ -188,28 +172,51 @@ struct SymptomSheet: View {
         }
     }
 
-    @ViewBuilder
-    private var commitButton: some View {
-        switch nameDraft {
-        case .create:
-            PillButton(
-                title: app.t("common.save"),
-                kind: .primary,
-                identifier: A11yID.symptomCustomCreate,
-                fillsWidth: true,
-                action: commitDraft
+    private var nameActions: [EqualWidthPillRow.Item] {
+        var items = [
+            EqualWidthPillRow.Item(
+                id: "cancel",
+                title: app.t("common.cancel"),
+                kind: .secondary,
+                action: closeDraft
             )
+        ]
+        switch nameDraft {
         case .edit(let id):
-            PillButton(
-                title: app.t("common.save"),
-                kind: .primary,
-                identifier: A11yID.symptomCustomSave(id.rawValue),
-                fillsWidth: true,
-                action: commitDraft
+            items.append(
+                EqualWidthPillRow.Item(
+                    id: "delete",
+                    title: app.t("common.delete"),
+                    kind: .destructive,
+                    identifier: A11yID.symptomCustomDelete(id.rawValue)
+                ) {
+                    nameFocused = false
+                    nameDraft = .confirmDelete(id)
+                }
+            )
+            items.append(
+                EqualWidthPillRow.Item(
+                    id: "save",
+                    title: app.t("common.save"),
+                    kind: .primary,
+                    identifier: A11yID.symptomCustomSave(id.rawValue),
+                    action: commitDraft
+                )
+            )
+        case .create:
+            items.append(
+                EqualWidthPillRow.Item(
+                    id: "save",
+                    title: app.t("common.save"),
+                    kind: .primary,
+                    identifier: A11yID.symptomCustomCreate,
+                    action: commitDraft
+                )
             )
         case .confirmDelete, nil:
-            EmptyView()
+            break
         }
+        return items
     }
 
     private func customRow(_ symptom: CustomSymptom) -> some View {
