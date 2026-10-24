@@ -76,6 +76,7 @@ struct PillButton: View {
     var barHeight: CGFloat? = nil
     var labelScale: CGFloat? = nil
     var spokenTitle: String? = nil
+    var inset: CGFloat = Self.horizontalPadding
     var action: () -> Void
 
     @ScaledMetric(relativeTo: .subheadline) private var subheadlineSize: CGFloat = 15
@@ -88,7 +89,7 @@ struct PillButton: View {
                 .lineLimit(fillsWidth ? lines : nil)
                 .minimumScaleFactor(labelScale == nil && fillsWidth ? Self.fillsWidthFloor : 1)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, Self.horizontalPadding)
+                .padding(.horizontal, inset)
                 .frame(maxWidth: fillsWidth ? .infinity : nil)
                 .frame(minHeight: barHeight ?? Self.minHeight)
                 .background(Capsule().fill(fill))
@@ -158,6 +159,7 @@ struct EqualWidthPillRow: View {
 
     @ScaledMetric(relativeTo: .subheadline) private var subheadlineSize: CGFloat = 15
     @Environment(\.legibilityWeight) private var legibilityWeight
+    @Environment(\.locale) private var locale
     @State private var rowHeight: CGFloat = 0
 
     var body: some View {
@@ -178,12 +180,15 @@ struct EqualWidthPillRow: View {
             )
             let height = Self.rowHeight(scale: fit.scale, lines: fit.lines, base: subheadlineSize, bold: bold)
             let font = UIFont.systemFont(ofSize: subheadlineSize * fit.scale, weight: bold ? .bold : .semibold)
-            let available = Self.textWidth(rowWidth: geo.size.width, count: titles.count)
+            let inset = fit.lines > 1
+                ? Self.inset(titles: titles, rowWidth: geo.size.width, font: font, locale: locale)
+                : PillButton.horizontalPadding
+            let available = Self.textWidth(rowWidth: geo.size.width, count: titles.count, inset: inset)
             HStack(spacing: Self.spacing) {
                 ForEach(items) { item in
                     PillButton(
                         title: fit.lines > 1
-                            ? Self.wrapped(item.title, width: available, font: font)
+                            ? Self.wrapped(item.title, width: available, font: font, locale: locale)
                             : item.title,
                         kind: item.kind,
                         identifier: item.identifier,
@@ -191,7 +196,8 @@ struct EqualWidthPillRow: View {
                         lines: fit.lines,
                         barHeight: height - PillButton.strokeWidth,
                         labelScale: fit.scale,
-                        spokenTitle: item.title,
+                        spokenTitle: Self.spokenLabel(for: item.title),
+                        inset: inset,
                         action: item.action
                     )
                 }
@@ -228,33 +234,110 @@ struct EqualWidthPillRow: View {
         title
     }
 
+    static let minimumInset: CGFloat = 6
+
+    static func inset(titles: [String], rowWidth: CGFloat, font: UIFont, locale: Locale) -> CGFloat {
+        let slot = slotWidth(rowWidth: rowWidth, count: titles.count)
+        let needed = titles.map { requiredTextWidth($0, font: font, locale: locale) }.max() ?? 0
+        let room = (slot - needed) / 2
+        if room >= PillButton.horizontalPadding {
+            return PillButton.horizontalPadding
+        }
+        return max(minimumInset, room)
+    }
+
     static func wrapped(_ title: String, width: CGFloat, font: UIFont, locale: Locale = .current) -> String {
-        let full = (title as NSString).size(withAttributes: [.font: font]).width
-        guard full > width + 0.5 else { return title }
-        let chars = Array(title)
-        guard chars.count > 1 else { return title }
-        var best = chars.count / 2
-        var bestGap = CGFloat.greatestFiniteMagnitude
-        var found = false
-        for index in 1..<chars.count {
-            let left = String(chars.prefix(index))
-            let right = String(chars.suffix(chars.count - index))
-            let leftWidth = (left as NSString).size(withAttributes: [.font: font]).width
-            let rightWidth = (right as NSString).size(withAttributes: [.font: font]).width
-            guard leftWidth <= width + 0.5, rightWidth <= width + 0.5 else { continue }
-            let gap = abs(leftWidth - rightWidth)
-            if gap < bestGap {
-                bestGap = gap
-                best = index
-                found = true
+        guard measured(title, font: font) > width + 0.5 else { return title }
+        guard let piece = bestPiece(breakPieces(title, locale: locale), width: width, font: font) else {
+            return title
+        }
+        return "\(piece.left)\n\(piece.right)"
+    }
+
+    private struct BreakPiece {
+        var left: String
+        var right: String
+        var hyphen: Bool
+    }
+
+    private static func breakPieces(_ title: String, locale: Locale) -> [BreakPiece] {
+        let ns = title as NSString
+        var pieces: [BreakPiece] = []
+        for index in 0..<ns.length where ns.character(at: index) == 32 {
+            let left = ns.substring(to: index)
+            let right = ns.substring(from: index + 1)
+            if !left.isEmpty, !right.isEmpty {
+                pieces.append(BreakPiece(left: left, right: right, hyphen: false))
             }
         }
-        if !found {
-            best = chars.count / 2
+        let cf = title as CFString
+        let length = CFStringGetLength(cf)
+        var cursor = length
+        let cfLocale = locale as CFLocale
+        while cursor > 0 {
+            var hyphenChar: UTF32Char = 0
+            let location = CFStringGetHyphenationLocationBeforeIndex(
+                cf,
+                cursor,
+                CFRange(location: 0, length: length),
+                0,
+                cfLocale,
+                &hyphenChar
+            )
+            if location == kCFNotFound || location <= 0 {
+                break
+            }
+            let right = ns.substring(from: location)
+            if !right.isEmpty {
+                pieces.append(BreakPiece(left: ns.substring(to: location) + "-", right: right, hyphen: true))
+            }
+            cursor = location
         }
-        let left = String(chars.prefix(best))
-        let right = String(chars.suffix(chars.count - best))
-        return "\(left)\n\(right)"
+        return pieces
+    }
+
+    private static func bestPiece(_ pieces: [BreakPiece], width: CGFloat, font: UIFont) -> BreakPiece? {
+        struct Scored {
+            var piece: BreakPiece
+            var overflow: CGFloat
+            var gap: CGFloat
+            var fits: Bool
+        }
+        let scored = pieces.map { piece in
+            let left = measured(piece.left, font: font)
+            let right = measured(piece.right, font: font)
+            return Scored(
+                piece: piece,
+                overflow: max(0, left - width) + max(0, right - width),
+                gap: abs(left - right),
+                fits: left <= width + 0.5 && right <= width + 0.5
+            )
+        }
+        let fitting = scored.filter(\.fits)
+        if fitting.isEmpty {
+            return scored.min { lhs, rhs in
+                if abs(lhs.overflow - rhs.overflow) > 0.5 { return lhs.overflow < rhs.overflow }
+                if lhs.piece.hyphen != rhs.piece.hyphen { return !lhs.piece.hyphen }
+                return lhs.gap < rhs.gap
+            }?.piece
+        }
+        return fitting.min { lhs, rhs in
+            if lhs.piece.hyphen != rhs.piece.hyphen { return !lhs.piece.hyphen }
+            return lhs.gap < rhs.gap
+        }?.piece
+    }
+
+    private static func requiredTextWidth(_ title: String, font: UIFont, locale: Locale) -> CGFloat {
+        let pieces = breakPieces(title, locale: locale)
+        let widths = pieces.map { max(measured($0.left, font: font), measured($0.right, font: font)) }
+        if let legal = widths.min() {
+            return legal
+        }
+        return measured(title, font: font)
+    }
+
+    private static func measured(_ text: String, font: UIFont) -> CGFloat {
+        (text as NSString).size(withAttributes: [.font: font]).width
     }
 
     private static func oneLineScale(titles: [String], rowWidth: CGFloat, base: CGFloat, bold: Bool) -> CGFloat {
@@ -267,9 +350,12 @@ struct EqualWidthPillRow: View {
         return (available - fitSlack) / widest
     }
 
-    private static func textWidth(rowWidth: CGFloat, count: Int) -> CGFloat {
-        let slot = (rowWidth - spacing * CGFloat(max(count - 1, 0))) / CGFloat(max(count, 1))
-        return slot - PillButton.horizontalPadding * 2
+    private static func slotWidth(rowWidth: CGFloat, count: Int) -> CGFloat {
+        (rowWidth - spacing * CGFloat(max(count - 1, 0))) / CGFloat(max(count, 1))
+    }
+
+    private static func textWidth(rowWidth: CGFloat, count: Int, inset: CGFloat = PillButton.horizontalPadding) -> CGFloat {
+        slotWidth(rowWidth: rowWidth, count: count) - inset * 2
     }
 }
 

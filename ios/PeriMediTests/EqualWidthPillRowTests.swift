@@ -72,12 +72,14 @@ final class EqualWidthPillRowTests: XCTestCase {
         let line = UIFont.systemFont(ofSize: base * fit.scale, weight: .semibold).lineHeight
         XCTAssertGreaterThanOrEqual(height, ceil(line))
         XCTAssertGreaterThanOrEqual(height, ceil(line) * 2)
-        let slot = (width - EqualWidthPillRow.spacing * 2) / 3
-        let available = slot - PillButton.horizontalPadding * 2
         let font = UIFont.systemFont(ofSize: base * fit.scale, weight: .semibold)
+        let locale = Locale(identifier: "de")
+        let inset = EqualWidthPillRow.inset(titles: titles, rowWidth: width, font: font, locale: locale)
+        let slot = (width - EqualWidthPillRow.spacing * 2) / 3
+        let available = slot - inset * 2
         for title in titles {
-            let shown = EqualWidthPillRow.wrapped(title, width: available, font: font)
-            XCTAssertEqual(shown.replacingOccurrences(of: "\n", with: ""), title)
+            let shown = EqualWidthPillRow.wrapped(title, width: available, font: font, locale: locale)
+            XCTAssertEqual(shown.replacingOccurrences(of: "-\n", with: ""), title)
             for part in shown.split(separator: "\n") {
                 let partWidth = (String(part) as NSString).size(withAttributes: [.font: font]).width
                 XCTAssertLessThanOrEqual(partWidth, available + 1)
@@ -90,9 +92,12 @@ final class EqualWidthPillRowTests: XCTestCase {
         let width: CGFloat = 318
         let base: CGFloat = 49
         let locale = Locale(identifier: "de")
-        let slot = (width - EqualWidthPillRow.spacing * 2) / 3
-        let available = slot - PillButton.horizontalPadding * 2
         let font = UIFont.systemFont(ofSize: base * EqualWidthPillRow.minLabelScale, weight: .semibold)
+        let inset = EqualWidthPillRow.inset(titles: titles, rowWidth: width, font: font, locale: locale)
+        let slot = (width - EqualWidthPillRow.spacing * 2) / 3
+        let available = slot - inset * 2
+        XCTAssertGreaterThanOrEqual(inset, EqualWidthPillRow.minimumInset)
+        XCTAssertLessThanOrEqual(inset, PillButton.horizontalPadding)
         let expected = [
             "Abbrechen": "Abbre-\nchen",
             "Löschen": "Lö-\nschen",
