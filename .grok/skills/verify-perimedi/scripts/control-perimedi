@@ -219,6 +219,7 @@ cmd_doctor() {
   python3 "$ROOT/ios/scripts/check-openspec-sync.py" || rc=1
   python3 "$ROOT/ios/scripts/check-ui-coverage.py" --fail-uncovered || rc=1
   python3 "$ROOT/ios/scripts/check-screen-catalog.py" || rc=1
+  python3 "$ROOT/ios/scripts/check-agent-rails.py" || rc=1
 
   load_state
   if [[ -z "${UDID:-}" ]]; then
@@ -584,6 +585,7 @@ cmd_verify() {
     python3 "$ROOT/ios/scripts/check-openspec-sync.py"
     python3 "$ROOT/ios/scripts/check-ui-coverage.py" --fail-uncovered
     python3 "$ROOT/ios/scripts/check-screen-catalog.py"
+    python3 "$ROOT/ios/scripts/check-agent-rails.py"
     python3 "$ROOT/ios/scripts/check-one-way-door.py" --base origin/main
   fi
 

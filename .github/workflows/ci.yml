@@ -51,6 +51,10 @@ jobs:
           fi
       - name: One-way door unit tests
         run: python3 ios/scripts/test_check_one_way_door.py
+      - name: Wired scripts are named in Agents.md
+        run: python3 ios/scripts/check-agent-rails.py
+      - name: Agent rails unit tests
+        run: python3 ios/scripts/test_check_agent_rails.py
       - name: Every A11yID is named in the feature map
         run: python3 ios/scripts/check-feature-map.py
       - name: Feature map vs UITest coverage
