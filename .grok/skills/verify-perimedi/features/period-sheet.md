@@ -20,7 +20,7 @@ Cycle → cycle settings (`cycle.action.period`).
 | Sheet | `sheet.period` | Present after `cycle.action.period`. |
 | Close | `sheet.close` | `AppRobot.closeSheet(id: "sheet.period")`. |
 | Add | `period.add` | Opens the card. May sit below the fold. The robot swipes up if it is missing. |
-| Start | `period.start` | In the card. `setDateKey`. First-use: `2026-03-07`. |
+| Start | `period.start` | In the card. `setDateKey`. The filled English label for 7 March 2026 is Mar 7, 2026. The accessibility value stays 2026-03-07. |
 | End | `period.end` | In the card. First-use: `2026-03-11`. |
 | Save | `period.save` | Right side of the card. Label is Save. Then close the sheet. |
 | Cancel | `confirm.cancel` | Left side of the new-period card. Proof: `testEnglishAppJourney` opens the card, sees an empty `period.end`, taps Cancel, and the end field is gone. |

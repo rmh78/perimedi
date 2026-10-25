@@ -69,6 +69,7 @@ struct AppProof {
         let start = robot.element("period.start")
         let startShown = ((start.value as? String) ?? "") + start.label
         XCTAssertTrue(startShown.contains("2026-03-07"), startShown)
+        XCTAssertEqual(start.label, "Mar 7, 2026")
         XCTAssertTrue(robot.exists("period.delete"))
         robot.setDateKey("period.end", "2026-03-12")
         robot.tap("period.save")

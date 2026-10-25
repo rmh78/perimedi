@@ -35,7 +35,7 @@ struct SymptomSheet: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 4) {
                         Text(app.t("symptom.date")).foregroundStyle(Theme.inkSoft)
-                        Text(DateCopy.longDay(dateKey, locale: app.locale.language.locale))
+                        Text(DateCopy.day(dateKey, locale: app.locale.language.locale))
                             .fontWeight(.semibold)
                             .foregroundStyle(Theme.ink)
                     }

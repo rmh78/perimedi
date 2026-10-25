@@ -42,8 +42,6 @@ final class DateCopyTests: XCTestCase {
         let month = DateKeys.parseDateKey("2026-03-01")!
         XCTAssertEqual(DateCopy.day(day, locale: en), "Mar 7, 2026")
         XCTAssertEqual(DateCopy.day(day, locale: de), "7. März 2026")
-        XCTAssertEqual(DateCopy.longDay(day, locale: en), "Mar 7, 2026")
-        XCTAssertEqual(DateCopy.longDay(day, locale: de), "7. März 2026")
         XCTAssertEqual(DateCopy.shortDay(day, locale: en), "Mar 7")
         XCTAssertEqual(DateCopy.shortDay(day, locale: de), "7. März")
         XCTAssertEqual(DateCopy.weekdayMonth(day, locale: en), "Sat, Mar 7")
