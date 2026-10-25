@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Fail if Trends or Visit keys live in L10n.swift, en/de tables disagree, or a user-facing DateFormatter sits outside DateCopy.swift."""
+"""Fail if Trends or Visit keys live in L10n.swift, en/de tables disagree, a user-facing DateFormatter sits outside DateCopy.swift, or German copy contains Beschwerde."""
 from __future__ import annotations
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -36,6 +37,7 @@ PINS = (
 
 FORMATTER = re.compile(r"(?<![A-Za-z0-9])DateFormatter\(")
 TEMPLATE = "setLocalizedDateFormatFromTemplate"
+NOUN = re.compile(r"beschwerde", re.IGNORECASE)
 PRESENTATION_ROOTS = (
     ROOT / "ios/PeriMedi",
     ROOT / "ios/PeriMediDoseWidget",
@@ -113,7 +115,220 @@ def string_map(source: str, name: str) -> dict[str, str]:
     return out
 
 
+def contains_noun(value: str) -> bool:
+    return NOUN.search(value) is not None
+
+
+def german_map_values(de: dict[str, str]) -> list[str]:
+    return list(de.values())
+
+
+def xcstrings_german_units(document: object) -> list[str]:
+    found: list[str] = []
+
+    def walk(node: object, in_de: bool, parent: str | None) -> None:
+        if isinstance(node, dict):
+            if in_de and parent == "stringUnit":
+                value = node.get("value")
+                if isinstance(value, str):
+                    found.append(value)
+            for key, child in node.items():
+                if not isinstance(key, str):
+                    continue
+                walk(child, in_de or (key == "de" and parent == "localizations"), key)
+        elif isinstance(node, list):
+            for child in node:
+                walk(child, in_de, parent)
+
+    walk(document, False, None)
+    return found
+
+
+def swift_string_literals(source: str) -> list[str]:
+    literals: list[str] = []
+    i = 0
+    n = len(source)
+    while i < n:
+        if source.startswith("//", i):
+            nl = source.find("\n", i)
+            i = n if nl < 0 else nl + 1
+            continue
+        if source.startswith("/*", i):
+            i = _skip_block(source, i)
+            continue
+        if source[i] == '"':
+            literal, nxt = _read_string(source, i)
+            if literal is not None:
+                literals.append(literal)
+            i = nxt if nxt > i else i + 1
+            continue
+        i += 1
+    return literals
+
+
+def _skip_block(source: str, i: int) -> int:
+    depth = 0
+    n = len(source)
+    while i < n - 1:
+        if source.startswith("/*", i):
+            depth += 1
+            i += 2
+            continue
+        if source.startswith("*/", i):
+            depth -= 1
+            i += 2
+            if depth == 0:
+                return i
+            continue
+        i += 1
+    return n
+
+
+def _read_string(source: str, i: int) -> tuple[str | None, int]:
+    n = len(source)
+    if source.startswith('"""', i):
+        j = i + 3
+        buf: list[str] = []
+        while j < n:
+            if source.startswith('"""', j):
+                return "".join(buf), j + 3
+            if source[j] == "\\" and j + 1 < n:
+                if source[j + 1] == "(":
+                    j = _skip_interpolation(source, j + 1)
+                    continue
+                buf.append(source[j + 1])
+                j += 2
+                continue
+            buf.append(source[j])
+            j += 1
+        return None, n
+    j = i + 1
+    buf = []
+    while j < n:
+        ch = source[j]
+        if ch == "\\":
+            if j + 1 < n and source[j + 1] == "(":
+                j = _skip_interpolation(source, j + 1)
+                continue
+            if j + 1 < n:
+                buf.append(source[j + 1])
+                j += 2
+                continue
+        if ch == '"':
+            return "".join(buf), j + 1
+        if ch == "\n":
+            return None, j
+        buf.append(ch)
+        j += 1
+    return None, n
+
+
+def _skip_interpolation(source: str, i: int) -> int:
+    depth = 0
+    n = len(source)
+    while i < n:
+        if source.startswith("//", i):
+            nl = source.find("\n", i)
+            i = n if nl < 0 else nl + 1
+            continue
+        if source.startswith("/*", i):
+            i = _skip_block(source, i)
+            continue
+        ch = source[i]
+        if ch == '"':
+            _, i = _read_string(source, i)
+            continue
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+            i += 1
+            if depth == 0:
+                return i
+            continue
+        i += 1
+    return n
+
+
+def self_check() -> bool:
+    failed = False
+
+    def expect(ok: bool, message: str) -> None:
+        nonlocal failed
+        if not ok:
+            print(f"self_check: {message}", file=sys.stderr)
+            failed = True
+
+    expect(contains_noun("Beschwerden"), "German value Beschwerden should fail")
+    expect(not contains_noun("Symptom"), "German value Symptom should pass")
+
+    english = "Track your Beschwerden today"
+    scanned = german_map_values({"legend.symptom": "Symptom"})
+    units = xcstrings_german_units(
+        {
+            "strings": {
+                "legend.symptom": {
+                    "localizations": {
+                        "en": {"stringUnit": {"value": english}},
+                        "de": {"stringUnit": {"value": "Symptom"}},
+                    }
+                }
+            }
+        }
+    )
+    passed_in = scanned + units
+    expect(english not in passed_in, "an English sentence is not passed in")
+    expect(not any(contains_noun(value) for value in passed_in), "Symptom should pass")
+
+    source = '\n'.join(
+        [
+            "// Beschwerde in a comment",
+            "/* Beschwerde block */",
+            "let beschwerdeCount = 1",
+            'let label = "Symptom"',
+        ]
+    )
+    literals = swift_string_literals(source)
+    expect(literals == ["Symptom"], f"comment is not a literal ({literals})")
+    expect("beschwerdeCount" not in literals, "identifier beschwerdeCount is not a literal")
+    expect(not any(contains_noun(value) for value in literals), "comment text should not be scanned")
+    return not failed
+
+
+def noun_hits(maps: dict[Path, dict[str, dict[str, str]]]) -> list[str]:
+    hits: list[str] = []
+    for path in TABLES:
+        for key, value in maps[path]["de"].items():
+            if contains_noun(value):
+                hits.append(f"{path.relative_to(ROOT)} de {key}: {value}")
+    ios = ROOT / "ios"
+    if ios.is_dir():
+        for path in sorted(ios.rglob("*.xcstrings")):
+            try:
+                document = json.loads(path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as error:
+                hits.append(f"{path.relative_to(ROOT)}: {error}")
+                continue
+            for value in xcstrings_german_units(document):
+                if contains_noun(value):
+                    hits.append(f"{path.relative_to(ROOT)}: {value}")
+    tables = {path.resolve() for path in TABLES}
+    for root in PRESENTATION_ROOTS:
+        if not root.is_dir():
+            continue
+        for path in sorted(root.rglob("*.swift")):
+            if path.resolve() in tables:
+                continue
+            for value in swift_string_literals(path.read_text(encoding="utf-8")):
+                if contains_noun(value):
+                    hits.append(f"{path.relative_to(ROOT)}: {value}")
+    return hits
+
+
 def main() -> int:
+    if not self_check():
+        return 1
+
     missing = [p for p in (*TABLES, DIALOG, PERIOD) if not p.is_file()]
     if missing:
         for path in missing:
@@ -198,6 +413,10 @@ def main() -> int:
     for path in presentation_formatter_leaks():
         failed = True
         print(f"{path}: user-facing DateFormatter outside DateCopy.swift", file=sys.stderr)
+
+    for hit in noun_hits(maps):
+        failed = True
+        print(hit, file=sys.stderr)
 
     if failed:
         return 1
