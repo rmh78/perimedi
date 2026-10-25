@@ -5,10 +5,6 @@ public enum DateCopy {
         render(key, template: "yMMMd", locale: locale)
     }
 
-    public static func longDay(_ key: String, locale: Locale) -> String {
-        render(key, template: "MMMMd yyyy", locale: locale)
-    }
-
     public static func shortDay(_ key: String, locale: Locale) -> String {
         render(key, template: "d MMM", locale: locale)
     }
@@ -23,7 +19,7 @@ public enum DateCopy {
 
     public static func field(_ key: String, locale: Locale) -> String {
         guard DateKeys.parseDateKey(key) != nil else { return key }
-        guard locale.language.languageCode == .german else { return key }
+        guard locale.language.languageCode == .german else { return day(key, locale: locale) }
         return render(key, format: "dd.MM.yyyy", locale: locale)
     }
 

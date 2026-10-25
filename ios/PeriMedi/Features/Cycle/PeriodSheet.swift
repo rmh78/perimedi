@@ -335,6 +335,6 @@ struct PeriodSheet: View {
     }
 
     private func formatted(_ key: String?) -> String? {
-        key.map { DateCopy.longDay($0, locale: app.locale.language.locale) }
+        key.map { DateCopy.day($0, locale: app.locale.language.locale) }
     }
 }

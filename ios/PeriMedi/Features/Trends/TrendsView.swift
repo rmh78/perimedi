@@ -332,8 +332,8 @@ struct TrendsView: View {
         let color = TrendsStyle.seriesColors[selected.colorIndex % TrendsStyle.seriesColors.count]
         let text = app.t("trends.detail", [
             "name": name,
-            "start": DateCopy.longDay(point.cycleStart, locale: app.locale.language.locale),
-            "end": DateCopy.longDay(point.cycleEnd, locale: app.locale.language.locale),
+            "start": DateCopy.day(point.cycleStart, locale: app.locale.language.locale),
+            "end": DateCopy.day(point.cycleEnd, locale: app.locale.language.locale),
             "count": "\(point.dayCount)",
             "mean": formatMean(point.meanIntensity),
         ])
