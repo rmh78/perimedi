@@ -32,5 +32,5 @@ PDF contents (range, taken rate, symptom table, Effect vs in-range changes, disc
 - Do not tap `visit.pdf.share` in journeys (system share sheet).
 - Empty store: range sheet copy says 4-week / 12-week fallback; Continue still opens a preview.
 - Screen catalog: `more-sample-en`, `visit-range-sample-en`, `visit-pdf-sample-en`. Review Files changed, not PR comment galleries.
-- Missing symptom days are not 0. `hot_flash` is days scored. German pump unit is Hub.
+- Missing symptom days are not 0. `hot_flash` is days scored. German pump unit is Hub, and a decimal in that dose or in a mean is a comma.
 - If Effect would name a dose change outside the chosen range, the PDF omits that Effect sentence.

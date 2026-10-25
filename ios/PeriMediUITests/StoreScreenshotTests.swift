@@ -14,13 +14,14 @@ final class StoreScreenshotTests: PeriMediUITestCase {
         StoreShot(file: "01-cycle.png", waitID: "cycle.effect") { robot in
             robot.tap("tab.cycle")
         },
-        StoreShot(file: "02-trends.png", waitID: "trends.plot") { robot in
+        StoreShot(file: "02-trends.png", waitID: "trends.detail") { robot in
             robot.tap("tab.trends")
+            selectTrendDot(robot)
         },
         StoreShot(file: "05-month.png", waitID: "month.day.\(today)") { robot in
             robot.tap("tab.month")
         },
-        StoreShot(file: "06-more.png", waitID: "more.lang.en") { robot in
+        StoreShot(file: "06-more.png", waitID: "more.privacyPolicy") { robot in
             robot.tap("tab.more")
             showMore(robot)
         },
@@ -63,30 +64,60 @@ final class StoreScreenshotTests: PeriMediUITestCase {
         }
     }
 
+    private static func selectTrendDot(_ robot: AppRobot) {
+        robot.waitFor(id: "trends.plot", timeout: 8)
+        let dots = robot.app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", "trends.dot.hot_flash.")
+        )
+        var chosen: XCUIElement?
+        var chosenID = ""
+        for index in 0..<dots.count {
+            let dot = dots.element(boundBy: index)
+            let identifier = dot.identifier
+            if identifier > chosenID {
+                chosenID = identifier
+                chosen = dot
+            }
+        }
+        chosen?.tap()
+    }
+
     private static func showMore(_ robot: AppRobot) {
         robot.waitFor(id: "more.lang.en")
         robot.waitFor(id: "more.sharePdf")
-        if !onScreen(robot, "more.sample") {
-            robot.scrollTo("more.sample")
-        }
-        if onScreen(robot, "more.lang.en") && onScreen(robot, "more.sample") {
-            return
-        }
+        robot.scrollTo("more.privacyPolicy")
+        let footer = robot.app.staticTexts.matching(
+            NSPredicate(
+                format: "label CONTAINS %@ OR label CONTAINS %@",
+                "not medical advice",
+                "kein medizinischer Rat"
+            )
+        ).firstMatch
+        let privacy = robot.element("more.privacyPolicy")
+        let limit = tabTop(robot) - 4
         for _ in 0..<4 {
-            if onScreen(robot, "more.lang.en") && onScreen(robot, "more.sharePdf") {
-                return
-            }
-            robot.app.swipeDown()
+            let footerFrame = footer.frame
+            let privacyFrame = privacy.frame
+            let footerClear = footer.exists
+                && footerFrame.height > 1
+                && footerFrame.minY >= 0
+                && footerFrame.maxY <= limit
+            let privacyClear = privacyFrame.height > 1
+                && privacyFrame.minY >= 0
+                && privacyFrame.maxY <= limit
+            if footerClear && privacyClear { return }
+            let start = robot.app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.62))
+            let end = robot.app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.48))
+            start.press(forDuration: 0.05, thenDragTo: end)
         }
     }
 
-    private static func onScreen(_ robot: AppRobot, _ id: String) -> Bool {
-        let element = robot.element(id)
-        guard element.exists else { return false }
-        let frame = element.frame
-        let bounds = robot.app.frame
-        guard frame.width > 1, frame.height > 1 else { return false }
-        return frame.minY >= bounds.minY && frame.maxY <= bounds.height - 80
+    private static func tabTop(_ robot: AppRobot) -> CGFloat {
+        let tab = robot.app.tabBars.firstMatch
+        if tab.exists, tab.frame.minY > 1 {
+            return tab.frame.minY
+        }
+        return robot.app.frame.height - 140
     }
 
     private func write(locale: String, file: String) throws {

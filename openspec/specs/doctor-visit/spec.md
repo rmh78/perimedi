@@ -125,4 +125,4 @@ Visit action labels on More and the PDF chrome (headings, range labels, table he
 
 #### Scenario: German PDF
 - **WHEN** the active language is German and the user generates the visit PDF
-- **THEN** headings and the disclaimer are in German, medication names remain as typed, and a pump unit is shown as Hub
+- **THEN** headings and the disclaimer are in German, medication names remain as typed, a pump unit is shown as Hub, a decimal point in that shown dose is a comma, and a mean intensity uses a comma

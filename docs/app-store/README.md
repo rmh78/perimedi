@@ -1,6 +1,6 @@
 # App Store listing drafts
 
-Tracked in [#30](https://github.com/rmh78/perimedi/issues/30). This folder holds the listing, `connect.md`, `privacy.md`, `screenshots/`, and `check-listing.py`. No iOS app code.
+Tracked in [#30](https://github.com/rmh78/perimedi/issues/30). This folder holds the listing, `connect.md`, `privacy.md`, `screenshots/`, and `check-listing.py`.
 
 ## Before paid membership
 - These drafts
@@ -14,7 +14,7 @@ Tracked in [#30](https://github.com/rmh78/perimedi/issues/30). This folder holds
 - Production iCloud container `iCloud.app.perimedi.ios`
 - Screenshots (6.9" iPhone) and submit
 
-Redo the 6.9" set with `docs/app-store/capture-store-shots.sh`. Do not add that script to `control-perimedi`.
+Before a listing edit, run `python3 docs/app-store/check-listing.py`. That check also runs in CI (`ids`) and in local `control-perimedi verify`. Redo the 6.9" set with `bash docs/app-store/capture-store-shots.sh`. Do not add the capture script to `control-perimedi`.
 
 ## Product rules
 - Category: **Health & Fitness**, not Medical

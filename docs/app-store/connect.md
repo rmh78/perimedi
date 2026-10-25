@@ -37,11 +37,11 @@ The shots are full-bleed app frames from sample data on iPhone 18 Pro Max, with 
 English files are in `docs/app-store/screenshots/en/`. German files are in `docs/app-store/screenshots/de/`.
 
 1. `01-cycle.png`. Sample Cycle, with the effect sentence visible and no sheet.
-2. `02-trends.png`. Sample Trends chart.
+2. `02-trends.png`. Sample Trends chart, with one symptom dot selected and its detail line visible.
 3. `03-symptoms.png`. Sample symptom sheet, scrolled so New symptom or Neues Symptom is visible.
-4. `04-visit.png`. Visit PDF preview, with the share control present.
+4. `04-visit.png`. Visit PDF preview, with the share control present. Sample medications show taken counts from the logged history.
 5. `05-month.png`. Sample Month.
-6. `06-more.png`. More, with language and backup both visible when the 6.9" frame allows. Otherwise keep Doctor visit and Language on screen.
+6. `06-more.png`. More, ending above the tab bar with the privacy link and the full disclaimer visible.
 
 ## Support URL
 

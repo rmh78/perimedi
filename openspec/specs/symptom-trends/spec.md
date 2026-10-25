@@ -83,7 +83,7 @@ The system SHALL draw at most three symptom series. The default series SHALL be 
 - **THEN** a selected name uses the same filled pill as the active language, an unselected name uses the same outlined pill as an inactive language choice, and the sheet does not paint a series color or a status dot
 
 ### Requirement: Tap shows cycle numbers
-Activating a dot SHALL show that symptom’s name, the cycle’s date range, the day count, and the mean intensity as numbers, and SHALL highlight the selected circle with a strong ring. The user-facing word for that intensity SHALL be “average” in English and “Mittel” in German. Copy SHALL be English and German according to the active language. When several circles sit on the same point, activating that point again SHALL cycle through those series. Activating empty plot area SHALL clear the selection.
+Activating a dot SHALL show that symptom’s name, the cycle’s date range, the day count, and the mean intensity as numbers, and SHALL highlight the selected circle with a strong ring. The user-facing word for that intensity SHALL be “average” in English and “Mittel” in German. A German mean SHALL use a decimal comma. Copy SHALL be English and German according to the active language. When several circles sit on the same point, activating that point again SHALL cycle through those series. Activating empty plot area SHALL clear the selection.
 
 #### Scenario: Tap a point
 - **WHEN** the user activates a plotted point

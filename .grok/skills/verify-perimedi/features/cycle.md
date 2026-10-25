@@ -46,3 +46,4 @@ Open the app, or tap Cycle in the bottom bar. Sheets for med / period / symptom 
 - Tapping a lane toggles dose status. Editing is the separate `.edit` control.
 - Cycle windows and planned doses come from domain (`CycleLogic` / `ScheduleLogic` / `DoseRangeLogic`); taken/not-taken is `Store.setDoseStatus`. Do not reimplement that math in the app.
 - Keep med lane labels and dose tracks row-aligned. Period UI is label + background only (no duplicate red bar). No follicular/luteal labels.
+- German lane dose text maps pump/pumps to Hub and a decimal point to a comma. The medication sheet field keeps the stored string. The Home Screen widget dose label stays as typed.

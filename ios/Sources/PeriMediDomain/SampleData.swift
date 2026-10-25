@@ -72,6 +72,7 @@ public enum SampleData {
         )
 
         let meds = [estradiol, progesterone, vaginalE2, magnesium, vitaminD]
+        let settings = CycleSettings(averageCycleLength: 30, averagePeriodLength: 5)
 
         func sched(
             med: Medication,
@@ -116,6 +117,39 @@ public enum SampleData {
         ]
 
         var doseLogs: [DoseLog] = []
+        // The visit PDF uses the last two completed cycles (day 74 through day 18
+        // when today is the sample anchor). Logs only on the open cycle read as
+        // 0 taken for every planned dose in that window.
+        let visitPlanned = ScheduleLogic.expandPlannedDoses(
+            from: key(74),
+            to: key(18),
+            medications: meds,
+            schedules: schedules,
+            doseLogs: [],
+            periods: periods,
+            settings: settings
+        )
+        var estradiolIndex = 0
+        var estradiolSkipped = 0
+        for dose in visitPlanned {
+            if dose.medication.id == estradiol.id {
+                let skip = estradiolSkipped < 7 && estradiolIndex % 8 == 0
+                estradiolIndex += 1
+                if skip {
+                    estradiolSkipped += 1
+                    continue
+                }
+            }
+            doseLogs.append(
+                log(
+                    med: dose.medication,
+                    schedule: dose.schedule,
+                    date: dose.date,
+                    time: dose.timeOfDay,
+                    taken: true
+                )
+            )
+        }
         for daysAgo in stride(from: 6, through: 0, by: -1) {
             let date = key(daysAgo)
             doseLogs.append(log(med: estradiol, schedule: schedules[0], date: date, time: "07:30", taken: daysAgo != 4))
@@ -224,7 +258,7 @@ public enum SampleData {
             schedules: schedules,
             doseLogs: doseLogs,
             remarks: [],
-            cycleSettings: CycleSettings(averageCycleLength: 30, averagePeriodLength: 5),
+            cycleSettings: settings,
             periods: periods,
             symptomScores: symptomScores,
             medicationChanges: medicationChanges

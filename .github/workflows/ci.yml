@@ -71,6 +71,8 @@ jobs:
         run: python3 ios/scripts/check-l10n-layout.py
       - name: Domain owns math; persistence writes logs
         run: python3 ios/scripts/check-domain-boundary.py
+      - name: App Store listing
+        run: python3 docs/app-store/check-listing.py
       - name: Decision script
         run: python3 .github/scripts/test_main_is_red.py
 

@@ -437,11 +437,7 @@ struct TrendsView: View {
     }
 
     private func formatMean(_ value: Double) -> String {
-        let rounded = (value * 10).rounded() / 10
-        if abs(rounded - rounded.rounded()) < 0.05 {
-            return "\(Int(rounded.rounded()))"
-        }
-        return String(format: "%.1f", rounded)
+        DoseUnitCopy.decimal(value, languageCode: app.locale.language.rawValue)
     }
 
 }
