@@ -154,6 +154,7 @@ struct DateKeyPicker: View {
     @Binding var key: String
     var allowEmpty = false
     var identifier: String? = nil
+    var usesTextWidth = false
 
     @Environment(\.locale) private var locale
     @State private var date = Date()
@@ -171,6 +172,7 @@ struct DateKeyPicker: View {
             Text(displayText)
                 .font(.body)
                 .foregroundStyle(key.isEmpty ? Theme.inkMuted : Theme.ink)
+                .fixedSize(horizontal: usesTextWidth, vertical: false)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .buttonStyle(.plain)
@@ -218,7 +220,7 @@ struct DateKeyPicker: View {
 
     private var displayText: String {
         if key.isEmpty {
-            return locale.language.languageCode == .german ? "TT.MM.JJJJ" : "YYYY-MM-DD"
+            return locale.language.languageCode == .german ? "TT.MM.JJJJ" : "Optional"
         }
         return DateCopy.field(key, locale: locale)
     }

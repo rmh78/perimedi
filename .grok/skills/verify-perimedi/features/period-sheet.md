@@ -21,7 +21,7 @@ Cycle → cycle settings (`cycle.action.period`).
 | Close | `sheet.close` | `AppRobot.closeSheet(id: "sheet.period")`. |
 | Add | `period.add` | Opens the card. May sit below the fold. The robot swipes up if it is missing. |
 | Start | `period.start` | In the card. `setDateKey`. The filled English label for 7 March 2026 is Mar 7, 2026. The accessibility value stays 2026-03-07. |
-| End | `period.end` | In the card. First-use: `2026-03-11`. |
+| End | `period.end` | In the card. Empty English reads Optional. Empty German reads TT.MM.JJJJ. First-use save uses `2026-03-11`. |
 | Save | `period.save` | Right side of the card. Label is Save. Then close the sheet. |
 | Cancel | `confirm.cancel` | Left side of the new-period card. Proof: `testEnglishAppJourney` opens the card, sees an empty `period.end`, taps Cancel, and the end field is gone. |
 | History | `period.history.{id}` | One row. The underlined date range shares that line with the length and flow. A closed period uses the same date-range format as a cycle in the doctor’s visit dialog. Opens the same card filled in. Proof: `testEnglishAppJourney` reads `Mar 7, 2026 – Mar 12, 2026`. |
@@ -37,3 +37,4 @@ After save, Cycle strip days `cycle.strip.day.2026-03-07` and `…-11` values co
 - No menstrual phase labels.
 - Period UI on Cycle is label + background only.
 - `period.add` is easy to miss without a swipe. Don't treat "missing" as "not implemented" until you scroll.
+- Start and end share one row at the default text size. `testEnglishAppJourney` checks that `period.start` and `period.end` share a midY within 2 points. They stack when a column's minimum width is wider than half the row. `testPeriodCardAtLargestText` opens the card at the largest accessibility size in English and in German, fills both dates, and checks that the end field starts at or below the start field, the full end hint is on screen and taller than 40 points, and neither date leaves the window.

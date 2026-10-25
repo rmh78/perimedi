@@ -128,4 +128,18 @@ final class EqualWidthPillRowTests: XCTestCase {
         XCTAssertLessThan(bold, 1)
         XCTAssertLessThanOrEqual(bold, regular)
     }
+
+    func testWideMinimumStacks() {
+        XCTAssertEqual(
+            PeriodDatePair.axis(minimumWidths: [200, 40], offeredWidth: 300, spacing: 10),
+            .stack
+        )
+    }
+
+    func testNarrowMinimumsStayOneRow() {
+        XCTAssertEqual(
+            PeriodDatePair.axis(minimumWidths: [100, 80], offeredWidth: 300, spacing: 10),
+            .row
+        )
+    }
 }

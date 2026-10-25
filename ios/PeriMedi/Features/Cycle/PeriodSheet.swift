@@ -125,28 +125,42 @@ struct PeriodSheet: View {
     }
 
     private var periodCard: some View {
-        ZStack(alignment: .bottom) {
+        ZStack {
             Theme.ink.opacity(0.28)
-                .onTapGesture { closeDraft() }
-            Group {
-                if case .confirmDelete(let id) = draft {
-                    periodDeletePrompt(id)
-                } else {
-                    periodFields
+            GeometryReader { geo in
+                ScrollView {
+                    cardSurface
+                        .frame(minHeight: geo.size.height, alignment: .bottom)
+                        .background {
+                            Color.clear
+                                .contentShape(Rectangle())
+                                .onTapGesture { closeDraft() }
+                        }
                 }
+                .scrollBounceBehavior(.basedOnSize)
             }
-            .padding(20)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.cream)
-            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .stroke(Theme.blush100, lineWidth: 1)
-            )
-            .padding(.horizontal, 16)
-            .padding(.bottom, 12)
         }
         .accessibilityAddTraits(.isModal)
+    }
+
+    private var cardSurface: some View {
+        Group {
+            if case .confirmDelete(let id) = draft {
+                periodDeletePrompt(id)
+            } else {
+                periodFields
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.cream)
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(Theme.blush100, lineWidth: 1)
+        )
+        .padding(.horizontal, 16)
+        .padding(.bottom, 12)
     }
 
     private var periodFields: some View {
@@ -154,24 +168,23 @@ struct PeriodSheet: View {
             Text(draft == .create ? app.t("period.new") : app.t("period.edit"))
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(Theme.ink)
-            HStack(alignment: .top, spacing: 10) {
+            PeriodDatePair(spacing: 10) {
                 VStack(alignment: .leading, spacing: 6) {
                     FieldLabel(text: app.t("period.startDate"))
                     SoftField {
-                        DateKeyPicker(key: $start, identifier: A11yID.periodStart)
+                        DateKeyPicker(key: $start, identifier: A11yID.periodStart, usesTextWidth: true)
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
                 VStack(alignment: .leading, spacing: 6) {
                     FieldLabel(text: app.t("period.endDate"))
                     SoftField {
-                        DateKeyPicker(key: $end, allowEmpty: true, identifier: A11yID.periodEnd)
+                        DateKeyPicker(key: $end, allowEmpty: true, identifier: A11yID.periodEnd, usesTextWidth: true)
                     }
                     Text(app.t("period.endHint"))
                         .font(.caption2)
                         .foregroundStyle(Theme.inkMuted)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
             FieldLabel(text: app.t("period.flow"))
             SoftField {
@@ -336,5 +349,81 @@ struct PeriodSheet: View {
 
     private func formatted(_ key: String?) -> String? {
         key.map { DateCopy.day($0, locale: app.locale.language.locale) }
+    }
+}
+
+struct PeriodDatePair: Layout {
+    var spacing: CGFloat = 10
+
+    enum Axis: Equatable {
+        case row
+        case stack
+    }
+
+    static func axis(minimumWidths: [CGFloat], offeredWidth: CGFloat, spacing: CGFloat) -> Axis {
+        let half = (offeredWidth - spacing) / 2
+        if minimumWidths.allSatisfy({ $0 <= half }) {
+            return .row
+        }
+        return .stack
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let mins = subviews.map { minimumWidth(of: $0) }
+        let offered = finiteWidth(proposal.width, minimumWidths: mins)
+        switch Self.axis(minimumWidths: mins, offeredWidth: offered, spacing: spacing) {
+        case .row:
+            let column = columnWidth(offered)
+            let height = subviews.map { $0.sizeThatFits(ProposedViewSize(width: column, height: nil)).height }.max() ?? 0
+            return CGSize(width: offered, height: height)
+        case .stack:
+            let heights = subviews.map { $0.sizeThatFits(ProposedViewSize(width: offered, height: nil)).height }
+            let gaps = spacing * CGFloat(max(subviews.count - 1, 0))
+            return CGSize(width: offered, height: heights.reduce(0, +) + gaps)
+        }
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let mins = subviews.map { minimumWidth(of: $0) }
+        let offered = bounds.width
+        switch Self.axis(minimumWidths: mins, offeredWidth: offered, spacing: spacing) {
+        case .row:
+            let column = columnWidth(offered)
+            var x = bounds.minX
+            for subview in subviews {
+                let height = subview.sizeThatFits(ProposedViewSize(width: column, height: nil)).height
+                subview.place(
+                    at: CGPoint(x: x, y: bounds.minY),
+                    proposal: ProposedViewSize(width: column, height: height)
+                )
+                x += column + spacing
+            }
+        case .stack:
+            var y = bounds.minY
+            for subview in subviews {
+                let height = subview.sizeThatFits(ProposedViewSize(width: offered, height: nil)).height
+                subview.place(
+                    at: CGPoint(x: bounds.minX, y: y),
+                    proposal: ProposedViewSize(width: offered, height: height)
+                )
+                y += height + spacing
+            }
+        }
+    }
+
+    private func columnWidth(_ offered: CGFloat) -> CGFloat {
+        max(0, (offered - spacing) / 2)
+    }
+
+    private func finiteWidth(_ proposed: CGFloat?, minimumWidths: [CGFloat]) -> CGFloat {
+        if let proposed, proposed.isFinite {
+            return proposed
+        }
+        let gaps = spacing * CGFloat(max(minimumWidths.count - 1, 0))
+        return minimumWidths.reduce(0, +) + gaps
+    }
+
+    private func minimumWidth(of subview: LayoutSubview) -> CGFloat {
+        subview.sizeThatFits(ProposedViewSize(width: 0, height: nil)).width
     }
 }
