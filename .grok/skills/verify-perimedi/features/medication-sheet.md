@@ -9,7 +9,7 @@ Create or edit a medication and its schedule. Presented over Cycle.
 - Remind toggle
 - Optional Dose-from date next to the dose field when default dose or primary schedule actually changed
 - Schedule mode: every day / specific days / cyclic
-- Save / delete (delete confirms). A new medication is titled New medication (German: Neues Medikament) and the create action is Save (German: Speichern). Edit keeps Edit medication and Save changes (German: Änderungen speichern).
+- Save / delete (delete confirms). A new medication is titled New medication (German: Neues Medikament). Edit keeps Edit medication (German: Medikament bearbeiten). Both actions say Save (German: Speichern).
 
 ## How to get to it (user POV)
 
