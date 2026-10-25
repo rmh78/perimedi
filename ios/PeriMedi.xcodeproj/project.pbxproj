@@ -58,6 +58,7 @@
 		A70A11CE0000000000000004 /* RequiredJourneyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A70A11CE0000000000000003 /* RequiredJourneyTests.swift */; };
 		65BE1A8523834B5702F7EEF4 /* ScreenCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6577D057AE5306E1CD71B78C /* ScreenCatalog.swift */; };
 		556A9AD85C4E8C5D8733E802 /* ScreenCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D7ECE05280DF3A9B1D9FD1F /* ScreenCatalogTests.swift */; };
+		B7E4A91C0D2F4A6E8B1C3D51 /* StoreScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7E4A91C0D2F4A6E8B1C3D50 /* StoreScreenshotTests.swift */; };
 		C0B2C79DBA60AC24518BD888 /* WidgetJourneyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C22F254059DF4D8BD043D91A /* WidgetJourneyTests.swift */; };
 		22E653FA472344C15E92C92E /* PeriMediDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 14300107B9E3EB1D420E4B3B /* PeriMediDomain */; };
 		7D564784EAF9A538A66ADDAB /* PeriMediDoseWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7E8C6E6A7CE57809166DFBF0 /* PeriMediDoseWidget.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -125,6 +126,7 @@
 		A70A11CE0000000000000003 /* RequiredJourneyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequiredJourneyTests.swift; sourceTree = "<group>"; };
 		6577D057AE5306E1CD71B78C /* ScreenCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenCatalog.swift; sourceTree = "<group>"; };
 		9D7ECE05280DF3A9B1D9FD1F /* ScreenCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenCatalogTests.swift; sourceTree = "<group>"; };
+		B7E4A91C0D2F4A6E8B1C3D50 /* StoreScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreScreenshotTests.swift; sourceTree = "<group>"; };
 		C22F254059DF4D8BD043D91A /* WidgetJourneyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetJourneyTests.swift; sourceTree = "<group>"; };
 		2C5C3A69A20F9E8D61C43308 /* DoseWidgetSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseWidgetSnapshot.swift; sourceTree = "<group>"; };
 		AC4EBBA48FBA9CA676374398 /* MarkDoseTakenIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkDoseTakenIntent.swift; sourceTree = "<group>"; };
@@ -302,6 +304,7 @@
 				A70A11CE0000000000000003 /* RequiredJourneyTests.swift */,
 				6577D057AE5306E1CD71B78C /* ScreenCatalog.swift */,
 				9D7ECE05280DF3A9B1D9FD1F /* ScreenCatalogTests.swift */,
+				B7E4A91C0D2F4A6E8B1C3D50 /* StoreScreenshotTests.swift */,
 				C22F254059DF4D8BD043D91A /* WidgetJourneyTests.swift */,
 			);
 			path = PeriMediUITests;
@@ -551,6 +554,7 @@
 				A70A11CE0000000000000004 /* RequiredJourneyTests.swift in Sources */,
 				65BE1A8523834B5702F7EEF4 /* ScreenCatalog.swift in Sources */,
 				556A9AD85C4E8C5D8733E802 /* ScreenCatalogTests.swift in Sources */,
+				B7E4A91C0D2F4A6E8B1C3D51 /* StoreScreenshotTests.swift in Sources */,
 				C0B2C79DBA60AC24518BD888 /* WidgetJourneyTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
