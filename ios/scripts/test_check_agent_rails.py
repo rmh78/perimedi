@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import json
+import os
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
-from agent_rails import missing_script_names, read_agents, unnamed_ui_tests
+from agent_rails import attachment_links, missing_script_names, read_agents, unnamed_ui_tests
 
 ROOT = Path(__file__).resolve().parents[2]
 RUNNERS = (
@@ -16,6 +19,7 @@ RUNNERS = (
 )
 CLI = Path(__file__).resolve().parent / "check-agent-rails.py"
 UI_CLI = Path(__file__).resolve().parent / "check-ui-test-names.py"
+PR_CLI = Path(__file__).resolve().parent / "check-pr-attachments.py"
 UNNAMED_TEST = (
     "UI test testNope is not named in Agents.md or features/. "
     "Add the method name next to the journey that runs it."
@@ -124,6 +128,90 @@ class UiTestNameTests(unittest.TestCase):
             capture_output=True,
             text=True,
             check=False,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertTrue(proc.stdout.startswith("ok:"), proc.stdout)
+
+
+class AttachmentLinkTests(unittest.TestCase):
+    def test_user_attachment_host(self) -> None:
+        problems = attachment_links("https://github.com/user-attachments/assets/dead")
+        self.assertEqual(
+            problems,
+            [
+                "Link host github.com/user-attachments 404s for reviewers. "
+                "Commit the PNG under ios/docs/screens/ and link that path."
+            ],
+        )
+
+    def test_user_images_host(self) -> None:
+        problems = attachment_links("https://user-images.githubusercontent.com/1/2.png")
+        self.assertEqual(
+            problems,
+            [
+                "Link host user-images.githubusercontent.com 404s for reviewers. "
+                "Commit the PNG under ios/docs/screens/ and link that path."
+            ],
+        )
+
+    def test_screen_path_passes(self) -> None:
+        self.assertEqual(
+            attachment_links("see ios/docs/screens/cycle-empty-en.png"),
+            [],
+        )
+
+    def test_body_file_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "body.txt"
+            path.write_text("https://github.com/user-attachments/assets/dead\n", encoding="utf-8")
+            env = os.environ.copy()
+            env.pop("GITHUB_EVENT_PATH", None)
+            proc = subprocess.run(
+                [sys.executable, str(PR_CLI), "--body-file", str(path)],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+                env=env,
+            )
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("pull request body", proc.stderr)
+        self.assertIn("github.com/user-attachments", proc.stderr)
+        self.assertIn("ios/docs/screens/", proc.stderr)
+
+    def test_event_body_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "event.json"
+            path.write_text(
+                json.dumps(
+                    {"pull_request": {"body": "https://user-images.githubusercontent.com/a/b.png"}}
+                ),
+                encoding="utf-8",
+            )
+            env = os.environ.copy()
+            env["GITHUB_EVENT_PATH"] = str(path)
+            proc = subprocess.run(
+                [sys.executable, str(PR_CLI)],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+                env=env,
+            )
+        self.assertEqual(proc.returncode, 1, proc.stdout)
+        self.assertIn("pull request body", proc.stderr)
+        self.assertIn("user-images.githubusercontent.com", proc.stderr)
+
+    def test_cli_real_tree(self) -> None:
+        env = os.environ.copy()
+        env.pop("GITHUB_EVENT_PATH", None)
+        proc = subprocess.run(
+            [sys.executable, str(PR_CLI)],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+            env=env,
         )
         self.assertEqual(proc.returncode, 0, proc.stderr)
         self.assertTrue(proc.stdout.startswith("ok:"), proc.stdout)

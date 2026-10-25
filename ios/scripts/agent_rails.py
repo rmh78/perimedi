@@ -64,3 +64,20 @@ def missing_script_names(runner_text: str, agents_text: str) -> list[str]:
                 "Add it to the verify or CI paragraph in Agents.md."
             )
     return problems
+
+
+_ATTACHMENT_HOSTS = (
+    "github.com/user-attachments",
+    "user-images.githubusercontent.com",
+)
+
+
+def attachment_links(text: str) -> list[str]:
+    problems: list[str] = []
+    for host in _ATTACHMENT_HOSTS:
+        if host in text:
+            problems.append(
+                f"Link host {host} 404s for reviewers. "
+                "Commit the PNG under ios/docs/screens/ and link that path."
+            )
+    return problems
