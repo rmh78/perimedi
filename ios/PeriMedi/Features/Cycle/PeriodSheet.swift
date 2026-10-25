@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import PeriMediDomain
 
 struct PeriodSheet: View {
@@ -22,6 +23,7 @@ struct PeriodSheet: View {
     @State private var start = DateKeys.todayKey()
     @State private var end = ""
     @State private var flow: FlowNote = .medium
+    @State private var nextPeriodLineWidth: CGFloat = 0
 
     private var nextPeriod: String? {
         CycleLogic.nextPredictedPeriodStart(periods: store.periods, settings: store.settings)
@@ -42,9 +44,7 @@ struct PeriodSheet: View {
                 }
 
                 if tracksPeriods {
-                    Text("\(app.t("period.intro")) \(formatted(nextPeriod) ?? "—")")
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.inkSoft)
+                    nextPeriodLine
 
                     HStack(alignment: .top, spacing: 10) {
                         dayCountField(app.t("period.avgCycle"), $cycleLen, 15...45)
@@ -347,8 +347,49 @@ struct PeriodSheet: View {
         )
     }
 
+    private var nextPeriodLine: some View {
+        let date = formatted(nextPeriod) ?? "—"
+        let sentence = "\(app.t("period.intro")) \(date)"
+        let scale = nextPeriodScale(date: date, lineWidth: nextPeriodLineWidth)
+        return Text(sentence)
+            .font(nextPeriodFont(scale: scale))
+            .foregroundStyle(Theme.inkSoft)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background {
+                GeometryReader { proxy in
+                    Color.clear
+                        .onAppear { nextPeriodLineWidth = proxy.size.width }
+                        .onChange(of: proxy.size.width) { _, width in
+                            nextPeriodLineWidth = width
+                        }
+                }
+            }
+    }
+
     private func formatted(_ key: String?) -> String? {
-        key.map { DateCopy.day($0, locale: app.locale.language.locale) }
+        key.map { DateCopy.predictedStart($0, locale: app.locale.language.locale) }
+    }
+
+    private func nextPeriodScale(date: String, lineWidth: CGFloat) -> CGFloat {
+        guard lineWidth > 0 else { return 1 }
+        let font = UIFont.preferredFont(forTextStyle: .subheadline)
+        let runWidth = (dayMonthRun(date) as NSString).size(withAttributes: [.font: font]).width
+        guard runWidth > 0 else { return 1 }
+        return min(1, lineWidth / runWidth)
+    }
+
+    private func dayMonthRun(_ date: String) -> String {
+        guard let glue = date.firstIndex(of: "\u{00A0}") else { return date }
+        let after = date.index(after: glue)
+        if let stop = date[after...].firstIndex(where: \.isWhitespace) {
+            return String(date[..<stop])
+        }
+        return date
+    }
+
+    private func nextPeriodFont(scale: CGFloat) -> Font {
+        let base = UIFont.preferredFont(forTextStyle: .subheadline)
+        return Font(UIFont(descriptor: base.fontDescriptor, size: base.pointSize * scale))
     }
 }
 

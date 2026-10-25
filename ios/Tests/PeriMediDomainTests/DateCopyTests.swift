@@ -53,4 +53,17 @@ final class DateCopyTests: XCTestCase {
         XCTAssertEqual(DateCopy.field("not-a-date", locale: de), "not-a-date")
         XCTAssertEqual(DateCopy.day("not-a-date", locale: en), "not-a-date")
     }
+
+    func testPredictedStartKeepsTheDayWithTheMonth() {
+        XCTAssertEqual(DateCopy.predictedStart("2026-04-04", locale: de), "4.\u{00A0}April 2026")
+        XCTAssertEqual(DateCopy.predictedStart("2026-09-04", locale: de), "4.\u{00A0}September 2026")
+        XCTAssertEqual(DateCopy.predictedStart("2026-03-07", locale: en), "Mar\u{00A0}7, 2026")
+        XCTAssertEqual(DateCopy.day("2026-04-04", locale: de), "4. Apr. 2026")
+        XCTAssertEqual(DateCopy.predictedStart("not-a-date", locale: de), "not-a-date")
+        XCTAssertEqual(DateCopy.predictedStart("not-a-date", locale: en), "not-a-date")
+        let once = DateCopy.glue("4. April 2026")
+        XCTAssertEqual(DateCopy.glue(once), once)
+        let spelled = DateCopy.predictedStart("2026-04-04", locale: de)
+        XCTAssertEqual(DateCopy.glue(spelled), spelled)
+    }
 }
