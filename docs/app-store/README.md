@@ -1,6 +1,6 @@
 # App Store listing drafts
 
-Tracked in [#30](https://github.com/rmh78/perimedi/issues/30). Copy only. No iOS code in this folder.
+Tracked in [#30](https://github.com/rmh78/perimedi/issues/30). This folder holds the listing, `connect.md`, `privacy.md`, `screenshots/`, and `check-listing.py`. No iOS app code.
 
 ## Before paid membership
 - These drafts
@@ -12,11 +12,13 @@ Tracked in [#30](https://github.com/rmh78/perimedi/issues/30). Copy only. No iOS
 - Create the App Store Connect record
 - Paid-team signing and TestFlight
 - Production iCloud container `iCloud.app.perimedi.ios`
-- Screenshots (6.9\" iPhone) and submit
+- Screenshots (6.9" iPhone) and submit
+
+Redo the 6.9" set with `docs/app-store/capture-store-shots.sh`. Do not add that script to `control-perimedi`.
 
 ## Product rules
 - Category: **Health & Fitness**, not Medical
 - Regulated medical device (EEA/UK/US): **No**
-- Do not promise second-device iCloud until [#19](https://github.com/rmh78/perimedi/issues/19) is solid
-- Effect is observational. Never diagnose, treat, or titrate HRT
+- Do not promise a second device. Optional iCloud uses the person's Apple ID, and the listing does not say the data appears on another phone.
+- Effect stays observational. Never diagnose, treat, or titrate.
 - In-app copy stays English and German. This folder is English except `listing-de.md`

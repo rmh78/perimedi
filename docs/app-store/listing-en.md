@@ -1,37 +1,39 @@
 # App Store listing (English)
 
 **Name:** PeriMedi
-**Subtitle (30):** Perimenopause HRT companion
+**Subtitle (30):** Perimenopause companion
 **Category:** Health & Fitness
 **Price (v1):** Free
 **Regulated medical device:** No
 
 ## Promotional text (170)
 
-Log HRT doses, periods, and symptoms on your iPhone. Reminders, cycle view, and a plain sentence from one cycle to the next. On-device. Not medical advice.
+Log medications, periods, and your own symptoms. Cycle, month, and trends. Visit PDF and a Home Screen widget for today's doses. On this iPhone. Not medical advice.
 
 ## Description
 
-PeriMedi is a perimenopause companion for women already using HRT. It helps you take doses on time, log how days actually felt, and walk into a gynecologist visit with your own notes.
+PeriMedi is a companion for perimenopause. It keeps medications, periods, and symptoms on your cycle so you can look back before an appointment.
 
 What you can do
 
-• Save medications (gel, patch, tablet, and other forms) with dose and schedule, including cyclic apply/pause
-• Get on-device reminders and mark a dose taken or skipped
-• Log periods and 11 structured symptom scores (1–4). Untouched scores stay blank, not zero
-• See Cycle and Month. After two cycles, a short Effect sentence compares this cycle so far with the same days of the last one. If you changed a dose, that is mentioned as context only
-• English and German. Switch in More
+• Save medications with a dose and a schedule, including cyclic apply and pause. Mark a planned dose Taken or Not taken. On-device reminders can nudge you at the planned time.
+• Add the Home Screen widget for today's remaining doses. Take on the widget records those doses for today.
+• Log periods. Score eleven symptoms from 1 to 4, and add up to eight names of your own. A blank score means you did not log it.
+• Cycle and Month show the same days. Trends charts days scored and how strong they were, one point per logged cycle. A dose or schedule change is a mark for context, not a cause.
+• After two logged cycles, Cycle can show one sentence that compares this cycle so far with the same days of the previous cycle. The sentence does not say a dose change caused the difference.
+• More builds a PDF of recent cycles for a doctor visit. The PDF stays on this iPhone until you share it. It is not a medical record.
+• English and German. Switch in More. Export or import a JSON backup from More.
 
 Privacy
 
-Your data stays on this iPhone. Optional iCloud uses your Apple ID, not a PeriMedi account. There is no PeriMedi server, no ads, and no analytics. You can export a JSON backup from More.
+Your data stays on this iPhone. Optional iCloud uses your Apple ID, not a PeriMedi account. There is no PeriMedi server, no ads, and no analytics.
 
-PeriMedi does not diagnose, treat, or recommend HRT changes. It is not a medical device and not a substitute for your clinician. Talk to a doctor before starting, stopping, or changing any medication.
+PeriMedi does not diagnose, treat, or recommend a medication change. It is not a medical device and not a substitute for your clinician.
 
 ## Keywords (100)
 
-perimenopause,HRT,menopause,cycle,symptoms,medication,reminder,period,estrogen
+perimenopause,HRT,menopause,cycle,symptoms,medication,reminder,period,trends
 
 ## What's New (1.0)
 
-First release: dose reminders, period and symptom logging, cycle view, and a cycle-to-cycle Effect sentence. On-device, optional iCloud, English and German.
+First release. Log medications, periods, and your own symptoms. Cycle, Month, and Trends. A visit PDF, dose reminders, and a Home Screen widget for today's doses. On this iPhone, with optional iCloud. English and German.

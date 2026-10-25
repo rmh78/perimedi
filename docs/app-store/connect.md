@@ -24,21 +24,24 @@ User export is user-initiated sharing, not collection by us.
 
 Expected band: 12+ (confirm in the questionnaire; do not fake a 4+).
 
+Connect is already 16+. Do not lower it.
+
 ## Review notes (for Apple)
 
-PeriMedi has no login. Reviewers can use More → Load sample to see Cycle, medications, symptoms, and the Effect sentence. Language toggle is More → Deutsch / English. Reminders are local notifications. The app does not diagnose or recommend HRT changes. Declared not a regulated medical device.
+PeriMedi has no login. From More, choose Load sample. That shows Cycle with the comparison sentence, Trends, Month, the symptom sheet (including New symptom), and the visit PDF. Language is More, Deutsch or English. The Home Screen widget is not required for review. Do not rely on iCloud on the review device. The app does not diagnose or recommend a medication change. It is not a regulated medical device.
 
-Do not rely on iCloud for the review device. Sample data is enough.
+## Screenshots (6.9" iPhone, EN and DE)
 
-## Screenshots (6.9\" iPhone, EN and DE)
+The shots are full-bleed app frames from sample data on iPhone 18 Pro Max, with today pinned to 2026-03-15. Each file is 1320×2868, or 1290×2796. There are no caption strings in the repo. Captions must not say the app treats menopause or that HRT is working.
 
-1. Cycle with Effect sentence (sample data)
-2. Medication sheet / dose reminder
-3. Symptom scores
-4. Month calendar
-5. More (backup + language), no medical claims on captions
+English files are in `docs/app-store/screenshots/en/`. German files are in `docs/app-store/screenshots/de/`.
 
-Captions must not say the app treats menopause or that HRT is working.
+1. `01-cycle.png`. Sample Cycle, with the effect sentence visible and no sheet.
+2. `02-trends.png`. Sample Trends chart.
+3. `03-symptoms.png`. Sample symptom sheet, scrolled so New symptom or Neues Symptom is visible.
+4. `04-visit.png`. Visit PDF preview, with the share control present.
+5. `05-month.png`. Sample Month.
+6. `06-more.png`. More, with language and backup both visible when the 6.9" frame allows. Otherwise keep Doctor visit and Language on screen.
 
 ## Support URL
 
