@@ -35,6 +35,23 @@ public enum DateCopy {
         return "\(day(startKey, locale: locale)) \u{2192} \u{2026}"
     }
 
+    public static func predictedStart(_ key: String, locale: Locale) -> String {
+        let text: String
+        if locale.language.languageCode == .german {
+            text = render(key, format: "d. MMMM yyyy", locale: locale)
+        } else {
+            text = day(key, locale: locale)
+        }
+        return glue(text)
+    }
+
+    static func glue(_ text: String) -> String {
+        guard let index = text.firstIndex(where: \.isWhitespace) else { return text }
+        var copy = text
+        copy.replaceSubrange(index...index, with: "\u{00A0}")
+        return copy
+    }
+
     private static func render(_ key: String, template: String, locale: Locale) -> String {
         guard let date = DateKeys.parseDateKey(key) else { return key }
         return render(date, template: template, locale: locale)

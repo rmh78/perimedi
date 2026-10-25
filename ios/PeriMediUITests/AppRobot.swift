@@ -113,6 +113,14 @@ final class AppRobot {
         waitFor(id: "cycle.action.med", file: file, line: line)
     }
 
+    func launch(arguments: [String], file: StaticString = #filePath, line: UInt = #line) {
+        lastJourney = nil
+        app.terminate()
+        app.launchArguments = arguments
+        app.launch()
+        waitFor(id: "tab.cycle", file: file, line: line)
+    }
+
     func launchCatalog(_ plan: CatalogLaunch, file: StaticString = #filePath, line: UInt = #line) {
         app.terminate()
         app.launchArguments = plan.arguments
@@ -387,13 +395,14 @@ final class AppRobot {
 
     private func rawCount(_ field: XCUIElement) -> Int {
         let raw = (field.value as? String) ?? ""
-        if raw.isEmpty || raw == "YYYY-MM-DD" { return 0 }
+        if raw.isEmpty || raw == "Optional" { return 0 }
         return raw.count
     }
 
     private func shown(_ field: XCUIElement) -> String {
-        ((field.value as? String) ?? field.label)
-            .replacingOccurrences(of: "YYYY-MM-DD", with: "")
+        let raw = (field.value as? String) ?? field.label
+        if raw.isEmpty || raw == "Optional" { return "" }
+        return raw
     }
 
     /// Tap the control itself. A raw point on the app missed Save: the touch

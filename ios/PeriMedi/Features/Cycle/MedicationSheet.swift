@@ -144,7 +144,7 @@ struct MedicationSheet: View {
 
                 HStack(spacing: 10) {
                     PillButton(
-                        title: app.t(isNew ? "med.saveNew" : "med.saveChanges"),
+                        title: app.t(isNew ? "common.save" : "med.saveChanges"),
                         kind: .primary,
                         identifier: A11yID.medSave,
                         action: save

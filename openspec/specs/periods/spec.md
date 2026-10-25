@@ -21,7 +21,7 @@ The system SHALL NOT place a cycle start marker on a day that falls inside anoth
 - **THEN** the day is not marked as a cycle start
 
 ### Requirement: Period settings and history
-The system SHALL allow the user to turn period tracking on or off. When tracking is on, the system SHALL allow the user to view and edit average cycle length and average period length, and to add, edit, and delete period history entries (start, end, flow). Average lengths SHALL be shown only when period tracking is on, SHALL be chosen from a day-count list (not free text), and SHALL persist when the settings sheet closes. Start and end dates for a new or edited period SHALL appear on one row. Period history SHALL sit at the bottom of the sheet under the Add control, and SHALL list each entry as a compact row (medium date pair, length and flow) so a long history remains scannable. The date range SHALL be underlined. The length and the flow SHALL sit on the same line as that range. Activating it SHALL open one card on top titled Edit period (German: Periode bearbeiten). The Add control SHALL open that same card empty, titled New period (German: Neue Periode). The card SHALL place Cancel on the left and Save (German: Speichern) on the right. When editing, Cancel, Delete (German: Löschen), and Save SHALL share that one row, with Delete between them. Delete SHALL replace that card’s contents with a question that names the period’s date range. A closed period SHALL use the same date-range format as a cycle in the doctor’s visit dialog: both ends in the active language’s medium date, joined by an en dash with spaces. An English range from 7 March 2026 through 12 March 2026 SHALL read Mar 7, 2026 – Mar 12, 2026. A one-day window SHALL still print both ends. A period with no end SHALL show that start date followed by an arrow and an ellipsis, and SHALL NOT invent an end from the average period length. A filled date field SHALL show the same medium date as other full dates when the language is English. When the language is German, a filled date field SHALL show that date as dd.MM.yyyy and an empty date field SHALL show TT.MM.JJJJ. The settings sheet SHALL NOT require a separate save-settings action or a notes field.
+The system SHALL allow the user to turn period tracking on or off. When tracking is on, the system SHALL allow the user to view and edit average cycle length and average period length, and to add, edit, and delete period history entries (start, end, flow). Average lengths SHALL be shown only when period tracking is on, SHALL be chosen from a day-count list (not free text), and SHALL persist when the settings sheet closes. Start and end dates for a new or edited period SHALL appear on one row at the default text size. The start date SHALL sit above the end date when one row would clip the start date, the end date, or the end hint. At the largest accessibility text size the start date, the end date, and the end hint SHALL be fully readable in English and German. Period history SHALL sit at the bottom of the sheet under the Add control, and SHALL list each entry as a compact row (medium date pair, length and flow) so a long history remains scannable. The date range SHALL be underlined. The length and the flow SHALL sit on the same line as that range. Activating it SHALL open one card on top titled Edit period (German: Periode bearbeiten). The Add control SHALL open that same card empty, titled New period (German: Neue Periode). The card SHALL place Cancel on the left and Save (German: Speichern) on the right. When editing, Cancel, Delete (German: Löschen), and Save SHALL share that one row, with Delete between them. Delete SHALL replace that card’s contents with a question that names the period’s date range. A closed period SHALL use the same date-range format as a cycle in the doctor’s visit dialog: both ends in the active language’s medium date, joined by an en dash with spaces. An English range from 7 March 2026 through 12 March 2026 SHALL read Mar 7, 2026 – Mar 12, 2026. A one-day window SHALL still print both ends. A period with no end SHALL show that start date followed by an arrow and an ellipsis, and SHALL NOT invent an end from the average period length. A filled date field SHALL show the same medium date as other full dates when the language is English. When the language is German, a filled date field SHALL show that date as dd.MM.yyyy and an empty date field SHALL show TT.MM.JJJJ. When the language is English, an empty date field SHALL show Optional. Date ranges, filled date fields, period history, the delete question, and the visit PDF SHALL keep the medium date. The next-period line SHALL spell a German full month, for example 4. April 2026, or the English medium date, for example Mar 7, 2026, and the day and the month SHALL stay on one line. The settings sheet SHALL NOT require a separate save-settings action or a notes field.
 
 #### Scenario: Compact history rows
 - **WHEN** several periods are logged and the user opens cycle settings
@@ -47,6 +47,18 @@ The system SHALL allow the user to turn period tracking on or off. When tracking
 - **WHEN** the language is German and the user opens a new period card with no end date
 - **THEN** the empty field shows TT.MM.JJJJ
 
+#### Scenario: English empty date
+- **WHEN** the language is English and the user opens a new period card with no end date
+- **THEN** the empty field shows Optional
+
+#### Scenario: Default text size keeps one date row
+- **WHEN** the text size is the default and the user opens a period card
+- **THEN** the start date and the end date share one row
+
+#### Scenario: Largest text size stacks the dates
+- **WHEN** the text size is the largest accessibility size and the language is English or German
+- **THEN** the start date, the end date, and the end hint are fully readable, and the end date sits at or below the start date
+
 #### Scenario: German delete question
 - **WHEN** the language is German and the user deletes a period that runs from 7 March 2026 through 11 March 2026
 - **THEN** the question names 7. März 2026 – 11. März 2026
@@ -54,6 +66,14 @@ The system SHALL allow the user to turn period tracking on or off. When tracking
 #### Scenario: English date field
 - **WHEN** the language is English and a filled date field holds 7 March 2026
 - **THEN** that field shows Mar 7, 2026
+
+#### Scenario: Next period spells a full month
+- **WHEN** the language is German and the next period starts on 4 April 2026
+- **THEN** the next-period line includes 4. April 2026 and keeps 4. and April on one line
+
+#### Scenario: English next period keeps the day with the month
+- **WHEN** the language is English and the next period starts on 7 March 2026
+- **THEN** the next-period line includes Mar 7, 2026 and keeps Mar and 7 on one line
 
 #### Scenario: Open cycle settings
 - **WHEN** the user activates Cycle settings from the day card

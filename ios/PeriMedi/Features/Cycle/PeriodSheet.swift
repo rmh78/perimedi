@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import PeriMediDomain
 
 struct PeriodSheet: View {
@@ -22,6 +23,7 @@ struct PeriodSheet: View {
     @State private var start = DateKeys.todayKey()
     @State private var end = ""
     @State private var flow: FlowNote = .medium
+    @State private var nextPeriodLineWidth: CGFloat = 0
 
     private var nextPeriod: String? {
         CycleLogic.nextPredictedPeriodStart(periods: store.periods, settings: store.settings)
@@ -42,9 +44,7 @@ struct PeriodSheet: View {
                 }
 
                 if tracksPeriods {
-                    Text("\(app.t("period.intro")) \(formatted(nextPeriod) ?? "—")")
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.inkSoft)
+                    nextPeriodLine
 
                     HStack(alignment: .top, spacing: 10) {
                         dayCountField(app.t("period.avgCycle"), $cycleLen, 15...45)
@@ -125,28 +125,42 @@ struct PeriodSheet: View {
     }
 
     private var periodCard: some View {
-        ZStack(alignment: .bottom) {
+        ZStack {
             Theme.ink.opacity(0.28)
-                .onTapGesture { closeDraft() }
-            Group {
-                if case .confirmDelete(let id) = draft {
-                    periodDeletePrompt(id)
-                } else {
-                    periodFields
+            GeometryReader { geo in
+                ScrollView {
+                    cardSurface
+                        .frame(minHeight: geo.size.height, alignment: .bottom)
+                        .background {
+                            Color.clear
+                                .contentShape(Rectangle())
+                                .onTapGesture { closeDraft() }
+                        }
                 }
+                .scrollBounceBehavior(.basedOnSize)
             }
-            .padding(20)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.cream)
-            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .stroke(Theme.blush100, lineWidth: 1)
-            )
-            .padding(.horizontal, 16)
-            .padding(.bottom, 12)
         }
         .accessibilityAddTraits(.isModal)
+    }
+
+    private var cardSurface: some View {
+        Group {
+            if case .confirmDelete(let id) = draft {
+                periodDeletePrompt(id)
+            } else {
+                periodFields
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.cream)
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(Theme.blush100, lineWidth: 1)
+        )
+        .padding(.horizontal, 16)
+        .padding(.bottom, 12)
     }
 
     private var periodFields: some View {
@@ -154,24 +168,23 @@ struct PeriodSheet: View {
             Text(draft == .create ? app.t("period.new") : app.t("period.edit"))
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(Theme.ink)
-            HStack(alignment: .top, spacing: 10) {
+            PeriodDatePair(spacing: 10) {
                 VStack(alignment: .leading, spacing: 6) {
                     FieldLabel(text: app.t("period.startDate"))
                     SoftField {
-                        DateKeyPicker(key: $start, identifier: A11yID.periodStart)
+                        DateKeyPicker(key: $start, identifier: A11yID.periodStart, usesTextWidth: true)
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
                 VStack(alignment: .leading, spacing: 6) {
                     FieldLabel(text: app.t("period.endDate"))
                     SoftField {
-                        DateKeyPicker(key: $end, allowEmpty: true, identifier: A11yID.periodEnd)
+                        DateKeyPicker(key: $end, allowEmpty: true, identifier: A11yID.periodEnd, usesTextWidth: true)
                     }
                     Text(app.t("period.endHint"))
                         .font(.caption2)
                         .foregroundStyle(Theme.inkMuted)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
             FieldLabel(text: app.t("period.flow"))
             SoftField {
@@ -334,7 +347,124 @@ struct PeriodSheet: View {
         )
     }
 
+    private var nextPeriodLine: some View {
+        let date = formatted(nextPeriod) ?? "—"
+        let sentence = "\(app.t("period.intro")) \(date)"
+        let scale = nextPeriodScale(date: date, lineWidth: nextPeriodLineWidth)
+        return Text(sentence)
+            .font(nextPeriodFont(scale: scale))
+            .foregroundStyle(Theme.inkSoft)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background {
+                GeometryReader { proxy in
+                    Color.clear
+                        .onAppear { nextPeriodLineWidth = proxy.size.width }
+                        .onChange(of: proxy.size.width) { _, width in
+                            nextPeriodLineWidth = width
+                        }
+                }
+            }
+    }
+
     private func formatted(_ key: String?) -> String? {
-        key.map { DateCopy.day($0, locale: app.locale.language.locale) }
+        key.map { DateCopy.predictedStart($0, locale: app.locale.language.locale) }
+    }
+
+    private func nextPeriodScale(date: String, lineWidth: CGFloat) -> CGFloat {
+        guard lineWidth > 0 else { return 1 }
+        let font = UIFont.preferredFont(forTextStyle: .subheadline)
+        let runWidth = (dayMonthRun(date) as NSString).size(withAttributes: [.font: font]).width
+        guard runWidth > 0 else { return 1 }
+        return min(1, lineWidth / runWidth)
+    }
+
+    private func dayMonthRun(_ date: String) -> String {
+        guard let glue = date.firstIndex(of: "\u{00A0}") else { return date }
+        let after = date.index(after: glue)
+        if let stop = date[after...].firstIndex(where: \.isWhitespace) {
+            return String(date[..<stop])
+        }
+        return date
+    }
+
+    private func nextPeriodFont(scale: CGFloat) -> Font {
+        let base = UIFont.preferredFont(forTextStyle: .subheadline)
+        return Font(UIFont(descriptor: base.fontDescriptor, size: base.pointSize * scale))
+    }
+}
+
+struct PeriodDatePair: Layout {
+    var spacing: CGFloat = 10
+
+    enum Axis: Equatable {
+        case row
+        case stack
+    }
+
+    static func axis(minimumWidths: [CGFloat], offeredWidth: CGFloat, spacing: CGFloat) -> Axis {
+        let half = (offeredWidth - spacing) / 2
+        if minimumWidths.allSatisfy({ $0 <= half }) {
+            return .row
+        }
+        return .stack
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let mins = subviews.map { minimumWidth(of: $0) }
+        let offered = finiteWidth(proposal.width, minimumWidths: mins)
+        switch Self.axis(minimumWidths: mins, offeredWidth: offered, spacing: spacing) {
+        case .row:
+            let column = columnWidth(offered)
+            let height = subviews.map { $0.sizeThatFits(ProposedViewSize(width: column, height: nil)).height }.max() ?? 0
+            return CGSize(width: offered, height: height)
+        case .stack:
+            let heights = subviews.map { $0.sizeThatFits(ProposedViewSize(width: offered, height: nil)).height }
+            let gaps = spacing * CGFloat(max(subviews.count - 1, 0))
+            return CGSize(width: offered, height: heights.reduce(0, +) + gaps)
+        }
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let mins = subviews.map { minimumWidth(of: $0) }
+        let offered = bounds.width
+        switch Self.axis(minimumWidths: mins, offeredWidth: offered, spacing: spacing) {
+        case .row:
+            let column = columnWidth(offered)
+            var x = bounds.minX
+            for subview in subviews {
+                let height = subview.sizeThatFits(ProposedViewSize(width: column, height: nil)).height
+                subview.place(
+                    at: CGPoint(x: x, y: bounds.minY),
+                    proposal: ProposedViewSize(width: column, height: height)
+                )
+                x += column + spacing
+            }
+        case .stack:
+            var y = bounds.minY
+            for subview in subviews {
+                let height = subview.sizeThatFits(ProposedViewSize(width: offered, height: nil)).height
+                subview.place(
+                    at: CGPoint(x: bounds.minX, y: y),
+                    proposal: ProposedViewSize(width: offered, height: height)
+                )
+                y += height + spacing
+            }
+        }
+    }
+
+    private func columnWidth(_ offered: CGFloat) -> CGFloat {
+        max(0, (offered - spacing) / 2)
+    }
+
+    private func finiteWidth(_ proposed: CGFloat?, minimumWidths: [CGFloat]) -> CGFloat {
+        if let proposed, proposed.isFinite {
+            return proposed
+        }
+        let gaps = spacing * CGFloat(max(minimumWidths.count - 1, 0))
+        return minimumWidths.reduce(0, +) + gaps
+    }
+
+    private func minimumWidth(of subview: LayoutSubview) -> CGFloat {
+        subview.sizeThatFits(ProposedViewSize(width: 0, height: nil)).width
     }
 }

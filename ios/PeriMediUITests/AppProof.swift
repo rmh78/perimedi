@@ -56,10 +56,13 @@ struct AppProof {
         }
         robot.tap("period.add")
         robot.waitFor(id: "period.end")
+        let startBox = robot.element("period.start").frame
+        let endBox = robot.element("period.end").frame
+        XCTAssertEqual(startBox.midY, endBox.midY, accuracy: 2)
         let end = robot.element("period.end")
         let endValue = (end.value as? String) ?? ""
         XCTAssertTrue(
-            endValue.isEmpty || endValue == "YYYY-MM-DD",
+            endValue.isEmpty || endValue == "Optional",
             "period.end is \(endValue)"
         )
         robot.tap("confirm.cancel")
