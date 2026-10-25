@@ -25,6 +25,25 @@ def read_agents(root: Path) -> str:
     raise FileNotFoundError(root / "Agents.md")
 
 
+_UI_TEST = re.compile(r"\bfunc\s+(test\w*)\s*\(")
+
+
+def unnamed_ui_tests(swift_text: str, doc_text: str) -> list[str]:
+    problems: list[str] = []
+    seen: list[str] = []
+    for match in _UI_TEST.finditer(swift_text):
+        name = match.group(1)
+        if name in seen:
+            continue
+        seen.append(name)
+        if name not in doc_text:
+            problems.append(
+                f"UI test {name} is not named in Agents.md or features/. "
+                "Add the method name next to the journey that runs it."
+            )
+    return problems
+
+
 def missing_script_names(runner_text: str, agents_text: str) -> list[str]:
     problems: list[str] = []
     seen: list[str] = []
