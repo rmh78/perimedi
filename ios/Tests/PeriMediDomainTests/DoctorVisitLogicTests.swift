@@ -526,4 +526,25 @@ final class DoctorVisitLogicTests: XCTestCase {
         XCTAssertTrue(text.contains(mean))
         XCTAssertFalse(text.contains(id.rawValue))
     }
+
+    func testSampleVisitCountsTakenDoses() {
+        let today = "2026-03-15"
+        let sample = SampleData.payload(now: DateKeys.parseDateKey(today)!)
+        let report = DoctorVisitLogic.report(
+            today: today,
+            medications: sample.medications,
+            schedules: sample.schedules,
+            doseLogs: sample.doseLogs,
+            periods: sample.periods,
+            settings: sample.cycleSettings,
+            scores: sample.symptomScores,
+            changes: sample.medicationChanges,
+            directory: .catalogOnly
+        )
+        let gel = report.medications.first { $0.name == "Estradiol gel" }
+        XCTAssertEqual(gel?.planned, 57)
+        XCTAssertEqual(gel?.taken, 50)
+        XCTAssertFalse(report.medications.isEmpty)
+        XCTAssertTrue(report.medications.allSatisfy { $0.taken > 0 })
+    }
 }

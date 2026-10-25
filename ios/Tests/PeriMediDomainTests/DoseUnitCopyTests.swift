@@ -4,15 +4,20 @@ import XCTest
 final class DoseUnitCopyTests: XCTestCase {
     func testEnglishLeavesStoredText() {
         XCTAssertEqual(DoseUnitCopy.display("2 pumps", languageCode: "en"), "2 pumps")
+        XCTAssertEqual(DoseUnitCopy.display("2.5 pumps", languageCode: "en"), "2.5 pumps")
         XCTAssertEqual(DoseUnitCopy.display("pumpkin", languageCode: "en"), "pumpkin")
+        XCTAssertEqual(DoseUnitCopy.decimal(3.14, languageCode: "en"), "3.1")
+        XCTAssertEqual(DoseUnitCopy.decimal(3, languageCode: "en"), "3")
     }
 
     func testGermanMapsPumpTokensToHub() {
         XCTAssertEqual(DoseUnitCopy.display("1 pump", languageCode: "de"), "1 Hub")
         XCTAssertEqual(DoseUnitCopy.display("2 pumps", languageCode: "de"), "2 Hub")
-        XCTAssertEqual(DoseUnitCopy.display("2.5 pumps", languageCode: "de"), "2.5 Hub")
-        XCTAssertEqual(DoseUnitCopy.display("0.25 pump", languageCode: "de"), "0.25 Hub")
+        XCTAssertEqual(DoseUnitCopy.display("2.5 pumps", languageCode: "de"), "2,5 Hub")
+        XCTAssertEqual(DoseUnitCopy.display("0.25 pump", languageCode: "de"), "0,25 Hub")
         XCTAssertEqual(DoseUnitCopy.display("2 PUMPS", languageCode: "de"), "2 Hub")
+        XCTAssertEqual(DoseUnitCopy.decimal(3.14, languageCode: "de"), "3,1")
+        XCTAssertEqual(DoseUnitCopy.decimal(3, languageCode: "de"), "3")
     }
 
     func testGermanDoesNotHalfTranslateOddValues() {

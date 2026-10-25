@@ -255,6 +255,7 @@ struct CycleView: View {
                                 laneH: laneH,
                                 laneGap: laneGap,
                                 scroll: plotScroll.state,
+                                languageCode: app.locale.language.rawValue,
                                 daysRange: { from, to in
                                     app.t("diagram.daysRange", ["from": "\(from)", "to": "\(to)"])
                                 }
@@ -720,6 +721,7 @@ private struct DoseLabelOverlay: View {
     let laneH: CGFloat
     let laneGap: CGFloat
     @ObservedObject var scroll: PlotScrollState
+    var languageCode: String
     var daysRange: (Int, Int) -> String
 
     private let labelW: CGFloat = 120
@@ -736,7 +738,7 @@ private struct DoseLabelOverlay: View {
                         let x = min(max(stickX, startX), max(startX, endX - labelW)) - scroll.offsetX
                         let y = stripH + laneGap + CGFloat(index) * (laneH + laneGap) + 6
                         VStack(alignment: .leading, spacing: 0) {
-                            Text(seg.doseLabel)
+                            Text(DoseUnitCopy.display(seg.doseLabel, languageCode: languageCode))
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundStyle(Theme.ink)
                                 .lineLimit(1)

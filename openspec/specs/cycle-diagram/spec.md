@@ -13,6 +13,10 @@ The system SHALL show one lane per medication with dose segments across the visi
 - **WHEN** medications have planned doses in the current cycle window
 - **THEN** each such medication appears as a lane with dose segments on applicable days
 
+#### Scenario: German pump unit on a lane
+- **WHEN** the active language is German and a planned dose label contains the word pump or pumps
+- **THEN** the lane shows Hub for that word, a decimal point in that shown dose is a comma, and the stored dose string is unchanged
+
 #### Scenario: Empty med list
 - **WHEN** no medications have planned doses in the window
 - **THEN** the medications card shows a no-data message and a separate card below introduces PeriMedi and describes the three actions in this order: period settings, add medication, add symptom, and explains that tapping a medication icon marks a dose taken or not taken

@@ -85,7 +85,7 @@ enum DoctorVisitShare {
                 app.t("visit.symptomRow", [
                     "name": app.symptomTitle(row.id),
                     "days": String(row.dayCount),
-                    "mean": String(format: "%.1f", row.meanIntensity),
+                    "mean": DoseUnitCopy.decimal(row.meanIntensity, languageCode: app.locale.language.rawValue),
                 ])
             }
         }

@@ -59,6 +59,10 @@ The system SHALL provide a loadable sample dataset for a typical woman about 40 
 - **WHEN** the user loads sample data
 - **THEN** at least two stored dose-change events are present
 
+#### Scenario: Sample visit range has taken doses
+- **WHEN** the user loads sample data and opens the default visit range
+- **THEN** each medication listed for that range has at least one taken dose
+
 #### Scenario: Sample and clear use a confirm card
 - **WHEN** the user activates load sample or clear data
 - **THEN** an inset cream confirm card appears over a light blur of the app (not a system action sheet), with Cancel and a confirm action

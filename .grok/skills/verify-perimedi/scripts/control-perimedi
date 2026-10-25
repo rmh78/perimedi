@@ -222,6 +222,7 @@ cmd_doctor() {
   python3 "$ROOT/ios/scripts/check-agent-rails.py" || rc=1
   python3 "$ROOT/ios/scripts/check-ui-test-names.py" || rc=1
   python3 "$ROOT/ios/scripts/check-pr-attachments.py" || rc=1
+  python3 "$ROOT/docs/app-store/check-listing.py" || rc=1
 
   load_state
   if [[ -z "${UDID:-}" ]]; then
@@ -591,6 +592,7 @@ cmd_verify() {
     python3 "$ROOT/ios/scripts/check-ui-test-names.py"
     python3 "$ROOT/ios/scripts/check-pr-attachments.py"
     python3 "$ROOT/ios/scripts/check-one-way-door.py" --base origin/main
+    python3 "$ROOT/docs/app-store/check-listing.py"
   fi
 
   [[ "$(uname -s)" == "Darwin" ]] || fail "domain and UI tests need macOS with Xcode and an iPhone Simulator"
