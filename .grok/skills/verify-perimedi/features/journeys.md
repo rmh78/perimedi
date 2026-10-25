@@ -13,14 +13,14 @@ A new user opens an empty app, glances at empty Trends, logs a period, adds medi
 
 ## How to get to it (user POV)
 
-Launch the app on a clear store. Stay on Cycle except for the empty Trends glance and the Month check. Sheets open over Cycle, not as extra pages.
+Launch the app on a clear store. Sheets open over Cycle, not as extra pages. The same method later opens Month, More, and Trends.
 
 ## Driving it with A11yID / AppRobot
 
 Preconditions:
 
 - `control-perimedi --run-id "$RUN_ID" doctor` prints `doctor: ok` after launch.
-- Journey launch flags only: `-en -clear -today=2026-03-15 -uiTesting`. No `-journeyStep`, no `-loadSample`.
+- The English app journey launches with `-en -clear -uiTesting -today=2026-03-15 -remindIn=2` (`JourneyLaunch.pinnedRemindIn(seconds: 2)`). Later launches in the same method use `-fixture=trends` and `-fixture=trends-noscores`. No `-journeyStep`, no `-loadSample`.
 
 - **Empty home.** `AppRobot.launch()` waits for `tab.cycle` and `cycle.action.med`. `cycle.empty.meds` contains `need-period` and `need-med`. `cycle.intro` is present. No `cycle.lane.estrogen`. No `cycle.effect`.
 - **Empty Trends.** Tap `tab.trends`. `trends.status` and `trends.empty` are `need-cycles`. Return with `tab.cycle`.
@@ -34,6 +34,6 @@ Preconditions:
 
 ## Gotchas
 
-- This path spans Cycle, Trends empty, period sheet, medication sheet, symptom sheet, and Month. It does not prove More, visit PDF, backup confirm, or the Trends chart fixture.
+- This path spans Cycle, empty Trends, the period, medication, and symptom sheets, Month, More (language, reminders, visit preview, sample cancel), and a later `.trendsChart` launch. Sample load is cancelled, not confirmed. The visit sheet is closed from the preview. It does not share the PDF.
 - Typing must use the software keyboard. The driver turns Connect Hardware Keyboard off before boot.
-- Sample data is a More action, not this journey.
+- This journey opens sample data and taps cancel. It does not load the sample.

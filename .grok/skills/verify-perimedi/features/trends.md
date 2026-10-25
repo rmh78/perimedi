@@ -46,7 +46,7 @@ Bottom bar → Trends. Launch flag `-tabTrends` (same pattern as `-tabMonth` / `
 - Copy is EN/DE via L10n. Tab label is Trends / Verlauf. German mood group is Stimmung; the mood chip is Niedrige Stimmung. DE dose unit is Hub, not pump (name stays as stored). No “you should…”, no HRT recommendation. No redundant on-screen “Trends” title that only repeats the tab.
 - `-uiTesting` skips launch animation so the screen is tappable immediately.
 - Sample data has four scored cycles. Trends only plots cycles that have scores; empty period history is not enough.
-- If more cycles are shown than fit, pan the plot horizontally (`trends.plot`). It opens on the most recent cycles.
+- If more cycles are shown than fit, pan the plot horizontally (`trends.plot`). It opens on the most recent cycles. The chart keeps the last six scored cycles, so panning stays inside that window.
 - Domain math is `SymptomTrendLogic.summarize` / `CycleLogic.loggedCycleWindows`. Do not reimplement cycle bounds in the view.
 - Do not embed this chart in `CycleView`.
 - Screen catalog PNGs: `ios/docs/screens/` (`trends-sample`, `trends-sheet`, `trends-tap`, `trends-tick`, `trends-noscores`, empty, plus medication/period/symptom sheets). Review Files changed, not PR comment galleries. No chip-cloud layout shots.
