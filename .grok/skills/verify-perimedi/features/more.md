@@ -37,7 +37,7 @@ Language pills call `LocaleController`. Preference is `AppStorage` `perimedi.loc
 
 Disclaimer copy is a personal companion, not a demo.
 
-If notification permission is denied, More shows `more.remindersDenied` copy and a settings button (`more.remindersSettings`). Fresh install with the master switch on (default) asks for permission once; UI tests launch `-uiTesting` and do not show the system dialog.
+If notification permission is denied and the master switch is on, More shows `more.remindersDenied` copy and a settings button (`more.remindersSettings`). Fresh install with the master switch on (default) asks for permission once; UI tests launch `-uiTesting` and do not show the system dialog.
 
 ## Gotchas
 
