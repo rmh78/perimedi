@@ -261,4 +261,169 @@ final class ReminderLogicTests: XCTestCase {
         let payload = try BackupCodec.decode(Data(json.utf8))
         XCTAssertEqual(payload.medications.first?.remindersEnabled, true)
     }
+
+    func plan(
+        now: Date,
+        count: FollowUpCount,
+        stops: Set<ReminderChainStop> = [],
+        medications: [Medication]? = nil,
+        schedules: [Schedule]? = nil,
+        logs: [DoseLog] = []
+    ) -> FollowUpPlan {
+        ReminderLogic.followUpPlan(
+            now: now,
+            count: count,
+            stops: stops,
+            medications: medications ?? [med()],
+            schedules: schedules ?? [sched()],
+            doseLogs: logs,
+            periods: [],
+            settings: settings
+        )
+    }
+
+    func fiveTimes() -> [Schedule] {
+        [sched { $0.times = ["08:00", "10:00", "12:00", "14:00", "16:00"] }]
+    }
+
+    func testParsedCountTreatsMissingAndIllegalAsOff() {
+        XCTAssertEqual(FollowUpCount.parsed(nil), .off)
+        XCTAssertEqual(FollowUpCount.parsed(0), .off)
+        XCTAssertEqual(FollowUpCount.parsed(1), .off)
+        XCTAssertEqual(FollowUpCount.parsed(4), .off)
+        XCTAssertEqual(FollowUpCount.parsed(2), .two)
+        XCTAssertEqual(FollowUpCount.parsed(3), .three)
+    }
+
+    func testOffMatchesUpcomingAndAddsNoFollowUp() {
+        let now = nowOn("2026-08-07", time: "07:00")
+        let schedules = fiveTimes()
+        let expected = ReminderLogic.upcoming(
+            now: now,
+            medications: [med()],
+            schedules: schedules,
+            doseLogs: [],
+            periods: [],
+            settings: settings,
+            limit: 60
+        )
+        let result = plan(
+            now: now,
+            count: .off,
+            stops: [ReminderChainStop(scheduleId: "s1", date: "2026-08-07", timeOfDay: "08:00")],
+            schedules: schedules
+        )
+        XCTAssertEqual(result.doses, expected)
+        XCTAssertEqual(result.doses.count, 60)
+        XCTAssertTrue(result.followUps.isEmpty)
+    }
+
+    func testFollowUpsFireTenMinutesApartAndStopAtN() {
+        let now = nowOn("2026-08-07", time: "07:00")
+        let planned = nowOn("2026-08-07", time: "08:00")
+        func fire(_ step: Int) -> Date {
+            planned.addingTimeInterval(TimeInterval(step * ReminderLogic.snoozeMinutes * 60))
+        }
+        let two = plan(now: now, count: .two).followUps.filter {
+            $0.date == "2026-08-07" && $0.timeOfDay == "08:00"
+        }
+        XCTAssertEqual(two.map(\.fireAt), [fire(1), fire(2)])
+        XCTAssertEqual(two.map(\.id), [
+            "follow.s1.2026-08-07.08:00.1",
+            "follow.s1.2026-08-07.08:00.2",
+        ])
+        XCTAssertEqual(two.map(\.medicationName), ["Estrogen", "Estrogen"])
+        XCTAssertEqual(two.map(\.doseLabel), ["1 mg", "1 mg"])
+
+        let three = plan(now: now, count: .three).followUps.filter {
+            $0.date == "2026-08-07" && $0.timeOfDay == "08:00"
+        }
+        XCTAssertEqual(three.map(\.fireAt), [fire(1), fire(2), fire(3)])
+        XCTAssertFalse(three.contains { $0.id.hasSuffix(".4") })
+        XCTAssertFalse(plan(now: now, count: .three).followUps.contains { $0.id.hasSuffix(".4") })
+    }
+
+    func testPastFollowUpStepIsAbsent() {
+        let now = nowOn("2026-08-07", time: "08:15")
+        let planned = nowOn("2026-08-07", time: "08:00")
+        let today = plan(now: now, count: .three).followUps.filter {
+            $0.date == "2026-08-07" && $0.timeOfDay == "08:00"
+        }
+        XCTAssertEqual(today.map(\.fireAt), [
+            planned.addingTimeInterval(TimeInterval(2 * ReminderLogic.snoozeMinutes * 60)),
+            planned.addingTimeInterval(TimeInterval(3 * ReminderLogic.snoozeMinutes * 60)),
+        ])
+        XCTAssertFalse(today.contains { $0.id.hasSuffix(".1") || $0.id.hasSuffix(".4") })
+        XCTAssertFalse(plan(now: now, count: .three).doses.contains {
+            $0.date == "2026-08-07" && $0.timeOfDay == "08:00"
+        })
+    }
+
+    func testStoppedSlotHasNoFollowUpWithoutASnoozeId() {
+        let now = nowOn("2026-08-07", time: "07:00")
+        let stop = ReminderChainStop(scheduleId: "s1", date: "2026-08-07", timeOfDay: "08:00")
+        let result = plan(now: now, count: .two, stops: [stop])
+        XCTAssertFalse(result.followUps.contains { $0.date == "2026-08-07" && $0.timeOfDay == "08:00" })
+        XCTAssertTrue(result.doses.contains { $0.date == "2026-08-07" && $0.timeOfDay == "08:00" })
+        XCTAssertTrue(result.stops.contains(stop))
+    }
+
+    func testTakenSlotDropsTheDoseTheFollowUpAndTheStop() {
+        let now = nowOn("2026-08-07", time: "07:00")
+        let stop = ReminderChainStop(scheduleId: "s1", date: "2026-08-07", timeOfDay: "08:00")
+        let log = DoseLog(
+            id: "l1",
+            medicationId: "m1",
+            scheduleId: "s1",
+            plannedFor: DateKeys.combineDateAndTime(dateKey: "2026-08-07", timeOfDay: "08:00"),
+            status: .taken,
+            confirmedAt: "t"
+        )
+        let result = plan(now: now, count: .three, stops: [stop], logs: [log])
+        XCTAssertFalse(result.doses.contains { $0.date == "2026-08-07" && $0.timeOfDay == "08:00" })
+        XCTAssertFalse(result.followUps.contains { $0.date == "2026-08-07" && $0.timeOfDay == "08:00" })
+        XCTAssertFalse(result.stops.contains(stop))
+    }
+
+    func testFifthSoonestCandidateHasNoFollowUpAndDoseCapIs48() {
+        let now = nowOn("2026-08-07", time: "07:00")
+        let schedules = fiveTimes()
+        let result = plan(now: now, count: .three, schedules: schedules)
+        let expected = ReminderLogic.upcoming(
+            now: now,
+            medications: [med()],
+            schedules: schedules,
+            doseLogs: [],
+            periods: [],
+            settings: settings,
+            limit: 48
+        )
+        XCTAssertEqual(result.doses, expected)
+        XCTAssertEqual(result.doses.count, 48)
+        let chained = Set(result.followUps.map { "\($0.scheduleId).\($0.date).\($0.timeOfDay)" })
+        XCTAssertEqual(chained.count, 4)
+        XCTAssertFalse(result.followUps.contains { $0.date == "2026-08-07" && $0.timeOfDay == "16:00" })
+        XCTAssertEqual(
+            result.followUps.filter { $0.date == "2026-08-07" && $0.timeOfDay == "14:00" }.count,
+            3
+        )
+        XCTAssertEqual(plan(now: now, count: .two, schedules: schedules).doses.count, 52)
+    }
+
+    func testFollowUpIdsListThreeWhenCountIsOff() {
+        XCTAssertEqual(
+            ReminderSlot.followUpIds(scheduleId: "s1", date: "2026-08-07", timeOfDay: "08:00"),
+            [
+                "follow.s1.2026-08-07.08:00.1",
+                "follow.s1.2026-08-07.08:00.2",
+                "follow.s1.2026-08-07.08:00.3",
+            ]
+        )
+        let off = plan(now: nowOn("2026-08-07", time: "07:00"), count: .off)
+        XCTAssertTrue(off.followUps.isEmpty)
+        XCTAssertEqual(
+            ReminderSlot.followUpIds(scheduleId: "s1", date: "2026-08-07", timeOfDay: "08:00").count,
+            3
+        )
+    }
 }

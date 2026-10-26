@@ -37,6 +37,82 @@ public struct ReminderSlot: Equatable, Sendable, Identifiable {
     public static func snoozeId(scheduleId: String, date: String, timeOfDay: String) -> String {
         "snooze.\(scheduleId).\(date).\(timeOfDay)"
     }
+
+    public static func followUpId(scheduleId: String, date: String, timeOfDay: String, step: Int) -> String {
+        "follow.\(scheduleId).\(date).\(timeOfDay).\(step)"
+    }
+
+    public static func followUpIds(scheduleId: String, date: String, timeOfDay: String) -> [String] {
+        (1...3).map { followUpId(scheduleId: scheduleId, date: date, timeOfDay: timeOfDay, step: $0) }
+    }
+}
+
+public enum FollowUpCount: Int, Sendable, Equatable {
+    case off = 0
+    case two = 2
+    case three = 3
+
+    public static let storageKey = "perimedi.reminderFollowUps"
+
+    public static func parsed(_ raw: Int?) -> FollowUpCount {
+        guard let raw, let count = FollowUpCount(rawValue: raw) else { return .off }
+        return count
+    }
+}
+
+public struct ReminderChainStop: Hashable, Codable, Sendable {
+    public var scheduleId: String
+    public var date: String
+    public var timeOfDay: String
+
+    public init(scheduleId: String, date: String, timeOfDay: String) {
+        self.scheduleId = scheduleId
+        self.date = date
+        self.timeOfDay = timeOfDay
+    }
+}
+
+public struct FollowUpRequest: Equatable, Sendable {
+    public var id: String
+    public var fireAt: Date
+    public var medicationId: String
+    public var scheduleId: String
+    public var date: String
+    public var timeOfDay: String
+    public var medicationName: String
+    public var doseLabel: String
+
+    public init(
+        id: String,
+        fireAt: Date,
+        medicationId: String,
+        scheduleId: String,
+        date: String,
+        timeOfDay: String,
+        medicationName: String,
+        doseLabel: String
+    ) {
+        self.id = id
+        self.fireAt = fireAt
+        self.medicationId = medicationId
+        self.scheduleId = scheduleId
+        self.date = date
+        self.timeOfDay = timeOfDay
+        self.medicationName = medicationName
+        self.doseLabel = doseLabel
+    }
+}
+
+public struct FollowUpPlan: Equatable, Sendable {
+    public var doses: [ReminderSlot]
+    public var followUps: [FollowUpRequest]
+    public var stops: Set<ReminderChainStop>
+
+    public init(doses: [ReminderSlot], followUps: [FollowUpRequest], stops: Set<ReminderChainStop>) {
+        self.doses = doses
+        self.followUps = followUps
+        self.stops = stops
+    }
 }
 
 /// Device notification permission, without importing UserNotifications into domain.
@@ -152,6 +228,7 @@ public enum ReminderLogic {
     public static let horizonDays = 14
     public static let maxPending = 60
     public static let snoozeMinutes = 10
+    private static let chainedSlotCap = 4
 
     /// How to fire a local notification so it is not dropped as “already past”
     /// (calendar components without a time zone can be read as GMT on device).
@@ -194,6 +271,101 @@ public enum ReminderLogic {
             return Array(slots.prefix(limit))
         }
         return slots
+    }
+
+    public static func followUpPlan(
+        now: Date,
+        count: FollowUpCount,
+        stops: Set<ReminderChainStop>,
+        medications: [Medication],
+        schedules: [Schedule],
+        doseLogs: [DoseLog],
+        periods: [Period],
+        settings: CycleSettings,
+        horizonDays: Int = horizonDays
+    ) -> FollowUpPlan {
+        let doses = upcoming(
+            now: now,
+            medications: medications,
+            schedules: schedules,
+            doseLogs: doseLogs,
+            periods: periods,
+            settings: settings,
+            horizonDays: horizonDays,
+            limit: doseLimit(for: count)
+        )
+        let today = DateKeys.toDateKey(now)
+        let to = DateKeys.addDaysKey(today, horizonDays)
+        let pending = slots(
+            from: today,
+            to: to,
+            medications: medications,
+            schedules: schedules,
+            doseLogs: doseLogs,
+            periods: periods,
+            settings: settings
+        )
+        let live = Set(pending.map {
+            ReminderChainStop(scheduleId: $0.scheduleId, date: $0.date, timeOfDay: $0.timeOfDay)
+        })
+        let pruned = stops.intersection(live)
+        guard count != .off else {
+            return FollowUpPlan(doses: doses, followUps: [], stops: pruned)
+        }
+        let stepCount = count.rawValue
+        let interval = TimeInterval(snoozeMinutes * 60)
+        let eligible = pending
+            .filter { slot in
+                let stop = ReminderChainStop(
+                    scheduleId: slot.scheduleId,
+                    date: slot.date,
+                    timeOfDay: slot.timeOfDay
+                )
+                guard !pruned.contains(stop) else { return false }
+                return (1...stepCount).contains { step in
+                    slot.fireAt.addingTimeInterval(interval * TimeInterval(step)) > now
+                }
+            }
+            .sorted { lhs, rhs in
+                if lhs.fireAt != rhs.fireAt { return lhs.fireAt < rhs.fireAt }
+                if lhs.scheduleId != rhs.scheduleId { return lhs.scheduleId < rhs.scheduleId }
+                if lhs.date != rhs.date { return lhs.date < rhs.date }
+                return lhs.timeOfDay < rhs.timeOfDay
+            }
+        var followUps: [FollowUpRequest] = []
+        for slot in eligible.prefix(chainedSlotCap) {
+            for step in 1...stepCount {
+                let fireAt = slot.fireAt.addingTimeInterval(interval * TimeInterval(step))
+                guard fireAt > now else { continue }
+                followUps.append(
+                    FollowUpRequest(
+                        id: ReminderSlot.followUpId(
+                            scheduleId: slot.scheduleId,
+                            date: slot.date,
+                            timeOfDay: slot.timeOfDay,
+                            step: step
+                        ),
+                        fireAt: fireAt,
+                        medicationId: slot.medicationId,
+                        scheduleId: slot.scheduleId,
+                        date: slot.date,
+                        timeOfDay: slot.timeOfDay,
+                        medicationName: slot.medicationName,
+                        doseLabel: slot.doseLabel
+                    )
+                )
+            }
+        }
+        return FollowUpPlan(doses: doses, followUps: followUps, stops: pruned)
+    }
+
+    private static func doseLimit(for count: FollowUpCount) -> Int {
+        switch count {
+        case .off:
+            return maxPending
+        case .two, .three:
+            return maxPending - chainedSlotCap * count.rawValue
+        }
     }
 
     /// Snooze ids for pending reminder slots in the horizon, including overdue times today.
