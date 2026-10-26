@@ -77,3 +77,30 @@ The system SHALL ask for notification permission on first launch when the master
 #### Scenario: Denied
 - **WHEN** notification permission is denied and reminders are on
 - **THEN** More shows a short explanation pointing to iOS Settings and does not prompt again on launch
+
+### Requirement: Opt-in extra reminders
+The system SHALL let the user choose Off, 2, or 3 extra reminders for a missed planned dose. The default SHALL be Off. The choice SHALL stay on this device and SHALL NOT be part of the backup. The control SHALL stay visible when the master reminders switch is off, and it SHALL have no effect until that switch is on and notification permission allows scheduling. Each extra reminder SHALL use the same title, medication name, body, Taken action, and Snooze action as the planned reminder. The body SHALL still name the planned take time. Extra reminder k SHALL fire at the planned time plus k times 10 minutes. The system SHALL omit a step whose time is already past and SHALL NOT move later steps earlier. The system SHALL NOT schedule more than the chosen count, and SHALL NOT schedule another extra after that count. At most the four soonest pending slots that are not stopped and still have a future extra reminder SHALL receive every remaining step. Other pending slots SHALL receive only the planned reminder. When 2 or 3 is selected and more planned reminders are pending than fit alongside those extras, the later planned reminders are not scheduled. Off SHALL schedule the same planned reminders as before this choice existed, one per pending slot.
+
+#### Scenario: Off
+- **WHEN** the user leaves extra reminders Off
+- **THEN** the system schedules one planned reminder for a pending slot, and manual Snooze still schedules only one reminder about ten minutes later
+
+#### Scenario: Two or three extras
+- **WHEN** the user chooses 2 or 3
+- **THEN** the system schedules that many extra reminders 10 minutes apart, the first 10 minutes after the planned time
+
+#### Scenario: Taken, Snooze, or no longer pending
+- **WHEN** the user marks the slot taken from the notification, the in-app banner, Cycle, or the Home Screen widget, chooses Snooze, or the slot is no longer pending
+- **THEN** the extra reminders for that slot stop
+
+#### Scenario: Snooze does not continue the chain
+- **WHEN** the Snooze reminder fires
+- **THEN** the chain does not continue after Snooze fires
+
+#### Scenario: Stops at the chosen count
+- **WHEN** the user chooses 2 or 3
+- **THEN** the chain does not loop past that count
+
+#### Scenario: Permission denied
+- **WHEN** notification permission is denied
+- **THEN** denied permission adds no other alert

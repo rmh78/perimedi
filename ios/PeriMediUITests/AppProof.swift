@@ -191,8 +191,18 @@ struct AppProof {
         robot.waitFor(id: "more.lang.de")
         robot.tap("more.lang.de")
         XCTAssertEqual(robot.element("tab.more").label, "Mehr")
+        XCTAssertTrue(
+            robot.app.staticTexts["Wartet 10 Minuten zwischen den Hinweisen."].waitForExistence(timeout: 2)
+        )
         robot.tap("more.lang.en")
         XCTAssertEqual(robot.element("tab.more").label, "More")
+        XCTAssertTrue(
+            robot.app.staticTexts["Waits 10 minutes between nudges."].waitForExistence(timeout: 2)
+        )
+        robot.waitFor(id: "more.reminderFollowUps")
+        let followUps = robot.element("more.reminderFollowUps")
+        followUps.buttons["2"].tap()
+        followUps.buttons["Off"].tap()
         robot.waitFor(id: "more.reminders")
         robot.tap("more.reminders")
         robot.waitFor(id: "more.reminderSound")

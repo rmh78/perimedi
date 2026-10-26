@@ -15,7 +15,15 @@ struct MoreView: View {
     @State private var showImporter = false
     @AppStorage(DoseReminderCenter.masterKey) private var remindersOn = true
     @AppStorage(ReminderSound.storageKey) private var reminderSoundRaw = ReminderSound.system.rawValue
+    @AppStorage(FollowUpCount.storageKey) private var followUpRaw = FollowUpCount.off.rawValue
     @State private var notifyDenied = false
+
+    private var followUpSelection: Binding<Int> {
+        Binding(
+            get: { FollowUpCount.parsed(followUpRaw).rawValue },
+            set: { followUpRaw = $0 }
+        )
+    }
 
 
     var body: some View {
@@ -90,6 +98,22 @@ struct MoreView: View {
                                 .accessibilityIdentifier(A11yID.moreReminderSoundPreview)
                             }
                         }
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(app.t("more.reminderFollowUps"))
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Theme.ink)
+                            Picker("", selection: followUpSelection) {
+                                Text(app.t("more.reminderFollowUps.off")).tag(FollowUpCount.off.rawValue)
+                                Text("2").tag(FollowUpCount.two.rawValue)
+                                Text("3").tag(FollowUpCount.three.rawValue)
+                            }
+                            .pickerStyle(.segmented)
+                            .labelsHidden()
+                            .accessibilityIdentifier(A11yID.moreReminderFollowUps)
+                            Text(app.t("more.reminderFollowUpsBody"))
+                                .font(.caption)
+                                .foregroundStyle(Theme.inkMuted)
+                        }
                         if remindersOn, notifyDenied {
                             Text(app.t("more.remindersDenied"))
                                 .font(.caption)
@@ -116,6 +140,9 @@ struct MoreView: View {
                     }
                 }
                 .onChange(of: reminderSoundRaw) { _, _ in
+                    DoseReminderCenter.shared.refresh()
+                }
+                .onChange(of: followUpRaw) { _, _ in
                     DoseReminderCenter.shared.refresh()
                 }
 
