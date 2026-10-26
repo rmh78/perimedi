@@ -165,7 +165,7 @@ final class AppRobot {
         case "more.reminders", "visit.range.previous":
             return [.switch]
         case "more.reminderFollowUps":
-            return [.segmentedControl, .other, .button]
+            return [.other, .button]
         case "trends.detail", "trends.screen":
             return [.other]
         case "cycle.chip.period", "cycle.pager.label", "trends.status", "trends.empty",

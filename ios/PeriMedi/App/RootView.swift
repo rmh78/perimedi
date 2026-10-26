@@ -153,6 +153,8 @@ struct RootView: View {
         if args.contains("-clear") {
             try? store.clearAll()
             UserDefaults.standard.removeObject(forKey: "perimedi.trends.selected")
+            UserDefaults.standard.removeObject(forKey: DoseReminderCenter.masterKey)
+            UserDefaults.standard.removeObject(forKey: FollowUpCount.storageKey)
         }
         if args.contains("-loadSample") {
             try? store.loadSample()

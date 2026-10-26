@@ -18,11 +18,31 @@ struct MoreView: View {
     @AppStorage(FollowUpCount.storageKey) private var followUpRaw = FollowUpCount.off.rawValue
     @State private var notifyDenied = false
 
-    private var followUpSelection: Binding<Int> {
-        Binding(
-            get: { FollowUpCount.parsed(followUpRaw).rawValue },
-            set: { followUpRaw = $0 }
-        )
+    private var followUpItems: [EqualWidthPillRow.Item] {
+        let selected = FollowUpCount.parsed(followUpRaw)
+        return [
+            EqualWidthPillRow.Item(
+                id: "off",
+                title: app.t("more.reminderFollowUps.off"),
+                kind: selected == .off ? .primary : .secondary
+            ) {
+                followUpRaw = FollowUpCount.off.rawValue
+            },
+            EqualWidthPillRow.Item(
+                id: "two",
+                title: "2×",
+                kind: selected == .two ? .primary : .secondary
+            ) {
+                followUpRaw = FollowUpCount.two.rawValue
+            },
+            EqualWidthPillRow.Item(
+                id: "three",
+                title: "3×",
+                kind: selected == .three ? .primary : .secondary
+            ) {
+                followUpRaw = FollowUpCount.three.rawValue
+            },
+        ]
     }
 
 
@@ -102,18 +122,15 @@ struct MoreView: View {
                             Text(app.t("more.reminderFollowUps"))
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(Theme.ink)
-                            Picker("", selection: followUpSelection) {
-                                Text(app.t("more.reminderFollowUps.off")).tag(FollowUpCount.off.rawValue)
-                                Text("2").tag(FollowUpCount.two.rawValue)
-                                Text("3").tag(FollowUpCount.three.rawValue)
-                            }
-                            .pickerStyle(.segmented)
-                            .labelsHidden()
-                            .accessibilityIdentifier(A11yID.moreReminderFollowUps)
+                            EqualWidthPillRow(items: followUpItems)
                             Text(app.t("more.reminderFollowUpsBody"))
                                 .font(.caption)
                                 .foregroundStyle(Theme.inkMuted)
                         }
+                        .opacity(remindersOn ? 1 : 0.4)
+                        .disabled(!remindersOn)
+                        .accessibilityElement(children: .contain)
+                        .accessibilityIdentifier(A11yID.moreReminderFollowUps)
                         if remindersOn, notifyDenied {
                             Text(app.t("more.remindersDenied"))
                                 .font(.caption)
