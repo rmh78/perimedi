@@ -32,9 +32,7 @@ PeriMedi has no login. From More, choose Load sample. That shows Cycle with the 
 
 ## Screenshots (6.9" iPhone, EN and DE)
 
-The shots are full-bleed app frames from sample data on iPhone 18 Pro Max, with today pinned to 2026-03-15. Each file is 1320×2868, or 1290×2796. There are no caption strings in the repo. Captions must not say the app treats menopause or that HRT is working.
-
-English files are in `docs/app-store/screenshots/en/`. German files are in `docs/app-store/screenshots/de/`.
+The 6.9" App Store Connect slot uses `docs/app-store/screenshots/en/` and `docs/app-store/screenshots/de/`. Capture those files on iPhone 18 Pro Max with `bash docs/app-store/capture-store-shots.sh`. Today is pinned to 2026-03-15. Each file is 1320×2868 or 1290×2796. There are no caption strings in the repo. Captions must not say the app treats menopause or that HRT is working.
 
 1. `01-cycle.png`. Sample Cycle, with the effect sentence visible and no sheet.
 2. `02-trends.png`. Sample Trends chart, with one symptom dot selected and its detail line visible.
@@ -42,6 +40,10 @@ English files are in `docs/app-store/screenshots/en/`. German files are in `docs
 4. `04-visit.png`. Visit PDF preview, with the share control present. Sample medications show taken counts from the logged history.
 5. `05-month.png`. Sample Month.
 6. `06-more.png`. More, ending above the tab bar with the privacy link and the full disclaimer visible.
+
+## Screenshots (6.1" and 6.3" iPhone, EN and DE)
+
+The 6.1" and 6.3" App Store Connect slot uses `docs/app-store/screenshots-6.3/en/` and `docs/app-store/screenshots-6.3/de/`. Capture those files on iPhone 17 Pro with `bash docs/app-store/capture-store-shots.sh 6.3`. Today is pinned to 2026-03-15. Each file is 1206×2622. The six frames use the same names and the same order as the 6.9" slot. Upload them in filename order.
 
 ## Support URL
 

@@ -474,29 +474,40 @@ final class AppRobot {
         waitGone(id: "sheet.med")
     }
 
-    func pick(_ id: String, _ option: String) {
+    func pick(_ id: String, _ option: String, file: StaticString = #filePath, line: UInt = #line) {
         tap(id)
+        if choose(id, option) { return }
+        // Every day is already selected. After the Home Screen long-press the
+        // menu rows leave the hierarchy, and the next tap hits the open menu.
+        if exists("sheet.med") { tap("sheet.med") }
+        if option == "med.mode.everyday" { return }
+        XCTFail("missing \(option)", file: file, line: line)
+    }
+
+    private func choose(_ id: String, _ option: String) -> Bool {
         let byId = element(option)
         if spin(timeout: 1.5) { byId.exists } {
             press(byId)
-            return
+            return true
         }
         let menuChoice = app.collectionViews.buttons[option]
         if spin(timeout: 1.5) { menuChoice.exists } {
             press(menuChoice)
-            return
+            return true
         }
         let other = app.buttons.matching(
             NSPredicate(format: "label == %@ AND identifier != %@", option, id)
         ).firstMatch
         if spin(timeout: 1) { other.exists } {
             press(other)
-            return
+            return true
         }
         let any = app.descendants(matching: .any)[option]
         if spin(timeout: 1) { any.exists } {
             press(any)
+            return true
         }
+        return false
     }
 
     func addSymptom(
