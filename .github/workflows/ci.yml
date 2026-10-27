@@ -57,6 +57,14 @@ jobs:
         run: python3 ios/scripts/check-ui-test-names.py
       - name: PR text does not link user-attachment hosts
         run: python3 ios/scripts/check-pr-attachments.py
+      - name: Added lines that repeat a review finding
+        env:
+          BASE_REF: ${{ github.base_ref || 'main' }}
+        run: |
+          git fetch --no-tags origin "$BASE_REF"
+          python3 ios/scripts/check-review-repeats.py --base "origin/$BASE_REF"
+      - name: Review-repeat unit tests
+        run: python3 ios/scripts/test_check_review_repeats.py
       - name: Agent rails unit tests
         run: python3 ios/scripts/test_check_agent_rails.py
       - name: Every A11yID is named in the feature map
