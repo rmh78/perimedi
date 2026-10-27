@@ -191,10 +191,23 @@ struct AppProof {
         robot.waitFor(id: "more.lang.de")
         robot.tap("more.lang.de")
         XCTAssertEqual(robot.element("tab.more").label, "Mehr")
+        XCTAssertTrue(
+            robot.app.staticTexts["Bis zu 2 oder 3 weitere Erinnerungen im Abstand von 10 Minuten, bis du die Dosis als genommen markierst."].waitForExistence(timeout: 2)
+        )
         robot.tap("more.lang.en")
         XCTAssertEqual(robot.element("tab.more").label, "More")
+        XCTAssertTrue(
+            robot.app.staticTexts["Up to 2 or 3 more reminders, 10 minutes apart, until you mark the dose taken."].waitForExistence(timeout: 2)
+        )
+        robot.waitFor(id: "more.reminderFollowUps")
+        let followUps = robot.element("more.reminderFollowUps")
+        followUps.buttons["2×"].tap()
+        followUps.buttons["Off"].tap()
         robot.waitFor(id: "more.reminders")
         robot.tap("more.reminders")
+        let off = followUps.buttons["Off"]
+        XCTAssertTrue(off.waitForExistence(timeout: 2))
+        XCTAssertFalse(off.isEnabled)
         robot.waitFor(id: "more.reminderSound")
         robot.tap("more.reminderSoundPreview")
         _ = robot.exists("more.remindersSettings")

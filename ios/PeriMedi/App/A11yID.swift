@@ -65,6 +65,7 @@ enum A11yID {
     static let medRemind = "med.remind"
     static let moreReminders = "more.reminders"
     static let moreReminderSound = "more.reminderSound"
+    static let moreReminderFollowUps = "more.reminderFollowUps"
     static let moreLangEn = "more.lang.en"
     static let moreLangDe = "more.lang.de"
     static let moreReminderSoundPreview = "more.reminderSoundPreview"

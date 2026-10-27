@@ -9,6 +9,22 @@ struct ScreenCatalogWriter {
         try captureTrendsFixture()
         try captureTrendsNoScores()
         try captureGermanNewSymptomPill()
+        robot.launch(arguments: [
+            "-en",
+            "-clear",
+            "-uiTesting",
+            "-today=2026-03-15",
+            "-loadSample",
+            "-UIPreferredContentSizeCategoryName",
+            "UICTContentSizeCategoryAccessibilityXXXL",
+        ])
+        robot.tap("tab.more")
+        robot.scrollTo("more.reminderFollowUps")
+        let title = robot.app.staticTexts["Remind me again"]
+        XCTAssertTrue(title.waitForExistence(timeout: 2))
+        XCTAssertTrue(title.isHittable)
+        XCTAssertTrue(robot.element("more.reminderFollowUps").buttons["Off"].isHittable)
+        try write("more-sample-xxxl-en")
 
         let expected = ScreenCatalog.expectedNames
         XCTAssertFalse(expected.isEmpty, "ios/docs/screens/expected.txt")
@@ -112,6 +128,12 @@ struct ScreenCatalogWriter {
         robot.scrollTo("more.sharePdf")
         robot.waitFor(id: "more.sharePdf")
         try write("more-sample-en")
+        robot.tap("more.lang.de")
+        XCTAssertTrue(
+            robot.app.staticTexts["Bis zu 2 oder 3 weitere Erinnerungen im Abstand von 10 Minuten, bis du die Dosis als genommen markierst."].waitForExistence(timeout: 2)
+        )
+        try write("more-sample-de")
+        robot.tap("more.lang.en")
         robot.tap("more.sharePdf")
         robot.waitFor(id: "visit.range")
         robot.waitFor(id: "visit.range.cycle.2026-02-02")

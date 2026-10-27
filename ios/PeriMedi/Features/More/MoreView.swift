@@ -15,7 +15,35 @@ struct MoreView: View {
     @State private var showImporter = false
     @AppStorage(DoseReminderCenter.masterKey) private var remindersOn = true
     @AppStorage(ReminderSound.storageKey) private var reminderSoundRaw = ReminderSound.system.rawValue
+    @AppStorage(FollowUpCount.storageKey) private var followUpRaw = FollowUpCount.off.rawValue
     @State private var notifyDenied = false
+
+    private var followUpItems: [EqualWidthPillRow.Item] {
+        let selected = FollowUpCount.parsed(followUpRaw)
+        return [
+            EqualWidthPillRow.Item(
+                id: "off",
+                title: app.t("more.reminderFollowUps.off"),
+                kind: selected == .off ? .primary : .secondary
+            ) {
+                followUpRaw = FollowUpCount.off.rawValue
+            },
+            EqualWidthPillRow.Item(
+                id: "two",
+                title: "2×",
+                kind: selected == .two ? .primary : .secondary
+            ) {
+                followUpRaw = FollowUpCount.two.rawValue
+            },
+            EqualWidthPillRow.Item(
+                id: "three",
+                title: "3×",
+                kind: selected == .three ? .primary : .secondary
+            ) {
+                followUpRaw = FollowUpCount.three.rawValue
+            },
+        ]
+    }
 
 
     var body: some View {
@@ -90,6 +118,19 @@ struct MoreView: View {
                                 .accessibilityIdentifier(A11yID.moreReminderSoundPreview)
                             }
                         }
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(app.t("more.reminderFollowUps"))
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Theme.ink)
+                            EqualWidthPillRow(items: followUpItems)
+                            Text(app.t("more.reminderFollowUpsBody"))
+                                .font(.caption)
+                                .foregroundStyle(Theme.inkMuted)
+                        }
+                        .opacity(remindersOn ? 1 : 0.4)
+                        .disabled(!remindersOn)
+                        .accessibilityElement(children: .contain)
+                        .accessibilityIdentifier(A11yID.moreReminderFollowUps)
                         if remindersOn, notifyDenied {
                             Text(app.t("more.remindersDenied"))
                                 .font(.caption)
@@ -116,6 +157,9 @@ struct MoreView: View {
                     }
                 }
                 .onChange(of: reminderSoundRaw) { _, _ in
+                    DoseReminderCenter.shared.refresh()
+                }
+                .onChange(of: followUpRaw) { _, _ in
                     DoseReminderCenter.shared.refresh()
                 }
 

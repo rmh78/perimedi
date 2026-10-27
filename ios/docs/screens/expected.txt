@@ -8,6 +8,8 @@ trends-tick-en.png
 trends-noscores-en.png
 month-sample-en.png
 more-sample-en.png
+more-sample-de.png
+more-sample-xxxl-en.png
 visit-range-sample-en.png
 visit-pdf-sample-en.png
 sheet-med-en.png

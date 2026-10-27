@@ -6,6 +6,7 @@ In-app banner for a pending slot, plus the More master switch.
 
 - Banner with title, medication name, dose/time body, Taken / Snooze
 - Master toggle and sound on More
+- Extra reminders Off / 2× / 3× on More (`more.reminderFollowUps`). Default Off. Title is Remind me again. The helper says up to 2 or 3 more reminders, 10 minutes apart, until the dose is marked taken. The row stays visible. While the master switch is off it is dimmed and disabled. Proof is the English journey on More, not a system banner. Off leaves one planned reminder plus manual Snooze. 2 or 3 plants that many follow-ups. Taken, Snooze, or a slot that is no longer pending stops them. The chain does not continue after Snooze fires and does not pass the chosen count. Denied permission adds no other alert. `-remindIn` does not plant the chain.
 - Per-medication remind toggle on the medication sheet
 
 ## How to get to it (user POV)
@@ -20,6 +21,7 @@ Turn reminders on in More. Enable remind on a medication. When a slot is due, a 
 | Taken | `reminder.taken` | Primary action on the right. Banner gone; `cycle.lane.{slug}.status` becomes `taken`. The English journey takes estrogen, then progesterone, before Month. |
 | Snooze | `reminder.snooze` | Left of Taken. Banner dismisses without taking. The English journey taps it between the untake and the second estrogen take. |
 | More master | `more.reminders` | See [more.md](more.md). |
+| Extra reminders | `more.reminderFollowUps` | Pills Off / 2× / 3× on the Reminders card. See [more.md](more.md). `testEnglishAppJourney` waits for it, taps 2×, then Off. After the master switch goes off, the Off pill is disabled. It does not open the system permission dialog. |
 | Per-med remind | `med.remind` | On [medication-sheet.md](medication-sheet.md). |
 
 `JourneyLaunch.pinnedRemindIn(seconds: 2)` fires the next pending slot in-process on `testEnglishAppJourney`. Save estrogen first so a lane exists with `not-taken`, then wait for the banner. Do not launch a second process for the reminder.

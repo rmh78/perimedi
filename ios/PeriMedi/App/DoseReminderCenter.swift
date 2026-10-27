@@ -157,34 +157,37 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         }
         let center = UNUserNotificationCenter.current()
         let pending = await center.pendingNotificationRequests()
+        let pendingIds = pending.map(\.identifier)
         if !masterEnabled {
-            let ours = pending.filter { $0.identifier.hasPrefix("dose.") || $0.identifier.hasPrefix("snooze.") }
-            Self.removePending(ours.map(\.identifier))
+            Self.removePending(pendingIds.filter(Self.isReminderRequest))
             return
         }
         let settings = await center.notificationSettings()
         let status = ReminderAuthStatus(settings.authorizationStatus)
-        let ours = pending.filter { $0.identifier.hasPrefix("dose.") || $0.identifier.hasPrefix("snooze.") }
         guard ReminderPermissionPolicy.shouldScheduleDoseReminders(
             masterEnabled: true,
             status: status
         ) else {
-            Self.removePending(ours.filter { $0.identifier.hasPrefix("dose.") }.map(\.identifier))
+            Self.removePending(pendingIds.filter(Self.isDoseOrFollow))
             return
         }
 
-        let slots = ReminderLogic.upcoming(
+        let count = FollowUpCount.parsed(storedFollowUpRaw())
+        let plan = ReminderLogic.followUpPlan(
             now: Date(),
+            count: count,
+            stops: ReminderChainStops.load(),
             medications: store.medications,
             schedules: store.schedules,
             doseLogs: store.doseLogs,
             periods: store.periods,
             settings: store.settings
         )
+        ReminderChainStops.save(plan.stops)
         // Rebuild every dose request so a broken trigger (no time zone) is not kept.
-        Self.removePending(ours.filter { $0.identifier.hasPrefix("dose.") }.map(\.identifier))
+        Self.removePending(pendingIds.filter(Self.isDoseOrFollow))
 
-        for slot in slots {
+        for slot in plan.doses {
             guard let request = makeRequest(
                 id: slot.id,
                 medicationName: slot.medicationName,
@@ -192,6 +195,24 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
                 timeOfDay: slot.timeOfDay,
                 fireAt: slot.fireAt,
                 info: userInfo(for: slot)
+            ) else { continue }
+            Self.enqueue(request)
+        }
+        for follow in plan.followUps {
+            guard let request = makeRequest(
+                id: follow.id,
+                medicationName: follow.medicationName,
+                doseLabel: follow.doseLabel,
+                timeOfDay: follow.timeOfDay,
+                fireAt: follow.fireAt,
+                info: userInfo(
+                    medicationId: follow.medicationId,
+                    scheduleId: follow.scheduleId,
+                    date: follow.date,
+                    timeOfDay: follow.timeOfDay,
+                    medicationName: follow.medicationName,
+                    doseLabel: follow.doseLabel
+                )
             ) else { continue }
             Self.enqueue(request)
         }
@@ -204,9 +225,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             periods: store.periods,
             settings: store.settings
         )
-        let staleSnooze = ours
-            .map(\.identifier)
-            .filter { $0.hasPrefix("snooze.") && !liveSnooze.contains($0) }
+        let staleSnooze = pendingIds.filter { $0.hasPrefix("snooze.") && !liveSnooze.contains($0) }
         if !staleSnooze.isEmpty {
             Self.removePendingAndDelivered(staleSnooze)
         }
@@ -354,7 +373,11 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         let ids = [
             ReminderSlot.doseId(scheduleId: identity.scheduleId, date: identity.date, timeOfDay: identity.timeOfDay),
             ReminderSlot.snoozeId(scheduleId: identity.scheduleId, date: identity.date, timeOfDay: identity.timeOfDay),
-        ]
+        ] + ReminderSlot.followUpIds(
+            scheduleId: identity.scheduleId,
+            date: identity.date,
+            timeOfDay: identity.timeOfDay
+        )
         Self.cancelNotifications(ids: ids)
     }
 
@@ -393,31 +416,21 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
 
     func snooze(reminder: PendingReminder) {
         app?.pendingReminder = nil
-        Task {
-            let fireAt = Date().addingTimeInterval(TimeInterval(ReminderLogic.snoozeMinutes * 60))
-            let id = ReminderSlot.snoozeId(
+        snoozeSlot(
+            scheduleId: reminder.scheduleId,
+            date: reminder.date,
+            timeOfDay: reminder.timeOfDay,
+            medicationName: reminder.medicationName,
+            doseLabel: reminder.doseLabel,
+            info: userInfo(
+                medicationId: reminder.medicationId,
                 scheduleId: reminder.scheduleId,
                 date: reminder.date,
-                timeOfDay: reminder.timeOfDay
-            )
-            if let request = makeRequest(
-                id: id,
-                medicationName: reminder.medicationName,
-                doseLabel: reminder.doseLabel,
                 timeOfDay: reminder.timeOfDay,
-                fireAt: fireAt,
-                info: userInfo(
-                    medicationId: reminder.medicationId,
-                    scheduleId: reminder.scheduleId,
-                    date: reminder.date,
-                    timeOfDay: reminder.timeOfDay,
-                    medicationName: reminder.medicationName,
-                    doseLabel: reminder.doseLabel
-                )
-            ) {
-                Self.enqueue(request)
-            }
-        }
+                medicationName: reminder.medicationName,
+                doseLabel: reminder.doseLabel
+            )
+        )
     }
 
     private func reminderTitle() -> String {
@@ -559,27 +572,85 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
 
     private func snooze(_ notification: UNNotification) async {
         let info = notification.request.content.userInfo
-        let fireAt = Date().addingTimeInterval(TimeInterval(ReminderLogic.snoozeMinutes * 60))
         let scheduleId = info["scheduleId"] as? String ?? ""
         let date = info["date"] as? String ?? ""
         let time = info["timeOfDay"] as? String ?? ""
-        let id = ReminderSlot.snoozeId(scheduleId: scheduleId, date: date, timeOfDay: time)
         let medicationName = (info["medicationName"] as? String).flatMap { $0.isEmpty ? nil : $0 }
             ?? {
                 let subtitle = notification.request.content.subtitle
                 return subtitle.isEmpty ? notification.request.content.title : subtitle
             }()
         let doseLabel = info["doseLabel"] as? String ?? ""
+        snoozeSlot(
+            scheduleId: scheduleId,
+            date: date,
+            timeOfDay: time,
+            medicationName: medicationName,
+            doseLabel: doseLabel,
+            info: info
+        )
+    }
+
+    private func snoozeSlot(
+        scheduleId: String,
+        date: String,
+        timeOfDay: String,
+        medicationName: String,
+        doseLabel: String,
+        info: [AnyHashable: Any]
+    ) {
+        ReminderChainStops.insert(scheduleId: scheduleId, date: date, timeOfDay: timeOfDay)
+        Self.cancelNotifications(
+            ids: ReminderSlot.followUpIds(scheduleId: scheduleId, date: date, timeOfDay: timeOfDay)
+        )
+        let fireAt = Date().addingTimeInterval(TimeInterval(ReminderLogic.snoozeMinutes * 60))
+        let id = ReminderSlot.snoozeId(scheduleId: scheduleId, date: date, timeOfDay: timeOfDay)
         if let request = makeRequest(
             id: id,
             medicationName: medicationName,
             doseLabel: doseLabel,
-            timeOfDay: time,
+            timeOfDay: timeOfDay,
             fireAt: fireAt,
             info: info
         ) {
             Self.enqueue(request)
         }
+    }
+
+    private func storedFollowUpRaw() -> Int? {
+        guard UserDefaults.standard.object(forKey: FollowUpCount.storageKey) != nil else { return nil }
+        return UserDefaults.standard.integer(forKey: FollowUpCount.storageKey)
+    }
+
+    private static func isReminderRequest(_ id: String) -> Bool {
+        id.hasPrefix("dose.") || id.hasPrefix("follow.") || id.hasPrefix("snooze.")
+    }
+
+    private static func isDoseOrFollow(_ id: String) -> Bool {
+        id.hasPrefix("dose.") || id.hasPrefix("follow.")
+    }
+}
+
+enum ReminderChainStops {
+    static let storageKey = "perimedi.reminderChainStops"
+
+    static func load() -> Set<ReminderChainStop> {
+        guard
+            let data = UserDefaults.standard.data(forKey: storageKey),
+            let rows = try? JSONDecoder().decode([ReminderChainStop].self, from: data)
+        else { return [] }
+        return Set(rows)
+    }
+
+    static func save(_ stops: Set<ReminderChainStop>) {
+        guard let data = try? JSONEncoder().encode(Array(stops)) else { return }
+        UserDefaults.standard.set(data, forKey: storageKey)
+    }
+
+    static func insert(scheduleId: String, date: String, timeOfDay: String) {
+        var stops = load()
+        stops.insert(ReminderChainStop(scheduleId: scheduleId, date: date, timeOfDay: timeOfDay))
+        save(stops)
     }
 }
 
