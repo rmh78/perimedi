@@ -419,7 +419,7 @@ final class SymptomDirectoryTests: XCTestCase {
                 CustomSymptom(id: other, name: "Ache", sort: 2),
             ]
         )
-        XCTAssertEqual(plan.droppedIds, [later])
+        XCTAssertEqual(plan.instructions, [.deleteCustom(later)])
         XCTAssertEqual(
             plan.scores,
             [
@@ -454,7 +454,7 @@ final class SymptomDirectoryTests: XCTestCase {
             scores: []
         )
         XCTAssertEqual(plan.directory.customs, [CustomSymptom(id: fog, name: "FOG", sort: 3)])
-        XCTAssertEqual(plan.droppedIds, [ache])
+        XCTAssertEqual(plan.instructions, [.deleteCustom(ache)])
     }
 
     func testSyncedSameDayTieBreakIgnoresArrivalOrder() {
@@ -569,7 +569,7 @@ final class SymptomDirectoryTests: XCTestCase {
             plan.scores,
             [SymptomScore(id: fog.rawValue, date: "2026-03-17", severity: 4, loggedAt: "2026-03-17T09:00:00Z")]
         )
-        XCTAssertEqual(plan.droppedIds, [])
+        XCTAssertEqual(plan.instructions, [])
         XCTAssertEqual(plan.memory, memory)
     }
 
@@ -735,7 +735,6 @@ final class SymptomDirectoryTests: XCTestCase {
             ]
         )
         XCTAssertEqual(plan.scores, [winner])
-        XCTAssertEqual(plan.droppedIds, [ache])
         XCTAssertEqual(
             plan.instructions,
             [

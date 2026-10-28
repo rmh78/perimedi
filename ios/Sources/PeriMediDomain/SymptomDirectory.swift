@@ -87,13 +87,6 @@ public struct SymptomSync: Equatable, Sendable {
         self.instructions = instructions
         self.memory = memory
     }
-
-    public var droppedIds: [CustomSymptomId] {
-        instructions.compactMap { instruction in
-            guard case .deleteCustom(let id) = instruction else { return nil }
-            return id
-        }
-    }
 }
 
 public struct RememberedScoreRewrites: Equatable, Sendable {
