@@ -253,7 +253,7 @@ struct MonthGridModel {
         doseLogs: [DoseLog],
         remarks: [Remark],
         symptomScores: [SymptomScore] = [],
-        directory: SymptomDirectory = .catalogOnly,
+        directory: SymptomDirectory,
         periods: [Period],
         settings: CycleSettings
     ) -> MonthGridModel {

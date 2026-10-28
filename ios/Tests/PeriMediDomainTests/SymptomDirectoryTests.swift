@@ -2,8 +2,41 @@ import XCTest
 @testable import PeriMediDomain
 
 final class SymptomDirectoryTests: XCTestCase {
+    private let day = "2026-03-15"
     private let fog = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-000000000001")!
     private let ache = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-000000000002")!
+
+    private func dayScore(
+        id: String,
+        severity: Int,
+        count: Int? = nil,
+        note: String? = nil,
+        loggedAt: String = "old",
+        higherIsWorse: Bool = true,
+        date: String? = nil
+    ) -> SymptomScore {
+        SymptomScore(
+            id: id,
+            date: date ?? day,
+            severity: severity,
+            count: count,
+            note: note,
+            loggedAt: loggedAt,
+            higherIsWorse: higherIsWorse
+        )
+    }
+
+    private func mark(
+        _ decision: SymptomDay.Write,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) -> SymptomScore? {
+        guard case .rewrite(let mark?) = decision else {
+            XCTFail("expected a replacement row", file: file, line: line)
+            return nil
+        }
+        return mark.score
+    }
 
     func testMintParsesAndCatalogIdDoesNot() {
         let minted = CustomSymptomId.mint()
@@ -133,13 +166,174 @@ final class SymptomDirectoryTests: XCTestCase {
         )
     }
 
-    func testDayRowOmitsSeverityOutsideOneToFour() {
-        XCTAssertNil(SymptomDay.row(date: "2026-03-15", ref: .catalog(.sleep), severity: nil, loggedAt: "t"))
-        XCTAssertNil(SymptomDay.row(date: "2026-03-15", ref: .catalog(.sleep), severity: 0, loggedAt: "t"))
-        let row = SymptomDay.row(date: "2026-03-15", ref: .custom(fog), severity: 2, loggedAt: "t")
-        XCTAssertEqual(row?.id, fog.rawValue)
-        XCTAssertEqual(row?.severity, 2)
-        XCTAssertNil(row?.note)
+    func testWriteSkipsACleanCatalogRow() {
+        let existing = dayScore(id: "sleep", severity: 2, loggedAt: "old", higherIsWorse: false)
+        let decision = SymptomDay.write(
+            date: day,
+            ref: .catalog(.sleep),
+            severity: 2,
+            scores: [existing],
+            directory: .catalogOnly,
+            loggedAt: "new"
+        )
+        XCTAssertEqual(decision, .skip)
+    }
+
+    func testWriteSkipsACleanEmptyNote() {
+        let existing = dayScore(id: "sleep", severity: 2, note: "")
+        let decision = SymptomDay.write(
+            date: day,
+            ref: .catalog(.sleep),
+            severity: 2,
+            scores: [existing],
+            directory: .catalogOnly,
+            loggedAt: "new"
+        )
+        XCTAssertEqual(decision, .skip)
+    }
+
+    func testWriteSkipsWhenNothingMatchesAClear() {
+        let otherDay = dayScore(id: "sleep", severity: 2, date: "2026-03-14")
+        let otherId = dayScore(id: "hot_flash", severity: 2)
+        for severity in [Int?.none, 0, 5] {
+            let decision = SymptomDay.write(
+                date: day,
+                ref: .catalog(.sleep),
+                severity: severity,
+                scores: [otherDay, otherId],
+                directory: .catalogOnly,
+                loggedAt: "new"
+            )
+            XCTAssertEqual(decision, .skip)
+        }
+    }
+
+    func testWriteSkipsAnUnlistedCustomSeverity() throws {
+        let leftover = dayScore(id: fog.rawValue, severity: 2, count: 1, note: "kept")
+        for severity in [3, 0, 5] {
+            let decision = SymptomDay.write(
+                date: day,
+                ref: .custom(fog),
+                severity: severity,
+                scores: [leftover],
+                directory: .catalogOnly,
+                loggedAt: "new"
+            )
+            XCTAssertEqual(decision, .skip)
+        }
+    }
+
+    func testWriteClearsAStoredRow() throws {
+        let existing = dayScore(id: "sleep", severity: 2)
+        for severity in [Int?.none, 0, 5] {
+            let decision = SymptomDay.write(
+                date: day,
+                ref: .catalog(.sleep),
+                severity: severity,
+                scores: [existing],
+                directory: .catalogOnly,
+                loggedAt: "new"
+            )
+            XCTAssertEqual(decision, .rewrite(nil))
+        }
+        let listed = try SymptomDirectory.catalogOnly.adding("Fog", mint: fog).get().0
+        let custom = dayScore(id: fog.rawValue, severity: 2)
+        XCTAssertEqual(
+            SymptomDay.write(
+                date: day,
+                ref: .custom(fog),
+                severity: 0,
+                scores: [custom],
+                directory: listed,
+                loggedAt: "new"
+            ),
+            .rewrite(nil)
+        )
+        XCTAssertEqual(
+            SymptomDay.write(
+                date: day,
+                ref: .custom(fog),
+                severity: nil,
+                scores: [custom],
+                directory: .catalogOnly,
+                loggedAt: "new"
+            ),
+            .rewrite(nil)
+        )
+    }
+
+    func testWriteReplacesWithACleanRow() throws {
+        let created = try XCTUnwrap(mark(
+            SymptomDay.write(
+                date: day,
+                ref: .catalog(.sleep),
+                severity: 2,
+                scores: [],
+                directory: .catalogOnly,
+                loggedAt: "new"
+            )
+        ))
+        XCTAssertEqual(
+            created,
+            SymptomScore(id: "sleep", date: day, severity: 2, loggedAt: "new")
+        )
+        XCTAssertEqual(SymptomLog.normalized(created), created)
+
+        let counted = dayScore(id: "sleep", severity: 2, count: 0)
+        let spaced = dayScore(id: "sleep", severity: 2, note: " ")
+        let duplicates = [dayScore(id: "sleep", severity: 2), dayScore(id: "sleep", severity: 2)]
+        for scores in [[counted], [spaced], duplicates] {
+            let score = try XCTUnwrap(mark(
+                SymptomDay.write(
+                    date: day,
+                    ref: .catalog(.sleep),
+                    severity: 2,
+                    scores: scores,
+                    directory: .catalogOnly,
+                    loggedAt: "new"
+                )
+            ))
+            XCTAssertEqual(score.count, nil)
+            XCTAssertEqual(score.note, nil)
+            XCTAssertEqual(score.loggedAt, "new")
+            XCTAssertEqual(score.severity, 2)
+        }
+
+        let listed = try SymptomDirectory.catalogOnly.adding("Fog", mint: fog).get().0
+        let custom = try XCTUnwrap(mark(
+            SymptomDay.write(
+                date: day,
+                ref: .custom(fog),
+                severity: 4,
+                scores: [],
+                directory: listed,
+                loggedAt: "new"
+            )
+        ))
+        XCTAssertEqual(custom.id, fog.rawValue)
+        XCTAssertEqual(custom.severity, 4)
+    }
+
+    func testWriteSkipsTheRowItJustStored() throws {
+        let first = try XCTUnwrap(mark(
+            SymptomDay.write(
+                date: day,
+                ref: .catalog(.sleep),
+                severity: 3,
+                scores: [],
+                directory: .catalogOnly,
+                loggedAt: "first"
+            )
+        ))
+        let second = SymptomDay.write(
+            date: day,
+            ref: .catalog(.sleep),
+            severity: 3,
+            scores: [first],
+            directory: .catalogOnly,
+            loggedAt: "second"
+        )
+        XCTAssertEqual(second, .skip)
     }
 
     func testEqualDayCountsKeepTheEarlierCatalogId() throws {
@@ -188,11 +382,17 @@ final class SymptomDirectoryTests: XCTestCase {
         )
         let decoded = try BackupCodec.decode(try BackupCodec.encode(payload))
         XCTAssertEqual(decoded.customSymptoms, [CustomSymptom(id: fog, name: "Fog", sort: 0)])
-        let stored = SymptomDirectory.scoresToStore(
-            decoded.symptomScores,
-            directory: SymptomDirectory.restored(decoded.customSymptoms)
+        let plan = SymptomDirectory.synced(
+            rows: decoded.customSymptoms,
+            scores: decoded.symptomScores
         )
-        XCTAssertEqual(stored.map(\.id), ["hot_flash", fog.rawValue])
+        XCTAssertEqual(
+            plan.scores,
+            [
+                SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 2, loggedAt: "t"),
+                SymptomScore(id: "hot_flash", date: "2026-03-15", severity: 3, loggedAt: "t"),
+            ]
+        )
     }
 
     func testSyncedFoldAndExportMatchesImport() throws {
@@ -219,7 +419,7 @@ final class SymptomDirectoryTests: XCTestCase {
                 CustomSymptom(id: other, name: "Ache", sort: 2),
             ]
         )
-        XCTAssertEqual(plan.droppedIds, [later])
+        XCTAssertEqual(plan.instructions, [.deleteCustom(later)])
         XCTAssertEqual(
             plan.scores,
             [
@@ -254,7 +454,7 @@ final class SymptomDirectoryTests: XCTestCase {
             scores: []
         )
         XCTAssertEqual(plan.directory.customs, [CustomSymptom(id: fog, name: "FOG", sort: 3)])
-        XCTAssertEqual(plan.droppedIds, [ache])
+        XCTAssertEqual(plan.instructions, [.deleteCustom(ache)])
     }
 
     func testSyncedSameDayTieBreakIgnoresArrivalOrder() {
@@ -369,7 +569,7 @@ final class SymptomDirectoryTests: XCTestCase {
             plan.scores,
             [SymptomScore(id: fog.rawValue, date: "2026-03-17", severity: 4, loggedAt: "2026-03-17T09:00:00Z")]
         )
-        XCTAssertEqual(plan.droppedIds, [])
+        XCTAssertEqual(plan.instructions, [])
         XCTAssertEqual(plan.memory, memory)
     }
 
@@ -535,7 +735,6 @@ final class SymptomDirectoryTests: XCTestCase {
             ]
         )
         XCTAssertEqual(plan.scores, [winner])
-        XCTAssertEqual(plan.droppedIds, [ache])
         XCTAssertEqual(
             plan.instructions,
             [
