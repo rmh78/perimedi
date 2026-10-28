@@ -422,19 +422,6 @@ final class Store: ObservableObject {
         }
     }
 
-    func deleteDayScore(date: String, symptomId: String) throws {
-        try commitWrite {
-            let day = date
-            let symptom = symptomId
-            for row in try fetchWhere(
-                SDSymptomScore.self,
-                #Predicate { $0.date == day && $0.symptomId == symptom }
-            ) {
-                context.delete(row)
-            }
-        }
-    }
-
     func saveSettings(_ next: CycleSettings) throws {
         try commitWrite {
             var descriptor = FetchDescriptor<SDCycleSettings>()
