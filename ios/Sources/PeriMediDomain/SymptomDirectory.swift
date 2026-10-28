@@ -280,10 +280,6 @@ public struct SymptomDirectory: Equatable, Sendable {
         return .success(SymptomDirectory(customs: next))
     }
 
-    public func removing(_ id: CustomSymptomId) -> SymptomDirectory {
-        SymptomDirectory(customs: customs.filter { $0.id != id })
-    }
-
     public var blocks: [SymptomBlock] {
         let catalog = SymptomGroup.allCases.map { group in
             SymptomBlock.catalog(group, group.ids)
