@@ -466,18 +466,6 @@ public struct SymptomDirectory: Equatable, Sendable {
         return current
     }
 
-    /// Catalog scores stay. A custom id stays only when this directory still has it.
-    public static func scoresToStore(
-        _ scores: [SymptomScore],
-        directory: SymptomDirectory
-    ) -> [SymptomScore] {
-        let live = Set(directory.customs.map(\.id.rawValue))
-        return scores.filter { score in
-            guard CustomSymptomId(rawValue: score.id) != nil else { return true }
-            return live.contains(score.id)
-        }
-    }
-
     public func name(for storageId: String) -> String? {
         guard let id = CustomSymptomId(rawValue: storageId) else { return nil }
         return customs.first { $0.id == id }?.name

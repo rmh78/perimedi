@@ -382,11 +382,17 @@ final class SymptomDirectoryTests: XCTestCase {
         )
         let decoded = try BackupCodec.decode(try BackupCodec.encode(payload))
         XCTAssertEqual(decoded.customSymptoms, [CustomSymptom(id: fog, name: "Fog", sort: 0)])
-        let stored = SymptomDirectory.scoresToStore(
-            decoded.symptomScores,
-            directory: SymptomDirectory.restored(decoded.customSymptoms)
+        let plan = SymptomDirectory.synced(
+            rows: decoded.customSymptoms,
+            scores: decoded.symptomScores
         )
-        XCTAssertEqual(stored.map(\.id), ["hot_flash", fog.rawValue])
+        XCTAssertEqual(
+            plan.scores,
+            [
+                SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 2, loggedAt: "t"),
+                SymptomScore(id: "hot_flash", date: "2026-03-15", severity: 3, loggedAt: "t"),
+            ]
+        )
     }
 
     func testSyncedFoldAndExportMatchesImport() throws {
