@@ -103,10 +103,6 @@ public enum SymptomLog {
     public static let maxSeverity = 4
     public static let maxCount = 99
 
-    public static func isCatalogId(_ id: String) -> Bool {
-        SymptomId(rawValue: id) != nil
-    }
-
     public static func clampSeverity(_ value: Int) -> Int {
         min(maxSeverity, max(minSeverity, value))
     }
