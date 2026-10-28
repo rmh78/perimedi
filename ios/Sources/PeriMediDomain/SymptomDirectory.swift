@@ -533,21 +533,87 @@ enum CustomSymptomBackup {
 }
 
 public enum SymptomDay {
-    public static func row(
+    public enum Write: Equatable, Sendable {
+        case skip
+        case rewrite(Mark?)
+
+        public static func == (lhs: Write, rhs: Write) -> Bool {
+            switch (lhs, rhs) {
+            case (.skip, .skip):
+                return true
+            case (.rewrite(nil), .rewrite(nil)):
+                return true
+            case (.rewrite(let left?), .rewrite(let right?)):
+                return left.score == right.score
+            default:
+                return false
+            }
+        }
+    }
+
+    public struct Mark: Sendable {
+        public var score: SymptomScore {
+            SymptomScore(
+                id: storageId,
+                date: date,
+                severity: level.rawValue,
+                count: nil,
+                note: nil,
+                loggedAt: loggedAt,
+                higherIsWorse: true
+            )
+        }
+
+        let date: String
+        let storageId: String
+        let level: Level
+        let loggedAt: String
+
+        init(date: String, storageId: String, level: Level, loggedAt: String) {
+            self.date = date
+            self.storageId = storageId
+            self.level = level
+            self.loggedAt = loggedAt
+        }
+    }
+
+    struct Level: Hashable, Sendable {
+        let rawValue: Int
+
+        init?(_ value: Int) {
+            guard (1...4).contains(value) else { return nil }
+            self.rawValue = value
+        }
+    }
+
+    public static func write(
         date: String,
         ref: SymptomRef,
         severity: Int?,
+        scores: [SymptomScore],
+        directory: SymptomDirectory,
         loggedAt: String
-    ) -> SymptomScore? {
-        guard let severity, (1...4).contains(severity) else { return nil }
-        return SymptomScore(
-            id: ref.storageId,
-            date: date,
-            severity: severity,
-            count: nil,
-            note: nil,
-            loggedAt: loggedAt,
-            higherIsWorse: true
-        )
+    ) -> Write {
+        let storageId = ref.storageId
+        let slice = scores.filter { $0.date == date && $0.id == storageId }
+        if case .custom(let id) = ref, !directory.customs.contains(where: { $0.id == id }) {
+            guard severity == nil else { return .skip }
+        }
+        if let severity, let level = Level(severity) {
+            if slice.count == 1,
+               slice[0].severity == severity,
+               slice[0].count == nil,
+               (slice[0].note ?? "").isEmpty {
+                return .skip
+            }
+            return .rewrite(Mark(
+                date: date,
+                storageId: storageId,
+                level: level,
+                loggedAt: loggedAt
+            ))
+        }
+        if slice.isEmpty { return .skip }
+        return .rewrite(nil)
     }
 }

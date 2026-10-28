@@ -393,30 +393,27 @@ final class Store: ObservableObject {
     }
 
     func setDaySeverity(date: String, ref: SymptomRef, severity: Int?) throws {
-        if case .custom(let id) = ref, !symptomDirectory.customs.contains(where: { $0.id == id }) {
-            guard severity == nil else { return }
-        }
+        let decision = SymptomDay.write(
+            date: date,
+            ref: ref,
+            severity: severity,
+            scores: symptomScores,
+            directory: symptomDirectory,
+            loggedAt: ISO8601DateFormatter().string(from: Date())
+        )
+        guard case .rewrite(let mark) = decision else { return }
         let storageId = ref.storageId
-        let existing = symptomScores.filter { $0.date == date && $0.id == storageId }
-        if let severity, (1...4).contains(severity) {
-            if existing.count == 1, existing[0].severity == severity, existing[0].count == nil, (existing[0].note ?? "").isEmpty {
-                return
-            }
-        } else if existing.isEmpty {
-            return
-        }
-        let loggedAt = ISO8601DateFormatter().string(from: Date())
-        let row = SymptomDay.row(date: date, ref: ref, severity: severity, loggedAt: loggedAt)
         try commitWrite {
             let day = date
             let symptom = storageId
             for stored in try fetchWhere(SDSymptomScore.self, #Predicate { $0.date == day && $0.symptomId == symptom }) {
                 context.delete(stored)
             }
-            if let row {
+            if let mark {
+                let row = SymptomLog.normalized(mark.score)
                 let stored = SDSymptomScore()
                 stored.recordId = row.rowId
-                stored.apply(SymptomLog.normalized(row))
+                stored.apply(row)
                 context.insert(stored)
             }
         }
