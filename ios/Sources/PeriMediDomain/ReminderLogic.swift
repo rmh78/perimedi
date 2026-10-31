@@ -45,6 +45,13 @@ public struct ReminderSlot: Equatable, Sendable, Identifiable {
     public static func followUpIds(scheduleId: String, date: String, timeOfDay: String) -> [String] {
         (1...3).map { followUpId(scheduleId: scheduleId, date: date, timeOfDay: timeOfDay, step: $0) }
     }
+
+    public static func ids(scheduleId: String, date: String, timeOfDay: String) -> [String] {
+        [
+            doseId(scheduleId: scheduleId, date: date, timeOfDay: timeOfDay),
+            snoozeId(scheduleId: scheduleId, date: date, timeOfDay: timeOfDay),
+        ] + followUpIds(scheduleId: scheduleId, date: date, timeOfDay: timeOfDay)
+    }
 }
 
 public enum FollowUpCount: Int, Sendable, Equatable {

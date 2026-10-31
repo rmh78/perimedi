@@ -48,6 +48,18 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
     weak var store: Store?
     weak var app: AppModel?
     private var previewPlayer: AVAudioPlayer?
+    private let engine = ReminderEngine(poster: SystemReminderPoster())
+    private var owedTokens: [UUID: PlannedSlotIdentity] = [:]
+    private var lookupToken: [PlannedSlotIdentity: UUID] = [:]
+
+    override init() {
+        super.init()
+        engine.deliverWrite = { [weak self] owed in
+            Task { @MainActor in
+                self?.performOwedWrite(owed)
+            }
+        }
+    }
 
     var masterEnabled: Bool {
         if UserDefaults.standard.object(forKey: Self.masterKey) == nil { return true }
@@ -126,11 +138,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
     }
 
     func clearAll() {
-        Self.notificationQueue.async {
-            let center = UNUserNotificationCenter.current()
-            center.removeAllPendingNotificationRequests()
-            center.removeAllDeliveredNotifications()
-        }
+        engine.enqueue(.clearAll)
     }
 
     func previewSound(_ sound: ReminderSound) {
@@ -155,83 +163,46 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             await scheduleSoon(using: store, delay: delay)
             return
         }
-        let center = UNUserNotificationCenter.current()
-        let pending = await center.pendingNotificationRequests()
-        let pendingIds = pending.map(\.identifier)
-        if !masterEnabled {
-            Self.removePending(pendingIds.filter(Self.isReminderRequest))
-            return
-        }
-        let settings = await center.notificationSettings()
-        let status = ReminderAuthStatus(settings.authorizationStatus)
-        guard ReminderPermissionPolicy.shouldScheduleDoseReminders(
+        let poster = engine.currentPoster()
+        let seen = await poster.pendingIdentifiers()
+        let status = await poster.authorization()
+        let allowed = masterEnabled && ReminderPermissionPolicy.shouldScheduleDoseReminders(
             masterEnabled: true,
             status: status
-        ) else {
-            Self.removePending(pendingIds.filter(Self.isDoseOrFollow))
-            return
-        }
-
-        let count = FollowUpCount.parsed(storedFollowUpRaw())
-        let plan = ReminderLogic.followUpPlan(
-            now: Date(),
-            count: count,
-            stops: ReminderChainStops.load(),
-            medications: store.medications,
-            schedules: store.schedules,
-            doseLogs: store.doseLogs,
-            periods: store.periods,
-            settings: store.settings
         )
-        ReminderChainStops.save(plan.stops)
-        // Rebuild every dose request so a broken trigger (no time zone) is not kept.
-        Self.removePending(pendingIds.filter(Self.isDoseOrFollow))
-
-        for slot in plan.doses {
-            guard let request = makeRequest(
-                id: slot.id,
-                medicationName: slot.medicationName,
-                doseLabel: slot.doseLabel,
-                timeOfDay: slot.timeOfDay,
-                fireAt: slot.fireAt,
-                info: userInfo(for: slot)
-            ) else { continue }
-            Self.enqueue(request)
+        let posts: [ReminderPost]
+        let preserve: Set<String>
+        if allowed {
+            let count = FollowUpCount.parsed(storedFollowUpRaw())
+            let plan = ReminderLogic.followUpPlan(
+                now: Date(),
+                count: count,
+                stops: ReminderChainStops.load(),
+                medications: store.medications,
+                schedules: store.schedules,
+                doseLogs: store.doseLogs,
+                periods: store.periods,
+                settings: store.settings
+            )
+            ReminderChainStops.save(plan.stops)
+            posts = reminderPosts(from: plan)
+            preserve = ReminderLogic.pendingSnoozeIds(
+                now: Date(),
+                medications: store.medications,
+                schedules: store.schedules,
+                doseLogs: store.doseLogs,
+                periods: store.periods,
+                settings: store.settings
+            )
+        } else {
+            posts = []
+            preserve = []
         }
-        for follow in plan.followUps {
-            guard let request = makeRequest(
-                id: follow.id,
-                medicationName: follow.medicationName,
-                doseLabel: follow.doseLabel,
-                timeOfDay: follow.timeOfDay,
-                fireAt: follow.fireAt,
-                info: userInfo(
-                    medicationId: follow.medicationId,
-                    scheduleId: follow.scheduleId,
-                    date: follow.date,
-                    timeOfDay: follow.timeOfDay,
-                    medicationName: follow.medicationName,
-                    doseLabel: follow.doseLabel
-                )
-            ) else { continue }
-            Self.enqueue(request)
-        }
-
-        let liveSnooze = ReminderLogic.pendingSnoozeIds(
-            now: Date(),
-            medications: store.medications,
-            schedules: store.schedules,
-            doseLogs: store.doseLogs,
-            periods: store.periods,
-            settings: store.settings
-        )
-        let staleSnooze = pendingIds.filter { $0.hasPrefix("snooze.") && !liveSnooze.contains($0) }
-        if !staleSnooze.isEmpty {
-            Self.removePendingAndDelivered(staleSnooze)
-        }
+        engine.enqueue(.reconcile(seen: seen, posts: posts, preserve: preserve))
     }
 
     private func scheduleSoon(using store: Store, delay: Int) async {
+        let owed = Set(owedTokens.values)
         guard let slot = ReminderLogic.pending(
             on: DateKeys.todayKey(),
             medications: store.medications,
@@ -239,21 +210,20 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             doseLogs: store.doseLogs,
             periods: store.periods,
             settings: store.settings
-        ).first else { return }
+        ).first(where: { !owed.contains($0.identity) }) else { return }
         var soon = slot
         soon.fireAt = Date().addingTimeInterval(TimeInterval(max(1, delay)))
-        // The card is in-app. add() on the main actor froze the UI for
-        // 286s after Taken while XCTest waited for the app to go idle.
         present(soon)
-        if let request = makeRequest(
+        if let post = makePost(
             id: soon.id,
+            identity: soon.identity,
             medicationName: soon.medicationName,
             doseLabel: soon.doseLabel,
             timeOfDay: soon.timeOfDay,
             fireAt: soon.fireAt,
-            info: userInfo(for: soon)
+            info: stringInfo(userInfo(for: soon))
         ) {
-            Self.enqueue(request)
+            engine.enqueue(.submit(post))
         }
     }
 
@@ -291,7 +261,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
     }
 
     func take(reminder: PendingReminder) {
-        _ = try? markSlotTaken(reminder.identity)
+        _ = try? markSlotTaken(reminder.identity, shownLogId: .lookup)
         app?.pendingReminder = nil
         refresh()
     }
@@ -316,28 +286,78 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             DoseWidgetBridge.publish()
             return .alreadyTaken
         }
-        do {
-            for slot in med.pending {
-                cancelNotifications(for: slot.identity)
-                try store.setDoseStatus(
-                    medicationId: slot.medication.id,
-                    scheduleId: slot.schedule.id,
-                    date: slot.date,
-                    timeOfDay: slot.timeOfDay,
-                    status: .taken,
-                    existingLogId: slot.log?.id
-                )
-            }
-            return .taken
-        } catch {
-            throw MarkDoseTakenError.saveFailed
+        for slot in med.pending {
+            _ = try markSlotTaken(slot.identity, shownLogId: .lookup)
         }
+        return .taken
     }
 
     @discardableResult
-    func markSlotTaken(_ identity: PlannedSlotIdentity) throws -> MarkSlotTakenResult {
-        guard let store else { throw MarkDoseTakenError.saveFailed }
-        cancelNotifications(for: identity)
+    func markSlotTaken(
+        _ identity: PlannedSlotIdentity,
+        shownLogId: ShownLogId
+    ) throws -> MarkSlotTakenResult {
+        guard store != nil else { throw MarkDoseTakenError.saveFailed }
+        switch shownLogId {
+        case .lookup:
+            return acceptLookup(identity)
+        case .shown(let existingLogId):
+            beginTake(identity, existingLogId: existingLogId, dedupeLookup: false)
+            return .taken
+        }
+    }
+
+    func setSlotStatuses(
+        medicationId: String,
+        slots: [SlotStatusWrite],
+        status: DoseStatus
+    ) {
+        for slot in slots {
+            let identity = PlannedSlotIdentity(
+                medicationId: medicationId,
+                scheduleId: slot.scheduleId,
+                date: slot.date,
+                timeOfDay: slot.timeOfDay
+            )
+            switch status {
+            case .taken:
+                _ = try? markSlotTaken(identity, shownLogId: .shown(slot.existingLogId))
+            case .pending:
+                releaseAndPend(identity, existingLogId: slot.existingLogId)
+            case .skipped:
+                break
+            }
+        }
+    }
+
+    func hasOwedTake(medicationId: String) -> Bool {
+        owedTokens.values.contains { $0.medicationId == medicationId }
+    }
+
+    func adoptPoster(_ poster: ReminderPoster) async {
+        engine.setPoster(poster, resetLedger: true)
+        await engine.fence()
+    }
+
+    func restoreSystemPoster() async {
+        engine.setPoster(SystemReminderPoster(), resetLedger: true)
+        await engine.fence()
+    }
+
+    func finishReminderWork() async {
+        await engine.fence()
+        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+            DispatchQueue.main.async { cont.resume() }
+        }
+    }
+
+    private func acceptLookup(_ identity: PlannedSlotIdentity) -> MarkSlotTakenResult {
+        guard let store else { return .notPlanned }
+        if lookupToken[identity] != nil {
+            cancelNotifications(for: identity)
+            DoseWidgetBridge.publish()
+            return .alreadyTaken
+        }
         switch NextPendingDose.resolve(
             identity: identity,
             medications: store.medications,
@@ -350,68 +370,87 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             DoseWidgetBridge.publish()
             return .notPlanned
         case .alreadyTaken:
+            cancelNotifications(for: identity)
             DoseWidgetBridge.publish()
             return .alreadyTaken
         case .pending(let dose):
-            do {
-                try store.setDoseStatus(
-                    medicationId: identity.medicationId,
-                    scheduleId: identity.scheduleId,
-                    date: identity.date,
-                    timeOfDay: identity.timeOfDay,
-                    status: .taken,
-                    existingLogId: dose.log?.id
-                )
-                return .taken
-            } catch {
-                throw MarkDoseTakenError.saveFailed
-            }
+            beginTake(identity, existingLogId: dose.log?.id, dedupeLookup: true)
+            return .taken
+        }
+    }
+
+    private func beginTake(
+        _ identity: PlannedSlotIdentity,
+        existingLogId: String?,
+        dedupeLookup: Bool
+    ) {
+        let token = UUID()
+        owedTokens[token] = identity
+        if dedupeLookup {
+            lookupToken[identity] = token
+        }
+        let owed = OwedWrite(token: token, identity: identity, existingLogId: existingLogId)
+        engine.enqueue(.retire(owed: owed, ids: slotIds(identity), slot: identity))
+    }
+
+    private func releaseAndPend(_ identity: PlannedSlotIdentity, existingLogId: String?) {
+        let tokens = Set(owedTokens.compactMap { token, slot in slot == identity ? token : nil })
+        for token in tokens {
+            owedTokens.removeValue(forKey: token)
+        }
+        lookupToken.removeValue(forKey: identity)
+        engine.enqueue(.release(identity, cancel: tokens))
+        guard let store else { return }
+        try? store.setDoseStatus(
+            medicationId: identity.medicationId,
+            scheduleId: identity.scheduleId,
+            date: identity.date,
+            timeOfDay: identity.timeOfDay,
+            status: .pending,
+            existingLogId: existingLogId
+        )
+    }
+
+    private func performOwedWrite(_ owed: OwedWrite) {
+        guard owedTokens.removeValue(forKey: owed.token) != nil else {
+            engine.enqueue(.dropOwed(owed.token))
+            return
+        }
+        if lookupToken[owed.identity] == owed.token {
+            lookupToken.removeValue(forKey: owed.identity)
+        }
+        guard let store else {
+            engine.enqueue(.release(owed.identity, cancel: []))
+            engine.enqueue(.dropOwed(owed.token))
+            return
+        }
+        do {
+            try store.setDoseStatus(
+                medicationId: owed.identity.medicationId,
+                scheduleId: owed.identity.scheduleId,
+                date: owed.identity.date,
+                timeOfDay: owed.identity.timeOfDay,
+                status: .taken,
+                existingLogId: owed.existingLogId
+            )
+            engine.enqueue(.dropOwed(owed.token))
+        } catch {
+            engine.enqueue(.release(owed.identity, cancel: []))
+            engine.enqueue(.dropOwed(owed.token))
+            DoseWidgetBridge.publish()
         }
     }
 
     private func cancelNotifications(for identity: PlannedSlotIdentity) {
-        let ids = [
-            ReminderSlot.doseId(scheduleId: identity.scheduleId, date: identity.date, timeOfDay: identity.timeOfDay),
-            ReminderSlot.snoozeId(scheduleId: identity.scheduleId, date: identity.date, timeOfDay: identity.timeOfDay),
-        ] + ReminderSlot.followUpIds(
+        engine.enqueue(.retire(owed: nil, ids: slotIds(identity), slot: identity))
+    }
+
+    private func slotIds(_ identity: PlannedSlotIdentity) -> [String] {
+        ReminderSlot.ids(
             scheduleId: identity.scheduleId,
             date: identity.date,
             timeOfDay: identity.timeOfDay
         )
-        Self.cancelNotifications(ids: ids)
-    }
-
-    /// One serial queue. A concurrent queue let a slow add from an earlier
-    /// reschedule land after Taken's cancel, so a taken dose could fire again.
-    /// The calls still leave the main actor, because the daemon can block.
-    nonisolated private static let notificationQueue = DispatchQueue(
-        label: "app.perimedi.notifications",
-        qos: .utility
-    )
-
-    nonisolated private static func enqueue(_ request: UNNotificationRequest) {
-        notificationQueue.async {
-            UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
-        }
-    }
-
-    nonisolated private static func removePending(_ ids: [String]) {
-        guard !ids.isEmpty else { return }
-        notificationQueue.async {
-            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ids)
-        }
-    }
-
-    nonisolated private static func removePendingAndDelivered(_ ids: [String]) {
-        notificationQueue.async {
-            let center = UNUserNotificationCenter.current()
-            center.removePendingNotificationRequests(withIdentifiers: ids)
-            center.removeDeliveredNotifications(withIdentifiers: ids)
-        }
-    }
-
-    nonisolated private static func cancelNotifications(ids: [String]) {
-        removePendingAndDelivered(ids)
     }
 
     func snooze(reminder: PendingReminder) {
@@ -471,51 +510,89 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         ]
     }
 
-    private func makeRequest(
+    private func reminderPosts(from plan: FollowUpPlan) -> [ReminderPost] {
+        var posts: [ReminderPost] = []
+        for slot in plan.doses {
+            if let post = makePost(
+                id: slot.id,
+                identity: slot.identity,
+                medicationName: slot.medicationName,
+                doseLabel: slot.doseLabel,
+                timeOfDay: slot.timeOfDay,
+                fireAt: slot.fireAt,
+                info: stringInfo(userInfo(for: slot))
+            ) {
+                posts.append(post)
+            }
+        }
+        for follow in plan.followUps {
+            let identity = PlannedSlotIdentity(
+                medicationId: follow.medicationId,
+                scheduleId: follow.scheduleId,
+                date: follow.date,
+                timeOfDay: follow.timeOfDay
+            )
+            if let post = makePost(
+                id: follow.id,
+                identity: identity,
+                medicationName: follow.medicationName,
+                doseLabel: follow.doseLabel,
+                timeOfDay: follow.timeOfDay,
+                fireAt: follow.fireAt,
+                info: stringInfo(
+                    userInfo(
+                        medicationId: follow.medicationId,
+                        scheduleId: follow.scheduleId,
+                        date: follow.date,
+                        timeOfDay: follow.timeOfDay,
+                        medicationName: follow.medicationName,
+                        doseLabel: follow.doseLabel
+                    )
+                )
+            ) {
+                posts.append(post)
+            }
+        }
+        return posts
+    }
+
+    private func makePost(
         id: String,
+        identity: PlannedSlotIdentity,
         medicationName: String,
         doseLabel: String,
         timeOfDay: String,
         fireAt: Date,
-        info: [AnyHashable: Any]
-    ) -> UNNotificationRequest? {
-        guard let kind = ReminderLogic.triggerKind(fireAt: fireAt) else { return nil }
-        let content = UNMutableNotificationContent()
-        content.title = reminderTitle()
-        content.subtitle = medicationName
-        content.body = reminderBody(dose: doseLabel, time: timeOfDay)
-        content.sound = notificationSound
-        content.categoryIdentifier = Self.categoryId
-        content.userInfo = info
-        let trigger: UNNotificationTrigger
-        switch kind {
-        case .timeInterval(let interval):
-            trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)
-        case .calendar(let comps):
-            let calendarTrigger = UNCalendarNotificationTrigger(
-                dateMatching: comps.dateComponents,
-                repeats: false
-            )
-            if let next = calendarTrigger.nextTriggerDate(), next.timeIntervalSinceNow > 0 {
-                trigger = calendarTrigger
-            } else {
-                let remaining = fireAt.timeIntervalSinceNow
-                guard remaining > 0 else { return nil }
-                trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, remaining), repeats: false)
-            }
-        }
-        return UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+        info: [String: String]
+    ) -> ReminderPost? {
+        guard ReminderLogic.triggerKind(fireAt: fireAt) != nil else { return nil }
+        return ReminderPost(
+            id: id,
+            fireAt: fireAt,
+            identity: identity,
+            title: reminderTitle(),
+            subtitle: medicationName,
+            body: reminderBody(dose: doseLabel, time: timeOfDay),
+            soundName: currentSoundName(),
+            userInfo: info
+        )
     }
 
-    private var notificationSound: UNNotificationSound {
+    private func currentSoundName() -> String? {
         let sound = ReminderSound.current
-        if let fileName = sound.fileName {
-            let stem = (fileName as NSString).deletingPathExtension
-            if Bundle.main.url(forResource: stem, withExtension: "caf") != nil {
-                return sound.notificationSound
-            }
+        guard let fileName = sound.fileName else { return nil }
+        let stem = (fileName as NSString).deletingPathExtension
+        guard Bundle.main.url(forResource: stem, withExtension: "caf") != nil else { return nil }
+        return fileName
+    }
+
+    private func stringInfo(_ info: [AnyHashable: Any]) -> [String: String] {
+        var out: [String: String] = [:]
+        for (key, value) in info {
+            guard let key = key as? String, let value = value as? String else { continue }
+            out[key] = value
         }
-        return .default
+        return out
     }
 
     nonisolated func userNotificationCenter(
@@ -559,7 +636,8 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
                     scheduleId: scheduleId,
                     date: date,
                     timeOfDay: time
-                )
+                ),
+                shownLogId: .lookup
             )
         case Self.snoozeAction:
             await snooze(response.notification)
@@ -600,20 +678,29 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         info: [AnyHashable: Any]
     ) {
         ReminderChainStops.insert(scheduleId: scheduleId, date: date, timeOfDay: timeOfDay)
-        Self.cancelNotifications(
-            ids: ReminderSlot.followUpIds(scheduleId: scheduleId, date: date, timeOfDay: timeOfDay)
+        let followUps = Set(
+            ReminderSlot.followUpIds(scheduleId: scheduleId, date: date, timeOfDay: timeOfDay)
         )
+        engine.enqueue(.remove(followUps))
         let fireAt = Date().addingTimeInterval(TimeInterval(ReminderLogic.snoozeMinutes * 60))
         let id = ReminderSlot.snoozeId(scheduleId: scheduleId, date: date, timeOfDay: timeOfDay)
-        if let request = makeRequest(
+        let strings = stringInfo(info)
+        let identity = PlannedSlotIdentity(
+            medicationId: strings["medicationId"] ?? "",
+            scheduleId: scheduleId,
+            date: date,
+            timeOfDay: timeOfDay
+        )
+        if let post = makePost(
             id: id,
+            identity: identity,
             medicationName: medicationName,
             doseLabel: doseLabel,
             timeOfDay: timeOfDay,
             fireAt: fireAt,
-            info: info
+            info: strings
         ) {
-            Self.enqueue(request)
+            engine.enqueue(.submit(post))
         }
     }
 
@@ -622,12 +709,294 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         return UserDefaults.standard.integer(forKey: FollowUpCount.storageKey)
     }
 
-    private static func isReminderRequest(_ id: String) -> Bool {
-        id.hasPrefix("dose.") || id.hasPrefix("follow.") || id.hasPrefix("snooze.")
+}
+
+enum ShownLogId: Equatable, Sendable {
+    case lookup
+    case shown(String?)
+}
+
+struct SlotStatusWrite: Equatable, Sendable {
+    var scheduleId: String
+    var date: String
+    var timeOfDay: String
+    var existingLogId: String?
+}
+
+struct ReminderPost: Equatable, Sendable {
+    var id: String
+    var fireAt: Date
+    var identity: PlannedSlotIdentity
+    var title: String
+    var subtitle: String
+    var body: String
+    var soundName: String?
+    var userInfo: [String: String]
+}
+
+enum ReminderAddResult: Equatable, Sendable {
+    case installed
+    case failed
+}
+
+protocol ReminderPoster: AnyObject {
+    func pendingIdentifiers() async -> Set<String>
+    func authorization() async -> ReminderAuthStatus
+    func add(_ post: ReminderPost, done: @escaping (ReminderAddResult) -> Void)
+    func remove(ids: Set<String>)
+    func clearAll()
+}
+
+private struct OwedWrite: Equatable, Sendable {
+    var token: UUID
+    var identity: PlannedSlotIdentity
+    var existingLogId: String?
+}
+
+private struct ReminderLedger {
+    var tombstone: Set<PlannedSlotIdentity> = []
+    var submitted: Set<String> = []
+    var inflight: Set<String> = []
+    var owed: [UUID: OwedWrite] = [:]
+    var writeScheduled: Set<UUID> = []
+    var cancelled: Set<UUID> = []
+}
+
+private enum ReminderCommand: Sendable {
+    case retire(owed: OwedWrite?, ids: [String], slot: PlannedSlotIdentity)
+    case release(PlannedSlotIdentity, cancel: Set<UUID>)
+    case reconcile(seen: Set<String>, posts: [ReminderPost], preserve: Set<String>)
+    case submit(ReminderPost)
+    case remove(Set<String>)
+    case clearAll
+    case dropOwed(UUID)
+}
+
+private final class ReminderEngine: @unchecked Sendable {
+    let queue = DispatchQueue(label: "app.perimedi.notifications", qos: .utility)
+    private let posterLock = NSLock()
+    private var poster: ReminderPoster
+    private var ledger = ReminderLedger()
+    var deliverWrite: (@Sendable (OwedWrite) -> Void)?
+
+    init(poster: ReminderPoster) {
+        self.poster = poster
     }
 
-    private static func isDoseOrFollow(_ id: String) -> Bool {
-        id.hasPrefix("dose.") || id.hasPrefix("follow.")
+    func currentPoster() -> ReminderPoster {
+        posterLock.lock()
+        defer { posterLock.unlock() }
+        return poster
+    }
+
+    func setPoster(_ poster: ReminderPoster, resetLedger: Bool) {
+        posterLock.lock()
+        self.poster = poster
+        posterLock.unlock()
+        if resetLedger {
+            queue.async { self.ledger = ReminderLedger() }
+        }
+    }
+
+    func enqueue(_ command: ReminderCommand) {
+        queue.async { self.perform(command) }
+    }
+
+    func fence() async {
+        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+            queue.async { cont.resume() }
+        }
+    }
+
+    private func perform(_ command: ReminderCommand) {
+        switch command {
+        case .retire(let owed, let ids, let slot):
+            performRetire(owed: owed, ids: ids, slot: slot)
+        case .release(let slot, let cancel):
+            performRelease(slot: slot, cancel: cancel)
+        case .reconcile(let seen, let posts, let preserve):
+            performReconcile(seen: seen, posts: posts, preserve: preserve)
+        case .submit(let post):
+            submit(post)
+        case .remove(let ids):
+            performRemove(ids)
+        case .clearAll:
+            currentPoster().clearAll()
+            ledger.submitted.removeAll()
+        case .dropOwed(let token):
+            ledger.owed.removeValue(forKey: token)
+            ledger.writeScheduled.remove(token)
+            ledger.cancelled.remove(token)
+        }
+    }
+
+    private func performRetire(owed: OwedWrite?, ids: [String], slot: PlannedSlotIdentity) {
+        if let owed, ledger.cancelled.contains(owed.token) {
+            ledger.cancelled.remove(owed.token)
+            return
+        }
+        ledger.tombstone.insert(slot)
+        let family = Set(ids)
+        let removeIds = family.union(ledger.submitted.intersection(family))
+        ledger.submitted.subtract(removeIds)
+        if !removeIds.isEmpty {
+            currentPoster().remove(ids: removeIds)
+        }
+        if let owed {
+            ledger.owed[owed.token] = owed
+            if family.isDisjoint(with: ledger.inflight) {
+                scheduleWrite(owed)
+            }
+        }
+    }
+
+    private func performRelease(slot: PlannedSlotIdentity, cancel: Set<UUID>) {
+        ledger.tombstone.remove(slot)
+        ledger.cancelled.formUnion(cancel)
+        for token in cancel {
+            ledger.owed.removeValue(forKey: token)
+            ledger.writeScheduled.remove(token)
+        }
+    }
+
+    private func performReconcile(seen: Set<String>, posts: [ReminderPost], preserve: Set<String>) {
+        let blocked = tombstoneIds()
+        let installing = posts.filter { !ledger.tombstone.contains($0.identity) }
+        let keep = Set(installing.map(\.id)).union(preserve.subtracting(blocked))
+        let universe = seen.union(ledger.submitted).union(blocked)
+        let removeIds = Set(universe.filter(isReminderIdentifier)).subtracting(keep)
+        ledger.submitted.subtract(removeIds)
+        if !removeIds.isEmpty {
+            currentPoster().remove(ids: removeIds)
+        }
+        for post in installing {
+            submit(post)
+        }
+    }
+
+    private func performRemove(_ ids: Set<String>) {
+        guard !ids.isEmpty else { return }
+        ledger.submitted.subtract(ids)
+        currentPoster().remove(ids: ids)
+    }
+
+    private func submit(_ post: ReminderPost) {
+        guard !ledger.tombstone.contains(post.identity) else { return }
+        ledger.submitted.insert(post.id)
+        ledger.inflight.insert(post.id)
+        let id = post.id
+        let slot = post.identity
+        currentPoster().add(post) { [weak self] result in
+            self?.queue.async {
+                self?.finishAdd(id: id, slot: slot, result: result)
+            }
+        }
+    }
+
+    private func finishAdd(id: String, slot: PlannedSlotIdentity, result: ReminderAddResult) {
+        ledger.inflight.remove(id)
+        if ledger.tombstone.contains(slot) {
+            ledger.submitted.remove(id)
+            currentPoster().remove(ids: [id])
+        } else if result != .installed {
+            ledger.submitted.remove(id)
+        }
+        let family = Set(
+            ReminderSlot.ids(scheduleId: slot.scheduleId, date: slot.date, timeOfDay: slot.timeOfDay)
+        )
+        guard family.isDisjoint(with: ledger.inflight) else { return }
+        for owed in ledger.owed.values where owed.identity == slot {
+            scheduleWrite(owed)
+        }
+    }
+
+    private func scheduleWrite(_ owed: OwedWrite) {
+        guard ledger.owed[owed.token] != nil else { return }
+        guard ledger.writeScheduled.insert(owed.token).inserted else { return }
+        deliverWrite?(owed)
+    }
+
+    private func tombstoneIds() -> Set<String> {
+        var ids = Set<String>()
+        for slot in ledger.tombstone {
+            ids.formUnion(
+                ReminderSlot.ids(scheduleId: slot.scheduleId, date: slot.date, timeOfDay: slot.timeOfDay)
+            )
+        }
+        return ids
+    }
+}
+
+private func isReminderIdentifier(_ id: String) -> Bool {
+    id.hasPrefix("dose.") || id.hasPrefix("follow.") || id.hasPrefix("snooze.")
+}
+
+private final class SystemReminderPoster: ReminderPoster {
+    func pendingIdentifiers() async -> Set<String> {
+        let pending = await UNUserNotificationCenter.current().pendingNotificationRequests()
+        return Set(pending.map(\.identifier))
+    }
+
+    func authorization() async -> ReminderAuthStatus {
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
+        return ReminderAuthStatus(settings.authorizationStatus)
+    }
+
+    func add(_ post: ReminderPost, done: @escaping (ReminderAddResult) -> Void) {
+        guard let request = makeRequest(post) else {
+            done(.failed)
+            return
+        }
+        UNUserNotificationCenter.current().add(request) { error in
+            done(error == nil ? .installed : .failed)
+        }
+    }
+
+    func remove(ids: Set<String>) {
+        guard !ids.isEmpty else { return }
+        let list = Array(ids)
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: list)
+        center.removeDeliveredNotifications(withIdentifiers: list)
+    }
+
+    func clearAll() {
+        let center = UNUserNotificationCenter.current()
+        center.removeAllPendingNotificationRequests()
+        center.removeAllDeliveredNotifications()
+    }
+
+    private func makeRequest(_ post: ReminderPost) -> UNNotificationRequest? {
+        guard let kind = ReminderLogic.triggerKind(fireAt: post.fireAt) else { return nil }
+        let content = UNMutableNotificationContent()
+        content.title = post.title
+        content.subtitle = post.subtitle
+        content.body = post.body
+        if let soundName = post.soundName {
+            content.sound = UNNotificationSound(named: UNNotificationSoundName(soundName))
+        } else {
+            content.sound = .default
+        }
+        content.categoryIdentifier = DoseReminderCenter.categoryId
+        content.userInfo = post.userInfo
+        let trigger: UNNotificationTrigger
+        switch kind {
+        case .timeInterval(let interval):
+            trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)
+        case .calendar(let comps):
+            let calendarTrigger = UNCalendarNotificationTrigger(
+                dateMatching: comps.dateComponents,
+                repeats: false
+            )
+            if let next = calendarTrigger.nextTriggerDate(), next.timeIntervalSinceNow > 0 {
+                trigger = calendarTrigger
+            } else {
+                let remaining = post.fireAt.timeIntervalSinceNow
+                guard remaining > 0 else { return nil }
+                trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, remaining), repeats: false)
+            }
+        }
+        return UNNotificationRequest(identifier: post.id, content: content, trigger: trigger)
     }
 }
 

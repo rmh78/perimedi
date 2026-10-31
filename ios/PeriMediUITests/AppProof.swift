@@ -117,6 +117,9 @@ struct AppProof {
         robot.tap("reminder.taken")
         robot.waitGone(id: "reminder.banner")
         logTakenSample()
+        XCTAssertTrue(
+            robot.spin(timeout: 5) { robot.value(of: "cycle.lane.estrogen.status") == "taken" }
+        )
         XCTAssertEqual(robot.value(of: "cycle.lane.estrogen.status"), "taken")
 
         robot.tap("cycle.lane.estrogen")
@@ -126,6 +129,9 @@ struct AppProof {
         robot.waitGone(id: "reminder.banner")
         XCTAssertEqual(robot.value(of: "cycle.lane.estrogen.status"), "not-taken")
         robot.tap("cycle.lane.estrogen")
+        XCTAssertTrue(
+            robot.spin(timeout: 5) { robot.value(of: "cycle.lane.estrogen.status") == "taken" }
+        )
         XCTAssertEqual(robot.value(of: "cycle.lane.estrogen.status"), "taken")
 
         robot.addMedication(
@@ -140,6 +146,9 @@ struct AppProof {
         robot.waitFor(id: "reminder.banner", timeout: 12)
         robot.tap("reminder.taken")
         robot.waitGone(id: "reminder.banner")
+        XCTAssertTrue(
+            robot.spin(timeout: 5) { robot.value(of: "cycle.lane.progesterone.status") == "taken" }
+        )
         XCTAssertEqual(robot.value(of: "cycle.lane.progesterone.status"), "taken")
 
         robot.waitFor(id: "cycle.pager.label")

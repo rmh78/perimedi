@@ -496,16 +496,18 @@ struct CycleView: View {
         guard !selectedDoses.isEmpty else { return }
         let allTaken = selectedDoses.allSatisfy { $0.status == .taken }
         let next: DoseStatus = allTaken ? .pending : .taken
-        for slot in selectedDoses {
-            try? store.setDoseStatus(
-                medicationId: lane.medicationId,
-                scheduleId: slot.schedule.id,
-                date: slot.date,
-                timeOfDay: slot.timeOfDay,
-                status: next,
-                existingLogId: slot.log?.id
-            )
-        }
+        DoseReminderCenter.shared.setSlotStatuses(
+            medicationId: lane.medicationId,
+            slots: selectedDoses.map { slot in
+                SlotStatusWrite(
+                    scheduleId: slot.schedule.id,
+                    date: slot.date,
+                    timeOfDay: slot.timeOfDay,
+                    existingLogId: slot.log?.id
+                )
+            },
+            status: next
+        )
     }
 
     private func statusValue(for lane: MedLane, snap: CycleSnapshot) -> String {

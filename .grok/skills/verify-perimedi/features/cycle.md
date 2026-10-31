@@ -44,6 +44,7 @@ Open the app, or tap Cycle in the bottom bar. Sheets for med / period / symptom 
 - First-use only asserts `cycle.effect` absent on empty home and `no-previous` after one period. Two-cycle `id:down` / `id:worse` values are domain tests (`EffectLogicTests`); journey tests do not load sample.
 - `A11yID.chipScore(_:)` builds `cycle.chip.score.{id}`. Keep the `cycle.chip.score.` literal in this map so check-feature-map still sees it.
 - Tapping a lane toggles dose status. Editing is the separate `.edit` control.
-- Cycle windows and planned doses come from domain (`CycleLogic` / `ScheduleLogic` / `DoseRangeLogic`); taken/not-taken is `Store.setDoseStatus`. Do not reimplement that math in the app.
+- Cycle windows and planned doses come from domain (`CycleLogic` / `ScheduleLogic` / `DoseRangeLogic`). Do not reimplement that math in the app.
+- Lane taken and untake go through `DoseReminderCenter`. That center is the only caller of `Store.setDoseStatus` for the toggle. The lane does not see the notification center. A nil shown id still inserts a row. The taken mark shows up when the log write lands, so a same-turn read can still say `not-taken`. Untake writes pending before the call returns.
 - Keep med lane labels and dose tracks row-aligned. Period UI is label + background only (no duplicate red bar). No follicular/luteal labels.
 - German lane dose text maps pump/pumps to Hub and a decimal point to a comma. The medication sheet field keeps the stored string. The Home Screen widget dose label stays as typed.
