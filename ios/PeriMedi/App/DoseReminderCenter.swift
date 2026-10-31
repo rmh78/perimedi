@@ -882,13 +882,17 @@ private final class ReminderEngine: @unchecked Sendable {
 
     private func submit(_ post: ReminderPost) {
         guard !ledger.tombstone.contains(post.identity) else { return }
+        if ledger.inflight.contains(post.id) { return }
         ledger.submitted.insert(post.id)
         ledger.inflight.insert(post.id)
         let id = post.id
         let slot = post.identity
-        currentPoster().add(post) { [weak self] result in
-            self?.queue.async {
-                self?.finishAdd(id: id, slot: slot, result: result)
+        let poster = currentPoster()
+        DispatchQueue.global(qos: .utility).async {
+            poster.add(post) { [weak self] result in
+                self?.queue.async {
+                    self?.finishAdd(id: id, slot: slot, result: result)
+                }
             }
         }
     }
