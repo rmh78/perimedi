@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Fail when a committed statechart fence drifts from the chart the tool writes."""
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import shutil
@@ -30,11 +30,53 @@ MODELS = (
     (
         "symptom-sync",
         ROOT / "ios/formal/symptom-sync/SymptomSync.tla",
-        ROOT / "ios/formal/symptom-sync/SymptomSync.cfg",
+        ROOT / "ios/formal/symptom-sync/SymptomSyncChart.cfg",
         ROOT / "ios/formal/symptom-sync/view.mjs",
         ROOT / "docs/statecharts/symptom-sync.md",
     ),
 )
+
+PELE = Path.home() / ".cache/perimedi/pele"
+PELE_VERSION = "1.9.0"
+HAPPY_FILL = "#ffcbe6"
+HAPPY_STROKE = "#c45c8a"
+BUG_STROKE = "#e72e3b"
+CLASS_DEFS = (
+    f"  classDef happy fill:{HAPPY_FILL},stroke:{HAPPY_STROKE}",
+    f"  classDef bugPath stroke:{BUG_STROKE},stroke-width:2.5px",
+)
+STYLE = """
+.pele { --pele-bg:#ffffff; --pele-fg:#1c1c1c; --pele-muted:#656565; --pele-line:#808080; --pele-surface:#fcfcfc; --pele-surface-alt:#f1f1f1; --pele-border:#c9c9c9; }
+.pele .blue rect { fill:#c3e0ff; }
+.pele .orange rect { fill:#f0d3bf; }
+.pele .purple rect { fill:#e3d5ff; }
+.pele .yellow rect { fill:#f0dcbf; }
+.pele .teal rect { fill:#bfe3df; }
+.pele .tan rect { fill:#e5d9ce; }
+.pele .pink rect { fill:#ffcbe6; }
+.pele .breaks rect { fill:#ffecee !important; stroke:#e72e3b !important; stroke-width:2.5px !important; }
+.pele .breaks text { fill:#cd2834 !important; }
+.pele .mayBreak rect { fill:#fff3e6 !important; stroke:#e8730c !important; stroke-width:2.5px !important; }
+.pele .mayBreak text { fill:#b85a06 !important; }
+.pele .happy rect { fill:#ffcbe6 !important; stroke:#c45c8a !important; }
+.pele .bugPath rect { stroke:#e72e3b !important; stroke-width:2.5px !important; }
+@media (prefers-color-scheme: dark) {
+  .pele { --pele-bg:#1f1f1f; --pele-fg:#f5f5f5; --pele-muted:#acacac; --pele-line:#939393; --pele-surface:#121212; --pele-surface-alt:#2c2c2c; --pele-border:#4e4e4e; }
+  .pele .blue rect { fill:#1b3857; }
+  .pele .orange rect { fill:#573117; }
+  .pele .purple rect { fill:#3c2e57; }
+  .pele .yellow rect { fill:#573d17; }
+  .pele .teal rect { fill:#174641; }
+  .pele .tan rect { fill:#3d3127; }
+  .pele .pink rect { fill:#57233e; }
+  .pele .breaks rect { fill:#2e2021 !important; stroke:#cf2b35 !important; }
+  .pele .breaks text { fill:#ff6463 !important; }
+  .pele .mayBreak rect { fill:#2e2619 !important; stroke:#d0700f !important; }
+  .pele .mayBreak text { fill:#ffa257 !important; }
+  .pele .happy rect { fill:#57233e !important; stroke:#c45c8a !important; }
+  .pele .bugPath rect { stroke:#e72e3b !important; }
+}
+"""
 
 
 def norm(text: str) -> str:
@@ -122,7 +164,423 @@ def generate(tool: Path, java: str, jar_path: Path, spec: Path, cfg: Path, view:
     return proc.returncode
 
 
+def split_top(text: str) -> list[str]:
+    parts: list[str] = []
+    buf: list[str] = []
+    depth = 0
+    quote = False
+    index = 0
+    while index < len(text):
+        char = text[index]
+        if char == '"':
+            quote = not quote
+            buf.append(char)
+            index += 1
+            continue
+        if not quote:
+            if text.startswith("|->", index):
+                buf.append("|->")
+                index += 3
+                continue
+            if text.startswith("<<", index) or text.startswith(">>", index):
+                depth += 1 if text[index] == "<" else -1
+                buf.append(text[index : index + 2])
+                index += 2
+                continue
+            if char in "[{":
+                depth += 1
+            elif char in "]}":
+                depth -= 1
+            elif char == "," and depth == 0:
+                parts.append("".join(buf).strip())
+                buf = []
+                index += 1
+                continue
+        buf.append(char)
+        index += 1
+    tail = "".join(buf).strip()
+    if tail:
+        parts.append(tail)
+    return parts
+
+
+def parse_tla(text: str):
+    value = text.strip()
+    if value == "TRUE":
+        return True
+    if value == "FALSE":
+        return False
+    if value == "<<>>":
+        return {}
+    if value.startswith("<<") and value.endswith(">>"):
+        inner = split_top(value[2:-2].strip())
+        return {str(index + 1): parse_tla(part) for index, part in enumerate(inner)}
+    if value.startswith("[") and value.endswith("]"):
+        fields = {}
+        for part in split_top(value[1:-1].strip()):
+            key, raw = part.split("|->", 1)
+            fields[key.strip()] = parse_tla(raw.strip())
+        return fields
+    if value.startswith('"') and value.endswith('"'):
+        return value[1:-1]
+    return value
+
+
+def parse_trace(output: str) -> list[dict]:
+    start = output.find("State 1:")
+    if start < 0:
+        return []
+    blocks = re.split(r"\nState \d+: ", "\n" + output[start:])
+    parsed = []
+    for block in blocks:
+        block = block.strip()
+        if not block:
+            continue
+        header, _, body = block.partition("\n")
+        action = "Init"
+        named = re.search(r"<([A-Za-z]+)", header)
+        if named and named.group(1) != "Initial":
+            action = named.group(1)
+        variables = {}
+        for line in body.splitlines():
+            if not line.startswith("/\\ "):
+                break
+            name, raw = line[3:].split(" = ", 1)
+            variables[name.strip()] = parse_tla(raw)
+        if variables:
+            parsed.append({"action": action, "vars": variables})
+    return parsed
+
+
+def happy_trace(java: str, jar_path: Path, spec: Path) -> list[dict]:
+    with tempfile.TemporaryDirectory(prefix="dose-happy-") as raw:
+        work = Path(raw)
+        shutil.copy(spec, work / spec.name)
+        (work / "DoseHappy.tla").write_text(
+            "---- MODULE DoseHappy ----\n"
+            "EXTENDS DoseReminder\n"
+            "NotHappy ==\n"
+            '  \\/ Len(rows) # 1\n'
+            '  \\/ Visible # "taken"\n'
+            '  \\/ live # "none"\n'
+            "  \\/ q # <<>>\n"
+            "  \\/ glass # FALSE\n"
+            "====\n",
+            encoding="utf-8",
+        )
+        (work / "happy.cfg").write_text(
+            "SPECIFICATION Spec\nINVARIANT NotHappy\n",
+            encoding="utf-8",
+        )
+        proc = subprocess.run(
+            [
+                java,
+                "-XX:+UseParallelGC",
+                "-jar",
+                str(jar_path),
+                "-workers",
+                "1",
+                "-fp",
+                "0",
+                "-metadir",
+                "meta",
+                "-config",
+                "happy.cfg",
+                "DoseHappy.tla",
+            ],
+            cwd=work,
+            text=True,
+            capture_output=True,
+            timeout=180,
+            check=False,
+        )
+        output = proc.stdout + proc.stderr
+        if "Invariant NotHappy is violated" not in output:
+            print(output[-2000:], file=sys.stderr)
+            raise RuntimeError("the taken dose with an empty queue is unreachable")
+        return parse_trace(output)
+
+
+def view_labels(view: Path, trace: list[dict]) -> list[dict]:
+    with tempfile.TemporaryDirectory(prefix="chart-view-") as raw:
+        payload = Path(raw) / "trace.json"
+        payload.write_text(json.dumps(trace), encoding="utf-8")
+        script = Path(raw) / "labels.mjs"
+        script.write_text(
+            "import { pathToFileURL } from 'node:url';\n"
+            "import { readFileSync } from 'node:fs';\n"
+            "const view = await import(pathToFileURL(process.argv[2]).href);\n"
+            "const trace = JSON.parse(readFileSync(process.argv[3], 'utf8'));\n"
+            "const out = [];\n"
+            "for (let i = 0; i < trace.length; i++) {\n"
+            "  const label = view.state(trace[i].vars);\n"
+            "  const text = typeof label === 'string'\n"
+            "    ? label\n"
+            "    : Object.entries(label).map(([name, value]) => `${name} ${value}`).join(', ');\n"
+            "  let step = null;\n"
+            "  if (i > 0 && view.step) step = view.step(trace[i].action, trace[i - 1].vars, trace[i].vars);\n"
+            "  out.push({ text, step });\n"
+            "}\n"
+            "process.stdout.write(JSON.stringify(out));\n",
+            encoding="utf-8",
+        )
+        proc = subprocess.run(
+            ["node", str(script), str(view), str(payload)],
+            text=True,
+            capture_output=True,
+            timeout=30,
+            check=False,
+        )
+        if proc.returncode != 0:
+            print(proc.stderr, file=sys.stderr)
+            raise RuntimeError("the chart view rejected a TLC state")
+        return json.loads(proc.stdout)
+
+
+def state_index(mermaid: str) -> dict[str, str]:
+    stack: list[str] = []
+    index: dict[str, str] = {}
+    for line in mermaid.splitlines():
+        stripped = line.strip()
+        opened = re.match(r'state "(.*)" as (\w+) \{', stripped)
+        if opened:
+            stack.append(opened.group(1))
+            continue
+        if stripped == "}":
+            if stack:
+                stack.pop()
+            continue
+        leaf = re.match(r"(\w+): (.*)$", stripped)
+        if leaf and stack[:1] != ["Legend"]:
+            index[", ".join([*stack, leaf.group(2)])] = leaf.group(1)
+    return index
+
+
+def bug_paths(report: str) -> list[list[tuple[str | None, str]]]:
+    paths: list[list[tuple[str | None, str]]] = []
+    current: list[tuple[str | None, str]] | None = None
+    for line in report.splitlines():
+        if line.startswith("## ") and line.endswith(" breaks"):
+            current = []
+            paths.append(current)
+            continue
+        if current is None:
+            continue
+        numbered = re.match(r"^\d+\. (.*)$", line)
+        if not numbered:
+            if line.startswith("## "):
+                current = None
+            continue
+        body = numbered.group(1)
+        if ": " in body:
+            step, state = body.split(": ", 1)
+        else:
+            step, state = None, body
+        current.append((step, state))
+    return paths
+
+
+def relations(mermaid: str) -> list[tuple[str, str, str]]:
+    found = []
+    for line in mermaid.splitlines():
+        match = re.match(r"  (?:\[\*\]|([A-Za-z0-9_]+)) --> ([A-Za-z0-9_]+)(?:: (.*))?$", line)
+        if not match:
+            continue
+        found.append((match.group(1) or "[*]", match.group(2), match.group(3) or ""))
+    return found
+
+
+def edge_indexes(
+    rels: list[tuple[str, str, str]],
+    path: list[tuple[str | None, str]],
+    ids: dict[str, str],
+) -> list[int]:
+    chosen = []
+    nodes = []
+    for step, state in path:
+        if state not in ids:
+            raise RuntimeError(f"chart has no state for {state}")
+        nodes.append((step, ids[state]))
+    for (_prev_step, source), (step, target) in zip(nodes, nodes[1:]):
+        matches = [
+            index
+            for index, (left, right, title) in enumerate(rels)
+            if left == source and right == target and (not step or step in title)
+        ]
+        if not matches:
+            raise RuntimeError(f"chart has no arrow for {step} from {source} to {target}")
+        chosen.extend(matches)
+    return chosen
+
+
+def finish_mermaid(text: str, happy_ids: list[str]) -> str:
+    lines = text.splitlines()
+    for line in CLASS_DEFS:
+        if line not in lines:
+            lines.append(line)
+    for sid in happy_ids:
+        line = f"  class {sid} happy"
+        if line not in lines:
+            lines.append(line)
+    return "\n".join(lines) + "\n"
+
+
+def ensure_pele() -> Path:
+    module = PELE / "node_modules/pele/dist/pele.js"
+    package = PELE / "node_modules/pele/package.json"
+    if package.is_file() and json.loads(package.read_text(encoding="utf-8")).get("version") == PELE_VERSION:
+        return module
+    PELE.mkdir(parents=True, exist_ok=True)
+    proc = subprocess.run(
+        ["npm", "install", "--prefix", str(PELE), f"pele@{PELE_VERSION}"],
+        text=True,
+        capture_output=True,
+        timeout=180,
+        check=False,
+    )
+    if proc.returncode != 0 or not module.is_file():
+        sys.stderr.write(proc.stdout)
+        sys.stderr.write(proc.stderr)
+        raise RuntimeError("could not install pele@1.9.0")
+    return module
+
+
+def render_svg(module: Path, mermaid: str) -> str:
+    with tempfile.TemporaryDirectory(prefix="pele-") as raw:
+        work = Path(raw)
+        source = work / "chart.mmd"
+        source.write_text(mermaid, encoding="utf-8")
+        script = work / "render.mjs"
+        script.write_text(
+            "import { readFileSync, writeFileSync } from 'node:fs';\n"
+            "import { pathToFileURL } from 'node:url';\n"
+            "const pele = await import(pathToFileURL(process.argv[2]).href);\n"
+            "const result = pele.render(readFileSync(process.argv[3], 'utf8'), "
+            "{ limit: 1000000, outputLimit: 8000000, maxEdges: 10000 });\n"
+            "writeFileSync(process.argv[4], result.svg);\n",
+            encoding="utf-8",
+        )
+        out = work / "chart.svg"
+        proc = subprocess.run(
+            ["node", str(script), str(module), str(source), str(out)],
+            text=True,
+            capture_output=True,
+            timeout=60,
+            check=False,
+        )
+        if proc.returncode != 0:
+            sys.stderr.write(proc.stdout)
+            sys.stderr.write(proc.stderr)
+            raise RuntimeError("Pele could not render the chart")
+        svg = out.read_text(encoding="utf-8")
+    if "statechart-colors" not in svg:
+        tag_end = svg.find(">")
+        svg = svg[: tag_end + 1] + "<style>/* statechart-colors */" + STYLE + "</style>" + svg[tag_end + 1 :]
+    return svg
+
+
+def color_edges(svg: str, bug: set[int], happy: set[int]) -> str:
+    pattern = re.compile(
+        r'(<g class="pele-edge pele-transition" data-id="edge(\d+)">)(.*?)(</g>)',
+        re.S,
+    )
+
+    def paint_marker(body: str, color: str) -> str:
+        updated, count = re.subn(
+            r'(<path\b[^>]*class="pele-marker"[^>]*?)fill="[^"]*"',
+            rf'\1fill="{color}"',
+            body,
+            count=1,
+            flags=re.S,
+        )
+        if count:
+            return updated
+        updated, _count = re.subn(
+            r'(<path\b[^>]*?)fill="[^"]*"([^>]*class="pele-marker")',
+            rf'\1fill="{color}"\2',
+            body,
+            count=1,
+            flags=re.S,
+        )
+        return updated
+
+    def paint(match: re.Match[str]) -> str:
+        index = int(match.group(2))
+        if index in bug:
+            color = BUG_STROKE
+        elif index in happy:
+            color = HAPPY_STROKE
+        else:
+            return match.group(0)
+        body = re.sub(r"<path\b", f'<path stroke="{color}"', match.group(3), count=1)
+        return match.group(1) + paint_marker(body, color) + match.group(4)
+
+    return pattern.sub(paint, svg)
+
+
+def picture(name: str, spec: Path, view: Path, mermaid: str, report: str, java: str, jar_path: Path) -> tuple[str, str]:
+    ids = state_index(mermaid)
+    rels = relations(mermaid)
+    bug: set[int] = set()
+    for path in bug_paths(report):
+        bug.update(edge_indexes(rels, path, ids))
+    happy_ids: list[str] = []
+    happy: set[int] = set()
+    if name == "dose-reminder":
+        labeled = view_labels(view, happy_trace(java, jar_path, spec))
+        happy_path = [(item["step"], item["text"]) for item in labeled]
+        happy_ids = [ids[item["text"]] for item in labeled]
+        happy.update(edge_indexes(rels, happy_path, ids))
+    drawn = finish_mermaid(mermaid, happy_ids)
+    rels = relations(drawn)
+    svg = render_svg(ensure_pele(), drawn)
+    edge_ids = {int(item) for item in re.findall(r'data-id="edge(\d+)"', svg)}
+    if edge_ids != set(range(len(rels))):
+        raise RuntimeError(f"Pele drew {sorted(edge_ids)} and the mermaid has {len(rels)} arrows")
+    return drawn, color_edges(svg, bug, happy)
+
+
+SVG_BLOCK = re.compile(r"<svg\b.*?</svg>", re.S)
+
+
+def image_link(doc: Path) -> str:
+    alt = "One dose reminder" if doc.stem == "dose-reminder" else "Custom symptom sync"
+    return f"![{alt}]({doc.name.replace('.md', '.svg')})"
+
+
+def page_matches(doc: Path, drawn: str, svg: str) -> bool:
+    if not doc.is_file():
+        return False
+    page = doc.read_text(encoding="utf-8")
+    side = doc.with_suffix(".svg")
+    return (
+        fence(page) == norm(drawn)
+        and side.is_file()
+        and side.read_text(encoding="utf-8") == svg
+        and image_link(doc) in page
+        and "<svg" not in page
+    )
+
+
+def write_page(doc: Path, drawn: str, svg: str) -> None:
+    page = doc.read_text(encoding="utf-8") if doc.is_file() else ""
+    fenced = "```mermaid\n" + norm(drawn) + "```"
+    if FENCE.search(page):
+        page = FENCE.sub(fenced, page, count=1)
+    else:
+        page = page.rstrip() + "\n\n" + fenced + "\n"
+    page = SVG_BLOCK.sub("", page)
+    link = image_link(doc)
+    if link not in page:
+        page = page.replace(fenced, link + "\n\n" + fenced, 1)
+    if not page.endswith("\n"):
+        page += "\n"
+    doc.write_text(page, encoding="utf-8")
+    doc.with_suffix(".svg").write_text(svg, encoding="utf-8")
+
+
 def main() -> int:
+    write = "--write" in sys.argv
     java = shutil.which("java")
     if java is None:
         print("java is not on PATH", file=sys.stderr)
@@ -134,7 +592,7 @@ def main() -> int:
     jar_path = jar()
     failed = False
     for name, spec, cfg, view, doc in MODELS:
-        if not spec.is_file() or not cfg.is_file() or not view.is_file() or not doc.is_file():
+        if not spec.is_file() or not cfg.is_file() or not view.is_file():
             print(f"missing inputs for {name}", file=sys.stderr)
             return 2
         with tempfile.TemporaryDirectory(prefix=f"statechart-{name}-") as raw:
@@ -142,20 +600,34 @@ def main() -> int:
             if code == 2:
                 return 2
             chart_path = Path(raw) / "chart.mmd"
-            committed = fence(doc.read_text(encoding="utf-8"))
-            if chart_path.is_file():
-                generated = norm(chart_path.read_text(encoding="utf-8"))
-                if committed != generated:
-                    print(f"{name}: mermaid fence does not match chart.mmd", file=sys.stderr)
-                    failed = True
-                    continue
-                print(f"ok: {name} fence matches")
-                continue
-            if committed is not None:
-                print(f"{name}: doc has a fence and the tool wrote no chart.mmd", file=sys.stderr)
+            report_path = Path(raw) / "report.md"
+            if not chart_path.is_file() or not report_path.is_file():
+                print(f"{name}: the tool wrote no chart", file=sys.stderr)
                 failed = True
                 continue
-            print(f"ok: {name} has no chart")
+            try:
+                drawn, svg = picture(
+                    name,
+                    spec,
+                    view,
+                    chart_path.read_text(encoding="utf-8"),
+                    report_path.read_text(encoding="utf-8"),
+                    java,
+                    jar_path,
+                )
+            except RuntimeError as err:
+                print(f"{name}: {err}", file=sys.stderr)
+                return 2
+            if page_matches(doc, drawn, svg):
+                print(f"ok: {name} fence and picture match")
+                continue
+            if write:
+                write_page(doc, drawn, svg)
+                if page_matches(doc, drawn, svg):
+                    print(f"wrote: {name}")
+                    continue
+            print(f"{name}: mermaid fence or picture does not match", file=sys.stderr)
+            failed = True
     return 1 if failed else 0
 
 
