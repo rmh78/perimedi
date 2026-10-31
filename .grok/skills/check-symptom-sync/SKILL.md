@@ -43,7 +43,7 @@ The committed chart at `ios/formal/symptom-sync/chart.mmd` shows an import of tw
 - `Store.refresh`, `Store.apply`, `Store.replaceAll`, `Store.clearAll`, `Store.wipeDomain`, and `SymptomFoldDefaults` in `ios/PeriMedi/Persistence/Store.swift`
 - `SDSymptomScore.recordId` in `ios/PeriMedi/Persistence/SwiftDataModels.swift`
 
-Sync commit: `dd69ec0`
+Sync commit: `7b8c3af`
 
 ## Bounds
 
