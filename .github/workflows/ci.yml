@@ -99,6 +99,10 @@ jobs:
           python3 ios/scripts/check-dose-reminder-model.py --base "origin/$BASE_REF"
       - name: Dose reminder model lint tests
         run: python3 ios/scripts/test_check_dose_reminder_model.py
+      - name: Covered-symbol checkers stay twins
+        run: python3 ios/scripts/check-model-twins.py
+      - name: Twin checker unit tests
+        run: python3 ios/scripts/test_check_model_twins.py
 
   openspec:
     if: github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && !(github.event_name == 'workflow_dispatch' && (github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')))
