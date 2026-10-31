@@ -14,6 +14,7 @@ SKILL = ROOT / ".grok/skills/check-symptom-sync/SKILL.md"
 DIRECTORY = "ios/Sources/PeriMediDomain/SymptomDirectory.swift"
 STORE = "ios/PeriMedi/Persistence/Store.swift"
 PAST = ("d6de884", "bfa1f9e", "15356cf")
+LEFT_OUT = "Left out: chain flattening in remembering() and terminal()."
 FIX = (
     "update ios/formal/symptom-sync/SymptomSync.tla, "
     "ios/formal/symptom-sync/SymptomSync.cfg, or the Sync commit in "
@@ -32,67 +33,161 @@ def load():
 model = load()
 
 
-def names(rev: str) -> list[str]:
+def show(rev: str, path: str) -> str | None:
     proc = subprocess.run(
-        ["git", "diff", "--name-only", f"{rev}^", rev],
+        ["git", "show", f"{rev}:{path}"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        return None
+    return proc.stdout
+
+
+def rev_diff(rev: str) -> str:
+    proc = subprocess.run(
+        ["git", "diff", "--no-renames", "-U0", f"{rev}^", rev],
         cwd=ROOT,
         text=True,
         capture_output=True,
         check=True,
     )
-    return [line for line in proc.stdout.splitlines() if line]
+    return proc.stdout
+
+
+def hunk(path: str, line: int) -> str:
+    return (
+        f"diff --git a/{path} b/{path}\n"
+        f"--- a/{path}\n"
+        f"+++ b/{path}\n"
+        f"@@ -{line},1 +{line},1 @@\n"
+        "-old\n"
+        "+new\n"
+    )
 
 
 class DriftTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.covered = model.covered_swift(SKILL.read_text(encoding="utf-8"))
+        self.skill = SKILL.read_text(encoding="utf-8")
+        self.covered = model.covered_symbols(self.skill)
+        self.store = (ROOT / STORE).read_text(encoding="utf-8")
+        self.files = {STORE: (self.store, self.store)}
 
-    def test_skill_lists_the_covered_files_and_sync_commit(self) -> None:
+    def test_skill_lists_symbols_and_leaves_chain_flattening_out(self) -> None:
         self.assertEqual(
-            self.covered,
-            [
+            {symbol.path for symbol in self.covered},
+            {
                 DIRECTORY,
                 STORE,
                 "ios/PeriMedi/Persistence/SwiftDataModels.swift",
-            ],
+            },
         )
-        self.assertEqual(model.sync_commit(SKILL.read_text(encoding="utf-8")), "dd69ec0")
+        self.assertNotIn("RememberedScoreRewrites.remembering", [s.name for s in self.covered])
+        self.assertIn(LEFT_OUT, self.skill)
+        self.assertEqual(model.sync_commit(self.skill), "dd69ec0")
+        self.assertEqual(model.unresolved(self.covered, {
+            symbol.path: (ROOT / symbol.path).read_text(encoding="utf-8")
+            for symbol in self.covered
+        }), [])
 
     def test_past_sync_fixes_fail_until_the_model_or_commit_moves(self) -> None:
         for rev in PAST:
-            changed = names(rev)
-            problems = model.drift_problems(changed, self.covered, "parent", "parent")
-            self.assertIn(f"{DIRECTORY}: {FIX}", problems, rev)
-            self.assertIn(f"{STORE}: {FIX}", problems, rev)
+            diff = rev_diff(rev)
+            files = {
+                symbol.path: (show(f"{rev}^", symbol.path), show(rev, symbol.path))
+                for symbol in self.covered
+            }
+            problems = model.hunk_problems(diff, self.covered, files, "parent", "parent")
+            self.assertTrue(any(DIRECTORY in item and FIX in item for item in problems), rev)
+            self.assertTrue(any(STORE in item and FIX in item for item in problems), rev)
+            for model_path in (
+                "ios/formal/symptom-sync/SymptomSync.tla",
+                "ios/formal/symptom-sync/SymptomSync.cfg",
+            ):
+                self.assertEqual(
+                    model.hunk_problems(
+                        f"diff --git a/{model_path} b/{model_path}\n" + diff,
+                        self.covered,
+                        files,
+                        "parent",
+                        "parent",
+                    ),
+                    [],
+                    rev,
+                )
             self.assertEqual(
-                model.drift_problems(
-                    changed + ["ios/formal/symptom-sync/SymptomSync.tla"],
-                    self.covered,
-                    "parent",
-                    "parent",
-                ),
-                [],
-                rev,
-            )
-            self.assertEqual(
-                model.drift_problems(
-                    changed + ["ios/formal/symptom-sync/SymptomSync.cfg"],
-                    self.covered,
-                    "parent",
-                    "parent",
-                ),
-                [],
-                rev,
-            )
-            self.assertEqual(
-                model.drift_problems(changed, self.covered, "parent", rev),
+                model.hunk_problems(diff, self.covered, files, "parent", rev),
                 [],
                 rev,
             )
 
-    def test_unrelated_diff_is_clean(self) -> None:
+    def test_unrelated_store_edit_passes(self) -> None:
         self.assertEqual(
-            model.drift_problems(["AGENTS.md"], self.covered, "dd69ec0", "dd69ec0"),
+            model.hunk_problems(hunk(STORE, 1), self.covered, self.files, "dd69ec0", "dd69ec0"),
+            [],
+        )
+
+    def test_edit_inside_store_refresh_fails(self) -> None:
+        refresh = next(symbol for symbol in self.covered if symbol.name == "Store.refresh")
+        start, _end = model.symbol_spans(self.store, refresh)[0]
+        problems = model.hunk_problems(
+            hunk(STORE, start), self.covered, self.files, "dd69ec0", "dd69ec0"
+        )
+        self.assertEqual(problems, [f"Store.refresh in {STORE}: {FIX}"])
+        mentioned = (
+            "diff --git a/.grok/skills/check-symptom-sync/SKILL.md "
+            "b/.grok/skills/check-symptom-sync/SKILL.md\n"
+            "@@ -1,1 +1,1 @@\n"
+            "-old\n"
+            "+see ios/formal/symptom-sync/SymptomSync.tla\n"
+        )
+        self.assertEqual(
+            model.hunk_problems(
+                mentioned + hunk(STORE, start),
+                self.covered,
+                self.files,
+                "dd69ec0",
+                "dd69ec0",
+            ),
+            [f"Store.refresh in {STORE}: {FIX}"],
+        )
+
+    def test_rename_of_covered_file_fails(self) -> None:
+        renamed = "ios/PeriMedi/Persistence/StoreRenamed.swift"
+        diff = (
+            f"diff --git a/{STORE} b/{STORE}\n"
+            "deleted file mode 100644\n"
+            f"--- a/{STORE}\n"
+            "+++ /dev/null\n"
+            "@@ -1,1 +0,0 @@\n"
+            "-import CoreData\n"
+            f"diff --git a/{renamed} b/{renamed}\n"
+            "new file mode 100644\n"
+            "--- /dev/null\n"
+            f"+++ b/{renamed}\n"
+            "@@ -0,0 +1,1 @@\n"
+            "+import CoreData\n"
+        )
+        problems = model.hunk_problems(diff, self.covered, {}, "dd69ec0", "dd69ec0")
+        self.assertEqual(problems, [f"{STORE}: renamed or deleted covered file. {FIX}"])
+
+    def test_remembering_edit_is_left_out(self) -> None:
+        text = (ROOT / DIRECTORY).read_text(encoding="utf-8")
+        line = next(
+            number
+            for number, row in enumerate(text.splitlines(), 1)
+            if "func remembering" in row
+        )
+        self.assertEqual(
+            model.hunk_problems(
+                hunk(DIRECTORY, line),
+                self.covered,
+                {DIRECTORY: (text, text)},
+                "dd69ec0",
+                "dd69ec0",
+            ),
             [],
         )
 

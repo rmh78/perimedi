@@ -27,6 +27,8 @@ ios/                 # Xcode app + PeriMediDomain package
 openspec/            # product specs
 ```
 
+The chart is [`ios/formal/symptom-sync/chart.mmd`](ios/formal/symptom-sync/chart.mmd). The skill is [`.grok/skills/check-symptom-sync/SKILL.md`](.grok/skills/check-symptom-sync/SKILL.md).
+
 Archived OpenSpec changes under `openspec/changes/archive/` may mention an old web companion; they are historical. Current product contract is `openspec/specs/` plus this file.
 
 ## Product rules
@@ -125,10 +127,11 @@ python3 ios/scripts/test_check_review_repeats.py
 # One-way door diff. Warns only.
 python3 ios/scripts/check-one-way-door.py --base origin/main
 
-# Custom-symptom sync model. Exits 1 when an invariant fails. CI passes --warn. verify does not run it.
+# Custom-symptom sync model. Chart ios/formal/symptom-sync/chart.mmd. Skill .grok/skills/check-symptom-sync/SKILL.md.
+# Exits 1 when an invariant fails. CI passes --warn. verify does not run it.
 python3 ios/scripts/check-symptom-sync.py
 
-# Covered Swift vs that model. Fails CI. verify does not run it.
+# Covered symbols vs that model. Fails CI. verify does not run it.
 python3 ios/scripts/check-symptom-model.py --base origin/main
 
 # Symptom-sync model lint tests. ids runs this. verify does not.
