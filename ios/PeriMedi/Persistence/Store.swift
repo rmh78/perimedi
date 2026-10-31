@@ -72,9 +72,18 @@ final class Store: ObservableObject {
             let memory = SymptomFoldDefaults.load(foldDefaults)
             let plan = SymptomDirectory.synced(rows: rows, records: records, memory: memory)
             if plan.memory != memory {
-                SymptomFoldDefaults.save(plan.memory, foldDefaults)
+                SymptomFoldDefaults.saveSnapshot(plan.memory, replacing: memory, in: foldDefaults)
             }
-            let changed = apply(plan.instructions, customs: customModels, scores: scoreModels)
+            let stored = zip(scoreModels, preImageScores).map { model, score in
+                (
+                    model: model,
+                    stored: StoredScoreRow(
+                        recordId: ScoreRecordId(rawValue: model.recordId),
+                        score: score
+                    )
+                )
+            }
+            let changed = apply(plan.repair, customs: customModels, scores: stored)
             if changed {
                 do {
                     try context.save()
@@ -122,44 +131,33 @@ final class Store: ObservableObject {
     }
 
     private func apply(
-        _ instructions: [RepairInstruction],
+        _ repair: DiskRepair,
         customs: [SDCustomSymptom],
-        scores: [SDSymptomScore]
+        scores: [(model: SDSymptomScore, stored: StoredScoreRow)]
     ) -> Bool {
-        var deleteCustom: Set<String> = []
-        var deleteScore: Set<String> = []
-        var keeps: [String: SymptomScore] = [:]
-        for instruction in instructions {
-            switch instruction {
-            case .deleteCustom(let id):
-                deleteCustom.insert(id.rawValue)
-            case .deleteScore(let id):
-                deleteScore.insert(id.rawValue)
-            case .keep(let keep):
-                keeps[keep.recordId.rawValue] = keep.score
-            }
-        }
+        let deleteCustom = Set(repair.deleteCustoms.map(\.rawValue))
         var changed = false
         for model in customs where deleteCustom.contains(model.id) {
             context.delete(model)
             changed = true
         }
-        var seenKeep: Set<String> = []
-        for model in scores {
-            if deleteScore.contains(model.recordId) {
-                context.delete(model)
+        let mutations = repair.mutations(for: scores.map(\.stored))
+        for (pair, mutation) in zip(scores, mutations) {
+            switch mutation {
+            case nil:
+                break
+            case .delete?:
+                context.delete(pair.model)
                 changed = true
-                continue
-            }
-            guard let score = keeps[model.recordId] else { continue }
-            if !seenKeep.insert(model.recordId).inserted {
-                context.delete(model)
-                changed = true
-                continue
-            }
-            if model.toDomain() != score {
-                model.apply(score)
-                changed = true
+            case .write(let row)?:
+                if pair.model.recordId != row.recordId.rawValue {
+                    pair.model.recordId = row.recordId.rawValue
+                    changed = true
+                }
+                if pair.model.toDomain() != row.score {
+                    pair.model.apply(row.score)
+                    changed = true
+                }
             }
         }
         return changed
@@ -502,6 +500,11 @@ final class Store: ObservableObject {
             settingsRow.apply(payload.cycleSettings)
             context.insert(settingsRow)
             try context.save()
+            SymptomFoldDefaults.mergeFresh(
+                plan.memory,
+                kept: Set(plan.directory.customs.map(\.id)),
+                into: foldDefaults
+            )
         } catch let error as BackupError {
             throw error
         } catch {
@@ -588,7 +591,23 @@ private enum SymptomFoldDefaults {
         return RememberedScoreRewrites(wire: wire)
     }
 
-    static func save(_ memory: RememberedScoreRewrites, _ defaults: UserDefaults = .standard) {
-        defaults.set(memory.wire, forKey: key)
+    static func saveSnapshot(
+        _ snapshot: RememberedScoreRewrites,
+        replacing loaded: RememberedScoreRewrites,
+        in defaults: UserDefaults
+    ) {
+        guard snapshot != loaded else { return }
+        defaults.set(snapshot.wire, forKey: key)
+    }
+
+    static func mergeFresh(
+        _ fresh: RememberedScoreRewrites,
+        kept: Set<CustomSymptomId>,
+        into defaults: UserDefaults
+    ) {
+        let existing = load(defaults)
+        let merged = existing.remembering(fresh.pairs, stoppingAt: kept)
+        guard merged != existing else { return }
+        defaults.set(merged.wire, forKey: key)
     }
 }

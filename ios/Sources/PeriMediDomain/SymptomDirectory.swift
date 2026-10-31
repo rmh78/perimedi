@@ -54,7 +54,31 @@ public struct ScoredRecord: Equatable, Sendable {
     }
 }
 
-public struct ScoreKeep: Equatable, Sendable {
+public struct RowClaim: Hashable, Sendable {
+    public let recordId: ScoreRecordId
+    public let date: String
+    public let symptomId: String
+
+    public init(recordId: ScoreRecordId, date: String, symptomId: String) {
+        self.recordId = recordId
+        self.date = date
+        self.symptomId = symptomId
+    }
+}
+
+public struct ScoreWrite: Equatable, Sendable {
+    public let claim: RowClaim
+    public let identity: ScoreRecordId
+    public let score: SymptomScore
+
+    public init(claim: RowClaim, identity: ScoreRecordId, score: SymptomScore) {
+        self.claim = claim
+        self.identity = identity
+        self.score = score
+    }
+}
+
+public struct StoredScoreRow: Equatable, Sendable {
     public var recordId: ScoreRecordId
     public var score: SymptomScore
 
@@ -64,27 +88,81 @@ public struct ScoreKeep: Equatable, Sendable {
     }
 }
 
-public enum RepairInstruction: Equatable, Sendable {
-    case deleteCustom(CustomSymptomId)
-    case keep(ScoreKeep)
-    case deleteScore(ScoreRecordId)
+public enum RowMutation: Equatable, Sendable {
+    case write(StoredScoreRow)
+    case delete
+}
+
+public struct DiskRepair: Equatable, Sendable {
+    public let deleteCustoms: [CustomSymptomId]
+    let writes: [ScoreWrite]
+    let drops: [RowClaim]
+
+    init(deleteCustoms: [CustomSymptomId], writes: [ScoreWrite], drops: [RowClaim]) {
+        assert(Set(writes.map(\.claim)).count == writes.count)
+        assert(Set(writes.map(\.identity)).count == writes.count)
+        assert(Set(drops).isDisjoint(with: Set(writes.map(\.claim))))
+        self.deleteCustoms = deleteCustoms
+        self.writes = writes
+        self.drops = drops
+    }
+
+    public static let none = DiskRepair(deleteCustoms: [], writes: [], drops: [])
+
+    public static func == (lhs: DiskRepair, rhs: DiskRepair) -> Bool {
+        lhs.deleteCustoms == rhs.deleteCustoms
+            && lhs.writes == rhs.writes
+            && lhs.drops == rhs.drops
+    }
+
+    /// Index-aligned with `rows`. `nil` leaves the row untouched.
+    public func mutations(for rows: [StoredScoreRow]) -> [RowMutation?] {
+        func matches(_ row: StoredScoreRow, _ claim: RowClaim) -> Bool {
+            row.recordId == claim.recordId
+                && row.score.date == claim.date
+                && row.score.id == claim.symptomId
+        }
+
+        var claimed = Array(repeating: false, count: rows.count)
+        var result = Array<RowMutation?>(repeating: nil, count: rows.count)
+        for drop in drops {
+            for index in rows.indices where !claimed[index] && matches(rows[index], drop) {
+                result[index] = .delete
+                claimed[index] = true
+            }
+        }
+        for write in writes {
+            var wrote = false
+            let updated = StoredScoreRow(recordId: write.identity, score: write.score)
+            for index in rows.indices where !claimed[index] && matches(rows[index], write.claim) {
+                if !wrote {
+                    if updated != rows[index] { result[index] = .write(updated) }
+                    wrote = true
+                } else {
+                    result[index] = .delete
+                }
+                claimed[index] = true
+            }
+        }
+        return result
+    }
 }
 
 public struct SymptomSync: Equatable, Sendable {
     public var directory: SymptomDirectory
     public var scores: [SymptomScore]
-    public var instructions: [RepairInstruction]
+    public var repair: DiskRepair
     public var memory: RememberedScoreRewrites
 
     public init(
         directory: SymptomDirectory,
         scores: [SymptomScore],
-        instructions: [RepairInstruction],
+        repair: DiskRepair,
         memory: RememberedScoreRewrites
     ) {
         self.directory = directory
         self.scores = scores
-        self.instructions = instructions
+        self.repair = repair
         self.memory = memory
     }
 }
@@ -330,9 +408,16 @@ public struct SymptomDirectory: Equatable, Sendable {
         var symptomId: String
     }
 
+    private struct Part {
+        var recordId: ScoreRecordId
+        var originalSymptomId: String
+        var incomingIndex: Int
+    }
+
     private struct Bucket {
+        var date: String
         var ranked: RankedScore
-        var recordIds: [ScoreRecordId]
+        var parts: [Part]
     }
 
     private static func fold(
@@ -356,16 +441,22 @@ public struct SymptomDirectory: Equatable, Sendable {
         let nextMemory = memory.remembering(fresh, stoppingAt: kept)
         let rewrites = merging(nextMemory, kept: kept)
         var buckets: [Slot: Bucket] = [:]
-        for item in incoming {
+        for (index, item) in incoming.enumerated() {
             guard let mapped = map(item.score, rewrites: rewrites, kept: kept) else { continue }
             let slot = Slot(date: mapped.date, symptomId: mapped.id)
             let ranked = RankedScore(score: mapped, originalId: item.score.id)
-            var bucket = buckets[slot] ?? Bucket(ranked: ranked, recordIds: [])
+            var bucket = buckets[slot] ?? Bucket(date: slot.date, ranked: ranked, parts: [])
             if buckets[slot] != nil {
                 bucket.ranked = prefer(bucket.ranked, ranked)
             }
             if let recordId = item.recordId {
-                bucket.recordIds.append(recordId)
+                bucket.parts.append(
+                    Part(
+                        recordId: recordId,
+                        originalSymptomId: item.score.id,
+                        incomingIndex: index
+                    )
+                )
             }
             buckets[slot] = bucket
         }
@@ -376,17 +467,47 @@ public struct SymptomDirectory: Equatable, Sendable {
             return left.id < right.id
         }
         let dropped = cleaned.map(\.id).filter { !kept.contains($0) }.sorted { $0.rawValue < $1.rawValue }
-        var instructions = dropped.map { RepairInstruction.deleteCustom($0) }
+        var counts: [ScoreRecordId: Int] = [:]
         for bucket in orderedBuckets {
-            guard let keeper = bucket.recordIds.min() else { continue }
-            instructions.append(.keep(ScoreKeep(recordId: keeper, score: bucket.ranked.score)))
-            let extras = Set(bucket.recordIds).subtracting([keeper]).sorted()
-            instructions.append(contentsOf: extras.map { .deleteScore($0) })
+            for part in bucket.parts {
+                counts[part.recordId, default: 0] += 1
+            }
+        }
+        let shared = Set(counts.filter { $0.value > 1 }.map(\.key))
+        var writes: [ScoreWrite] = []
+        var drops: [RowClaim] = []
+        for bucket in orderedBuckets {
+            guard let keeperId = bucket.parts.map(\.recordId).min() else { continue }
+            let survivors = bucket.parts.filter { $0.recordId == keeperId }
+            let keeper = survivors.min { lhs, rhs in
+                lhs.originalSymptomId == rhs.originalSymptomId
+                    ? lhs.incomingIndex < rhs.incomingIndex
+                    : lhs.originalSymptomId < rhs.originalSymptomId
+            }!
+            let claim = RowClaim(
+                recordId: keeperId,
+                date: bucket.date,
+                symptomId: keeper.originalSymptomId
+            )
+            let identity = shared.contains(keeperId)
+                ? ScoreRecordId(rawValue: bucket.ranked.score.rowId)
+                : keeperId
+            writes.append(ScoreWrite(claim: claim, identity: identity, score: bucket.ranked.score))
+            for part in bucket.parts {
+                let partClaim = RowClaim(
+                    recordId: part.recordId,
+                    date: bucket.date,
+                    symptomId: part.originalSymptomId
+                )
+                if partClaim != claim {
+                    drops.append(partClaim)
+                }
+            }
         }
         return SymptomSync(
             directory: directory,
             scores: orderedBuckets.map(\.ranked.score),
-            instructions: instructions,
+            repair: DiskRepair(deleteCustoms: dropped, writes: writes, drops: drops),
             memory: nextMemory
         )
     }
