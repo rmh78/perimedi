@@ -79,9 +79,9 @@ stateDiagram-v2
   class s9 bugPath
 ```
 
-`WidgetHidesTaken` breaks. A taken dose is not on the widget. The shortest path has 3 steps: the app writes the widget file, you tap Taken on the card, and the widget reloads onto a file that still lists the dose.
+`WidgetHidesTaken` breaks. A taken dose is not on the widget. The shortest path has 3 steps: the app writes the widget file, you tap Taken on the notification, and the widget reloads onto a file that still lists the dose. Filed as #128.
 
-`TakenNotPending` breaks. A taken dose leaves no reminder that can still fire. The shortest path has 4 steps: the app reads the pending reminders, the app writes the reminder list, the queued add lands, and you tap Taken on the card while that reminder is still waiting.
+`TakenNotPending` breaks. A taken dose leaves no reminder that can still fire. The shortest path has 4 steps: the app reads the pending reminders, the app writes the reminder list, the queued add lands, and you tap Taken on the notification while that reminder is still waiting. Filed as #127.
 
 `WritersAgree` holds. TLC found none. The dose log stays pending or taken.
 

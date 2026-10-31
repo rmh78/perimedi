@@ -58,8 +58,8 @@ The model cannot show a follow-up or a snooze pending beside the dose id, and it
 
 ## Findings
 
-`TakenNotPending` fails. The shortest trace reads an empty pending list, enqueues the add, lets that add land, then takes the dose. `cancelNotifications` enqueues the remove and returns before the center runs it. The request is still pending, so the system can deliver it.
+`TakenNotPending` fails. The shortest trace reads an empty pending list, enqueues the add, lets that add land, then takes the dose. `cancelNotifications` enqueues the remove and returns before the center runs it. The request is still pending, so the system can deliver it. Filed as #127.
 
-`WidgetHidesTaken` fails. `publish` writes today's pending meds, the take's later write fails, and the timeline reload copies the file that still lists the dose. A write that succeeds and has not reloaded yet leaves the same dose on the timeline.
+`WidgetHidesTaken` fails. `publish` writes today's pending meds, the take's later write fails, and the timeline reload copies the file that still lists the dose. A write that succeeds and has not reloaded yet leaves the same dose on the timeline. Filed as #128.
 
 `WritersAgree` holds. The dose log stays pending or taken. `Store.setDoseStatus` is the only dose-log writer, and the model keeps that as one status.
