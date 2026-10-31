@@ -1,0 +1,65 @@
+---
+name: check-dose-reminder
+description: "Check the dose reminder model when a change touches DoseReminderCenter, the widget take, CycleView.toggleLane, or Store.setDoseStatus. Run the model, and use /maintain-formal-verification-skill when a merge skipped this skill."
+---
+
+# Check the dose reminder
+
+One planned slot. `Store.setDoseStatus` is the only writer of the dose log. The notification center and the widget file are separate stores. This model checks every interleaving inside its bounds.
+
+## When
+
+Run `python3 ios/scripts/check-dose-reminder.py` before you finish an edit to the covered code. A change to `DoseReminderCenter.markSlotTaken` or `DoseReminderCenter.reschedule` is the trigger.
+
+If the edit changes what a take or a reschedule promises, update `ios/formal/dose-reminder/DoseReminder.tla` in the same change. Move the sync commit only after the model describes the new code. A docs-only edit does not move it.
+
+`python3 ios/scripts/check-dose-reminder-model.py` fails the `ids` job when a covered symbol changes, or a covered file is renamed or deleted, and that same change leaves `DoseReminder.tla`, `DoseReminder.cfg`, and the sync commit below untouched.
+
+When a merge changed the covered code and skipped this skill, use `/maintain-formal-verification-skill`.
+
+## Command
+
+From the repo root:
+
+```bash
+python3 ios/scripts/check-dose-reminder.py
+```
+
+The command exits 1 while `TakenNotPending` or `WidgetHidesTaken` fails. CI runs the same command with `--warn` and does not fail the workflow. Do not add the command to `control-perimedi verify`.
+
+The checker downloads TLC 1.7.4 on first use and needs `java` on PATH (Java 11 or later).
+
+## What a result means
+
+`PASS` means that invariant holds for every interleaving in the model. `FAIL` on `TakenNotPending` means a taken dose can still be delivered. `FAIL` on `WidgetHidesTaken` means the widget can still list a taken dose. `WritersAgree` is the one shared status. Any other `FAIL` is a new bug, or the model no longer describes the code.
+
+Do not weaken an invariant to make the command pass. Do not change product code from this skill unless the user asks. Read the TLC output with the pstack `/statechart` skill. It shows each broken rule as its shortest path.
+
+## Covered code
+
+- `DoseReminderCenter.markSlotTaken`, `DoseReminderCenter.markMedicationTaken`, `DoseReminderCenter.refresh`, `DoseReminderCenter.reschedule`, and `DoseReminderCenter.cancelNotifications` in `ios/PeriMedi/App/DoseReminderCenter.swift`
+- `DoseWidgetBridge.takeFromWidget` and `DoseWidgetBridge.publish` in `ios/PeriMedi/App/DoseWidgetBridge.swift`
+- `CycleView.toggleLane` in `ios/PeriMedi/Features/Cycle/CycleView.swift`
+- `Store.setDoseStatus` in `ios/PeriMedi/Persistence/Store.swift`
+- `NextPendingDose.resolve` in `ios/Sources/PeriMediDomain/NextPendingDose.swift`
+- `MarkTodayMedicationTakenIntent.perform` in `ios/PeriMediDoseWidgetSupport/MarkDoseTakenIntent.swift`
+
+Sync commit: `a124db5`
+
+## Bounds
+
+One slot and one medication. Status is pending or taken. `live` is none or pending, and that one bit is the dose id, a follow-up id, or the snooze id. The queue holds at most two of add and cancel, and the tail does not repeat. The pending-request read is idle, miss, or saw, and it does not see the queue. The widget file and the timeline are two booleans.
+
+## Left out
+
+Left out: `ReminderLogic.followUpPlan`. The model does not describe its follow-up schedule.
+
+The model cannot show a follow-up or a snooze pending beside the dose id, and it cannot show snooze leaving the dose id in place. It leaves out the master switch, a denied authorization, and a second `reschedule` that overlaps the first. It leaves out a second dose log from a stale nil id, tomorrow's frozen `nextMeds`, and an add that falls off once the queue is longer than two.
+
+## Findings
+
+`TakenNotPending` fails. The shortest trace reads an empty pending list, enqueues the add, lets that add land, then takes the dose. `cancelNotifications` enqueues the remove and returns before the center runs it. The request is still pending, so the system can deliver it.
+
+`WidgetHidesTaken` fails. `publish` writes today's pending meds, the take's later write fails, and the timeline reload copies the file that still lists the dose. A write that succeeds and has not reloaded yet leaves the same dose on the timeline.
+
+`WritersAgree` holds. The model has one status. A second taken row is that same status, so it is not a second cell.
