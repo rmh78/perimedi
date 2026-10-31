@@ -24,10 +24,11 @@ ios/                 # Xcode app + PeriMediDomain package
   Tests/             # XCTest for domain
   docs/              # iCloud device-switch notes
   formal/symptom-sync/ # TLA+ model of custom-symptom sync
+  formal/dose-reminder/ # TLA+ model of one dose reminder
 openspec/            # product specs
 ```
 
-The chart is [`ios/formal/symptom-sync/chart.mmd`](ios/formal/symptom-sync/chart.mmd). The skill is [`.grok/skills/check-symptom-sync/SKILL.md`](.grok/skills/check-symptom-sync/SKILL.md).
+The symptom note is [`docs/statecharts/symptom-sync.md`](docs/statecharts/symptom-sync.md). The dose chart is [`docs/statecharts/dose-reminder.md`](docs/statecharts/dose-reminder.md). The skills are [`.grok/skills/check-symptom-sync/SKILL.md`](.grok/skills/check-symptom-sync/SKILL.md) and [`.grok/skills/check-dose-reminder/SKILL.md`](.grok/skills/check-dose-reminder/SKILL.md).
 
 Archived OpenSpec changes under `openspec/changes/archive/` may mention an old web companion; they are historical. Current product contract is `openspec/specs/` plus this file.
 
@@ -127,7 +128,7 @@ python3 ios/scripts/test_check_review_repeats.py
 # One-way door diff. Warns only.
 python3 ios/scripts/check-one-way-door.py --base origin/main
 
-# Custom-symptom sync model. Chart ios/formal/symptom-sync/chart.mmd. Skill .grok/skills/check-symptom-sync/SKILL.md.
+# Custom-symptom sync model. Note docs/statecharts/symptom-sync.md. Skill .grok/skills/check-symptom-sync/SKILL.md.
 # Exits 1 when an invariant fails. CI passes --warn. verify does not run it.
 python3 ios/scripts/check-symptom-sync.py
 

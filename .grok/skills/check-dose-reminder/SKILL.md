@@ -33,7 +33,7 @@ The checker downloads TLC 1.7.4 on first use and needs `java` on PATH (Java 11 o
 
 `PASS` means that invariant holds for every interleaving in the model. `FAIL` on `TakenNotPending` means a taken dose can still be delivered. `FAIL` on `WidgetHidesTaken` means the widget can still list a taken dose. `WritersAgree` is the one shared status. Any other `FAIL` is a new bug, or the model no longer describes the code.
 
-Do not weaken an invariant to make the command pass. Do not change product code from this skill unless the user asks. Read the TLC output with the pstack `/statechart` skill. It shows each broken rule as its shortest path.
+Do not weaken an invariant to make the command pass. Do not change product code from this skill unless the user asks. Read the TLC output with the pstack `/statechart` skill. It shows each broken rule as its shortest path. The chart is `docs/statecharts/dose-reminder.md`.
 
 ## Covered code
 
