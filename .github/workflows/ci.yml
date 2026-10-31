@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       force_red:
-        description: Fail ids on purpose and skip the other three jobs
+        description: Fail ids on purpose and skip openspec, domain, ui, and symptom-sync
         type: boolean
         default: false
 
@@ -83,6 +83,14 @@ jobs:
         run: python3 docs/app-store/check-listing.py
       - name: Decision script
         run: python3 .github/scripts/test_main_is_red.py
+      - name: Symptom sync model matches covered Swift
+        env:
+          BASE_REF: ${{ github.base_ref || 'main' }}
+        run: |
+          git fetch --no-tags origin "$BASE_REF"
+          python3 ios/scripts/check-symptom-model.py --base "origin/$BASE_REF"
+      - name: Symptom sync model lint tests
+        run: python3 ios/scripts/test_check_symptom_model.py
 
   openspec:
     if: github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && !(github.event_name == 'workflow_dispatch' && (github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')))
@@ -178,6 +186,20 @@ jobs:
             ios/DerivedData/SDKStatCaches.noindex
             ios/DerivedData/build-ok
           key: ${{ steps.ui-build-cache.outputs.cache-primary-key }}
+
+  symptom-sync:
+    if: github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && !(github.event_name == 'workflow_dispatch' && (github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Custom symptom sync model
+        run: python3 ios/scripts/check-symptom-sync.py --warn
 
   main-status:
     needs: [ids, openspec, domain, ui]
