@@ -31,7 +31,7 @@ The checker downloads TLC 1.7.4 on first use and needs `java` on PATH (Java 11 o
 
 ## What a result means
 
-`PASS` means that invariant holds for every interleaving in the model. `FAIL` on `TakenNotPending` means a taken dose can still be delivered. `FAIL` on `WidgetHidesTaken` means the widget can still list a taken dose. `FAIL` on `WritersAgree` means the dose log is neither pending nor taken. Any other `FAIL` is a new bug, or the model no longer describes the code.
+`PASS` means that invariant holds for every interleaving in the model. `FAIL` on `TakenNotPending` means a taken dose can still be delivered. `FAIL` on `WidgetHidesTaken` means the widget can still list a taken dose. `FAIL` on `WritersAgree` means one time has two dose logs, or those logs do not share one status. Any other `FAIL` is a new bug, or the model no longer describes the code.
 
 Do not weaken an invariant to make the command pass. Do not change product code from this skill unless the user asks. Read the TLC output with the pstack `/statechart` skill. It shows each broken rule as its shortest path. The chart is `docs/statecharts/dose-reminder.md`.
 
@@ -48,13 +48,13 @@ Sync commit: `a124db5`
 
 ## Bounds
 
-One slot and one medication. Status is pending or taken. `live` is none or pending, and that one bit is the dose id, a follow-up id, or the snooze id. The queue holds at most two of add and cancel, and the tail does not repeat. The pending-request read is idle, miss, or saw, and it does not see the queue. The widget file and the timeline are two booleans.
+One slot and one medication. Status is pending or taken. `live` is none or pending, and that one bit is the dose id, a follow-up id, or the snooze id. The queue holds at most two of add and cancel, and the tail does not repeat. The lane keeps the log id and the status it showed, or it is idle. A nil id stays open so another take can insert first. The widget file and the timeline are two booleans.
 
 ## Left out
 
 Left out: `ReminderLogic.followUpPlan`. The model does not describe its follow-up schedule.
 
-The model cannot show a follow-up or a snooze pending beside the dose id, and it cannot show snooze leaving the dose id in place. It leaves out the master switch, a denied authorization, and a second `reschedule` that overlaps the first. It leaves out a second dose log from a stale nil id, tomorrow's frozen `nextMeds`, and an add that falls off once the queue is longer than two.
+The model cannot show a follow-up or a snooze pending beside the dose id, and it cannot show snooze leaving the dose id in place. It leaves out the master switch, a denied authorization, and a second `reschedule` that overlaps the first. It leaves out tomorrow's frozen `nextMeds`.
 
 ## Findings
 
@@ -62,4 +62,4 @@ The model cannot show a follow-up or a snooze pending beside the dose id, and it
 
 `WidgetHidesTaken` fails. `publish` writes today's pending meds, the take's later write fails, and the timeline reload copies the file that still lists the dose. A write that succeeds and has not reloaded yet leaves the same dose on the timeline. Filed as #128.
 
-`WritersAgree` holds. The dose log stays pending or taken. `Store.setDoseStatus` is the only dose-log writer, and the model keeps that as one status.
+`WritersAgree` checks at most one row for the slot, and those rows share one status, whatever order the writers run. TLC fails it when the dose button keeps a nil id and a take inserts a row before that button writes. Filed as #132.

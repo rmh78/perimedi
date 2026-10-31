@@ -15,7 +15,7 @@ CFG = ROOT / "ios/formal/dose-reminder/DoseReminder.cfg"
 
 SENTENCES = {
     "TakenNotPending": "A taken dose leaves no reminder that can still fire.",
-    "WritersAgree": "The dose log stays pending or taken.",
+    "WritersAgree": "At most one row for the slot, and those rows share one status.",
     "WidgetHidesTaken": "A taken dose is not on the widget.",
 }
 
