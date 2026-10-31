@@ -6,15 +6,11 @@
 EXTENDS Integers, Sequences
 
 Status == {"pending", "taken"}
-Place == {"none", "pending"}
-Snap == {"idle", "miss", "saw"}
-Op == {"A", "R"}
 
 VARIABLES status, live, q, snap, suite, glass
 
 vars == <<status, live, q, snap, suite, glass>>
 
-\* Append op unless it is already the tail, then keep the last two.
 Enq(seq, op) ==
   LET appended == IF seq = <<>> \/ op # seq[Len(seq)] THEN Append(seq, op) ELSE seq
   IN IF Len(appended) > 2 THEN SubSeq(appended, Len(appended) - 1, Len(appended)) ELSE appended
@@ -64,8 +60,6 @@ CardTake ==
   /\ UNCHANGED <<live, snap, glass>>
   /\ PublishResult
 
-\* markMedicationTaken. A slot that is already taken is not in today's pending list,
-\* so this path publishes and does not cancel. A pending slot cancels, then writes taken.
 WidgetTake ==
   /\ q' = IF status = "pending" THEN Enq(q, "R") ELSE q
   /\ status' = "taken"
@@ -111,7 +105,6 @@ Next ==
 
 Spec == Init /\ [][Next]_vars
 
-\* A second taken row is the same status, so the model has one cell.
 WritersAgree == status \in Status
 
 TakenNotPending == status = "taken" => live = "none"

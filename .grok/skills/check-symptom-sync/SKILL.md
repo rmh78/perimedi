@@ -25,7 +25,7 @@ From the repo root:
 python3 ios/scripts/check-symptom-sync.py
 ```
 
-The command exits 1 while `EmptyKeeperSafe` or `ImportRemembers` fails. CI runs the same command with `--warn` and does not fail the workflow. Do not add the command to `control-perimedi verify`.
+The command exits 1 when an invariant fails. CI runs the same command with `--warn` and does not fail the workflow. Do not add the command to `control-perimedi verify`.
 
 The checker downloads TLC 1.7.4 on first use and needs `java` on PATH (Java 11 or later).
 

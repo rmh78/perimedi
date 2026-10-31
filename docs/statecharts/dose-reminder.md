@@ -83,7 +83,7 @@ stateDiagram-v2
 
 `TakenNotPending` breaks. A taken dose leaves no reminder that can still fire. The shortest path has 4 steps: the app reads the pending reminders, the app writes the reminder list, the queued add lands, and you tap Taken on the card while that reminder is still waiting.
 
-`WritersAgree` holds. TLC found none.
+`WritersAgree` holds. TLC found none. The dose log stays pending or taken.
 
 The chart hides a take that starts from a dose already taken, a fire while the dose is not taken, and a step that stays on the same labels. It keeps the label on the pending-reminder read and on the widget-file write, because those steps sit on a bug path even when the labels do not change.
 

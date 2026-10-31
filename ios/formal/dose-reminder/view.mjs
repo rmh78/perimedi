@@ -37,12 +37,10 @@ export const step = (action, from, to) => {
   if (action === "ReadSnap") return "the app reads the pending reminders";
   if (action === "Publish") return "the app writes the widget file";
   if (action === "Fire") {
-    // A fire while the dose is still pending is not on a bug path.
     if (from.status !== "taken") return null;
     return "the reminder fires";
   }
   if (action === "NoteTake" || action === "CardTake" || action === "WidgetTake") {
-    // A second take only queues another cancel. Labeling it drops the regions chart.
     if (from.status === "taken") return null;
   }
   if (action === "CommitPlan" || action === "Apply" || action === "Reload" || action === "FreshTap") {

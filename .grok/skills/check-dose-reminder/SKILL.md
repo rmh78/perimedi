@@ -25,13 +25,13 @@ From the repo root:
 python3 ios/scripts/check-dose-reminder.py
 ```
 
-The command exits 1 while `TakenNotPending` or `WidgetHidesTaken` fails. CI runs the same command with `--warn` and does not fail the workflow. Do not add the command to `control-perimedi verify`.
+The command exits 1 when an invariant fails. CI runs the same command with `--warn` and does not fail the workflow. Do not add the command to `control-perimedi verify`.
 
 The checker downloads TLC 1.7.4 on first use and needs `java` on PATH (Java 11 or later).
 
 ## What a result means
 
-`PASS` means that invariant holds for every interleaving in the model. `FAIL` on `TakenNotPending` means a taken dose can still be delivered. `FAIL` on `WidgetHidesTaken` means the widget can still list a taken dose. `WritersAgree` is the one shared status. Any other `FAIL` is a new bug, or the model no longer describes the code.
+`PASS` means that invariant holds for every interleaving in the model. `FAIL` on `TakenNotPending` means a taken dose can still be delivered. `FAIL` on `WidgetHidesTaken` means the widget can still list a taken dose. `FAIL` on `WritersAgree` means the dose log is neither pending nor taken. Any other `FAIL` is a new bug, or the model no longer describes the code.
 
 Do not weaken an invariant to make the command pass. Do not change product code from this skill unless the user asks. Read the TLC output with the pstack `/statechart` skill. It shows each broken rule as its shortest path. The chart is `docs/statecharts/dose-reminder.md`.
 
@@ -62,4 +62,4 @@ The model cannot show a follow-up or a snooze pending beside the dose id, and it
 
 `WidgetHidesTaken` fails. `publish` writes today's pending meds, the take's later write fails, and the timeline reload copies the file that still lists the dose. A write that succeeds and has not reloaded yet leaves the same dose on the timeline.
 
-`WritersAgree` holds. The model has one status. A second taken row is that same status, so it is not a second cell.
+`WritersAgree` holds. The dose log stays pending or taken. `Store.setDoseStatus` is the only dose-log writer, and the model keeps that as one status.

@@ -19,7 +19,6 @@ PLUGIN_URL = "https://github.com/pstack-ports/grok-pstack.git"
 PLUGIN_CACHE = Path.home() / ".cache/perimedi/grok-pstack" / PLUGIN_COMMIT
 FENCE = re.compile(r"```mermaid\n(.*?)```", re.S)
 
-# Prose in the doc is not regenerated. Only the mermaid fence is compared.
 MODELS = (
     (
         "dose-reminder",
