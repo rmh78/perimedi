@@ -1,26 +1,28 @@
 # Dose reminder
 
-This picture is one dose at one time, and a second saved log is purple. Red arrows are the shortest way each broken rule fails. Pink is the shortest way to a taken dose with no reminder and a blank widget. Where that way shares an arrow with a broken rule, the arrow stays red.
+This picture is the shortest quiet taken dose and the shortest way each broken rule fails. The thick pink line is that quiet dose. The thick red lines are the broken rules. A line that is both stays red. The full picture is linked under this one.
 
 ![One dose reminder](dose-reminder.svg)
 
+[The full picture](dose-reminder-full.svg)
+
 ## What TLC checked
 
-TakenNotPending failed in 3 steps. A taken dose can still have a reminder waiting.
+TakenNotPending failed in 3 steps. A taken dose can still have a reminder waiting. Filed as #127.
 
-WritersAgree failed in 3 steps. One time can have two logs. Those two logs can disagree after 5 steps.
+WritersAgree failed in 3 steps. One time can have two logs. Those two logs can disagree after 5 steps. Filed as #132.
 
-WidgetHidesTaken failed in 3 steps. A taken dose can still show on the widget.
+WidgetHidesTaken failed in 3 steps. A taken dose can still show on the widget. Filed as #128.
 
 NoDeadlock holds.
 
 TLC found 338 distinct states when the checks are off. A separate reminder read reached 1016 distinct states, and a read that only remembers that it looked still reached 676. Both are past the 500-state picture budget, so that read and the reminder write are one step.
 
-The model leaves out a skipped dose, a second time slot, snooze, and a follow-up reminder.
+The model leaves out a skipped dose, a second time slot, snooze, a follow-up reminder, and reschedule's stale pending read (#127, second path).
 
 The chart hides Done, a fire while the dose is not taken, and a second take that starts already taken.
 
-`python3 ios/scripts/check-statecharts.py` checks this fence and this picture.
+`python3 ios/scripts/check-statecharts.py` checks this fence, this picture, and the full picture.
 
 ```mermaid
 ---

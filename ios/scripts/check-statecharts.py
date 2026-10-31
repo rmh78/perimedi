@@ -41,6 +41,20 @@ PELE_VERSION = "1.9.0"
 HAPPY_FILL = "#ffcbe6"
 HAPPY_STROKE = "#c45c8a"
 BUG_STROKE = "#e72e3b"
+THICK = "8"
+FADE = "0.22"
+FOCUS_MAX = 1800
+PAGE_WIDTH = 880
+PAGE_STROKE = 5
+FULL_LINK = "[The full picture](dose-reminder-full.svg)"
+PREVENTED_LABEL = "A saved day is gone"
+SYMPTOM_HAPPY = [
+    (None, "No custom symptoms"),
+    ("you add a symptom", "One custom symptom"),
+    ("the other phone adds a symptom", "Two phones added the same name"),
+    ("the phone saves the remembered pairs", "The pairs are saved and the store save is still open"),
+    ("the store save lands", "One symptom remains, and the pair is remembered"),
+]
 CLASS_DEFS = (
     f"  classDef happy fill:{HAPPY_FILL},stroke:{HAPPY_STROKE}",
     f"  classDef bugPath stroke:{BUG_STROKE},stroke-width:2.5px",
@@ -58,8 +72,10 @@ STYLE = """
 .pele .breaks text { fill:#cd2834 !important; }
 .pele .mayBreak rect { fill:#fff3e6 !important; stroke:#e8730c !important; stroke-width:2.5px !important; }
 .pele .mayBreak text { fill:#b85a06 !important; }
-.pele .happy rect { fill:#ffcbe6 !important; stroke:#c45c8a !important; }
-.pele .bugPath rect { stroke:#e72e3b !important; stroke-width:2.5px !important; }
+.pele .happy rect { fill:#ffcbe6 !important; stroke:#c45c8a !important; stroke-width:4px !important; }
+.pele .bugPath rect { stroke:#e72e3b !important; stroke-width:4px !important; }
+.pele .prevented rect { fill:#e4e7ea !important; stroke:#5c6b73 !important; stroke-width:2.5px !important; }
+.pele .prevented text { fill:#1c1c1c !important; }
 @media (prefers-color-scheme: dark) {
   .pele { --pele-bg:#1f1f1f; --pele-fg:#f5f5f5; --pele-muted:#acacac; --pele-line:#939393; --pele-surface:#121212; --pele-surface-alt:#2c2c2c; --pele-border:#4e4e4e; }
   .pele .blue rect { fill:#1b3857; }
@@ -73,8 +89,10 @@ STYLE = """
   .pele .breaks text { fill:#ff6463 !important; }
   .pele .mayBreak rect { fill:#2e2619 !important; stroke:#d0700f !important; }
   .pele .mayBreak text { fill:#ffa257 !important; }
-  .pele .happy rect { fill:#57233e !important; stroke:#c45c8a !important; }
-  .pele .bugPath rect { stroke:#e72e3b !important; }
+  .pele .happy rect { fill:#57233e !important; stroke:#c45c8a !important; stroke-width:4px !important; }
+  .pele .bugPath rect { stroke:#e72e3b !important; stroke-width:4px !important; }
+  .pele .prevented rect { fill:#2a2e31 !important; stroke:#9aa7af !important; stroke-width:2.5px !important; }
+  .pele .prevented text { fill:#f5f5f5 !important; }
 }
 """
 
@@ -390,11 +408,11 @@ def relations(mermaid: str) -> list[tuple[str, str, str]]:
     return found
 
 
-def edge_indexes(
+def path_edges(
     rels: list[tuple[str, str, str]],
     path: list[tuple[str | None, str]],
     ids: dict[str, str],
-) -> list[int]:
+) -> list[tuple[int, str | None]]:
     chosen = []
     nodes = []
     for step, state in path:
@@ -409,8 +427,79 @@ def edge_indexes(
         ]
         if not matches:
             raise RuntimeError(f"chart has no arrow for {step} from {source} to {target}")
-        chosen.extend(matches)
+        chosen.append((matches[0], step))
     return chosen
+
+
+def wrapped(label: str) -> str:
+    parts = [part.strip() for part in label.split(", ") if part.strip()]
+    return "<br/>".join(parts) if parts else label
+
+
+def svg_width(svg: str) -> int:
+    match = re.search(r'<svg\b[^>]*\bwidth="(\d+)"', svg)
+    if match is None:
+        raise RuntimeError("the picture has no width")
+    return int(match.group(1))
+
+
+def stroke_px(width: int) -> str:
+    return str(max(int(THICK), round(PAGE_STROKE * width / PAGE_WIDTH)))
+
+
+def mark_prevented(mermaid: str) -> tuple[str, str]:
+    ids = state_index(mermaid)
+    sid = ids.get(PREVENTED_LABEL)
+    if sid is None:
+        raise RuntimeError(f"chart has no state for {PREVENTED_LABEL}")
+    lines = []
+    for line in mermaid.splitlines():
+        stripped = line.strip()
+        if stripped == f"class {sid} pink":
+            lines.append(f"  class {sid} prevented")
+            continue
+        if stripped == "class lg0 pink":
+            lines.append("  class lg0 prevented")
+            continue
+        if stripped == "lg0: Lost":
+            lines.append("  lg0: Prevented")
+            continue
+        lines.append(line)
+    extra = "  classDef prevented fill:#e4e7ea,stroke:#5c6b73,stroke-width:2.5px"
+    if extra not in lines:
+        lines.append(extra)
+    return "\n".join(lines) + "\n", sid
+
+
+def focus_chart(
+    mermaid: str,
+    rels: list[tuple[str, str, str]],
+    edges: list[tuple[int, str | None]],
+    happy_ids: list[str],
+    bug_ids: list[str],
+) -> str:
+    inverse = {sid: label for label, sid in state_index(mermaid).items()}
+    lines = ["stateDiagram-v2"]
+    seen: list[str] = []
+    happy = set(happy_ids)
+    for index, step in edges:
+        left, right, title = rels[index]
+        for nid in (left, right):
+            if nid == "[*]" or nid in seen:
+                continue
+            seen.append(nid)
+            lines.append(f"  {nid}: {wrapped(inverse[nid])}")
+        src = "[*]" if left == "[*]" else left
+        lines.append(f"  {src} --> {right}: {step or title}")
+    lines.extend(CLASS_DEFS)
+    for sid in happy_ids:
+        if sid in seen:
+            lines.append(f"  class {sid} happy")
+    for sid in bug_ids:
+        if sid in seen and sid not in happy:
+            lines.append(f"  class {sid} bugPath")
+            lines.append(f"  class {sid} breaks")
+    return "\n".join(lines) + "\n"
 
 
 def finish_mermaid(text: str, happy_ids: list[str]) -> str:
@@ -479,16 +568,16 @@ def render_svg(module: Path, mermaid: str) -> str:
     return svg
 
 
-def color_edges(svg: str, bug: set[int], happy: set[int]) -> str:
+def color_edges(svg: str, bug: set[int], happy: set[int], thick: str) -> str:
     pattern = re.compile(
         r'(<g class="pele-edge pele-transition" data-id="edge(\d+)">)(.*?)(</g>)',
         re.S,
     )
 
-    def paint_marker(body: str, color: str) -> str:
+    def paint_marker(body: str, color: str, opacity: str) -> str:
         updated, count = re.subn(
             r'(<path\b[^>]*class="pele-marker"[^>]*?)fill="[^"]*"',
-            rf'\1fill="{color}"',
+            rf'\1fill="{color}" fill-opacity="{opacity}"',
             body,
             count=1,
             flags=re.S,
@@ -497,7 +586,7 @@ def color_edges(svg: str, bug: set[int], happy: set[int]) -> str:
             return updated
         updated, _count = re.subn(
             r'(<path\b[^>]*?)fill="[^"]*"([^>]*class="pele-marker")',
-            rf'\1fill="{color}"\2',
+            rf'\1fill="{color}" fill-opacity="{opacity}"\2',
             body,
             count=1,
             flags=re.S,
@@ -507,37 +596,113 @@ def color_edges(svg: str, bug: set[int], happy: set[int]) -> str:
     def paint(match: re.Match[str]) -> str:
         index = int(match.group(2))
         if index in bug:
-            color = BUG_STROKE
+            color, width, opacity = BUG_STROKE, thick, "1"
         elif index in happy:
-            color = HAPPY_STROKE
+            color, width, opacity = HAPPY_STROKE, thick, "1"
         else:
-            return match.group(0)
-        body = re.sub(r"<path\b", f'<path stroke="{color}"', match.group(3), count=1)
-        return match.group(1) + paint_marker(body, color) + match.group(4)
+            color, width, opacity = "#b5b5b5", "2", FADE
+        body = re.sub(
+            r"<path\b",
+            f'<path stroke="{color}" stroke-width="{width}" stroke-opacity="{opacity}"',
+            match.group(3),
+            count=1,
+        )
+        return match.group(1) + paint_marker(body, color, opacity) + match.group(4)
 
     return pattern.sub(paint, svg)
 
 
-def picture(name: str, spec: Path, view: Path, mermaid: str, report: str, java: str, jar_path: Path) -> tuple[str, str]:
-    ids = state_index(mermaid)
-    rels = relations(mermaid)
-    bug: set[int] = set()
-    for path in bug_paths(report):
-        bug.update(edge_indexes(rels, path, ids))
-    happy_ids: list[str] = []
-    happy: set[int] = set()
-    if name == "dose-reminder":
-        labeled = view_labels(view, happy_trace(java, jar_path, spec))
-        happy_path = [(item["step"], item["text"]) for item in labeled]
-        happy_ids = [ids[item["text"]] for item in labeled]
-        happy.update(edge_indexes(rels, happy_path, ids))
-    drawn = finish_mermaid(mermaid, happy_ids)
-    rels = relations(drawn)
-    svg = render_svg(ensure_pele(), drawn)
+def fade_nodes(svg: str, keep: set[str]) -> str:
+    pattern = re.compile(r'(<g class="pele-node [^"]*" data-id="([^"]+)")')
+
+    def paint(match: re.Match[str]) -> str:
+        if match.group(2) in keep:
+            return match.group(0)
+        return match.group(1) + ' opacity="0.28"'
+
+    return pattern.sub(paint, svg)
+
+
+def drawn_edges(svg: str, rels: list[tuple[str, str, str]]) -> None:
     edge_ids = {int(item) for item in re.findall(r'data-id="edge(\d+)"', svg)}
     if edge_ids != set(range(len(rels))):
         raise RuntimeError(f"Pele drew {sorted(edge_ids)} and the mermaid has {len(rels)} arrows")
-    return drawn, color_edges(svg, bug, happy)
+
+
+def picture(
+    name: str,
+    spec: Path,
+    view: Path,
+    mermaid: str,
+    report: str,
+    java: str,
+    jar_path: Path,
+) -> tuple[str, str, str | None]:
+    prevented: str | None = None
+    if name == "symptom-sync":
+        mermaid, prevented = mark_prevented(mermaid)
+    ids = state_index(mermaid)
+    rels = relations(mermaid)
+    bug: set[int] = set()
+    bug_ids: list[str] = []
+    kept: list[tuple[int, str | None]] = []
+    seen: set[int] = set()
+    for path in bug_paths(report):
+        for index, step in path_edges(rels, path, ids):
+            bug.add(index)
+            if index not in seen:
+                seen.add(index)
+                kept.append((index, step))
+        for _step, state in path:
+            sid = ids[state]
+            if sid not in bug_ids:
+                bug_ids.append(sid)
+    if name == "dose-reminder":
+        labeled = view_labels(view, happy_trace(java, jar_path, spec))
+        happy_path = [(item["step"], item["text"]) for item in labeled]
+    else:
+        happy_path = list(SYMPTOM_HAPPY)
+    happy_ids: list[str] = []
+    happy: set[int] = set()
+    for _step, state in happy_path:
+        sid = ids[state]
+        if sid not in happy_ids:
+            happy_ids.append(sid)
+    for index, step in path_edges(rels, happy_path, ids):
+        happy.add(index)
+        if index not in seen:
+            seen.add(index)
+            kept.append((index, step))
+    drawn = finish_mermaid(mermaid, happy_ids)
+    rels = relations(drawn)
+    module = ensure_pele()
+    full = render_svg(module, drawn)
+    drawn_edges(full, rels)
+    keep = set(happy_ids) | set(bug_ids)
+    if prevented:
+        keep.add(prevented)
+    embedded_thick = THICK if name == "dose-reminder" else stroke_px(svg_width(full))
+    full = fade_nodes(color_edges(full, bug, happy, embedded_thick), keep)
+    focus = None
+    if name == "dose-reminder":
+        small = focus_chart(drawn, rels, kept, happy_ids, bug_ids)
+        small_rels = relations(small)
+        focus = render_svg(module, small)
+        drawn_edges(focus, small_rels)
+        width = svg_width(focus)
+        if width > FOCUS_MAX:
+            raise RuntimeError(f"the short dose picture is {width}px wide")
+        focus_bug: set[int] = set()
+        focus_happy: set[int] = set()
+        for pos, (index, _step) in enumerate(kept):
+            if index in bug:
+                focus_bug.add(pos)
+            elif index in happy:
+                focus_happy.add(pos)
+        focus = color_edges(focus, focus_bug, focus_happy, stroke_px(width))
+        if BUG_STROKE not in focus or HAPPY_STROKE not in focus or 'stroke-width="' + stroke_px(width) not in focus:
+            raise RuntimeError("the short dose picture does not draw the thick paths")
+    return drawn, full, focus
 
 
 SVG_BLOCK = re.compile(r"<svg\b.*?</svg>", re.S)
@@ -548,21 +713,36 @@ def image_link(doc: Path) -> str:
     return f"![{alt}]({doc.name.replace('.md', '.svg')})"
 
 
-def page_matches(doc: Path, drawn: str, svg: str) -> bool:
+def full_picture(doc: Path) -> Path:
+    return doc.with_name(f"{doc.stem}-full.svg")
+
+
+def page_matches(doc: Path, drawn: str, full_svg: str, focus_svg: str | None) -> bool:
     if not doc.is_file():
         return False
     page = doc.read_text(encoding="utf-8")
+    embedded = focus_svg if focus_svg is not None else full_svg
     side = doc.with_suffix(".svg")
-    return (
+    ok = (
         fence(page) == norm(drawn)
         and side.is_file()
-        and side.read_text(encoding="utf-8") == svg
+        and side.read_text(encoding="utf-8") == embedded
         and image_link(doc) in page
         and "<svg" not in page
     )
+    if focus_svg is None:
+        return ok
+    full = full_picture(doc)
+    return (
+        ok
+        and full.is_file()
+        and full.read_text(encoding="utf-8") == full_svg
+        and FULL_LINK in page
+        and svg_width(focus_svg) <= FOCUS_MAX
+    )
 
 
-def write_page(doc: Path, drawn: str, svg: str) -> None:
+def write_page(doc: Path, drawn: str, full_svg: str, focus_svg: str | None) -> None:
     page = doc.read_text(encoding="utf-8") if doc.is_file() else ""
     fenced = "```mermaid\n" + norm(drawn) + "```"
     if FENCE.search(page):
@@ -573,10 +753,14 @@ def write_page(doc: Path, drawn: str, svg: str) -> None:
     link = image_link(doc)
     if link not in page:
         page = page.replace(fenced, link + "\n\n" + fenced, 1)
+    if focus_svg is not None and FULL_LINK not in page:
+        page = page.replace(link, link + "\n\n" + FULL_LINK, 1)
     if not page.endswith("\n"):
         page += "\n"
     doc.write_text(page, encoding="utf-8")
-    doc.with_suffix(".svg").write_text(svg, encoding="utf-8")
+    doc.with_suffix(".svg").write_text(focus_svg if focus_svg is not None else full_svg, encoding="utf-8")
+    if focus_svg is not None:
+        full_picture(doc).write_text(full_svg, encoding="utf-8")
 
 
 def main() -> int:
@@ -606,7 +790,7 @@ def main() -> int:
                 failed = True
                 continue
             try:
-                drawn, svg = picture(
+                drawn, full_svg, focus_svg = picture(
                     name,
                     spec,
                     view,
@@ -618,12 +802,12 @@ def main() -> int:
             except RuntimeError as err:
                 print(f"{name}: {err}", file=sys.stderr)
                 return 2
-            if page_matches(doc, drawn, svg):
+            if page_matches(doc, drawn, full_svg, focus_svg):
                 print(f"ok: {name} fence and picture match")
                 continue
             if write:
-                write_page(doc, drawn, svg)
-                if page_matches(doc, drawn, svg):
+                write_page(doc, drawn, full_svg, focus_svg)
+                if page_matches(doc, drawn, full_svg, focus_svg):
                     print(f"wrote: {name}")
                     continue
             print(f"{name}: mermaid fence or picture does not match", file=sys.stderr)

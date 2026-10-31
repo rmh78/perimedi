@@ -1,8 +1,10 @@
 # Custom symptom sync
 
-This picture uses one day, the name fog, and logs a mark only on the first symptom, so the sync fits on one page. The full check uses two days, the names fog and ache, and logs a mark on either symptom. The picture keeps both symptom ids, because the start state names the second one.
+This picture uses one day, the name fog, and logs a mark only on the first symptom, so the sync fits on one page. The full check uses two days, the names fog and ache, and logs a mark on either symptom. The picture keeps both symptom ids, because the start state names the second one. The thick pink line runs from no custom symptoms through adding one, the other phone adding the same name, and saving the pair, to one symptom remaining.
 
 ![Custom symptom sync](symptom-sync.svg)
+
+TLC reached "A saved day is gone", and every rule still holds.
 
 ## What TLC checked
 
@@ -36,11 +38,11 @@ title: "Custom symptom sync on one phone"
 ---
 stateDiagram-v2
   state "Legend" as legend {
-    lg0: Lost
+  lg0: Prevented
     lg1: Saving
     lg2: Settled
   }
-  class lg0 pink
+  class lg0 prevented
   class lg1 yellow
   class lg2 teal
   s0: No custom symptoms
@@ -85,7 +87,13 @@ stateDiagram-v2
   class s3 yellow
   class s4 yellow
   class s5 teal
-  class s6 pink
+  class s6 prevented
+  classDef prevented fill:#e4e7ea,stroke:#5c6b73,stroke-width:2.5px
   classDef happy fill:#ffcbe6,stroke:#c45c8a
   classDef bugPath stroke:#e72e3b,stroke-width:2.5px
+  class s0 happy
+  class s1 happy
+  class s5 happy
+  class s3 happy
+  class s2 happy
 ```
