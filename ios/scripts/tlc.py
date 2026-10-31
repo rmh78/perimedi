@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Run a pinned TLC jar. Callers own the sentences and the warning title."""
 
 from __future__ import annotations
 
@@ -63,16 +62,40 @@ def jar() -> Path:
     return JAR_CACHE
 
 
-def write_cfg(path: Path, names: list[str]) -> None:
-    lines = ["SPECIFICATION Spec", "INVARIANTS", *(f"  {name}" for name in names), ""]
+def constant_lines(text: str) -> list[str]:
+    lines: list[str] = []
+    in_section = False
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped in {"CONSTANT", "CONSTANTS"}:
+            in_section = True
+            lines.append(stripped)
+            continue
+        if not in_section:
+            continue
+        if not stripped or (stripped.isupper() and "=" not in stripped and stripped.replace("_", "").isalpha()):
+            break
+        lines.append(line.rstrip())
+    return lines
+
+
+def write_cfg(path: Path, names: list[str], constants: list[str] | None = None) -> None:
+    lines = [*(constants or []), "SPECIFICATION Spec", "INVARIANTS", *(f"  {name}" for name in names), ""]
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
-def run_tlc(java: str, jar_path: Path, spec: Path, names: list[str], work: Path) -> tuple[int, str]:
+def run_tlc(
+    java: str,
+    jar_path: Path,
+    spec: Path,
+    names: list[str],
+    work: Path,
+    constants: list[str] | None = None,
+) -> tuple[int, str]:
     # TLC joins -config with the spec directory. An absolute config outside that
     # directory is reported missing. Keep the generated config next to a copy of the spec.
     shutil.copy(spec, work / spec.name)
-    write_cfg(work / "check.cfg", names)
+    write_cfg(work / "check.cfg", names, constants)
     proc = subprocess.run(
         [
             java,
@@ -116,7 +139,9 @@ def check(
     if not spec.is_file() or not cfg.is_file():
         print(f"missing the {model_name} model", file=sys.stderr)
         return 2
-    names = invariants(cfg.read_text(encoding="utf-8"))
+    cfg_text = cfg.read_text(encoding="utf-8")
+    names = invariants(cfg_text)
+    constants = constant_lines(cfg_text)
     if not names:
         print(f"no invariants in {cfg.relative_to(ROOT)}", file=sys.stderr)
         return 2
@@ -133,7 +158,7 @@ def check(
         work = Path(raw)
         while remaining:
             try:
-                code, output = run_tlc(java, tool, spec, remaining, work)
+                code, output = run_tlc(java, tool, spec, remaining, work, constants)
             except subprocess.TimeoutExpired:
                 print("TLC timed out", file=sys.stderr)
                 return 2

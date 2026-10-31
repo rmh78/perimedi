@@ -1,13 +1,11 @@
 ---- MODULE SymptomSync ----
-\* Custom-symptom sync, one code step at a time.
 \* a is the earlier sort and the lower id. A same-name fold keeps a.
 \* A record id is either the unique date#id writers store, or the empty default.
 \* Left out: prefer's tie-break, chains longer than one hop, CloudKit's transport.
 
 EXTENDS Integers, TLC
 
-Ids == {"a", "b"}
-Days == {1, 2}
+CONSTANTS Ids, Days, Names, LogIds
 
 VARIABLES present, nm, has, empty, memory, shown, phase, view, combined, owned, refreshed
 
@@ -26,14 +24,11 @@ Target(id, mem, pres) ==
   ELSE IF id = "a" /\ mem = "ab" /\ Applies(mem, pres) THEN "b"
   ELSE id
 
-\* Rows that still exist and land on this symptom for this day.
 Feeds(id, day, mem, pres) ==
   \/ (has[id][day] /\ Target(id, mem, pres) = id)
   \/ (id = "a" /\ has["b"][day] /\ Target("b", mem, pres) = "a")
   \/ (id = "b" /\ has["a"][day] /\ Target("a", mem, pres) = "b")
 
-\* A mapped score is shown when its target row is in the directory.
-\* Orphans stay in `has` and stay out of `shown`. map returns nil for them.
 ShownAt(id, day, mem, pres) ==
   Feeds(id, day, mem, pres) /\ pres[id]
 
@@ -65,7 +60,6 @@ ExtraUnique(i, day, mem) ==
 
 Deleted(i, day, mem) == ExtraUnique(i, day, mem)
 
-\* A retargeted row keeps the winning symptom id. The loser id no longer has that row.
 NextHas(mem) ==
   [i \in Ids |-> [d \in Days |->
     \/ (has[i][d] /\ ~Deleted(i, d, mem) /\ Target(i, mem, NextPresent) = i)
@@ -211,12 +205,12 @@ Wipe ==
   /\ UNCHANGED <<nm, memory, phase, combined>>
 
 Next ==
-  \/ \E id \in Ids, name \in {"fog", "ache"} : Add(id, name)
-  \/ \E id \in Ids, name \in {"fog", "ache"} : ArriveCustom(id, name)
-  \/ \E id \in Ids, name \in {"fog", "ache"} : Rename(id, name)
+  \/ \E id \in Ids, name \in Names : Add(id, name)
+  \/ \E id \in Ids, name \in Names : ArriveCustom(id, name)
+  \/ \E id \in Ids, name \in Names : Rename(id, name)
   \/ \E id \in Ids : Delete(id)
-  \/ \E id \in Ids, day \in Days : Log(id, day)
-  \/ \E id \in Ids, day \in Days : ArriveEmpty(id, day)
+  \/ \E id \in LogIds, day \in Days : Log(id, day)
+  \/ \E id \in LogIds, day \in Days : ArriveEmpty(id, day)
   \/ SaveKey
   \/ Commit
   \/ Rollback
@@ -226,52 +220,42 @@ Next ==
 
 Spec == Init /\ [][Next]_vars
 
-\* A later mark for a removed copy shows on the symptom that remains.
 LateScoreKept ==
   (view = "live" /\ refreshed) =>
     \A d \in Days :
       (memory = "ba" /\ present["a"] /\ ~present["b"] /\ has["b"][d]) =>
         shown["a"][d]
 
-\* This phone never combined the pair, so the late mark stays hidden.
 NeverCombinedHides ==
   (view = "live" /\ refreshed /\ memory = "none" /\ ~combined) =>
     \A d \in Days :
       (~present["b"] /\ has["b"][d] /\ ~has["a"][d]) =>
         ~shown["a"][d] /\ ~shown["b"][d]
 
-\* The kept symptom is gone, so the mark stays hidden.
 WinnerGoneHides ==
   (view = "live" /\ refreshed /\ ~present["a"] /\ ~present["b"]) =>
     \A i \in Ids, d \in Days : ~shown[i][d]
 
-\* A mark whose record id is the unique date#id is still on screen after a commit,
-\* on its own symptom or on the one this phone kept. A user delete may remove it.
 UniqueMarkRemains ==
   (view = "live" /\ refreshed) =>
     \A i \in Ids, d \in Days :
       (has[i][d] /\ ~empty[i][d] /\ (present[Target(i, memory, present)] \/ present[i])) =>
         shown[Target(i, memory, present)][d] \/ shown[i][d]
 
-\* An empty record id used as the keeper does not remove a mark on another day.
-\* `owned` survives Commit. A user delete, a wipe, and an import clear it.
 EmptyKeeperSafe ==
   (view = "live" /\ refreshed) =>
     \A d \in Days :
       (\E i \in Ids : owned[i][d] /\ (present[i] \/ Target(i, memory, present) # i)) =>
         \E j \in Ids : shown[j][d]
 
-\* The backup combined two names, so this phone stores the pair.
 ImportRemembers ==
   combined => memory = "ba"
 
-\* A pair saved before the store commits does not hide a score whose symptom is still listed.
 ScoreOnListedSymptom ==
   (view = "live" /\ refreshed) =>
     \A i \in Ids, d \in Days :
       (has[i][d] /\ ~empty[i][d] /\ present[i]) => shown[i][d]
 
-\* A mark the file left out is not brought back by the key that wipe and import keep.
 OrphanStaysOut ==
   (view = "live" /\ refreshed /\ \A i \in Ids, d \in Days : ~has[i][d]) =>
     \A i \in Ids, d \in Days : ~shown[i][d]
