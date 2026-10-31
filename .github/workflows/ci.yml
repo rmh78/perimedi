@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       force_red:
-        description: Fail ids on purpose and skip openspec, domain, ui, and symptom-sync
+        description: Fail ids on purpose and skip openspec, domain, ui, symptom-sync, and dose-reminder
         type: boolean
         default: false
 
@@ -22,6 +22,7 @@ jobs:
   ids:
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Forced red drill
         if: github.event_name == 'workflow_dispatch' && (github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')
@@ -91,6 +92,27 @@ jobs:
           python3 ios/scripts/check-symptom-model.py --base "origin/$BASE_REF"
       - name: Symptom sync model lint tests
         run: python3 ios/scripts/test_check_symptom_model.py
+      - name: Dose reminder model matches covered Swift
+        env:
+          BASE_REF: ${{ github.base_ref || 'main' }}
+        run: |
+          git fetch --no-tags origin "$BASE_REF"
+          python3 ios/scripts/check-dose-reminder-model.py --base "origin/$BASE_REF"
+      - name: Dose reminder model lint tests
+        run: python3 ios/scripts/test_check_dose_reminder_model.py
+      - name: Covered-symbol checkers stay twins
+        run: python3 ios/scripts/check-model-twins.py
+      - name: Twin checker unit tests
+        run: python3 ios/scripts/test_check_model_twins.py
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Statecharts match the models
+        run: python3 ios/scripts/check-statecharts.py
 
   openspec:
     if: github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && !(github.event_name == 'workflow_dispatch' && (github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')))
@@ -200,6 +222,20 @@ jobs:
           java-version: "21"
       - name: Custom symptom sync model
         run: python3 ios/scripts/check-symptom-sync.py --warn
+
+  dose-reminder:
+    if: github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && !(github.event_name == 'workflow_dispatch' && (github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Dose reminder model
+        run: python3 ios/scripts/check-dose-reminder.py --warn
 
   main-status:
     needs: [ids, openspec, domain, ui]

@@ -18,4 +18,4 @@ Repeated review findings from merged pull requests. `AGENTS.md` links here. A gu
 | A spec or a feature note still describes the old control. | #66, #102 | not yet. #105 does not check the sentence next to a file name, because that check fails the manual build example in Agents.md. |
 | A simulator failure outside the diff costs another review round. | #66, #114 | not yet |
 | A covered symbol in the symptom-sync skill changes and the TLA model stays on the old commit. | #77, #88, #90 | [`check-symptom-model.py`](../scripts/check-symptom-model.py). The symbols and the sync commit live in `.grok/skills/check-symptom-sync/SKILL.md`. A rename uses `git diff --no-renames`. |
-| A new job copies the force_red guard and the drill test only counts copies. | #122 | `test_main_status_permissions_and_needs` names `openspec`, `domain`, `ui`, and `symptom-sync`. |
+| A new job copies the force_red guard and the drill test only counts copies. | #122 | `test_main_status_permissions_and_needs` names `openspec`, `domain`, `ui`, `symptom-sync`, `dose-reminder`, and `statecharts`. |

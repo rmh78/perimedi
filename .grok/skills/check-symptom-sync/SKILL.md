@@ -25,7 +25,7 @@ From the repo root:
 python3 ios/scripts/check-symptom-sync.py
 ```
 
-The command exits 1 while `EmptyKeeperSafe` or `ImportRemembers` fails. CI runs the same command with `--warn` and does not fail the workflow. Do not add the command to `control-perimedi verify`.
+The command exits 1 when an invariant fails. CI runs the same command with `--warn` and does not fail the workflow. Do not add the command to `control-perimedi verify`.
 
 The checker downloads TLC 1.7.4 on first use and needs `java` on PATH (Java 11 or later).
 
@@ -35,7 +35,7 @@ The checker downloads TLC 1.7.4 on first use and needs `java` on PATH (Java 11 o
 
 Do not weaken an invariant to make the command pass. Do not change product code from this skill unless the user asks. Read the TLC output with the pstack `/statechart` skill. It shows each broken rule as its shortest path.
 
-The committed chart at `ios/formal/symptom-sync/chart.mmd` shows an import of two names ending with the pair stored, and a commit that keeps a saved day. The model is larger than a full chart, so the picture leaves out the other steps.
+The model is past the chart budget. While every rule holds, `/statechart` writes no diagram. The note is `docs/statecharts/symptom-sync.md`.
 
 ## Covered code
 

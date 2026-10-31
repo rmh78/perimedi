@@ -24,10 +24,11 @@ ios/                 # Xcode app + PeriMediDomain package
   Tests/             # XCTest for domain
   docs/              # iCloud device-switch notes
   formal/symptom-sync/ # TLA+ model of custom-symptom sync
+  formal/dose-reminder/ # TLA+ model of one dose reminder
 openspec/            # product specs
 ```
 
-The chart is [`ios/formal/symptom-sync/chart.mmd`](ios/formal/symptom-sync/chart.mmd). The skill is [`.grok/skills/check-symptom-sync/SKILL.md`](.grok/skills/check-symptom-sync/SKILL.md).
+The symptom note is [`docs/statecharts/symptom-sync.md`](docs/statecharts/symptom-sync.md). The dose chart is [`docs/statecharts/dose-reminder.md`](docs/statecharts/dose-reminder.md). The skills are [`.grok/skills/check-symptom-sync/SKILL.md`](.grok/skills/check-symptom-sync/SKILL.md) and [`.grok/skills/check-dose-reminder/SKILL.md`](.grok/skills/check-dose-reminder/SKILL.md).
 
 Archived OpenSpec changes under `openspec/changes/archive/` may mention an old web companion; they are historical. Current product contract is `openspec/specs/` plus this file.
 
@@ -65,7 +66,7 @@ It sources `ios/env.sh`, checks feature-map IDs, checks feature layout, checks L
 
 It also runs `python3 ios/scripts/check-one-way-door.py --base origin/main`. That check warns and exits 0.
 
-CI runs on every pull request. CI also runs on main at 04:17 UTC, and when someone starts it with `gh workflow run ci.yml --ref main`. CI does not run on push. A new commit on a pull request cancels the previous ci run for that pull request. A run on main does not cancel a running main run. Every PR runs `ids` on Ubuntu (`python3 ios/scripts/check-feature-map.py`, `python3 ios/scripts/check-feature-layout.py`, `python3 ios/scripts/check-l10n-layout.py`, `python3 ios/scripts/check-domain-boundary.py`, `python3 docs/app-store/check-listing.py`, `python3 ios/scripts/check-ui-coverage.py --fail-uncovered`, `python3 ios/scripts/check-screen-catalog.py`, `python3 ios/scripts/check-one-way-door.py` (notice only, `continue-on-error`, does not fail `ids`), `python3 ios/scripts/check-agent-rails.py`, `python3 ios/scripts/check-ui-test-names.py`, `python3 ios/scripts/check-pr-attachments.py`, `python3 ios/scripts/check-review-repeats.py`, `python3 ios/scripts/test_check_review_repeats.py`, `python3 ios/scripts/test_check_one_way_door.py`, `python3 ios/scripts/test_check_agent_rails.py`, `python3 ios/scripts/check-symptom-model.py`, `python3 ios/scripts/test_check_symptom_model.py`, then `python3 .github/scripts/test_main_is_red.py`), `openspec` on Ubuntu (`python3 ios/scripts/check-openspec-sync.py`), `domain` on macOS 26 with Xcode 26.6 (`swift test --package-path ios`), and `ui` on the `xcode-27` image with Xcode 27.0 and iPhone 17e on iOS 27.0 (`.grok/skills/verify-perimedi/scripts/control-perimedi verify`). A green `ui` job is UI proof. The `symptom-sync` job runs `python3 ios/scripts/check-symptom-sync.py --warn` on Ubuntu with Temurin 21, on pull requests and on main. It is warn-only. It is not a Protect main check. `verify` does not run it. Protect main requires `ids`, `openspec`, `domain`, and `ui`. The live ruleset already includes openspec. `main-status` is not a required check. Do not add it to Protect main. GitHub turns scheduled workflows off after 60 days without activity in a public repository. Turn that schedule back on with `gh workflow enable ci.yml`. CI Manager watches the "main is red" issue with the `main-red` label. An unlabeled issue with the same title is left alone and the bot opens its own labeled one. A red main run opens or updates the labeled issue. A plain green main run closes it. If creating the label fails and the label is not already there, the new issue is opened without the label and later runs leave it alone. `gh workflow run ci.yml --ref main -f force_red=true` fails `ids` before checkout, skips `openspec`, `domain`, `ui`, and `symptom-sync`, and opens or updates the issue with the line `Drill: force_red`. That drill does not close the issue. The next plain `gh workflow run ci.yml --ref main` closes it when `ids`, `openspec`, `domain`, and `ui` are green. Start main proof runs one at a time. A newer waiting run cancels an older waiting run. A scheduled run can start hours after the cron time. Coverage stays inside `ids`; OpenSpec sync is the `openspec` job. On GitHub, `verify` skips the Python rails and domain tests (`ids` / `openspec` / `domain` already ran them). A failed `ui` job uploads `ios/DerivedData/PeriMedi.xcresult`.
+CI runs on every pull request. CI also runs on main at 04:17 UTC, and when someone starts it with `gh workflow run ci.yml --ref main`. CI does not run on push. A new commit on a pull request cancels the previous ci run for that pull request. A run on main does not cancel a running main run. Every PR runs `ids` on Ubuntu (`python3 ios/scripts/check-feature-map.py`, `python3 ios/scripts/check-feature-layout.py`, `python3 ios/scripts/check-l10n-layout.py`, `python3 ios/scripts/check-domain-boundary.py`, `python3 docs/app-store/check-listing.py`, `python3 ios/scripts/check-ui-coverage.py --fail-uncovered`, `python3 ios/scripts/check-screen-catalog.py`, `python3 ios/scripts/check-one-way-door.py` (notice only, `continue-on-error`, does not fail `ids`), `python3 ios/scripts/check-agent-rails.py`, `python3 ios/scripts/check-ui-test-names.py`, `python3 ios/scripts/check-pr-attachments.py`, `python3 ios/scripts/check-review-repeats.py`, `python3 ios/scripts/test_check_review_repeats.py`, `python3 ios/scripts/test_check_one_way_door.py`, `python3 ios/scripts/test_check_agent_rails.py`, `python3 ios/scripts/check-symptom-model.py`, `python3 ios/scripts/test_check_symptom_model.py`, `python3 ios/scripts/check-dose-reminder-model.py`, `python3 ios/scripts/test_check_dose_reminder_model.py`, `python3 ios/scripts/check-model-twins.py`, `python3 ios/scripts/test_check_model_twins.py`, `python3 ios/scripts/check-statecharts.py` (Java 21 and Node 24), then `python3 .github/scripts/test_main_is_red.py`), `openspec` on Ubuntu (`python3 ios/scripts/check-openspec-sync.py`), `domain` on macOS 26 with Xcode 26.6 (`swift test --package-path ios`), and `ui` on the `xcode-27` image with Xcode 27.0 and iPhone 17e on iOS 27.0 (`.grok/skills/verify-perimedi/scripts/control-perimedi verify`). A green `ui` job is UI proof. The `symptom-sync` job runs `python3 ios/scripts/check-symptom-sync.py --warn` on Ubuntu with Temurin 21, on pull requests and on main. It is warn-only. It is not a Protect main check. `verify` does not run it. The `dose-reminder` job runs `python3 ios/scripts/check-dose-reminder.py --warn` on Ubuntu with Temurin 21, on pull requests and on main. It is warn-only. It is not a Protect main check. `verify` does not run it. Protect main requires `ids`, `openspec`, `domain`, and `ui`. The live ruleset already includes openspec. `main-status` is not a required check. Do not add it to Protect main. GitHub turns scheduled workflows off after 60 days without activity in a public repository. Turn that schedule back on with `gh workflow enable ci.yml`. CI Manager watches the "main is red" issue with the `main-red` label. An unlabeled issue with the same title is left alone and the bot opens its own labeled one. A red main run opens or updates the labeled issue. A plain green main run closes it. If creating the label fails and the label is not already there, the new issue is opened without the label and later runs leave it alone. `gh workflow run ci.yml --ref main -f force_red=true` fails `ids` before checkout, skips `openspec`, `domain`, `ui`, `symptom-sync`, and `dose-reminder`, and opens or updates the issue with the line `Drill: force_red`. That drill does not close the issue. The next plain `gh workflow run ci.yml --ref main` closes it when `ids`, `openspec`, `domain`, and `ui` are green. Start main proof runs one at a time. A newer waiting run cancels an older waiting run. A scheduled run can start hours after the cron time. Coverage stays inside `ids`; OpenSpec sync is the `openspec` job. On GitHub, `verify` skips the Python rails and domain tests (`ids` / `openspec` / `domain` already ran them). A failed `ui` job uploads `ios/DerivedData/PeriMedi.xcresult`.
 
 Pieces, if you need one step:
 
@@ -127,7 +128,7 @@ python3 ios/scripts/test_check_review_repeats.py
 # One-way door diff. Warns only.
 python3 ios/scripts/check-one-way-door.py --base origin/main
 
-# Custom-symptom sync model. Chart ios/formal/symptom-sync/chart.mmd. Skill .grok/skills/check-symptom-sync/SKILL.md.
+# Custom-symptom sync model. Note docs/statecharts/symptom-sync.md. Skill .grok/skills/check-symptom-sync/SKILL.md.
 # Exits 1 when an invariant fails. CI passes --warn. verify does not run it.
 python3 ios/scripts/check-symptom-sync.py
 
@@ -136,6 +137,25 @@ python3 ios/scripts/check-symptom-model.py --base origin/main
 
 # Symptom-sync model lint tests. ids runs this. verify does not.
 python3 ios/scripts/test_check_symptom_model.py
+
+# Dose reminder model. Chart docs/statecharts/dose-reminder.md. Skill .grok/skills/check-dose-reminder/SKILL.md.
+# The jar pin lives in ios/scripts/tlc.py. Exits 1 when an invariant fails. CI passes --warn. verify does not run it.
+python3 ios/scripts/check-dose-reminder.py
+
+# Covered symbols vs that model. Fails CI. verify does not run it.
+python3 ios/scripts/check-dose-reminder-model.py --base origin/main
+
+# Dose-reminder model lint tests. ids runs this. verify does not.
+python3 ios/scripts/test_check_dose_reminder_model.py
+
+# Covered-symbol checkers stay twins. ids runs this. verify does not.
+python3 ios/scripts/check-model-twins.py
+
+# Twin unit tests. ids runs this. verify does not.
+python3 ios/scripts/test_check_model_twins.py
+
+# Statechart fences and pictures. Fails CI. verify does not run it.
+python3 ios/scripts/check-statecharts.py
 
 # App Store listing limits. Run before any listing edit. Fails CI.
 python3 docs/app-store/check-listing.py
