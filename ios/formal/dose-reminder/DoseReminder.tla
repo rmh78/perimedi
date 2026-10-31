@@ -41,6 +41,18 @@ Enq(seq, op) ==
   LET appended == IF seq = <<>> \/ op # seq[Len(seq)] THEN Append(seq, op) ELSE seq
   IN IF Len(appended) > 2 THEN SubSeq(appended, Len(appended) - 1, Len(appended)) ELSE appended
 
+DropAdd(seq) == SelectSeq(seq, LAMBDA op : op # "A")
+
+Has(seq, op) == \E i \in 1..Len(seq) : seq[i] = op
+
+StaleOrLive(seen) ==
+  \/ seen = live
+  \/ seen = "none" /\ (live = "pending" \/ Has(q, "A"))
+
+ClearLive ==
+  /\ live' = "none"
+  /\ q' = DropAdd(q)
+
 \* Success writes whether the next log would still be listed. Failure leaves the file.
 PublishResult ==
   \/ suite' = (VisibleOf(rows') = "pending")
@@ -56,46 +68,52 @@ Init ==
 
 CommitPlan ==
   /\ LaneOpen
-  /\ q' = LET queued == IF live = "pending" THEN Enq(q, "R") ELSE q
-          IN IF Visible = "pending" THEN Enq(queued, "A") ELSE queued
+  /\ \E seen \in {"none", "pending"} :
+       /\ StaleOrLive(seen)
+       /\ IF Visible = "taken"
+          THEN q' = Enq(DropAdd(q), "R")
+          ELSE q' = LET cleared == IF seen = "pending" THEN Enq(q, "R") ELSE q
+                    IN Enq(cleared, "A")
   /\ UNCHANGED <<rows, held, live, suite, glass>>
 
 Apply ==
   /\ LaneOpen
   /\ Len(q) > 0
-  /\ live' = IF Head(q) = "A" THEN "pending" ELSE "none"
+  /\ live' = IF Head(q) = "A" /\ Visible = "pending" THEN "pending" ELSE "none"
   /\ q' = Tail(q)
   /\ UNCHANGED <<rows, held, suite, glass>>
 
 \* TLC prints the action that owns the body. One shared name would hide the other tap.
 NoteTake ==
   /\ LaneOpen
-  /\ q' = Enq(q, "R")
-  /\ UNCHANGED <<held, live, glass>>
+  /\ UNCHANGED <<held, glass>>
   /\ IF Visible = "taken"
-     THEN rows' = rows
+     THEN /\ rows' = rows
+          /\ ClearLive
      ELSE /\ CanWrite(rows, AttachedId)
           /\ rows' = WriteLog(rows, AttachedId, "taken")
+          /\ ClearLive
   /\ PublishResult
 
 CardTake ==
   /\ LaneOpen
-  /\ q' = Enq(q, "R")
-  /\ UNCHANGED <<held, live, glass>>
+  /\ UNCHANGED <<held, glass>>
   /\ IF Visible = "taken"
-     THEN rows' = rows
+     THEN /\ rows' = rows
+          /\ ClearLive
      ELSE /\ CanWrite(rows, AttachedId)
           /\ rows' = WriteLog(rows, AttachedId, "taken")
+          /\ ClearLive
   /\ PublishResult
 
 WidgetTake ==
   /\ LaneOpen
-  /\ UNCHANGED <<held, live, glass>>
+  /\ UNCHANGED <<held, glass>>
   /\ IF Visible = "pending"
      THEN /\ CanWrite(rows, AttachedId)
           /\ rows' = WriteLog(rows, AttachedId, "taken")
-          /\ q' = Enq(q, "R")
-     ELSE UNCHANGED <<rows, q>>
+          /\ ClearLive
+     ELSE UNCHANGED <<rows, live, q>>
   /\ PublishResult
 
 FreshTapRead ==
@@ -108,7 +126,10 @@ FreshTapWrite ==
   ELSE /\ CanWrite(rows, IdOf(held))
        /\ rows' = WriteLog(rows, IdOf(held), NextOf(held))
        /\ held' = "idle"
-       /\ UNCHANGED <<live, q, glass>>
+       /\ UNCHANGED <<glass>>
+       /\ IF NextOf(held) = "taken"
+          THEN ClearLive
+          ELSE UNCHANGED <<live, q>>
        /\ PublishResult
 
 Publish ==
