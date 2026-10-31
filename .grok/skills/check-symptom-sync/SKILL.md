@@ -13,6 +13,8 @@ Run `python3 ios/scripts/check-symptom-sync.py` before you finish an edit to the
 
 If the edit changes what `synced` promises, update `ios/formal/symptom-sync/SymptomSync.tla` in the same change. Move the sync commit only after the model describes the new code. A docs-only edit does not move it.
 
+`python3 ios/scripts/check-symptom-model.py` fails the `ids` job when a covered Swift file changes and that same change leaves `SymptomSync.tla`, `SymptomSync.cfg`, and the sync commit below untouched.
+
 When a merge changed the covered code and skipped this skill, use `/maintain-formal-verification-skill`.
 
 ## Command

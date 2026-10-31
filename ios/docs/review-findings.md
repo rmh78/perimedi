@@ -17,3 +17,5 @@ Repeated review findings from merged pull requests. `AGENTS.md` links here. A gu
 | A green check never sees the new case. Examples are catalogOnly fixtures, a listing check that ignores PNG size, and one accessibility id covering a whole sheet. | #66, #108, #114 | not yet. Extra catalog PNGs and per-change screenshot folders stay in #106. |
 | A spec or a feature note still describes the old control. | #66, #102 | not yet. #105 does not check the sentence next to a file name, because that check fails the manual build example in Agents.md. |
 | A simulator failure outside the diff costs another review round. | #66, #114 | not yet |
+| Covered Swift for custom-symptom sync changes and the TLA model stays on the old commit. | #77, #88, #90 | [`check-symptom-model.py`](../scripts/check-symptom-model.py). The covered files and the sync commit live in `.grok/skills/check-symptom-sync/SKILL.md`. |
+| A new job copies the force_red guard and the drill test only counts copies. | #122 | `test_main_status_permissions_and_needs` names `openspec`, `domain`, `ui`, and `symptom-sync`. |

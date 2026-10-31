@@ -277,12 +277,30 @@ class WorkflowTest(unittest.TestCase):
         self.assertEqual([part.strip() for part in needs.group(1).split(",")], ["ids", "openspec", "domain", "ui"])
         self.assertEqual(text.count("issues: write"), 1)
         self.assertIn("&& 'true' || 'false'", block)
-        drill_if = [
-            line.strip()
-            for line in text.splitlines()
-            if line.strip().startswith("if: github.event_name == 'pull_request' || (github.ref")
-        ]
-        self.assertEqual(drill_if, [drill_if[0], drill_if[0], drill_if[0]])
+        self.assertEqual(
+            _jobs_with_exact_if(text, _FORCE_RED_GUARD),
+            ["openspec", "domain", "ui", "symptom-sync"],
+        )
+
+
+_FORCE_RED_GUARD = (
+    "if: github.event_name == 'pull_request' || "
+    "(github.ref == 'refs/heads/main' && !(github.event_name == 'workflow_dispatch' && "
+    "(github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')))"
+)
+
+
+def _jobs_with_exact_if(text: str, guard: str) -> list[str]:
+    jobs: list[str] = []
+    current: str | None = None
+    for line in text.splitlines():
+        match = re.fullmatch(r"  ([A-Za-z0-9-]+):", line)
+        if match:
+            current = match.group(1)
+            continue
+        if line.strip() == guard:
+            jobs.append(current or "")
+    return jobs
 
 
 def _job(text: str, name: str) -> str:
