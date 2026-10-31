@@ -86,7 +86,7 @@ class DriftTests(unittest.TestCase):
         )
         self.assertNotIn("RememberedScoreRewrites.remembering", [s.name for s in self.covered])
         self.assertIn(LEFT_OUT, self.skill)
-        self.assertEqual(model.sync_commit(self.skill), "dd69ec0")
+        self.assertEqual(model.sync_commit(self.skill), "7b8c3af")
         self.assertEqual(model.unresolved(self.covered, {
             symbol.path: (ROOT / symbol.path).read_text(encoding="utf-8")
             for symbol in self.covered

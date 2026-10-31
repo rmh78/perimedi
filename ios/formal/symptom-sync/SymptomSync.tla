@@ -43,20 +43,15 @@ ShownFrom(mem, pres) == [i \in Ids |-> [d \in Days |-> ShownAt(i, d, mem, pres)]
 \* from the rows it was given. It does not read the key it just saved.
 GapMem == IF SameName THEN "ba" ELSE "none"
 
-\* Two different days both have an empty recordId that fold will keep.
-\* Store.apply then has one keeps entry for "". The later day overwrites it
-\* and the earlier empty row is deleted.
-Clash ==
-  \E d1, d2 \in Days :
-    /\ d1 < d2
-    /\ \E i \in Ids : has[i][d1] /\ empty[i][d1]
-    /\ \E j \in Ids : has[j][d2] /\ empty[j][d2]
+SharedEmpty ==
+  \E i1, i2 \in Ids, d1, d2 \in Days :
+    /\ has[i1][d1] /\ empty[i1][d1]
+    /\ has[i2][d2] /\ empty[i2][d2]
+    /\ (i1 # i2 \/ d1 # d2)
 
 NextPresent ==
   IF SameName THEN [present EXCEPT !["b"] = FALSE] ELSE present
 
-\* A row is deleted on commit when it is the extra unique id in one day-bucket,
-\* or when it is an empty id on a day that loses the "" clash.
 \* Unique date#id values differ across days, so they never clash across days.
 ExtraUnique(i, day, mem) ==
   /\ has[i][day]
@@ -68,11 +63,7 @@ ExtraUnique(i, day, mem) ==
       /\ Target(j, mem, NextPresent) = Target(i, mem, NextPresent)
       /\ j = "a" /\ i = "b"
 
-Deleted(i, day, mem) ==
-  /\ has[i][day]
-  /\ \/ ExtraUnique(i, day, mem)
-     \/ (empty[i][day] /\ Clash /\ day = 1 /\
-          \E j \in Ids : has[j][2] /\ empty[j][2])
+Deleted(i, day, mem) == ExtraUnique(i, day, mem)
 
 \* A retargeted row keeps the winning symptom id. The loser id no longer has that row.
 NextHas(mem) ==
@@ -82,7 +73,8 @@ NextHas(mem) ==
         j # i /\ has[j][d] /\ ~Deleted(j, d, mem) /\ Target(j, mem, NextPresent) = i]]
 
 NextEmpty(mem) ==
-  [i \in Ids |-> [d \in Days |-> empty[i][d] /\ NextHas(mem)[i][d]]]
+  [i \in Ids |-> [d \in Days |->
+    empty[i][d] /\ NextHas(mem)[i][d] /\ ~SharedEmpty]]
 
 Init ==
   /\ present = [i \in Ids |-> FALSE]
@@ -130,7 +122,8 @@ Delete(id) ==
   /\ has' = [has EXCEPT ![id] = [d \in Days |-> FALSE]]
   /\ empty' = [empty EXCEPT ![id] = [d \in Days |-> FALSE]]
   /\ shown' = [shown EXCEPT ![id] = [d \in Days |-> FALSE]]
-  /\ owned' = [owned EXCEPT ![id] = [d \in Days |-> FALSE]]
+  /\ owned' = [i \in Ids |-> [d \in Days |->
+       i # id /\ owned[i][d] /\ (has[i][d] \/ \E k \in Ids : k # id /\ has[k][d])]]
   /\ refreshed' = FALSE
   /\ UNCHANGED <<nm, memory, phase, view, combined>>
 
@@ -179,7 +172,6 @@ Rollback ==
   /\ refreshed' = TRUE
   /\ UNCHANGED <<present, nm, has, empty, memory, combined, owned>>
 
-\* replaceAll inserts the folded payload and discards the pair it just found.
 ImportCombined ==
   /\ phase = "idle"
   /\ present' = [i \in Ids |-> i = "a"]
@@ -187,11 +179,12 @@ ImportCombined ==
   /\ has' = [i \in Ids |-> [d \in Days |-> i = "a" /\ d = 1]]
   /\ empty' = [i \in Ids |-> [d \in Days |-> FALSE]]
   /\ shown' = [i \in Ids |-> [d \in Days |-> i = "a" /\ d = 1]]
+  /\ memory' = "ba"
   /\ view' = "live"
   /\ combined' = TRUE
   /\ owned' = [i \in Ids |-> [d \in Days |-> i = "a" /\ d = 1]]
   /\ refreshed' = TRUE
-  /\ UNCHANGED <<memory, phase>>
+  /\ UNCHANGED <<phase>>
 
 \* The orphan mark in the file is not inserted. The key is not consulted.
 ImportOrphan ==

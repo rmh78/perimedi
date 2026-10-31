@@ -3,41 +3,22 @@ title: "Custom symptom sync on one phone"
 ---
 stateDiagram-v2
   state "Legend" as legend {
-    lg0: Forgot
-    lg1: Lost
     lg2: Saving
     lg3: Settled
-    lg4: Breaks EmptyKeeperSafe or ImportRemembers
-    lg5: Path to the EmptyKeeperSafe or ImportRemembers bug
   }
-  class lg0 orange
-  class lg1 pink
   class lg2 yellow
   class lg3 teal
-  class lg4 breaks
-  class lg5 bugPath
   s0: No custom symptoms
   s1: One custom symptom
-  s2: Import joined two names and forgot the pair
+  s2: The pair is stored
   s3: The pairs are saved and the store save is still open
-  s4: A saved day is gone
   [*] --> s0
   s0 --> s1: you add a symptom
   s0 --> s2: you import a backup that joined two names
   s1 --> s1: a row arrives with no record id
   s1 --> s3: the phone saves the remembered pairs
   s3 --> s1: the store save lands
-  s3 --> s4: the store save lands
-  classDef breaks fill:#ffecee,stroke:#e72e3b,stroke-width:2.5px,color:#cd2834
   class s0 teal
-  class s0 bugPath
   class s1 teal
-  class s1 bugPath
-  class s2 orange
-  class s2 breaks
-  class s2 bugPath
+  class s2 teal
   class s3 yellow
-  class s3 bugPath
-  class s4 pink
-  class s4 breaks
-  class s4 bugPath

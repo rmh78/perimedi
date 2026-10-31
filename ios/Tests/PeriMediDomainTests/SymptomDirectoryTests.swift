@@ -419,7 +419,7 @@ final class SymptomDirectoryTests: XCTestCase {
                 CustomSymptom(id: other, name: "Ache", sort: 2),
             ]
         )
-        XCTAssertEqual(plan.instructions, [.deleteCustom(later)])
+        XCTAssertEqual(plan.repair.deleteCustoms, [later])
         XCTAssertEqual(
             plan.scores,
             [
@@ -454,7 +454,7 @@ final class SymptomDirectoryTests: XCTestCase {
             scores: []
         )
         XCTAssertEqual(plan.directory.customs, [CustomSymptom(id: fog, name: "FOG", sort: 3)])
-        XCTAssertEqual(plan.instructions, [.deleteCustom(ache)])
+        XCTAssertEqual(plan.repair.deleteCustoms, [ache])
     }
 
     func testSyncedSameDayTieBreakIgnoresArrivalOrder() {
@@ -569,7 +569,7 @@ final class SymptomDirectoryTests: XCTestCase {
             plan.scores,
             [SymptomScore(id: fog.rawValue, date: "2026-03-17", severity: 4, loggedAt: "2026-03-17T09:00:00Z")]
         )
-        XCTAssertEqual(plan.instructions, [])
+        XCTAssertEqual(plan.repair, .none)
         XCTAssertEqual(plan.memory, memory)
     }
 
@@ -735,15 +735,97 @@ final class SymptomDirectoryTests: XCTestCase {
             ]
         )
         XCTAssertEqual(plan.scores, [winner])
+        XCTAssertEqual(plan.repair.deleteCustoms, [ache])
         XCTAssertEqual(
-            plan.instructions,
-            [
-                .deleteCustom(ache),
-                .keep(ScoreKeep(recordId: low, score: winner)),
-                .deleteScore(high),
-            ]
+            plan.repair.writes,
+            [ScoreWrite(
+                claim: RowClaim(recordId: low, date: "2026-03-15", symptomId: ache.rawValue),
+                identity: low,
+                score: winner
+            )]
+        )
+        XCTAssertEqual(
+            plan.repair.drops,
+            [RowClaim(recordId: high, date: "2026-03-15", symptomId: fog.rawValue)]
         )
         XCTAssertEqual(plan.memory, RememberedScoreRewrites.none.remembering([ache: fog]))
+    }
+
+    func testMutationsKeepsUniqueRecordDeletesExtraAndLeavesOrphan() {
+        let blank = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-000000000099")!
+        let unknown = CustomSymptomId(rawValue: "c.00000000-0000-0000-0000-000000000088")!
+        let low = ScoreRecordId(rawValue: "a")
+        let high = ScoreRecordId(rawValue: "b")
+        let omitted = ScoreRecordId(rawValue: "z")
+        let tied = "2026-03-15T08:00:00Z"
+        let winner = SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 4, loggedAt: tied)
+        let stored = [
+            StoredScoreRow(
+                recordId: low,
+                score: SymptomScore(id: ache.rawValue, date: "2026-03-15", severity: 2, loggedAt: tied)
+            ),
+            StoredScoreRow(
+                recordId: high,
+                score: SymptomScore(id: fog.rawValue, date: "2026-03-15", severity: 4, loggedAt: tied)
+            ),
+            StoredScoreRow(
+                recordId: omitted,
+                score: SymptomScore(id: unknown.rawValue, date: "2026-03-17", severity: 4, loggedAt: tied)
+            ),
+        ]
+        let plan = SymptomDirectory.synced(
+            rows: [
+                CustomSymptom(id: fog, name: "Fog", sort: 0),
+                CustomSymptom(id: ache, name: "fog", sort: 1),
+                CustomSymptom(id: blank, name: "   ", sort: 9),
+            ],
+            records: stored.map { ScoredRecord(id: $0.recordId, score: $0.score) }
+        )
+        XCTAssertEqual(
+            plan.repair.mutations(for: stored),
+            [
+                .write(StoredScoreRow(recordId: low, score: winner)),
+                .delete,
+                nil,
+            ]
+        )
+    }
+
+    func testMutationsStampsTwoDaysThatShareAnEmptyRecordId() {
+        let first = dayScore(id: fog.rawValue, severity: 2, loggedAt: "2026-03-15T08:00:00Z", date: "2026-03-15")
+        let second = dayScore(id: fog.rawValue, severity: 3, loggedAt: "2026-03-16T08:00:00Z", date: "2026-03-16")
+        assertSharedRecordStampsBothDays(recordId: "", scores: [first, second])
+    }
+
+    func testMutationsStampsTwoDaysThatShareARecordId() {
+        let first = dayScore(id: fog.rawValue, severity: 2, loggedAt: "2026-03-15T08:00:00Z", date: "2026-03-15")
+        let second = dayScore(id: fog.rawValue, severity: 3, loggedAt: "2026-03-16T08:00:00Z", date: "2026-03-16")
+        assertSharedRecordStampsBothDays(recordId: "same-row", scores: [first, second])
+    }
+
+    func testMutationsDeletesOnlyTheDropWhenThatRecordIdKeepsAnotherDay() {
+        let shared = ScoreRecordId(rawValue: "b")
+        let keeper = ScoreRecordId(rawValue: "a")
+        let earlierExtra = dayScore(id: fog.rawValue, severity: 2, loggedAt: "2026-03-15T08:00:00Z", date: "2026-03-15")
+        let earlierKeep = dayScore(id: fog.rawValue, severity: 4, loggedAt: "2026-03-15T08:00:00Z", date: "2026-03-15")
+        let laterKeep = dayScore(id: fog.rawValue, severity: 3, loggedAt: "2026-03-16T08:00:00Z", date: "2026-03-16")
+        let stored = [
+            StoredScoreRow(recordId: shared, score: earlierExtra),
+            StoredScoreRow(recordId: keeper, score: earlierKeep),
+            StoredScoreRow(recordId: shared, score: laterKeep),
+        ]
+        let plan = SymptomDirectory.synced(
+            rows: [CustomSymptom(id: fog, name: "Fog", sort: 0)],
+            records: stored.map { ScoredRecord(id: $0.recordId, score: $0.score) }
+        )
+        XCTAssertEqual(
+            plan.repair.mutations(for: stored),
+            [
+                .delete,
+                nil,
+                .write(StoredScoreRow(recordId: ScoreRecordId(rawValue: laterKeep.rowId), score: laterKeep)),
+            ]
+        )
     }
 
     func testRememberedEdgeStopsAtTheKeptSymptom() {
@@ -799,6 +881,29 @@ final class SymptomDirectoryTests: XCTestCase {
                 id: fog.rawValue, date: "2026-03-17", severity: 2, count: 1, note: "m",
                 loggedAt: tied, higherIsWorse: false
             )]
+        )
+    }
+
+    private func assertSharedRecordStampsBothDays(
+        recordId: String,
+        scores: [SymptomScore],
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        let id = ScoreRecordId(rawValue: recordId)
+        let stored = scores.map { StoredScoreRow(recordId: id, score: $0) }
+        let plan = SymptomDirectory.synced(
+            rows: [CustomSymptom(id: fog, name: "Fog", sort: 0)],
+            records: stored.map { ScoredRecord(id: id, score: $0.score) }
+        )
+        let expected: [RowMutation?] = scores.map { score in
+            .write(StoredScoreRow(recordId: ScoreRecordId(rawValue: score.rowId), score: score))
+        }
+        XCTAssertEqual(
+            plan.repair.mutations(for: stored),
+            expected,
+            file: file,
+            line: line
         )
     }
 
