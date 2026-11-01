@@ -798,8 +798,8 @@ cmd_verify() {
   fi
 
   # Local boots sample the keyboard preference, so a booted phone is shut down
-  # and booted again. GitHub starts `control-perimedi boot` before the cache
-  # restore. Wait for that boot. Do not shut it down.
+  # and booted again. GitHub restores the cache first, then starts boot and a
+  # plugin-cache warmup. Wait for both. Do not shut a booted simulator down.
   if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
     refresh_device_line
     if [[ "$DEVICE_LINE" != *Shutdown* ]]; then
@@ -808,24 +808,27 @@ cmd_verify() {
     fi
     boot_simulator_now
   else
-    if [[ -f /tmp/perimedi-boot.pid ]]; then
-      local bpid
-      bpid="$(cat /tmp/perimedi-boot.pid)"
-      if [[ -n "$bpid" ]] && kill -0 "$bpid" 2>/dev/null; then
-        mark "waiting for early boot $bpid"
-        while kill -0 "$bpid" 2>/dev/null; do
+    local label pidfile pid
+    for spec in "early boot:/tmp/perimedi-boot.pid" "plugin warm:/tmp/perimedi-plugin-warm.pid"; do
+      label="${spec%%:*}"
+      pidfile="${spec#*:}"
+      [[ -f "$pidfile" ]] || continue
+      pid="$(cat "$pidfile")"
+      if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+        mark "waiting for $label $pid"
+        while kill -0 "$pid" 2>/dev/null; do
           sleep 2
         done
-        mark "early boot exited"
+        mark "$label exited"
       fi
-    fi
+    done
     if [[ -f /tmp/perimedi-boot.log ]]; then
       cat /tmp/perimedi-boot.log >&2 || true
     fi
     boot_simulator_now
-    if [[ -f /tmp/perimedi-first-launch.log ]]; then
-      mark "first launch log"
-      cat /tmp/perimedi-first-launch.log >&2 || true
+    if [[ -f /tmp/perimedi-plugin-warm.log ]]; then
+      mark "plugin warm log"
+      cat /tmp/perimedi-plugin-warm.log >&2 || true
     fi
   fi
   # Killing it after 5s left the next simctl in a 104s to 166s hole on the

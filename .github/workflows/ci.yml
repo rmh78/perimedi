@@ -149,12 +149,6 @@ jobs:
       - name: Xcode version for the build cache
         id: xcode-ver
         run: echo "hash=$(xcodebuild -version | shasum -a 256 | awk '{print $1}')" >> "$GITHUB_OUTPUT"
-      - name: Boot the simulator
-        run: |
-          .grok/skills/verify-perimedi/scripts/control-perimedi boot > /tmp/perimedi-boot.log 2>&1 &
-          echo $! > /tmp/perimedi-boot.pid
-          xcodebuild -runFirstLaunch > /tmp/perimedi-first-launch.log 2>&1 &
-          echo $! > /tmp/perimedi-first-launch.pid
       - name: Restore the UI test build
         id: ui-build-cache
         uses: actions/cache/restore@v4
@@ -175,6 +169,29 @@ jobs:
       - name: Drop a prefix-restored build marker
         if: steps.ui-build-cache.outputs.cache-hit != 'true'
         run: rm -f ios/DerivedData/build-ok
+      - name: Boot the simulator
+        run: |
+          .grok/skills/verify-perimedi/scripts/control-perimedi boot > /tmp/perimedi-boot.log 2>&1 &
+          echo $! > /tmp/perimedi-boot.pid
+          {
+            set +e
+            echo "plugin-warm begin $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            xcodebuild -project ios/PeriMedi.xcodeproj -scheme PeriMedi \
+              -destination 'generic/platform=iOS Simulator' \
+              -showBuildSettings \
+              -derivedDataPath /tmp/perimedi-plugin-warm \
+              -disableAutomaticPackageResolution \
+              -onlyUsePackageVersionsFromResolvedFile \
+              -skipPackageUpdates \
+              -skipPackagePluginValidation \
+              -skipPackageSignatureValidation \
+              > /tmp/perimedi-plugin-warm-xcode.log 2>&1
+            status=$?
+            echo "plugin-warm exit $status $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            grep -E 'Command line invocation|Resolve Package Graph|Resolved source packages|error:' /tmp/perimedi-plugin-warm-xcode.log | head -20 || true
+            exit $status
+          } > /tmp/perimedi-plugin-warm.log 2>&1 &
+          echo $! > /tmp/perimedi-plugin-warm.pid
       - name: UI tests
         env:
           UI_BUILD_CACHE_HIT: ${{ steps.ui-build-cache.outputs.cache-hit }}
@@ -232,12 +249,6 @@ jobs:
       - name: Xcode version for the build cache
         id: xcode-ver
         run: echo "hash=$(xcodebuild -version | shasum -a 256 | awk '{print $1}')" >> "$GITHUB_OUTPUT"
-      - name: Boot the simulator
-        run: |
-          .grok/skills/verify-perimedi/scripts/control-perimedi boot > /tmp/perimedi-boot.log 2>&1 &
-          echo $! > /tmp/perimedi-boot.pid
-          xcodebuild -runFirstLaunch > /tmp/perimedi-first-launch.log 2>&1 &
-          echo $! > /tmp/perimedi-first-launch.pid
       - name: Restore the UI test build
         id: ui-build-cache
         uses: actions/cache/restore@v4
@@ -258,6 +269,29 @@ jobs:
       - name: Drop a prefix-restored build marker
         if: steps.ui-build-cache.outputs.cache-hit != 'true'
         run: rm -f ios/DerivedData/build-ok
+      - name: Boot the simulator
+        run: |
+          .grok/skills/verify-perimedi/scripts/control-perimedi boot > /tmp/perimedi-boot.log 2>&1 &
+          echo $! > /tmp/perimedi-boot.pid
+          {
+            set +e
+            echo "plugin-warm begin $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            xcodebuild -project ios/PeriMedi.xcodeproj -scheme PeriMedi \
+              -destination 'generic/platform=iOS Simulator' \
+              -showBuildSettings \
+              -derivedDataPath /tmp/perimedi-plugin-warm \
+              -disableAutomaticPackageResolution \
+              -onlyUsePackageVersionsFromResolvedFile \
+              -skipPackageUpdates \
+              -skipPackagePluginValidation \
+              -skipPackageSignatureValidation \
+              > /tmp/perimedi-plugin-warm-xcode.log 2>&1
+            status=$?
+            echo "plugin-warm exit $status $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            grep -E 'Command line invocation|Resolve Package Graph|Resolved source packages|error:' /tmp/perimedi-plugin-warm-xcode.log | head -20 || true
+            exit $status
+          } > /tmp/perimedi-plugin-warm.log 2>&1 &
+          echo $! > /tmp/perimedi-plugin-warm.pid
       - name: UI tests
         env:
           UI_BUILD_CACHE_HIT: ${{ steps.ui-build-cache.outputs.cache-hit }}
