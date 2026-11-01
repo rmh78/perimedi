@@ -19,7 +19,9 @@ final class CustomSymptomSyncTests: XCTestCase {
         "perimedi.refresh-keep",
         "perimedi.empty-record-id",
         "perimedi.shared-record-id",
+        "perimedi.apply-empty-record",
         "perimedi.import-same-name",
+        "perimedi.import-remembers",
     ]
 
     override func tearDown() {
@@ -341,6 +343,75 @@ final class CustomSymptomSyncTests: XCTestCase {
     func testEmptyOrSharedRecordIdKeepsTheOtherDay() throws {
         try assertSharedRecordKeepsBothDays(recordId: "", name: "empty-record-id", suite: "perimedi.empty-record-id")
         try assertSharedRecordKeepsBothDays(recordId: "same-row", name: "shared-record-id", suite: "perimedi.shared-record-id")
+    }
+
+    func testApplyKeepsBothDaysWhenScoresShareEmptyRecordId() throws {
+        try assertSharedRecordKeepsBothDays(
+            recordId: "",
+            name: "apply-empty-record",
+            suite: "perimedi.apply-empty-record"
+        )
+    }
+
+    func testReplaceAllPersistsRememberedRewriteForDuplicateNames() throws {
+        let suite = "perimedi.import-remembers"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defaults.removePersistentDomain(forName: suite)
+        let container = try inMemoryContainer(name: "import-remembers")
+        let store = Store(container: container, foldDefaults: defaults)
+        let imported = SymptomScore(
+            id: later.rawValue,
+            date: "2026-03-16",
+            severity: 3,
+            loggedAt: "2026-03-16T08:00:00Z"
+        )
+        try store.replaceAll(with: ExportPayload(
+            exportedAt: "2026-03-16T12:00:00Z",
+            medications: [],
+            schedules: [],
+            doseLogs: [],
+            remarks: [],
+            cycleSettings: .default,
+            periods: [],
+            symptomScores: [imported],
+            customSymptoms: [
+                CustomSymptom(id: fog, name: "Fog", sort: 0),
+                CustomSymptom(id: later, name: "fog", sort: 1),
+            ]
+        ))
+
+        let remembered = defaults.dictionary(forKey: "perimedi.rememberedScoreRewrites")
+        XCTAssertEqual(remembered?[later.rawValue] as? String, fog.rawValue)
+        assertDayVisible(
+            store,
+            SymptomScore(
+                id: fog.rawValue,
+                date: "2026-03-16",
+                severity: 3,
+                loggedAt: "2026-03-16T08:00:00Z"
+            ),
+            today: "2026-03-20"
+        )
+
+        let late = SymptomScore(
+            id: later.rawValue,
+            date: "2026-03-17",
+            severity: 4,
+            loggedAt: "2026-03-17T09:00:00Z"
+        )
+        insertStoredScore(late, in: container.mainContext)
+        store.refresh()
+        assertDayVisible(
+            store,
+            SymptomScore(
+                id: fog.rawValue,
+                date: "2026-03-17",
+                severity: 4,
+                loggedAt: "2026-03-17T09:00:00Z"
+            ),
+            today: "2026-03-20"
+        )
+        XCTAssertNil(store.lastError)
     }
 
     func testImportOfSameNamedSymptomsKeepsALaterScore() throws {
