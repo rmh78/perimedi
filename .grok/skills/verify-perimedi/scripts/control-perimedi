@@ -765,10 +765,8 @@ cmd_verify() {
   if [[ -n "$holder" && "$holder" != "$RUN_ID" ]]; then
     fail "simulator $UDID is locked by run-id $holder (lock $(lock_dir)). Refuse double-drive. Cleanup that run."
   fi
-  if app_installed && [[ "$holder" != "$RUN_ID" ]]; then
-    if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
-      fail "PeriMedi is already installed on $UDID and this run does not hold the lock. Refuse to steal a shared instance."
-    fi
+  if [[ -z "${GITHUB_ACTIONS:-}" ]] && app_installed && [[ "$holder" != "$RUN_ID" ]]; then
+    fail "PeriMedi is already installed on $UDID and this run does not hold the lock. Refuse to steal a shared instance."
   fi
 
   acquire_lock
@@ -782,7 +780,11 @@ cmd_verify() {
   else
     rm -f /tmp/perimedi-sample-taken
   fi
-  restore_checkout_mtime
+  if [[ "${UI_BUILD_CACHE_HIT:-}" == "true" ]]; then
+    echo "control-perimedi: skip mtime restore on exact cache hit"
+  else
+    restore_checkout_mtime
+  fi
   local build_log="$DERIVED/build-for-testing.log"
   local build_ok="$DERIVED/build-ok"
   local group_ok=0

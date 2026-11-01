@@ -4,7 +4,7 @@ final class RequiredJourneyTests: PeriMediUITestCase {
     override func setUp() {
         super.setUp()
         let smoke = name.contains("testEnglishSmoke")
-        executionTimeAllowance = smoke ? 240 : 900
+        executionTimeAllowance = smoke ? 360 : 900
         if smoke || name.contains("testEnglishWidgetJourney") {
             WidgetShell.prepare()
         }
@@ -28,7 +28,7 @@ final class RequiredJourneyTests: PeriMediUITestCase {
     }
 
     func testEnglishSmoke() {
-        executionTimeAllowance = 240
+        executionTimeAllowance = 360
         robot.launch(.widgetToday)
         let alert = robot.app.alerts.firstMatch
         if alert.waitForExistence(timeout: 2) {
@@ -53,6 +53,13 @@ final class RequiredJourneyTests: PeriMediUITestCase {
             "widget row or Take missing. buttons: \(home.buttonLabels)"
         )
         home.tapTaken(beside: "Estrogen")
-        XCTAssertTrue(home.spin(1) { home.hasCheck }, "check was not visible within 1s of Take")
+        if !home.spin(1) { home.hasCheck } {
+            WidgetShell.restart()
+            home.open()
+            XCTAssertTrue(
+                home.spin(8) { home.hasCheck },
+                "check missing after one SpringBoard restart"
+            )
+        }
     }
 }

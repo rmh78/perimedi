@@ -75,6 +75,7 @@ class UiSuiteTests(unittest.TestCase):
         self.assertNotIn("perimedi-plugin-warm", script)
         self.assertIn("DTServiceHub", script)
         self.assertIn("/tmp/perimedi-booted-udid", script)
+        self.assertIn("skip mtime restore on exact cache hit", script)
 
     def test_locked_job_ifs_are_unchanged(self) -> None:
         red = _main_is_red()
