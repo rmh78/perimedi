@@ -7,6 +7,8 @@ import PeriMediDomain
 final class DoseReminderCenterTests: XCTestCase {
     private var savedStore: Store?
     private var savedMaster: Any?
+    private var container: ModelContainer?
+    private let held = HeldAdds()
 
     override func tearDown() async throws {
         let center = DoseReminderCenter.shared
@@ -18,12 +20,86 @@ final class DoseReminderCenterTests: XCTestCase {
         } else {
             UserDefaults.standard.removeObject(forKey: DoseReminderCenter.masterKey)
         }
-        await center.restoreSystemPoster()
+        ReminderDelivery.resetForTest()
         savedStore = nil
+        container = nil
         try await super.tearDown()
     }
 
-    func testTakenSlotIsAbsentFromPendingIdsAfterAStaleCenterRead() async throws {
+    func testTakenSlotHasNoPendingRequestsAfterStaleReschedule() async throws {
+        let (center, store, identity, family) = try await heldDose()
+        center.setSlotStatuses(
+            medicationId: identity.medicationId,
+            slots: [
+                SlotStatusWrite(
+                    scheduleId: identity.scheduleId,
+                    date: identity.date,
+                    timeOfDay: identity.timeOfDay,
+                    existingLogId: nil
+                ),
+            ],
+            status: .taken
+        )
+        center.refresh()
+        for _ in 0..<8 {
+            await Task.yield()
+            center.finishNotificationWork()
+        }
+
+        held.release()
+        center.finishNotificationWork()
+
+        let status = logStatus(store, identity: identity)
+        let pending = await held.pendingIds()
+        XCTAssertEqual(status, .taken)
+        XCTAssertTrue(
+            pending.isDisjoint(with: family),
+            "pending \(pending) still has \(family)"
+        )
+    }
+
+    func testLaneTakeCancelsReminder() async throws {
+        let (center, store, identity, family) = try await heldDose()
+        center.setSlotStatuses(
+            medicationId: identity.medicationId,
+            slots: [
+                SlotStatusWrite(
+                    scheduleId: identity.scheduleId,
+                    date: identity.date,
+                    timeOfDay: identity.timeOfDay,
+                    existingLogId: nil
+                ),
+            ],
+            status: .taken
+        )
+        XCTAssertEqual(logStatus(store, identity: identity), .taken)
+
+        held.release()
+        center.finishNotificationWork()
+        let pending = await held.pendingIds()
+        XCTAssertTrue(
+            pending.isDisjoint(with: family),
+            "pending \(pending) still has \(family)"
+        )
+    }
+
+    func testLookupTakeIsSavedWhileTheAddIsHeld() async throws {
+        let (center, store, identity, family) = try await heldDose()
+        let result = try center.markSlotTaken(identity, shownLogId: .lookup)
+        let saved = logStatus(store, identity: identity)
+        XCTAssertEqual(result, .taken)
+        XCTAssertEqual(saved, .taken, "the log was still \(String(describing: saved)) when Take returned")
+
+        held.release()
+        center.finishNotificationWork()
+        let pending = await held.pendingIds()
+        XCTAssertTrue(
+            pending.isDisjoint(with: family),
+            "pending \(pending) still has \(family)"
+        )
+    }
+
+    private func heldDose() async throws -> (DoseReminderCenter, Store, PlannedSlotIdentity, Set<String>) {
         let center = DoseReminderCenter.shared
         savedStore = center.store
         savedMaster = UserDefaults.standard.object(forKey: DoseReminderCenter.masterKey)
@@ -33,13 +109,14 @@ final class DoseReminderCenterTests: XCTestCase {
             for: PersistenceController.schema,
             configurations: [
                 ModelConfiguration(
-                    "taken-pending",
+                    "taken-pending-\(UUID().uuidString)",
                     schema: PersistenceController.schema,
                     isStoredInMemoryOnly: true,
                     cloudKitDatabase: .none
                 ),
             ]
         )
+        self.container = container
         let store = Store(container: container)
         let medicationId = "taken-pending-med"
         let scheduleId = "taken-pending-schedule"
@@ -66,19 +143,25 @@ final class DoseReminderCenterTests: XCTestCase {
         store.addAfterChange { [weak center] in
             center?.refresh()
         }
-
-        let poster = WithholdingPoster()
+        ReminderDelivery.installForTest(
+            add: { [held] request, done in held.add(request, done: done) },
+            remove: { [held] ids in held.remove(ids) },
+            pending: { [held] in await held.pendingIds() },
+            auth: { .authorized }
+        )
         center.store = store
-        await center.adoptPoster(poster)
         center.refresh()
-        var dosePost: ReminderPost?
-        for _ in 0..<12 {
-            await center.finishReminderWork()
-            dosePost = poster.dosePosts().first { $0.identity.scheduleId == scheduleId }
-            if dosePost != nil { break }
+        var request: UNNotificationRequest?
+        for _ in 0..<20 {
+            await Task.yield()
+            center.finishNotificationWork()
+            request = held.doseRequests().first { request in
+                ReminderDelivery.identity(of: request)?.scheduleId == scheduleId
+            }
+            if request != nil { break }
         }
-        let post = try XCTUnwrap(dosePost, "reschedule did not submit a dose add")
-        let identity = post.identity
+        let post = try XCTUnwrap(request, "reschedule did not submit a dose add")
+        let identity = try XCTUnwrap(ReminderDelivery.identity(of: post))
         let family = Set(
             ReminderSlot.ids(
                 scheduleId: identity.scheduleId,
@@ -86,178 +169,61 @@ final class DoseReminderCenterTests: XCTestCase {
                 timeOfDay: identity.timeOfDay
             )
         )
-
-        center.setSlotStatuses(
-            medicationId: identity.medicationId,
-            slots: [
-                SlotStatusWrite(
-                    scheduleId: identity.scheduleId,
-                    date: identity.date,
-                    timeOfDay: identity.timeOfDay,
-                    existingLogId: nil
-                ),
-            ],
-            status: .taken
-        )
-        center.refresh()
-        for _ in 0..<8 {
-            await center.finishReminderWork()
-        }
-
-        poster.releaseAdditions()
-        let planned = ScheduleLogic.plannedForIso(dateKey: identity.date, timeOfDay: identity.timeOfDay)
-        var pending: Set<String> = []
-        var status: DoseStatus?
-        for _ in 0..<16 {
-            await center.finishReminderWork()
-            pending = await poster.pendingIdentifiers()
-            status = store.doseLogs.first {
-                $0.scheduleId == identity.scheduleId && $0.plannedFor == planned
-            }?.status
-            if status == .taken && pending.isDisjoint(with: family) { break }
-        }
-
-        XCTAssertEqual(status, .taken)
-        XCTAssertTrue(
-            pending.isDisjoint(with: family),
-            "pending \(pending) still has \(family)"
-        )
+        return (center, store, identity, family)
     }
 
-    func testLookupTakeIsSavedWhileTheAddIsHeld() async throws {
-        let center = DoseReminderCenter.shared
-        savedStore = center.store
-        savedMaster = UserDefaults.standard.object(forKey: DoseReminderCenter.masterKey)
-        UserDefaults.standard.set(true, forKey: DoseReminderCenter.masterKey)
-
-        let container = try ModelContainer(
-            for: PersistenceController.schema,
-            configurations: [
-                ModelConfiguration(
-                    "lookup-take",
-                    schema: PersistenceController.schema,
-                    isStoredInMemoryOnly: true,
-                    cloudKitDatabase: .none
-                ),
-            ]
-        )
-        let store = Store(container: container)
-        let medicationId = "lookup-take-med"
-        let scheduleId = "lookup-take-schedule"
-        try store.upsertMedication(
-            Medication(
-                id: medicationId,
-                name: "Estrogen",
-                form: .PILL,
-                doseLabel: "1 mg",
-                createdAt: "t"
-            )
-        )
-        try store.upsertSchedule(
-            Schedule(
-                id: scheduleId,
-                medicationId: medicationId,
-                daysOfWeek: [],
-                timeOfDay: "09:00",
-                times: ["09:00"],
-                active: true,
-                cycleRule: .none
-            )
-        )
-        store.addAfterChange { [weak center] in
-            center?.refresh()
-        }
-
-        let poster = WithholdingPoster()
-        center.store = store
-        await center.adoptPoster(poster)
-        center.refresh()
-        var dosePost: ReminderPost?
-        for _ in 0..<12 {
-            await center.finishReminderWork()
-            dosePost = poster.dosePosts().first { $0.identity.scheduleId == scheduleId }
-            if dosePost != nil { break }
-        }
-        let post = try XCTUnwrap(dosePost, "reschedule did not submit a dose add")
-        let identity = post.identity
-        let family = Set(
-            ReminderSlot.ids(
-                scheduleId: identity.scheduleId,
-                date: identity.date,
-                timeOfDay: identity.timeOfDay
-            )
-        )
-
-        let result = try center.markSlotTaken(identity, shownLogId: .lookup)
+    private func logStatus(_ store: Store, identity: PlannedSlotIdentity) -> DoseStatus? {
         let planned = ScheduleLogic.plannedForIso(dateKey: identity.date, timeOfDay: identity.timeOfDay)
-        let saved = store.doseLogs.first {
+        return store.doseLogs.first {
             $0.scheduleId == identity.scheduleId && $0.plannedFor == planned
         }?.status
-        XCTAssertEqual(result, .taken)
-        XCTAssertEqual(saved, .taken, "the log was still \(String(describing: saved)) when Take returned")
-
-        poster.releaseAdditions()
-        var pending: Set<String> = []
-        for _ in 0..<16 {
-            await center.finishReminderWork()
-            pending = await poster.pendingIdentifiers()
-            if pending.isDisjoint(with: family) { break }
-        }
-        XCTAssertTrue(
-            pending.isDisjoint(with: family),
-            "pending \(pending) still has \(family)"
-        )
     }
 }
 
-private final class WithholdingPoster: ReminderPoster {
+private final class HeldAdds {
     private let lock = NSLock()
     private var pending: Set<String> = []
-    private var withheld: [(ReminderPost, (ReminderAddResult) -> Void)] = []
+    private var held: [(UNNotificationRequest, () -> Void)] = []
 
-    func pendingIdentifiers() async -> Set<String> {
+    func add(_ request: UNNotificationRequest, done: @escaping () -> Void) {
         lock.lock()
-        defer { lock.unlock() }
-        return pending
-    }
-
-    func authorization() async -> ReminderAuthStatus { .authorized }
-
-    func add(_ post: ReminderPost, done: @escaping (ReminderAddResult) -> Void) {
-        lock.lock()
-        withheld.append((post, done))
+        held.append((request, done))
         lock.unlock()
     }
 
-    func remove(ids: Set<String>) {
+    func remove(_ ids: [String]) {
         lock.lock()
         pending.subtract(ids)
         lock.unlock()
     }
 
-    func clearAll() {
-        lock.lock()
-        pending.removeAll()
-        lock.unlock()
+    func pendingIds() async -> Set<String> {
+        copyPending()
     }
 
-    func dosePosts() -> [ReminderPost] {
+    private func copyPending() -> Set<String> {
         lock.lock()
         defer { lock.unlock() }
-        return withheld.map(\.0).filter { $0.id.hasPrefix("dose.") }
+        return pending
     }
 
-    func releaseAdditions() {
-        let batch: [(ReminderPost, (ReminderAddResult) -> Void)]
+    func doseRequests() -> [UNNotificationRequest] {
         lock.lock()
-        batch = withheld
-        withheld = []
-        for (post, _) in batch {
-            pending.insert(post.id)
+        defer { lock.unlock() }
+        return held.map(\.0).filter { $0.identifier.hasPrefix("dose.") }
+    }
+
+    func release() {
+        let batch: [(UNNotificationRequest, () -> Void)]
+        lock.lock()
+        batch = held
+        held = []
+        for (request, _) in batch {
+            pending.insert(request.identifier)
         }
         lock.unlock()
         for (_, done) in batch {
-            done(.installed)
+            done()
         }
     }
 }

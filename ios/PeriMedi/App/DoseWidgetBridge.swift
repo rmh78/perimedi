@@ -70,9 +70,6 @@ enum DoseWidgetBridge {
             snapshot.ack = candidate
             if !snapshot.face(at: Date()).showsCheck {
                 snapshot.ack = nil
-                if DoseReminderCenter.shared.hasOwedTake(medicationId: candidate.row.medicationId) {
-                    stagedAck = candidate
-                }
             }
         }
         try? DoseWidgetSnapshotFile.write(snapshot)
