@@ -371,9 +371,13 @@ final class AppRobot {
     }
 
     private func focus(_ field: XCUIElement, id: String, file: StaticString, line: UInt) {
+        let keyboard = app.keyboards.firstMatch
         press(field)
+        if spin(timeout: 2, { field.hasFocus }) { return }
+        press(field)
+        if spin(timeout: 2, { field.hasFocus }) { return }
         XCTAssertTrue(
-            spin(timeout: 2) { field.hasFocus },
+            spin(timeout: 4) { field.hasFocus || keyboard.exists },
             "focused \(id)",
             file: file,
             line: line

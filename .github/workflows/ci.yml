@@ -84,6 +84,8 @@ jobs:
         run: python3 docs/app-store/check-listing.py
       - name: Decision script
         run: python3 .github/scripts/test_main_is_red.py
+      - name: UI suite filters
+        run: python3 ios/scripts/test_ui_suite.py
 
   openspec:
     if: github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && !(github.event_name == 'workflow_dispatch' && (github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')))
@@ -145,6 +147,7 @@ jobs:
         env:
           UI_BUILD_CACHE_HIT: ${{ steps.ui-build-cache.outputs.cache-hit }}
           TEST_RUNNER_PERIMEDI_SAMPLE_TAKEN: "1"
+          PERIMEDI_UI_SUITE: ${{ github.event_name == 'pull_request' && 'smoke' || 'full' }}
         run: .grok/skills/verify-perimedi/scripts/control-perimedi verify
       - name: Upload xcresult on failure
         if: failure()

@@ -57,7 +57,7 @@ Simulator CLI builds can still pass `CODE_SIGNING_ALLOWED=NO`.
 
 ## UI tests (interaction proof)
 
-Instrumented XCUITests live in `PeriMediUITests/`. The required suite is `testEnglishAppJourney` (empty home through tracking, the reminder, More, and Trends) and `testEnglishWidgetJourney` (medium, then small, on the device's today). Both are English. Tests start empty and tap Cycle / sheets. Watch **iPhone 17e** (Simulator → Window → iPhone 17e). **iPhone 17** is a different Simulator and will stay idle.
+Instrumented XCUITests live in `PeriMediUITests/`. A pull request runs `testEnglishSmoke` (empty home, one medication typed by name, medium widget Take). Local verification and the nightly run also run `testEnglishAppJourney` (empty home through tracking, the reminder, More, and Trends) and `testEnglishWidgetJourney` (medium, then small, on the device's today). Those journeys are English. Tests start empty and tap Cycle / sheets. Watch **iPhone 17e** (Simulator → Window → iPhone 17e). **iPhone 17** is a different Simulator and will stay idle.
 
 The widget journeys run in this same `xcodebuild test`. Do not pass `CODE_SIGNING_ALLOWED=NO`. That build has no App Group, so the widget stays on the empty card.
 

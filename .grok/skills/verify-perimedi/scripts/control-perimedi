@@ -20,9 +20,11 @@ usage() {
   cat <<'EOF'
 control-perimedi — PeriMedi iOS verification driver
 
-Full product UI proof (no --run-id):
+Full product UI proof (no --run-id). Default suite is full.
+--suite smoke or --suite full wins over PERIMEDI_UI_SUITE.
 
   control-perimedi verify
+  control-perimedi verify --suite smoke
 
 Agents. Require --run-id. Isolation is that id plus the simulator
 UDID (SIM_UDID, or SIM_OS, iPhone 17e only). Do not pass --checkout.
@@ -113,6 +115,7 @@ uninstall_app() {
 
 RUN_ID=""
 TEST=""
+SUITE=""
 CMD=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -124,6 +127,11 @@ while [[ $# -gt 0 ]]; do
     --test)
       [[ $# -ge 2 ]] || fail "--test needs a value"
       TEST="$2"
+      shift 2
+      ;;
+    --suite)
+      [[ $# -ge 2 ]] || fail "--suite needs smoke or full"
+      SUITE="$2"
       shift 2
       ;;
     --help|-h)
@@ -148,6 +156,7 @@ if [[ "$CMD" == "verify" ]]; then
   [[ -z "$RUN_ID" ]] || fail "verify does not take --run-id"
   [[ -z "$TEST" ]] || fail "verify does not take --test"
 else
+  [[ -z "$SUITE" ]] || fail "$CMD does not take --suite"
   [[ -n "$RUN_ID" ]] || fail "need --run-id"
   [[ "$RUN_ID" =~ ^[A-Za-z0-9._-]+$ ]] || fail "run-id must match [A-Za-z0-9._-]+"
   EVIDENCE="$SKILL_DIR/evidence/$RUN_ID"
@@ -581,6 +590,12 @@ watch_taken_sample() {
 }
 
 cmd_verify() {
+  local suite="${SUITE:-${PERIMEDI_UI_SUITE:-full}}"
+  case "$suite" in
+    smoke|full) ;;
+    *) fail "suite must be smoke or full (got '$suite')" ;;
+  esac
+
   if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
     python3 "$ROOT/ios/scripts/check-feature-map.py"
     python3 "$ROOT/ios/scripts/check-feature-layout.py"
@@ -655,7 +670,7 @@ cmd_verify() {
   fi
   xcrun simctl boot "$UDID"
   xcrun simctl bootstatus "$UDID" -b
-  # CI skips the screen catalog. The status-bar override is for those PNGs.
+  echo "control-perimedi: booted $(date -u +%Y-%m-%dT%H:%M:%SZ)"
   # Killing it after 5s left the next simctl in a 104s to 166s hole on the
   # three exact-cache logs. The pre-test uninstall is the call in that hole.
   # A GitHub runner starts with no PeriMedi installed. The post-test uninstall stays.
@@ -703,10 +718,7 @@ cmd_verify() {
   fi
 
   local skip_catalog=0
-  if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
-    skip_catalog=1
-    echo "Skipping ScreenCatalogTests on CI (committed PNGs; ids job checks they exist)"
-  elif [[ "${SCREEN_CATALOG:-1}" == "0" ]]; then
+  if [[ "${SCREEN_CATALOG:-1}" == "0" ]]; then
     skip_catalog=1
     echo "Skipping ScreenCatalogTests (SCREEN_CATALOG=0)"
   fi
@@ -714,6 +726,15 @@ cmd_verify() {
   local -a xcode_args=(-resultBundlePath "$RESULT")
   if [[ "$skip_catalog" -eq 1 ]]; then
     xcode_args+=(-skip-testing:PeriMediUITests/ScreenCatalogTests)
+  fi
+  local suite_out=""
+  suite_out="$(python3 "$ROOT/ios/scripts/ui_suite.py" "$suite")"
+  if [[ -n "$suite_out" ]]; then
+    local word
+    while IFS= read -r word; do
+      [[ -n "$word" ]] || continue
+      xcode_args+=("$word")
+    done <<<"$suite_out"
   fi
 
   local sample_pid=""
@@ -724,6 +745,7 @@ cmd_verify() {
     set +m
   fi
 
+  echo "control-perimedi: test-without-building $(date -u +%Y-%m-%dT%H:%M:%SZ)"
   set +e
   xcode_test test-without-building "${xcode_args[@]}"
   local status=$?
