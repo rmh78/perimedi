@@ -169,6 +169,20 @@ jobs:
       - name: Drop a prefix-restored build marker
         if: steps.ui-build-cache.outputs.cache-hit != 'true'
         run: rm -f ios/DerivedData/build-ok
+      - name: Restore the Xcode plugin cache
+        id: plugin-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /tmp/perimedi-plugin-cache
+          key: xcode-plugincache-${{ steps.xcode-ver.outputs.hash }}
+      - name: Install the Xcode plugin cache
+        if: steps.plugin-cache.outputs.cache-hit == 'true'
+        run: |
+          dest="$(getconf DARWIN_USER_CACHE_DIR)/com.apple.DeveloperTools"
+          mkdir -p "$(dirname "$dest")"
+          rm -rf "$dest"
+          cp -R /tmp/perimedi-plugin-cache "$dest"
+          echo "plugin cache installed $(date -u +%Y-%m-%dT%H:%M:%SZ)"
       - name: Boot the simulator
         run: .grok/skills/verify-perimedi/scripts/control-perimedi boot
       - name: UI tests
@@ -210,6 +224,27 @@ jobs:
             ios/DerivedData/SDKStatCaches.noindex
             ios/DerivedData/build-ok
           key: ${{ steps.ui-build-cache.outputs.cache-primary-key }}
+      - name: Stage the Xcode plugin cache
+        id: plugin-stage
+        if: always() && steps.plugin-cache.outputs.cache-hit != 'true'
+        run: |
+          src="$(getconf DARWIN_USER_CACHE_DIR)/com.apple.DeveloperTools"
+          if [[ -d "$src" ]] && find "$src" -name 'PlugInCache-xcodebuild.xcplugincache' -print -quit | grep -q .; then
+            rm -rf /tmp/perimedi-plugin-cache
+            cp -R "$src" /tmp/perimedi-plugin-cache
+            du -sh /tmp/perimedi-plugin-cache
+            echo "staged=true" >> "$GITHUB_OUTPUT"
+            echo "plugin cache staged $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          else
+            echo "staged=false" >> "$GITHUB_OUTPUT"
+            echo "plugin cache missing $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          fi
+      - name: Save the Xcode plugin cache
+        if: always() && steps.plugin-cache.outputs.cache-hit != 'true' && steps.plugin-stage.outputs.staged == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: /tmp/perimedi-plugin-cache
+          key: ${{ steps.plugin-cache.outputs.cache-primary-key }}
 
   full:
     if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
@@ -248,6 +283,20 @@ jobs:
       - name: Drop a prefix-restored build marker
         if: steps.ui-build-cache.outputs.cache-hit != 'true'
         run: rm -f ios/DerivedData/build-ok
+      - name: Restore the Xcode plugin cache
+        id: plugin-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /tmp/perimedi-plugin-cache
+          key: xcode-plugincache-${{ steps.xcode-ver.outputs.hash }}
+      - name: Install the Xcode plugin cache
+        if: steps.plugin-cache.outputs.cache-hit == 'true'
+        run: |
+          dest="$(getconf DARWIN_USER_CACHE_DIR)/com.apple.DeveloperTools"
+          mkdir -p "$(dirname "$dest")"
+          rm -rf "$dest"
+          cp -R /tmp/perimedi-plugin-cache "$dest"
+          echo "plugin cache installed $(date -u +%Y-%m-%dT%H:%M:%SZ)"
       - name: Boot the simulator
         run: .grok/skills/verify-perimedi/scripts/control-perimedi boot
       - name: UI tests
@@ -289,6 +338,27 @@ jobs:
             ios/DerivedData/SDKStatCaches.noindex
             ios/DerivedData/build-ok
           key: ${{ steps.ui-build-cache.outputs.cache-primary-key }}
+      - name: Stage the Xcode plugin cache
+        id: plugin-stage
+        if: always() && steps.plugin-cache.outputs.cache-hit != 'true'
+        run: |
+          src="$(getconf DARWIN_USER_CACHE_DIR)/com.apple.DeveloperTools"
+          if [[ -d "$src" ]] && find "$src" -name 'PlugInCache-xcodebuild.xcplugincache' -print -quit | grep -q .; then
+            rm -rf /tmp/perimedi-plugin-cache
+            cp -R "$src" /tmp/perimedi-plugin-cache
+            du -sh /tmp/perimedi-plugin-cache
+            echo "staged=true" >> "$GITHUB_OUTPUT"
+            echo "plugin cache staged $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          else
+            echo "staged=false" >> "$GITHUB_OUTPUT"
+            echo "plugin cache missing $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          fi
+      - name: Save the Xcode plugin cache
+        if: always() && steps.plugin-cache.outputs.cache-hit != 'true' && steps.plugin-stage.outputs.staged == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: /tmp/perimedi-plugin-cache
+          key: ${{ steps.plugin-cache.outputs.cache-primary-key }}
 
   main-status:
     needs: [ids, openspec, domain, ui]

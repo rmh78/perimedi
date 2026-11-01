@@ -738,6 +738,7 @@ cmd_verify() {
   fi
 
   RUN_ID="$VERIFY_SUITE_ID"
+  mark "resolve udid"
   resolve_udid
   echo "device: $DEVICE_LINE"
 

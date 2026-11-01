@@ -62,6 +62,8 @@ class UiSuiteTests(unittest.TestCase):
         self.assertIn("-only-testing:PeriMediTests", text)
         self.assertNotIn("-runFirstLaunch", text)
         self.assertNotIn("-showBuildSettings", text)
+        self.assertIn("xcode-plugincache-", text)
+        self.assertIn("PlugInCache-xcodebuild.xcplugincache", text)
         before_restore, _, after_restore = text.partition("name: Restore the UI test build")
         self.assertNotIn("control-perimedi boot", before_restore)
         self.assertIn("control-perimedi boot", after_restore)
