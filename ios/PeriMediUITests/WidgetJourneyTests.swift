@@ -257,28 +257,18 @@ final class HomeWidgets {
         case .icon:
             restoreAppIcon()
         case .medium:
-            open()
-            revealPeriMedi()
-            if onScreen(widgetIcon()), !onScreen(appIcon()) {
-                openSizeMenu(on: widgetIcon())
-                _ = tapLabel(Self.labels(.icon))
-                _ = spin(6) { onScreen(appIcon()) }
-            }
-            guard spin(4, { onScreen(appIcon()) }) else {
+            if chooseMedium() { return }
+            WidgetShell.restart()
+            guard chooseMedium() else {
                 XCTFail(
-                    "PeriMedi icon missing. icons: \(iconLabels) buttons: \(buttonLabels)",
+                    onScreen(appIcon())
+                        ? "Medium-sized widget missing. icons: \(iconLabels) buttons: \(buttonLabels)"
+                        : "PeriMedi icon missing. icons: \(iconLabels) buttons: \(buttonLabels)",
                     file: file,
                     line: line
                 )
                 return
             }
-            openSizeMenu(on: appIcon())
-            XCTAssertTrue(
-                tapLabel(Self.labels(.medium)),
-                "Medium-sized widget missing. icons: \(iconLabels) buttons: \(buttonLabels)",
-                file: file,
-                line: line
-            )
         case .small:
             open()
             revealPeriMedi()
@@ -308,6 +298,19 @@ final class HomeWidgets {
                 line: line
             )
         }
+    }
+
+    private func chooseMedium() -> Bool {
+        open()
+        revealPeriMedi()
+        if onScreen(widgetIcon()), !onScreen(appIcon()) {
+            openSizeMenu(on: widgetIcon())
+            _ = tapLabel(Self.labels(.icon))
+            _ = spin(6) { onScreen(appIcon()) }
+        }
+        guard spin(4, { onScreen(appIcon()) }) else { return false }
+        openSizeMenu(on: appIcon())
+        return tapLabel(Self.labels(.medium))
     }
 
     func restoreAppIcon() {

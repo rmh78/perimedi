@@ -1,0 +1,38 @@
+name: nightly
+
+on:
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+    inputs:
+      check_sha:
+        description: SHA to look up. A value only checks. Empty starts the suite.
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: Test the nightly lookup
+        run: python3 .github/scripts/test_nightly_prior.py
+      - name: Look up a green nightly
+        id: prior
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NIGHTLY_SHA: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.check_sha || github.sha }}
+          NIGHTLY_MODE: ${{ github.event_name == 'schedule' && 'schedule' || github.event_name == 'workflow_dispatch' && github.event.inputs.check_sha != '' && 'check' || 'dispatch' }}
+        run: python3 .github/scripts/nightly_prior.py
+      - name: Start the suite
+        if: steps.prior.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "nightly start ci.yml ${{ github.ref_name }}"
+          gh workflow run ci.yml --ref "${{ github.ref_name }}" -f nightly=true

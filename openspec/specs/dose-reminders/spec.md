@@ -42,7 +42,7 @@ The system SHALL present a reminder whose title is a dose prompt, whose subtitle
 
 #### Scenario: Snooze
 - **WHEN** a reminder fires and the user chooses Snooze
-- **THEN** another reminder for the same slot is scheduled about ten minutes later
+- **THEN** the pending reminder for that slot is cancelled, and one reminder for the same slot is scheduled about ten minutes later
 
 #### Scenario: Open the day
 - **WHEN** the user activates the reminder banner

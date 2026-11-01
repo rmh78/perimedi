@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Native iOS app. Proof is XCUITest on an iPhone Simulator through `control-perimedi`, not markdown. Identifiers live in `ios/PeriMedi/App/A11yID.swift`. The in-test harness is `ios/PeriMediUITests/AppRobot.swift`. Read `features/` for the surface you are about to touch, then drive it.
 
-`--run-id` plus the simulator UDID is the isolation handle for agent `doctor`, `launch`, `drive`, and `cleanup`. Require `--run-id` on those commands. `verify` takes no `--run-id`. Do not pass `--checkout`. Refuse to drive a simulator that already has `app.perimedi.ios` installed unless this run-id holds the lock.
+`--run-id` plus the simulator UDID is the isolation handle for agent `doctor`, `launch`, `drive`, and `cleanup`. Require `--run-id` on those commands. `verify` takes no `--run-id`. It takes `--suite smoke` or `--suite full`. The flag wins over `PERIMEDI_UI_SUITE`. When neither is set, `verify` runs the full suite. Do not pass `--checkout`. Refuse to drive a simulator that already has `app.perimedi.ios` installed unless this run-id holds the lock.
 
 ## Launch
 
@@ -22,7 +22,7 @@ Ready when stdout contains `launch: ready udid=`. The helper boots that UDID if 
 
 Teardown is `cleanup` on the same `--run-id`.
 
-`AppRobot.launch` takes a `JourneyLaunch`: `.pinnedRemindIn(seconds: 2)` (today `2026-03-15`), `.trendsChart`, `.trendsNoScores`, or `.widgetToday` (device date). Each is `-en -clear -uiTesting` plus `-today` and that case's one flag. Never `-journeyStep` or `-loadSample` on a journey. A second launch with the same case fails. `launchCatalog` is the only path that may pass `-loadSample`. It writes the sixteen English catalog names and may switch to German only to write `sheet-symptom-pill-de.png`. Frozen dates in `UITestDate`: today `2026-03-15`, yesterday `2026-03-14`, period `2026-03-07`–`2026-03-11`.
+`AppRobot.launch` takes a `JourneyLaunch`: `.pinnedRemindIn(seconds: 2)` (today `2026-03-15`), `.trendsChart`, or `.widgetToday` (device date). Each is `-en -clear -uiTesting` plus `-today` and that case's one flag. Never `-journeyStep` or `-loadSample` on a journey. A second launch with the same case fails. `launchCatalog` is the only path that may pass `-loadSample`. It writes the sixteen English catalog names and may switch to German only to write `sheet-symptom-pill-de.png`. Frozen dates in `UITestDate`: today `2026-03-15`, yesterday `2026-03-14`, period `2026-03-07`–`2026-03-11`.
 
 ## Doctor
 
@@ -41,7 +41,7 @@ PR-wide proof is `control-perimedi verify`. Do not use `doctor` as the product U
 1. Open the matching file under `features/`.
 2. Get there the way a user would (bottom tabs, Cycle action buttons, sheets).
 3. Tap `A11yID` strings through `AppRobot` (`tap`, `waitFor`, `value(of:)`, `exists`).
-4. Type with `clearAndType`: tap, wait until the software keyboard exists, send the whole string in one `typeText`, refocus once if the value is wrong, assert the exact value. Do not paste, type one character per `typeText`, use the clipboard menu, or test-only setters.
+4. Type with `clearAndType`: tap, wait until the field is focused, send the whole string in one `typeText`, refocus once if the value is wrong, assert the exact value. Do not paste, type one character per `typeText`, use the clipboard menu, or test-only setters.
 5. Assert the observable state listed in that file.
 
 ```bash
@@ -55,6 +55,7 @@ Mapped tests:
 |---|---|
 | English app journey (Cycle, period edit/delete, meds, reminder, symptom, Month, More, Trends chart, custom symptom, no-scores) | `PeriMediUITests/RequiredJourneyTests/testEnglishAppJourney` |
 | English Home Screen widget (medium, then small, same process) | `PeriMediUITests/RequiredJourneyTests/testEnglishWidgetJourney` |
+| Pull-request smoke (empty home, one medication) | `PeriMediUITests/RequiredJourneyTests/testEnglishSmoke` |
 
 `AppRobot.pick` tries an accessibility identifier first, then a visible label. Tests launch `-en`. `addMedication` uses `med.mode.everyday` / `med.mode.cyclic`.
 
@@ -69,7 +70,7 @@ Do not submit "look, it opens." Proof is a production user path plus an observab
 - A proof that drives one convenient entry point is incomplete when the map lists others.
 - For a broad regression, walk `features/README.md` top to bottom (Full sweep). Driving one feature is not a sweep.
 
-PR-wide UI proof is `verify: ok` from `.grok/skills/verify-perimedi/scripts/control-perimedi verify` (or CI job `ui`). Domain `swift test --package-path ios` alone is not UI proof. The same `verify` command runs `ios/scripts/check-one-way-door.py --base origin/main`. That check warns and exits 0. `doctor` does not run it.
+PR-wide UI proof is `verify: ok` from `.grok/skills/verify-perimedi/scripts/control-perimedi verify` (or CI job `ui`). A pull request runs the smoke suite. Local `verify` and the nightly full suite run every journey. Domain `swift test --package-path ios` alone is not UI proof. The same `verify` command runs `ios/scripts/check-one-way-door.py --base origin/main`. That check warns and exits 0. `doctor` does not run it.
 
 ## Evidence
 
@@ -77,7 +78,7 @@ Named location: `.grok/skills/verify-perimedi/evidence/<run-id>/`
 
 Each `drive` writes a subdirectory named after the `--test` path (slashes become dashes), for example `…/evidence/<run-id>/PeriMediUITests-RequiredJourneyTests-testEnglishAppJourney/`. That slot holds `xcodebuild.log` (`TEST SUCCEEDED`), `summary.txt`, `test.txt`, `command.txt`, and `PeriMedi.xcresult`. Later drives on the same run-id must not delete earlier slots. `drives.txt` lists slot names in order. Exercise the real user path (`AppRobot` taps and `clearAndType`), not `-loadSample`, `-journeyStep`, or test-only setters. Journey tests never pass those flags.
 
-Main-screen PNGs for UX review are the sixteen English files in `ios/docs/screens/`, plus `sheet-symptom-pill-de.png` and the two widget pictures in `expected.txt`. `ScreenCatalogTests` writes the English files and that one German pill on a local `control-perimedi verify` unless `SCREEN_CATALOG=0`. Commit those after UI changes. UX reviews the Files changed image diff. Do not paste screenshot galleries into PR comments. `control-perimedi drive` does not rewrite that catalog. GitHub skips the catalog writer. The English widget journey rewrites `widget-medium-before-en.png` and `widget-medium-after-en.png` on every run, including `drive` and GitHub.
+Main-screen PNGs for UX review are the sixteen English files in `ios/docs/screens/`, plus `sheet-symptom-pill-de.png` and the two widget pictures in `expected.txt`. `ScreenCatalogTests` writes the English files and that one German pill on a local `control-perimedi verify` unless `SCREEN_CATALOG=0`. Commit those after UI changes. UX reviews the Files changed image diff. Do not paste screenshot galleries into PR comments. `control-perimedi drive` does not rewrite that catalog. A pull request does not run the catalog writer. Local `verify` and the nightly full suite run it unless `SCREEN_CATALOG=0`. The English widget journey rewrites `widget-medium-before-en.png` and `widget-medium-after-en.png` on every full run, including `drive` and the nightly GitHub run. The smoke does not write those pictures.
 
 ## Cleanup
 

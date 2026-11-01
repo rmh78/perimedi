@@ -665,7 +665,8 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
     ) {
         ReminderChainStops.insert(scheduleId: scheduleId, date: date, timeOfDay: timeOfDay)
         Self.cancelNotifications(
-            ids: ReminderSlot.followUpIds(scheduleId: scheduleId, date: date, timeOfDay: timeOfDay)
+            ids: [ReminderSlot.doseId(scheduleId: scheduleId, date: date, timeOfDay: timeOfDay)]
+                + ReminderSlot.followUpIds(scheduleId: scheduleId, date: date, timeOfDay: timeOfDay)
         )
         let fireAt = Date().addingTimeInterval(TimeInterval(ReminderLogic.snoozeMinutes * 60))
         let id = ReminderSlot.snoozeId(scheduleId: scheduleId, date: date, timeOfDay: timeOfDay)

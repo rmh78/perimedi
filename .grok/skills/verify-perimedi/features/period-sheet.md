@@ -22,15 +22,15 @@ Cycle → cycle settings (`cycle.action.period`).
 | Add | `period.add` | Opens the card. May sit below the fold. The robot swipes up if it is missing. |
 | Start | `period.start` | In the card. `setDateKey`. The filled English label for 7 March 2026 is Mar 7, 2026. The accessibility value stays 2026-03-07. |
 | End | `period.end` | In the card. Empty English reads Optional. Empty German reads TT.MM.JJJJ. First-use save uses `2026-03-11`. |
-| Save | `period.save` | Right side of the card. Label is Save. Then close the sheet. |
+| Save | `period.save` | Right side of the card. Label is Save. The card closes and the history row stays on the sheet. |
 | Cancel | `confirm.cancel` | Left side of the new-period card. Proof: `testEnglishAppJourney` opens the card, sees an empty `period.end`, taps Cancel, and the end field is gone. |
-| History | `period.history.{id}` | One row. The underlined date range shares that line with the length and flow. A closed period uses the same date-range format as a cycle in the doctor’s visit dialog. Opens the same card filled in. Proof: `testEnglishAppJourney` reads `Mar 7, 2026 – Mar 12, 2026`. |
-| Delete | `period.delete` | On the edit card’s button row, between Cancel and Save. Those labels share one type size. If one must shrink, they all shrink together. The row grows with the text size. A label never drops below half size. When one would, every label on the row wraps to two lines at that shared half size. The break is a space between words, or a hyphen at a real hyphenation point. VoiceOver reads the whole word. The card then asks `Delete {{name}}?` using that range. Confirm with `confirm.delete`. Proof: `testEnglishAppJourney` reads `Delete Mar 7, 2026 – Mar 12, 2026?`, then the intro returns and the period is logged again. |
+| History | `period.history.{id}` | One row per saved period. The underlined date range shares that line with the length and flow. A closed period uses the same date-range format as a cycle in the doctor’s visit dialog. Opens the same card filled in. Match the row by that range label. Proof: `testEnglishAppJourney` keeps `Mar 7, 2026 – Mar 11, 2026` and deletes `Mar 1, 2026 – Mar 5, 2026`. |
+| Delete | `period.delete` | On the edit card’s button row, between Cancel and Save. Those labels share one type size. If one must shrink, they all shrink together. The row grows with the text size. A label never drops below half size. When one would, every label on the row wraps to two lines at that shared half size. The break is a space between words, or a hyphen at a real hyphenation point. VoiceOver reads the whole word. The card then asks `Delete {{name}}?` using that range. Confirm with `confirm.delete`. Proof: `testEnglishAppJourney` reads `Delete Mar 1, 2026 – Mar 5, 2026?`, and the Mar 7 row remains. |
 | Date chooser done | `date.done` | Used by `setDateKey`. |
 
 After save, Cycle strip days `cycle.strip.day.2026-03-07` and `…-11` values contain `period`. Empty-meds chip drops `need-period` and becomes `need-med`. Intro is gone.
 
-`AppRobot.addPeriod()` is the packaged path.
+The app journey drives this sheet in one visit. It does not close the sheet between the two saves, the cancel, the edit, and the delete.
 
 ## Gotchas
 
@@ -38,4 +38,4 @@ After save, Cycle strip days `cycle.strip.day.2026-03-07` and `…-11` values co
 - Period UI on Cycle is label + background only.
 - `period.add` is easy to miss without a swipe. Don't treat "missing" as "not implemented" until you scroll.
 - The next-period line spells a full month, 4. April 2026 in German or Mar 7, 2026 in English, with the day and the month kept together. The line scales down when that day-month run is wider than the line.
-- Start and end share one row at the default text size. `testEnglishAppJourney` checks that `period.start` and `period.end` share a midY within 2 points. They stack when a column's minimum width is wider than half the row. `testPeriodCardAtLargestText` scrolls to `period.add` first, because at the largest accessibility size that control can exist below the fold. It then opens the card in English and in German, fills both dates, and checks that the end field starts at or below the start field, the full end hint is on screen and taller than 40 points, and neither date leaves the window.
+- Start and end share one row at the default text size. `testEnglishAppJourney` checks that `period.start` and `period.end` share a midY within 2 points. They stack when a column's minimum width is wider than half the row.

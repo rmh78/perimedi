@@ -17,7 +17,7 @@ This directory is the maintained verification source. Open one feature file for 
 - Start every recipe from the baseline launch unless the feature file says otherwise (`-remindIn=2`, `-fixture=trends`, `-tabTrends`).
 - Prefer `A11yID` strings over coordinates and visible copy. Chrome is en/de; IDs are language-independent. Tests force English with `-en`.
 - Treat every identifier as literal. Keep backtick IDs unchanged so `check-feature-map.py` still sees them.
-- Type with `clearAndType` / `typeText` after the software keyboard exists. Do not paste.
+- Type with `clearAndType` / `typeText` after the field is focused. Do not paste.
 - Restore isolation with `cleanup` on the same `--run-id`. Do not remove proof artifacts.
 
 ## Proof and skip reporting
@@ -42,7 +42,7 @@ Practical test walk for that order:
 1. `PeriMediUITests/RequiredJourneyTests/testEnglishAppJourney` — Cycle, period edit and delete, meds, reminder, symptom, Month, More, Trends chart, custom symptom, no-scores
 2. `PeriMediUITests/RequiredJourneyTests/testEnglishWidgetJourney` — medium Home Screen widget, then small, in the same process
 
-PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verify`. Local and GitHub both run the English widget journey. GitHub still skips `ScreenCatalogTests`.
+PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verify`. A pull request runs `testEnglishSmoke` and does not run `ScreenCatalogTests`. Local `verify` and the nightly full suite run the English widget journey and the catalog writer.
 
 ## Features
 
@@ -54,7 +54,7 @@ PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verif
 - [Period sheet](./period-sheet.md) — log bleeds over Cycle
 - [Symptom sheet](./symptom-sheet.md) — scores 1–4 over Cycle
 - [Dose reminders](./reminders.md) — in-app banner Taken / Snooze
-- [Home Screen today's-meds widget](./home-dose-widget.md) — one English SpringBoard journey. Local and GitHub `verify` run it.
+- [Home Screen today's-meds widget](./home-dose-widget.md) — one English SpringBoard journey. Local `verify` and the nightly full suite run it. A pull request does not run it.
 - [Doctor visit PDF](./doctor-visit.md) — More → range → in-app preview
 - [Backup / sample](./backup.md) — sample, export, import, clear (cancel in journeys)
 - [First-use journey](./journeys.md) — empty app through tracking and Month

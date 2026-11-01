@@ -22,7 +22,6 @@ enum UITestDate {
 enum JourneyLaunch: Equatable {
     case pinnedRemindIn(seconds: Int)
     case trendsChart
-    case trendsNoScores
     case widgetToday
 
     var arguments: [String] {
@@ -32,8 +31,6 @@ enum JourneyLaunch: Equatable {
             return base + ["-remindIn=\(seconds)"]
         case .trendsChart:
             return base + ["-fixture=trends"]
-        case .trendsNoScores:
-            return base + ["-fixture=trends-noscores"]
         case .widgetToday:
             return base
         }
@@ -43,7 +40,7 @@ enum JourneyLaunch: Equatable {
         switch self {
         case .widgetToday:
             return UITestDate.deviceToday
-        case .pinnedRemindIn, .trendsChart, .trendsNoScores:
+        case .pinnedRemindIn, .trendsChart:
             return UITestDate.today
         }
     }
@@ -176,6 +173,9 @@ final class AppRobot {
             return [.button, .staticText]
         default:
             break
+        }
+        if id.hasSuffix(".focused") {
+            return [.any]
         }
         if id.hasSuffix(".status") || id.hasPrefix("trends.group.") {
             return [.staticText]
@@ -371,10 +371,13 @@ final class AppRobot {
     }
 
     private func focus(_ field: XCUIElement, id: String, file: StaticString, line: UInt) {
+        func ready() -> Bool { field.hasFocus || exists(id + ".focused") }
+        press(field)
+        if spin(timeout: 2, ready) { return }
         press(field)
         XCTAssertTrue(
-            spin(timeout: 2) { app.keyboards.firstMatch.exists },
-            "keyboard for \(id)",
+            spin(timeout: 4, ready),
+            "focused \(id)",
             file: file,
             line: line
         )
@@ -396,14 +399,13 @@ final class AppRobot {
     }
 
     private func rawCount(_ field: XCUIElement) -> Int {
-        let raw = (field.value as? String) ?? ""
-        if raw.isEmpty || raw == "Optional" { return 0 }
-        return raw.count
+        shown(field).count
     }
 
     private func shown(_ field: XCUIElement) -> String {
         let raw = (field.value as? String) ?? field.label
         if raw.isEmpty || raw == "Optional" { return "" }
+        if let placeholder = field.placeholderValue, raw == placeholder { return "" }
         return raw
     }
 
@@ -432,19 +434,6 @@ final class AppRobot {
     func closeSheet(id: String) {
         tap("sheet.close")
         waitGone(id: id)
-    }
-
-    func addPeriod(start: String = UITestDate.periodStart, end: String = UITestDate.periodEnd) {
-        tap("cycle.action.period")
-        waitFor(id: "sheet.period")
-        if !exists("period.add") {
-            app.swipeUp()
-        }
-        tap("period.add")
-        setDateKey("period.start", start)
-        setDateKey("period.end", end)
-        tap("period.save")
-        closeSheet(id: "sheet.period")
     }
 
     func addMedication(
