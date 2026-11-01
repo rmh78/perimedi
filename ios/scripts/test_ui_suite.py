@@ -56,9 +56,10 @@ class UiSuiteTests(unittest.TestCase):
         self.assertIn("PERIMEDI_UI_SUITE: full", text)
         self.assertFalse((ROOT / ".github/workflows/ui-full.yml").exists())
         self.assertIn(
-            "always() && github.event_name != 'pull_request' && steps.ui-build-cache.outputs.cache-hit != 'true'",
+            "always() && steps.ui-build-cache.outputs.cache-hit != 'true' && steps.build-ok.outputs.ok == 'true'",
             text,
         )
+        self.assertNotIn("github.event_name != 'pull_request'", text)
 
     def test_locked_job_ifs_are_unchanged(self) -> None:
         red = _main_is_red()

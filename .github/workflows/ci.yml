@@ -136,6 +136,10 @@ jobs:
             ios/DerivedData/SDKStatCaches.noindex
             ios/DerivedData/build-ok
           key: ui-derived-xcode27-v3-${{ steps.xcode-ver.outputs.hash }}-${{ hashFiles('ios/PeriMedi*/**', 'ios/Sources/**', 'ios/PeriMediUITests/**', 'ios/Package.swift', 'ios/Package.resolved') }}
+          restore-keys: |
+            ui-derived-xcode27-v3-
+            ui-derived-xcode27-v2-
+            ui-derived-xcode27-
       - name: Drop a prefix-restored build marker
         if: steps.ui-build-cache.outputs.cache-hit != 'true'
         run: rm -f ios/DerivedData/build-ok
@@ -166,7 +170,7 @@ jobs:
             echo "ok=false" >> "$GITHUB_OUTPUT"
           fi
       - name: Save the UI test build
-        if: always() && github.event_name != 'pull_request' && steps.ui-build-cache.outputs.cache-hit != 'true' && steps.build-ok.outputs.ok == 'true'
+        if: always() && steps.ui-build-cache.outputs.cache-hit != 'true' && steps.build-ok.outputs.ok == 'true'
         uses: actions/cache/save@v4
         with:
           path: |
@@ -209,6 +213,10 @@ jobs:
             ios/DerivedData/SDKStatCaches.noindex
             ios/DerivedData/build-ok
           key: ui-derived-xcode27-v3-${{ steps.xcode-ver.outputs.hash }}-${{ hashFiles('ios/PeriMedi*/**', 'ios/Sources/**', 'ios/PeriMediUITests/**', 'ios/Package.swift', 'ios/Package.resolved') }}
+          restore-keys: |
+            ui-derived-xcode27-v3-
+            ui-derived-xcode27-v2-
+            ui-derived-xcode27-
       - name: Drop a prefix-restored build marker
         if: steps.ui-build-cache.outputs.cache-hit != 'true'
         run: rm -f ios/DerivedData/build-ok
