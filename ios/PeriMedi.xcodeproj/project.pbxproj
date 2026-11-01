@@ -71,6 +71,7 @@
 		B2F75D8E01C0DE0000000002 /* DoseWidgetBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2F75D8E01C0DE0000000001 /* DoseWidgetBridgeTests.swift */; };
 		D127A7E00000000000000002 /* DoseReminderCenterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D127A7E00000000000000001 /* DoseReminderCenterTests.swift */; };
 		C4A1E0010000000000000002 /* EqualWidthPillRowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A1E0010000000000000001 /* EqualWidthPillRowTests.swift */; };
+		S70REBEH0000000000000002 /* StoreBehaviorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = S70REBEH0000000000000001 /* StoreBehaviorTests.swift */; };
 		A11C0DE0000000000000000E /* PeriMediDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A11C0DE0000000000000000F /* PeriMediDomain */; };
 /* End PBXBuildFile section */
 
@@ -140,6 +141,7 @@
 		B2F75D8E01C0DE0000000001 /* DoseWidgetBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseWidgetBridgeTests.swift; sourceTree = "<group>"; };
 		D127A7E00000000000000001 /* DoseReminderCenterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseReminderCenterTests.swift; sourceTree = "<group>"; };
 		C4A1E0010000000000000001 /* EqualWidthPillRowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EqualWidthPillRowTests.swift; sourceTree = "<group>"; };
+		S70REBEH0000000000000001 /* StoreBehaviorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreBehaviorTests.swift; sourceTree = "<group>"; };
 		A11C0DE00000000000000003 /* PeriMediTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PeriMediTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -319,6 +321,7 @@
 				B2F75D8E01C0DE0000000001 /* DoseWidgetBridgeTests.swift */,
 				D127A7E00000000000000001 /* DoseReminderCenterTests.swift */,
 				C4A1E0010000000000000001 /* EqualWidthPillRowTests.swift */,
+				S70REBEH0000000000000001 /* StoreBehaviorTests.swift */,
 			);
 			path = PeriMediTests;
 			sourceTree = "<group>";
@@ -570,6 +573,7 @@
 				B2F75D8E01C0DE0000000002 /* DoseWidgetBridgeTests.swift in Sources */,
 				D127A7E00000000000000002 /* DoseReminderCenterTests.swift in Sources */,
 				C4A1E0010000000000000002 /* EqualWidthPillRowTests.swift in Sources */,
+				S70REBEH0000000000000002 /* StoreBehaviorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
