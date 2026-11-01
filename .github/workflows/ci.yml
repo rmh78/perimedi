@@ -136,10 +136,6 @@ jobs:
             ios/DerivedData/SDKStatCaches.noindex
             ios/DerivedData/build-ok
           key: ui-derived-xcode27-v3-${{ steps.xcode-ver.outputs.hash }}-${{ hashFiles('ios/PeriMedi*/**', 'ios/Sources/**', 'ios/PeriMediUITests/**', 'ios/Package.swift', 'ios/Package.resolved') }}
-          restore-keys: |
-            ui-derived-xcode27-v3-
-            ui-derived-xcode27-v2-
-            ui-derived-xcode27-
       - name: Drop a prefix-restored build marker
         if: steps.ui-build-cache.outputs.cache-hit != 'true'
         run: rm -f ios/DerivedData/build-ok
@@ -213,10 +209,6 @@ jobs:
             ios/DerivedData/SDKStatCaches.noindex
             ios/DerivedData/build-ok
           key: ui-derived-xcode27-v3-${{ steps.xcode-ver.outputs.hash }}-${{ hashFiles('ios/PeriMedi*/**', 'ios/Sources/**', 'ios/PeriMediUITests/**', 'ios/Package.swift', 'ios/Package.resolved') }}
-          restore-keys: |
-            ui-derived-xcode27-v3-
-            ui-derived-xcode27-v2-
-            ui-derived-xcode27-
       - name: Drop a prefix-restored build marker
         if: steps.ui-build-cache.outputs.cache-hit != 'true'
         run: rm -f ios/DerivedData/build-ok
