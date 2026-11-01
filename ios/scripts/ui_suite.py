@@ -8,7 +8,6 @@ import sys
 SUITES = {
     "smoke": [
         "-only-testing:PeriMediUITests/RequiredJourneyTests/testEnglishSmoke",
-        "-only-testing:PeriMediTests",
     ],
     "full": [],
 }

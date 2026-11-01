@@ -33,12 +33,11 @@ def _main_is_red():
 
 
 class UiSuiteTests(unittest.TestCase):
-    def test_smoke_allowlist_keeps_unit_tests(self) -> None:
+    def test_smoke_is_the_english_smoke_only(self) -> None:
         self.assertEqual(
             ui_suite.args("smoke"),
             [
                 "-only-testing:PeriMediUITests/RequiredJourneyTests/testEnglishSmoke",
-                "-only-testing:PeriMediTests",
             ],
         )
 
@@ -60,6 +59,14 @@ class UiSuiteTests(unittest.TestCase):
             text,
         )
         self.assertNotIn("github.event_name != 'pull_request'", text)
+        self.assertIn("-only-testing:PeriMediTests", text)
+        self.assertIn("control-perimedi boot", text)
+        script = (
+            ROOT / ".grok/skills/verify-perimedi/scripts/control-perimedi"
+        ).read_text(encoding="utf-8")
+        self.assertIn("-disableAutomaticPackageResolution", script)
+        self.assertIn("-onlyUsePackageVersionsFromResolvedFile", script)
+        self.assertIn("DTServiceHub", script)
 
     def test_locked_job_ifs_are_unchanged(self) -> None:
         red = _main_is_red()

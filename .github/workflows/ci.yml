@@ -105,6 +105,32 @@ jobs:
       - uses: actions/checkout@v5
       - name: Domain tests
         run: swift test --package-path ios
+      - name: App unit tests
+        run: |
+          set -euo pipefail
+          echo "domain: app unit tests $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          udid=$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/ && $2 ~ /^[0-9A-F-]{36}$/ {print $2; exit}')
+          test -n "$udid"
+          echo "domain: simulator $udid"
+          xcodebuild test \
+            -project ios/PeriMedi.xcodeproj \
+            -scheme PeriMedi \
+            -destination "platform=iOS Simulator,id=$udid" \
+            -derivedDataPath ios/DerivedData-unit \
+            -only-testing:PeriMediTests \
+            -skip-testing:PeriMediUITests \
+            -disableAutomaticPackageResolution \
+            -onlyUsePackageVersionsFromResolvedFile \
+            -skipPackageUpdates \
+            -skipPackagePluginValidation \
+            -skipPackageSignatureValidation \
+            -collect-test-diagnostics never \
+            -destination-timeout 60 \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY=- \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            ENABLE_PREVIEWS=NO
+          echo "domain: app unit tests done $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
   ui:
     if: github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && !(github.event_name == 'workflow_dispatch' && (github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')))
@@ -123,6 +149,12 @@ jobs:
       - name: Xcode version for the build cache
         id: xcode-ver
         run: echo "hash=$(xcodebuild -version | shasum -a 256 | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+      - name: Boot the simulator
+        run: |
+          .grok/skills/verify-perimedi/scripts/control-perimedi boot > /tmp/perimedi-boot.log 2>&1 &
+          echo $! > /tmp/perimedi-boot.pid
+          xcodebuild -runFirstLaunch > /tmp/perimedi-first-launch.log 2>&1 &
+          echo $! > /tmp/perimedi-first-launch.pid
       - name: Restore the UI test build
         id: ui-build-cache
         uses: actions/cache/restore@v4
@@ -200,6 +232,12 @@ jobs:
       - name: Xcode version for the build cache
         id: xcode-ver
         run: echo "hash=$(xcodebuild -version | shasum -a 256 | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+      - name: Boot the simulator
+        run: |
+          .grok/skills/verify-perimedi/scripts/control-perimedi boot > /tmp/perimedi-boot.log 2>&1 &
+          echo $! > /tmp/perimedi-boot.pid
+          xcodebuild -runFirstLaunch > /tmp/perimedi-first-launch.log 2>&1 &
+          echo $! > /tmp/perimedi-first-launch.pid
       - name: Restore the UI test build
         id: ui-build-cache
         uses: actions/cache/restore@v4
