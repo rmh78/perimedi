@@ -55,7 +55,7 @@ Mapped tests:
 |---|---|
 | English app journey (Cycle, period edit/delete, meds, reminder, symptom, Month, More, Trends chart, custom symptom, no-scores) | `PeriMediUITests/RequiredJourneyTests/testEnglishAppJourney` |
 | English Home Screen widget (medium, then small, same process) | `PeriMediUITests/RequiredJourneyTests/testEnglishWidgetJourney` |
-| Pull-request smoke (empty home, one medication, medium Take) | `PeriMediUITests/RequiredJourneyTests/testEnglishSmoke` |
+| Pull-request smoke (empty home, one medication) | `PeriMediUITests/RequiredJourneyTests/testEnglishSmoke` |
 
 `AppRobot.pick` tries an accessibility identifier first, then a visible label. Tests launch `-en`. `addMedication` uses `med.mode.everyday` / `med.mode.cyclic`.
 

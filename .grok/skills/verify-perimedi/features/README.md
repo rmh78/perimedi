@@ -54,7 +54,7 @@ PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verif
 - [Period sheet](./period-sheet.md) — log bleeds over Cycle
 - [Symptom sheet](./symptom-sheet.md) — scores 1–4 over Cycle
 - [Dose reminders](./reminders.md) — in-app banner Taken / Snooze
-- [Home Screen today's-meds widget](./home-dose-widget.md) — one English SpringBoard journey. Local `verify` and the nightly full suite run it. A pull request runs `testEnglishSmoke`.
+- [Home Screen today's-meds widget](./home-dose-widget.md) — one English SpringBoard journey. Local `verify` and the nightly full suite run it. A pull request does not run it.
 - [Doctor visit PDF](./doctor-visit.md) — More → range → in-app preview
 - [Backup / sample](./backup.md) — sample, export, import, clear (cancel in journeys)
 - [First-use journey](./journeys.md) — empty app through tracking and Month
