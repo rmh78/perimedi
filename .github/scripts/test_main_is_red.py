@@ -279,7 +279,7 @@ class WorkflowTest(unittest.TestCase):
         self.assertIn("&& 'true' || 'false'", block)
         self.assertEqual(
             _jobs_with_exact_if(text, _FORCE_RED_GUARD),
-            ["openspec", "domain", "ui", "symptom-sync", "dose-reminder"],
+            ["openspec", "domain", "ui"],
         )
 
 

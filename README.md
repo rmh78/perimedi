@@ -52,12 +52,6 @@ python3 ios/scripts/check-openspec-sync.py
 
 CI job `openspec` fails if an active `openspec/changes/<name>/` delta is not yet in `openspec/specs/`. Archive/sync the change in the same PR as the feature.
 
-## State diagrams
-
-[Dose reminder](docs/statecharts/dose-reminder.md) is one planned slot, the notification center, and the widget timeline.
-
-[Custom symptom sync](docs/statecharts/symptom-sync.md) is two custom names on one phone. That model is past the chart budget, so the page has no diagram.
-
 ## Privacy
 
 - On-device SwiftData; optional Apple iCloud for the same Apple ID
