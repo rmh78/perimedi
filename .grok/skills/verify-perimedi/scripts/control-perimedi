@@ -81,6 +81,13 @@ require_iphone_17e_env() {
 }
 
 resolve_udid() {
+  if [[ -z "${SIM_UDID:-}" && -n "${GITHUB_ACTIONS:-}" && -f /tmp/perimedi-booted-udid ]]; then
+    UDID="$(tr -d '[:space:]' < /tmp/perimedi-booted-udid)"
+    [[ -n "$UDID" ]] || fail "boot step udid file is empty"
+    DEVICE_LINE="    ${REQUIRED_DEVICE} (${UDID}) (Booted)"
+    mark "udid from boot step"
+    return
+  fi
   if [[ -n "${SIM_UDID:-}" ]]; then
     local line name
     line="$(xcrun simctl list devices | grep "${SIM_UDID}" | head -n 1 || true)"
@@ -313,6 +320,16 @@ refresh_device_line() {
 # Keyboard preference first, then boot. A device that is already Booted is left up.
 boot_simulator_now() {
   disable_hardware_keyboard
+  if [[ -n "${GITHUB_ACTIONS:-}" && -f /tmp/perimedi-booted-udid ]]; then
+    local cached
+    cached="$(tr -d '[:space:]' < /tmp/perimedi-booted-udid)"
+    if [[ -n "$cached" ]]; then
+      UDID="$cached"
+      DEVICE_LINE="    ${REQUIRED_DEVICE} (${UDID}) (Booted)"
+      mark "simulator already booted from boot step"
+      return 0
+    fi
+  fi
   refresh_device_line
   local state
   state="$(sim_state)"
@@ -335,6 +352,7 @@ cmd_boot() {
   resolve_udid
   mark "boot begin $UDID"
   boot_simulator_now
+  printf '%s\n' "$UDID" > /tmp/perimedi-booted-udid
   mark "boot end"
 }
 
