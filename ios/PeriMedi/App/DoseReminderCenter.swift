@@ -49,17 +49,6 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
     weak var app: AppModel?
     private var previewPlayer: AVAudioPlayer?
     private let engine = ReminderEngine(poster: SystemReminderPoster())
-    private var owedTokens: [UUID: PlannedSlotIdentity] = [:]
-    private var lookupToken: [PlannedSlotIdentity: UUID] = [:]
-
-    override init() {
-        super.init()
-        engine.deliverWrite = { [weak self] owed in
-            Task { @MainActor in
-                self?.performOwedWrite(owed)
-            }
-        }
-    }
 
     var masterEnabled: Bool {
         if UserDefaults.standard.object(forKey: Self.masterKey) == nil { return true }
@@ -202,7 +191,6 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
     }
 
     private func scheduleSoon(using store: Store, delay: Int) async {
-        let owed = Set(owedTokens.values)
         guard let slot = ReminderLogic.pending(
             on: DateKeys.todayKey(),
             medications: store.medications,
@@ -210,7 +198,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             doseLogs: store.doseLogs,
             periods: store.periods,
             settings: store.settings
-        ).first(where: { !owed.contains($0.identity) }) else { return }
+        ).first else { return }
         var soon = slot
         soon.fireAt = Date().addingTimeInterval(TimeInterval(max(1, delay)))
         present(soon)
@@ -300,9 +288,9 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         guard store != nil else { throw MarkDoseTakenError.saveFailed }
         switch shownLogId {
         case .lookup:
-            return acceptLookup(identity)
+            return try acceptLookup(identity)
         case .shown(let existingLogId):
-            beginTake(identity, existingLogId: existingLogId, dedupeLookup: false)
+            try beginTake(identity, existingLogId: existingLogId)
             return .taken
         }
     }
@@ -330,8 +318,8 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
-    func hasOwedTake(medicationId: String) -> Bool {
-        owedTokens.values.contains { $0.medicationId == medicationId }
+    func hasOwedTake(medicationId _: String) -> Bool {
+        false
     }
 
     func adoptPoster(_ poster: ReminderPoster) async {
@@ -351,13 +339,8 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
-    private func acceptLookup(_ identity: PlannedSlotIdentity) -> MarkSlotTakenResult {
+    private func acceptLookup(_ identity: PlannedSlotIdentity) throws -> MarkSlotTakenResult {
         guard let store else { return .notPlanned }
-        if lookupToken[identity] != nil {
-            cancelNotifications(for: identity)
-            DoseWidgetBridge.publish()
-            return .alreadyTaken
-        }
         switch NextPendingDose.resolve(
             identity: identity,
             medications: store.medications,
@@ -374,32 +357,29 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             DoseWidgetBridge.publish()
             return .alreadyTaken
         case .pending(let dose):
-            beginTake(identity, existingLogId: dose.log?.id, dedupeLookup: true)
+            try beginTake(identity, existingLogId: dose.log?.id)
             return .taken
         }
     }
 
     private func beginTake(
         _ identity: PlannedSlotIdentity,
-        existingLogId: String?,
-        dedupeLookup: Bool
-    ) {
-        let token = UUID()
-        owedTokens[token] = identity
-        if dedupeLookup {
-            lookupToken[identity] = token
-        }
-        let owed = OwedWrite(token: token, identity: identity, existingLogId: existingLogId)
-        engine.enqueue(.retire(owed: owed, ids: slotIds(identity), slot: identity))
+        existingLogId: String?
+    ) throws {
+        guard let store else { throw MarkDoseTakenError.saveFailed }
+        try store.setDoseStatus(
+            medicationId: identity.medicationId,
+            scheduleId: identity.scheduleId,
+            date: identity.date,
+            timeOfDay: identity.timeOfDay,
+            status: .taken,
+            existingLogId: existingLogId
+        )
+        engine.enqueue(.retire(ids: slotIds(identity), slot: identity))
     }
 
     private func releaseAndPend(_ identity: PlannedSlotIdentity, existingLogId: String?) {
-        let tokens = Set(owedTokens.compactMap { token, slot in slot == identity ? token : nil })
-        for token in tokens {
-            owedTokens.removeValue(forKey: token)
-        }
-        lookupToken.removeValue(forKey: identity)
-        engine.enqueue(.release(identity, cancel: tokens))
+        engine.enqueue(.release(identity))
         guard let store else { return }
         try? store.setDoseStatus(
             medicationId: identity.medicationId,
@@ -411,38 +391,8 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         )
     }
 
-    private func performOwedWrite(_ owed: OwedWrite) {
-        guard owedTokens.removeValue(forKey: owed.token) != nil else {
-            engine.enqueue(.dropOwed(owed.token))
-            return
-        }
-        if lookupToken[owed.identity] == owed.token {
-            lookupToken.removeValue(forKey: owed.identity)
-        }
-        guard let store else {
-            engine.enqueue(.release(owed.identity, cancel: []))
-            engine.enqueue(.dropOwed(owed.token))
-            return
-        }
-        do {
-            try store.setDoseStatus(
-                medicationId: owed.identity.medicationId,
-                scheduleId: owed.identity.scheduleId,
-                date: owed.identity.date,
-                timeOfDay: owed.identity.timeOfDay,
-                status: .taken,
-                existingLogId: owed.existingLogId
-            )
-            engine.enqueue(.dropOwed(owed.token))
-        } catch {
-            engine.enqueue(.release(owed.identity, cancel: []))
-            engine.enqueue(.dropOwed(owed.token))
-            DoseWidgetBridge.publish()
-        }
-    }
-
     private func cancelNotifications(for identity: PlannedSlotIdentity) {
-        engine.enqueue(.retire(owed: nil, ids: slotIds(identity), slot: identity))
+        engine.enqueue(.retire(ids: slotIds(identity), slot: identity))
     }
 
     private func slotIds(_ identity: PlannedSlotIdentity) -> [String] {
@@ -747,29 +697,19 @@ protocol ReminderPoster: AnyObject {
     func clearAll()
 }
 
-private struct OwedWrite: Equatable, Sendable {
-    var token: UUID
-    var identity: PlannedSlotIdentity
-    var existingLogId: String?
-}
-
 private struct ReminderLedger {
     var tombstone: Set<PlannedSlotIdentity> = []
     var submitted: Set<String> = []
     var inflight: Set<String> = []
-    var owed: [UUID: OwedWrite] = [:]
-    var writeScheduled: Set<UUID> = []
-    var cancelled: Set<UUID> = []
 }
 
 private enum ReminderCommand: Sendable {
-    case retire(owed: OwedWrite?, ids: [String], slot: PlannedSlotIdentity)
-    case release(PlannedSlotIdentity, cancel: Set<UUID>)
+    case retire(ids: [String], slot: PlannedSlotIdentity)
+    case release(PlannedSlotIdentity)
     case reconcile(seen: Set<String>, posts: [ReminderPost], preserve: Set<String>)
     case submit(ReminderPost)
     case remove(Set<String>)
     case clearAll
-    case dropOwed(UUID)
 }
 
 private final class ReminderEngine: @unchecked Sendable {
@@ -777,7 +717,6 @@ private final class ReminderEngine: @unchecked Sendable {
     private let posterLock = NSLock()
     private var poster: ReminderPoster
     private var ledger = ReminderLedger()
-    var deliverWrite: (@Sendable (OwedWrite) -> Void)?
 
     init(poster: ReminderPoster) {
         self.poster = poster
@@ -810,10 +749,10 @@ private final class ReminderEngine: @unchecked Sendable {
 
     private func perform(_ command: ReminderCommand) {
         switch command {
-        case .retire(let owed, let ids, let slot):
-            performRetire(owed: owed, ids: ids, slot: slot)
-        case .release(let slot, let cancel):
-            performRelease(slot: slot, cancel: cancel)
+        case .retire(let ids, let slot):
+            performRetire(ids: ids, slot: slot)
+        case .release(let slot):
+            performRelease(slot: slot)
         case .reconcile(let seen, let posts, let preserve):
             performReconcile(seen: seen, posts: posts, preserve: preserve)
         case .submit(let post):
@@ -823,18 +762,10 @@ private final class ReminderEngine: @unchecked Sendable {
         case .clearAll:
             currentPoster().clearAll()
             ledger.submitted.removeAll()
-        case .dropOwed(let token):
-            ledger.owed.removeValue(forKey: token)
-            ledger.writeScheduled.remove(token)
-            ledger.cancelled.remove(token)
         }
     }
 
-    private func performRetire(owed: OwedWrite?, ids: [String], slot: PlannedSlotIdentity) {
-        if let owed, ledger.cancelled.contains(owed.token) {
-            ledger.cancelled.remove(owed.token)
-            return
-        }
+    private func performRetire(ids: [String], slot: PlannedSlotIdentity) {
         ledger.tombstone.insert(slot)
         let family = Set(ids)
         let removeIds = family.union(ledger.submitted.intersection(family))
@@ -842,21 +773,10 @@ private final class ReminderEngine: @unchecked Sendable {
         if !removeIds.isEmpty {
             currentPoster().remove(ids: removeIds)
         }
-        if let owed {
-            ledger.owed[owed.token] = owed
-            if family.isDisjoint(with: ledger.inflight) {
-                scheduleWrite(owed)
-            }
-        }
     }
 
-    private func performRelease(slot: PlannedSlotIdentity, cancel: Set<UUID>) {
+    private func performRelease(slot: PlannedSlotIdentity) {
         ledger.tombstone.remove(slot)
-        ledger.cancelled.formUnion(cancel)
-        for token in cancel {
-            ledger.owed.removeValue(forKey: token)
-            ledger.writeScheduled.remove(token)
-        }
     }
 
     private func performReconcile(seen: Set<String>, posts: [ReminderPost], preserve: Set<String>) {
@@ -905,19 +825,6 @@ private final class ReminderEngine: @unchecked Sendable {
         } else if result != .installed {
             ledger.submitted.remove(id)
         }
-        let family = Set(
-            ReminderSlot.ids(scheduleId: slot.scheduleId, date: slot.date, timeOfDay: slot.timeOfDay)
-        )
-        guard family.isDisjoint(with: ledger.inflight) else { return }
-        for owed in ledger.owed.values where owed.identity == slot {
-            scheduleWrite(owed)
-        }
-    }
-
-    private func scheduleWrite(_ owed: OwedWrite) {
-        guard ledger.owed[owed.token] != nil else { return }
-        guard ledger.writeScheduled.insert(owed.token).inserted else { return }
-        deliverWrite?(owed)
     }
 
     private func tombstoneIds() -> Set<String> {
