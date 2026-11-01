@@ -61,20 +61,16 @@ class UiSuiteTests(unittest.TestCase):
         self.assertNotIn("github.event_name != 'pull_request'", text)
         self.assertIn("-only-testing:PeriMediTests", text)
         self.assertNotIn("-runFirstLaunch", text)
-        self.assertIn("-showBuildSettings", text)
-        self.assertIn("/tmp/perimedi-plugin-warm", text)
+        self.assertNotIn("-showBuildSettings", text)
         before_restore, _, after_restore = text.partition("name: Restore the UI test build")
         self.assertNotIn("control-perimedi boot", before_restore)
         self.assertIn("control-perimedi boot", after_restore)
-        boot = after_restore.split("name: Boot the simulator", 1)[1]
-        self.assertLess(boot.find("while kill"), boot.find("-showBuildSettings"))
-        self.assertGreater(boot.find("while kill"), -1)
         script = (
             ROOT / ".grok/skills/verify-perimedi/scripts/control-perimedi"
         ).read_text(encoding="utf-8")
         self.assertIn("-disableAutomaticPackageResolution", script)
         self.assertIn("-onlyUsePackageVersionsFromResolvedFile", script)
-        self.assertIn("/tmp/perimedi-plugin-warm.pid", script)
+        self.assertNotIn("perimedi-plugin-warm", script)
         self.assertIn("DTServiceHub", script)
 
     def test_locked_job_ifs_are_unchanged(self) -> None:

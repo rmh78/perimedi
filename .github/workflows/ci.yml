@@ -170,30 +170,7 @@ jobs:
         if: steps.ui-build-cache.outputs.cache-hit != 'true'
         run: rm -f ios/DerivedData/build-ok
       - name: Boot the simulator
-        run: |
-          .grok/skills/verify-perimedi/scripts/control-perimedi boot > /tmp/perimedi-boot.log 2>&1 &
-          echo $! > /tmp/perimedi-boot.pid
-          while kill -0 "$(cat /tmp/perimedi-boot.pid)" 2>/dev/null; do
-            sleep 2
-          done
-          echo "boot step: simulator ready $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          {
-            set +e
-            echo "plugin-warm begin $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            xcodebuild -project ios/PeriMedi.xcodeproj -scheme PeriMedi \
-              -destination 'generic/platform=iOS Simulator' \
-              -showBuildSettings \
-              -derivedDataPath /tmp/perimedi-plugin-warm \
-              -disableAutomaticPackageResolution \
-              -onlyUsePackageVersionsFromResolvedFile \
-              -skipPackageUpdates \
-              -skipPackagePluginValidation \
-              -skipPackageSignatureValidation \
-              > /tmp/perimedi-plugin-warm-xcode.log 2>&1
-            status=$?
-            echo "plugin-warm exit $status $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            grep -E 'Command line invocation|Resolve Package Graph|Resolved source packages|error:' /tmp/perimedi-plugin-warm-xcode.log | head -20 || true
-          } > /tmp/perimedi-plugin-warm.log 2>&1
+        run: .grok/skills/verify-perimedi/scripts/control-perimedi boot
       - name: UI tests
         env:
           UI_BUILD_CACHE_HIT: ${{ steps.ui-build-cache.outputs.cache-hit }}
@@ -272,30 +249,7 @@ jobs:
         if: steps.ui-build-cache.outputs.cache-hit != 'true'
         run: rm -f ios/DerivedData/build-ok
       - name: Boot the simulator
-        run: |
-          .grok/skills/verify-perimedi/scripts/control-perimedi boot > /tmp/perimedi-boot.log 2>&1 &
-          echo $! > /tmp/perimedi-boot.pid
-          while kill -0 "$(cat /tmp/perimedi-boot.pid)" 2>/dev/null; do
-            sleep 2
-          done
-          echo "boot step: simulator ready $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          {
-            set +e
-            echo "plugin-warm begin $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            xcodebuild -project ios/PeriMedi.xcodeproj -scheme PeriMedi \
-              -destination 'generic/platform=iOS Simulator' \
-              -showBuildSettings \
-              -derivedDataPath /tmp/perimedi-plugin-warm \
-              -disableAutomaticPackageResolution \
-              -onlyUsePackageVersionsFromResolvedFile \
-              -skipPackageUpdates \
-              -skipPackagePluginValidation \
-              -skipPackageSignatureValidation \
-              > /tmp/perimedi-plugin-warm-xcode.log 2>&1
-            status=$?
-            echo "plugin-warm exit $status $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            grep -E 'Command line invocation|Resolve Package Graph|Resolved source packages|error:' /tmp/perimedi-plugin-warm-xcode.log | head -20 || true
-          } > /tmp/perimedi-plugin-warm.log 2>&1
+        run: .grok/skills/verify-perimedi/scripts/control-perimedi boot
       - name: UI tests
         env:
           UI_BUILD_CACHE_HIT: ${{ steps.ui-build-cache.outputs.cache-hit }}

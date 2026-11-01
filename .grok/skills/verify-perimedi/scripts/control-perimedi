@@ -782,8 +782,7 @@ cmd_verify() {
   fi
 
   # Local boots sample the keyboard preference, so a booted phone is shut down
-  # and booted again. GitHub restores the cache, boots, then warms the plugin
-  # cache. Wait if either pid is still alive. Do not shut a booted simulator down.
+  # and booted again. GitHub boots in the previous step. Leave that simulator up.
   if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
     refresh_device_line
     if [[ "$DEVICE_LINE" != *Shutdown* ]]; then
@@ -792,28 +791,7 @@ cmd_verify() {
     fi
     boot_simulator_now
   else
-    local label pidfile pid
-    for spec in "early boot:/tmp/perimedi-boot.pid" "plugin warm:/tmp/perimedi-plugin-warm.pid"; do
-      label="${spec%%:*}"
-      pidfile="${spec#*:}"
-      [[ -f "$pidfile" ]] || continue
-      pid="$(cat "$pidfile")"
-      if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
-        mark "waiting for $label $pid"
-        while kill -0 "$pid" 2>/dev/null; do
-          sleep 2
-        done
-        mark "$label exited"
-      fi
-    done
-    if [[ -f /tmp/perimedi-boot.log ]]; then
-      cat /tmp/perimedi-boot.log >&2 || true
-    fi
     boot_simulator_now
-    if [[ -f /tmp/perimedi-plugin-warm.log ]]; then
-      mark "plugin warm log"
-      cat /tmp/perimedi-plugin-warm.log >&2 || true
-    fi
   fi
   # Killing it after 5s left the next simctl in a 104s to 166s hole on the
   # three exact-cache logs. The pre-test uninstall is the call in that hole.
