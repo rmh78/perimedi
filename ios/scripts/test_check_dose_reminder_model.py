@@ -89,7 +89,7 @@ class DriftTests(unittest.TestCase):
         )
         self.assertNotIn("ReminderLogic.followUpPlan", [symbol.name for symbol in self.covered])
         self.assertIn(LEFT_OUT, self.skill)
-        self.assertEqual(model.sync_commit(self.skill), "a124db5")
+        self.assertEqual(model.sync_commit(self.skill), "9981f7d")
         self.assertEqual(
             model.unresolved(
                 self.covered,
@@ -158,7 +158,7 @@ class DriftTests(unittest.TestCase):
         )
 
     def test_static_cancel_is_covered(self) -> None:
-        line = line_of(CENTER, "func cancelNotifications(ids")
+        line = line_of(CENTER, "func cancelNotifications(for")
         self.assertEqual(
             model.hunk_problems(hunk(CENTER, line), self.covered, self.files, "a124db5", "a124db5"),
             [f"DoseReminderCenter.cancelNotifications in {CENTER}: {FIX}"],
