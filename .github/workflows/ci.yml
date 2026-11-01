@@ -13,6 +13,10 @@ on:
         description: Mark this run as the nightly. The night sets this. A manual run leaves it off.
         type: boolean
         default: false
+      check_sha:
+        description: Look up this SHA and do not start the suite. Empty runs the suite.
+        type: string
+        default: ""
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -249,8 +253,26 @@ jobs:
           path: /tmp/perimedi-plugin-cache
           key: ${{ steps.plugin-cache.outputs.cache-primary-key }}
 
+  nightly-check:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.check_sha != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v5
+      - name: Test the nightly lookup
+        run: python3 .github/scripts/test_nightly_prior.py
+      - name: Look up a green nightly
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NIGHTLY_SHA: ${{ github.event.inputs.check_sha }}
+          NIGHTLY_MODE: check
+        run: python3 .github/scripts/nightly_prior.py
+
   full:
-    if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main' && (github.event.inputs.check_sha == '' || github.event.inputs.check_sha == null)
     runs-on: xcode-27
     timeout-minutes: 45
     permissions:

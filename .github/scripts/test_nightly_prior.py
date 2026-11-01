@@ -68,6 +68,14 @@ class WiringTest(unittest.TestCase):
         self.assertIn("steps.prior.outputs.skip != 'true'", nightly)
         self.assertIn("-f nightly=true", nightly)
         self.assertIn("NIGHTLY_MODE", nightly)
+        self.assertIn(
+            "github.event_name == 'workflow_dispatch' && github.event.inputs.check_sha != ''",
+            ci,
+        )
+        self.assertIn(
+            "github.event.inputs.check_sha == '' || github.event.inputs.check_sha == null",
+            ci,
+        )
         self.assertIn("nightly:", ci)
         self.assertIn("&& 'nightly' ||", ci)
         self.assertEqual(

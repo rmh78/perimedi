@@ -15,7 +15,8 @@ SMOKE_LINE = (
     "PERIMEDI_UI_SUITE: ${{ github.event_name == 'pull_request' && 'smoke' || 'full' }}"
 )
 BRANCH_FULL = (
-    "if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'"
+    "if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main' "
+    "&& (github.event.inputs.check_sha == '' || github.event.inputs.check_sha == null)"
 )
 
 
