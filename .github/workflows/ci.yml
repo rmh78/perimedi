@@ -1,13 +1,16 @@
 name: ci
+run-name: ${{ (github.event_name == 'workflow_dispatch' && (github.event.inputs.nightly == true || github.event.inputs.nightly == 'true')) && 'nightly' || github.event_name == 'pull_request' && github.event.pull_request.title || github.workflow }}
 
 on:
   pull_request:
-  schedule:
-    - cron: '17 4 * * *'
   workflow_dispatch:
     inputs:
       force_red:
         description: Fail ids on purpose and skip openspec, domain, and ui
+        type: boolean
+        default: false
+      nightly:
+        description: Mark this run as the nightly. The night sets this. A manual run leaves it off.
         type: boolean
         default: false
 
