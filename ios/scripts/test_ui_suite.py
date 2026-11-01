@@ -11,9 +11,11 @@ import ui_suite
 
 ROOT = Path(__file__).resolve().parents[2]
 CI = ROOT / ".github/workflows/ci.yml"
-UI_FULL = ROOT / ".github/workflows/ui-full.yml"
 SMOKE_LINE = (
     "PERIMEDI_UI_SUITE: ${{ github.event_name == 'pull_request' && 'smoke' || 'full' }}"
+)
+BRANCH_FULL = (
+    "if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'"
 )
 
 
@@ -50,10 +52,13 @@ class UiSuiteTests(unittest.TestCase):
     def test_pull_request_selects_smoke_and_other_events_select_full(self) -> None:
         text = CI.read_text(encoding="utf-8")
         self.assertIn(SMOKE_LINE, text)
-        full = UI_FULL.read_text(encoding="utf-8")
-        self.assertIn("workflow_dispatch:", full)
-        self.assertIn("PERIMEDI_UI_SUITE: full", full)
-        self.assertNotIn("schedule:", full)
+        self.assertIn(BRANCH_FULL, text)
+        self.assertIn("PERIMEDI_UI_SUITE: full", text)
+        self.assertFalse((ROOT / ".github/workflows/ui-full.yml").exists())
+        self.assertIn(
+            "always() && github.event_name != 'pull_request' && steps.ui-build-cache.outputs.cache-hit != 'true'",
+            text,
+        )
 
     def test_locked_job_ifs_are_unchanged(self) -> None:
         red = _main_is_red()

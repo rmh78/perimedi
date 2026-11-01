@@ -170,6 +170,83 @@ jobs:
             echo "ok=false" >> "$GITHUB_OUTPUT"
           fi
       - name: Save the UI test build
+        if: always() && github.event_name != 'pull_request' && steps.ui-build-cache.outputs.cache-hit != 'true' && steps.build-ok.outputs.ok == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ios/DerivedData/Build
+            ios/DerivedData/SourcePackages
+            ios/DerivedData/ModuleCache.noindex
+            ios/DerivedData/CompilationCache.noindex
+            ios/DerivedData/SDKExplicitPrecompiledModules
+            ios/DerivedData/SDKStatCaches.noindex
+            ios/DerivedData/build-ok
+          key: ${{ steps.ui-build-cache.outputs.cache-primary-key }}
+
+  full:
+    if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+    runs-on: xcode-27
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      actions: write
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.app/Contents/Developer
+      SIM_OS: "27.0"
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Xcode version for the build cache
+        id: xcode-ver
+        run: echo "hash=$(xcodebuild -version | shasum -a 256 | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+      - name: Restore the UI test build
+        id: ui-build-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ios/DerivedData/Build
+            ios/DerivedData/SourcePackages
+            ios/DerivedData/ModuleCache.noindex
+            ios/DerivedData/CompilationCache.noindex
+            ios/DerivedData/SDKExplicitPrecompiledModules
+            ios/DerivedData/SDKStatCaches.noindex
+            ios/DerivedData/build-ok
+          key: ui-derived-xcode27-v3-${{ steps.xcode-ver.outputs.hash }}-${{ hashFiles('ios/PeriMedi*/**', 'ios/Sources/**', 'ios/PeriMediUITests/**', 'ios/Package.swift', 'ios/Package.resolved') }}
+          restore-keys: |
+            ui-derived-xcode27-v3-
+            ui-derived-xcode27-v2-
+            ui-derived-xcode27-
+      - name: Drop a prefix-restored build marker
+        if: steps.ui-build-cache.outputs.cache-hit != 'true'
+        run: rm -f ios/DerivedData/build-ok
+      - name: UI tests
+        env:
+          UI_BUILD_CACHE_HIT: ${{ steps.ui-build-cache.outputs.cache-hit }}
+          TEST_RUNNER_PERIMEDI_SAMPLE_TAKEN: "1"
+          PERIMEDI_UI_SUITE: full
+        run: .grok/skills/verify-perimedi/scripts/control-perimedi verify
+      - name: Upload xcresult on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-full-xcresult
+          path: ios/DerivedData/PeriMedi.xcresult
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Prune the UI test build
+        if: always() && steps.ui-build-cache.outputs.cache-hit != 'true'
+        run: rm -rf ios/DerivedData/Index.noindex ios/DerivedData/Logs ios/DerivedData/TestResults ios/DerivedData/PeriMedi.xcresult ios/DerivedData/build-for-testing.log
+      - name: Note a successful build
+        id: build-ok
+        if: always()
+        run: |
+          if [[ -f ios/DerivedData/build-ok ]]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Save the UI test build
         if: always() && steps.ui-build-cache.outputs.cache-hit != 'true' && steps.build-ok.outputs.ok == 'true'
         uses: actions/cache/save@v4
         with:

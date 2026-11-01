@@ -8,13 +8,12 @@ struct AppProof {
         robot.launch(.pinnedRemindIn(seconds: 2))
         assertEmptyHome()
         assertEmptyTrends()
-        editDeleteAndRelogPeriod()
+        logTwoPeriods()
+        assertNoScores()
         trackMedsReminderMonthAndMore()
         robot.launch(.trendsChart)
         assertTrendsChart()
         assertCustomSymptom()
-        robot.launch(.trendsNoScores)
-        assertNoScores()
     }
 
     private func assertEmptyHome() {
@@ -47,13 +46,18 @@ struct AppProof {
         robot.waitFor(id: "cycle.intro")
     }
 
-    private func editDeleteAndRelogPeriod() {
-        robot.addPeriod()
+    private func logTwoPeriods() {
+        let dash = "\u{2013}"
+        let keeper = "Mar 7, 2026 \(dash) Mar 11, 2026"
+        let spare = "Mar 1, 2026 \(dash) Mar 3, 2026"
+        let edited = "Mar 1, 2026 \(dash) Mar 5, 2026"
+
         robot.tap("cycle.action.period")
         robot.waitFor(id: "sheet.period")
-        if !robot.exists("period.add") {
-            robot.app.swipeUp()
-        }
+        saveNewPeriod(start: UITestDate.periodStart, end: UITestDate.periodEnd)
+        XCTAssertTrue(historyRow(keeper).waitForExistence(timeout: 2))
+
+        revealAdd()
         robot.tap("period.add")
         robot.waitFor(id: "period.end")
         let startBox = robot.element("period.start").frame
@@ -67,32 +71,34 @@ struct AppProof {
         )
         robot.tap("confirm.cancel")
         robot.waitGone(id: "period.end")
-        tapHistory()
+        XCTAssertTrue(historyRow(keeper).exists)
 
+        saveNewPeriod(start: "2026-03-01", end: "2026-03-03")
+        openHistory(spare)
         let start = robot.element("period.start")
         let startShown = ((start.value as? String) ?? "") + start.label
-        XCTAssertTrue(startShown.contains("2026-03-07"), startShown)
-        XCTAssertEqual(start.label, "Mar 7, 2026")
+        XCTAssertTrue(startShown.contains("2026-03-01"), startShown)
+        XCTAssertEqual(start.label, "Mar 1, 2026")
         XCTAssertTrue(robot.exists("period.delete"))
-        robot.setDateKey("period.end", "2026-03-12")
+        robot.setDateKey("period.end", "2026-03-05")
         robot.tap("period.save")
 
-        let edited = historyRow()
-        XCTAssertTrue(edited.waitForExistence(timeout: 2))
-        XCTAssertEqual(edited.label, "Mar 7, 2026 \u{2013} Mar 12, 2026")
-        robot.press(edited)
+        let editedRow = historyRow(edited)
+        XCTAssertTrue(editedRow.waitForExistence(timeout: 2))
+        XCTAssertEqual(editedRow.label, edited)
+        openHistory(edited)
         robot.tap("period.delete")
-        XCTAssertTrue(robot.app.staticTexts["Delete Mar 7, 2026 \u{2013} Mar 12, 2026?"].waitForExistence(timeout: 2))
+        XCTAssertTrue(robot.app.staticTexts["Delete \(edited)?"].waitForExistence(timeout: 2))
         robot.tap("confirm.delete")
-        assertNoHistoryRows()
+        let rows = historyQuery()
+        let deadline = Date().addingTimeInterval(2)
+        while Date() < deadline, rows.count != 1 || historyRow(edited).exists {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+        }
+        XCTAssertEqual(rows.count, 1)
+        XCTAssertEqual(historyRow(keeper).label, keeper)
 
         robot.closeSheet(id: "sheet.period")
-        robot.waitFor(id: "cycle.intro")
-        robot.waitFor(id: "cycle.empty.meds")
-        XCTAssertTrue(robot.value(of: "cycle.empty.meds").contains("need-period"))
-        XCTAssertFalse(robot.exists("cycle.strip.day.2026-03-07"))
-
-        robot.addPeriod()
         robot.waitFor(id: "cycle.strip.day.\(UITestDate.periodStart)")
         XCTAssertTrue(robot.value(of: "cycle.strip.day.\(UITestDate.periodStart)").contains("period"))
         XCTAssertTrue(robot.value(of: "cycle.strip.day.\(UITestDate.periodEnd)").contains("period"))
@@ -101,6 +107,20 @@ struct AppProof {
         XCTAssertFalse(robot.exists("cycle.intro"))
         robot.waitFor(id: "cycle.effect")
         XCTAssertEqual(robot.value(of: "cycle.effect"), "no-previous")
+    }
+
+    private func revealAdd() {
+        if !robot.exists("period.add") {
+            robot.app.swipeUp()
+        }
+    }
+
+    private func saveNewPeriod(start: String, end: String) {
+        revealAdd()
+        robot.tap("period.add")
+        robot.setDateKey("period.start", start)
+        robot.setDateKey("period.end", end)
+        robot.tap("period.save")
     }
 
     private func trackMedsReminderMonthAndMore() {
@@ -389,16 +409,22 @@ struct AppProof {
         XCTAssertFalse(robot.exists("trends.series.hot_flash"))
         XCTAssertFalse(robot.exists("trends.intro"))
         XCTAssertFalse(robot.exists("trends.change"))
+        robot.tap("tab.cycle")
+        robot.waitFor(id: "cycle.action.med")
     }
 
-    private func historyRow() -> XCUIElement {
+    private func historyQuery() -> XCUIElementQuery {
         robot.app.buttons.matching(
             NSPredicate(format: "identifier BEGINSWITH %@", "period.history.")
-        ).firstMatch
+        )
     }
 
-    private func tapHistory() {
-        let row = historyRow()
+    private func historyRow(_ label: String) -> XCUIElement {
+        historyQuery().matching(NSPredicate(format: "label == %@", label)).firstMatch
+    }
+
+    private func openHistory(_ label: String) {
+        let row = historyRow(label)
         for _ in 0..<8 {
             if robot.frameInsideChrome(row) { break }
             robot.app.swipeUp()
@@ -407,18 +433,7 @@ struct AppProof {
         if !robot.frameInsideChrome(row) {
             robot.app.swipeUp()
         }
-        robot.press(historyRow())
-    }
-
-    private func assertNoHistoryRows() {
-        let leftover = robot.app.descendants(matching: .any).matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", "period.history.")
-        )
-        let deadline = Date().addingTimeInterval(2)
-        while Date() < deadline, leftover.count > 0 {
-            RunLoop.current.run(until: Date().addingTimeInterval(0.05))
-        }
-        XCTAssertEqual(leftover.count, 0)
+        robot.press(historyRow(label))
     }
 
     private func assertFieldAboveKeyboard(_ id: String, file: StaticString = #filePath, line: UInt = #line) {

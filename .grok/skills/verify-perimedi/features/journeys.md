@@ -20,20 +20,21 @@ Launch the app on a clear store. Sheets open over Cycle, not as extra pages. The
 Preconditions:
 
 - `control-perimedi --run-id "$RUN_ID" doctor` prints `doctor: ok` after launch.
-- The English app journey launches with `-en -clear -uiTesting -today=2026-03-15 -remindIn=2` (`JourneyLaunch.pinnedRemindIn(seconds: 2)`). Later launches in the same method use `-fixture=trends` and `-fixture=trends-noscores`. No `-journeyStep`, no `-loadSample`.
+- The English app journey launches with `-en -clear -uiTesting -today=2026-03-15 -remindIn=2` (`JourneyLaunch.pinnedRemindIn(seconds: 2)`). The later launch in the same method uses `-fixture=trends`. No `-journeyStep`, no `-loadSample`.
 
 - **Empty home.** `AppRobot.launch()` waits for `tab.cycle` and `cycle.action.med`. `cycle.empty.meds` contains `need-period` and `need-med`. `cycle.intro` is present. No `cycle.lane.estrogen`. No `cycle.effect`.
 - **Empty Trends.** Tap `tab.trends`. `trends.status` and `trends.empty` are `need-cycles`. Return with `tab.cycle`.
-- **Period.** `AppRobot.addPeriod()` (`2026-03-07`–`2026-03-11`). Strip days contain `period`. Empty-meds value is exactly `need-med`. `cycle.effect` is `no-previous`.
+- **Period.** One visit to cycle settings. Save `2026-03-07`–`2026-03-11`, cancel an empty new card, save `2026-03-01`–`2026-03-03`, edit that end to `2026-03-05`, and delete it. The remaining history label is `Mar 7, 2026 – Mar 11, 2026`. Strip days contain `period`. Empty-meds value is exactly `need-med`. `cycle.effect` is `no-previous`.
+- **No scores.** After that period and before any symptom, tap `tab.trends`. `trends.status` and `trends.empty` are `no-scores`. No series chips and no `trends.change`. Return with `tab.cycle`.
 - **Meds.** `addMedication` Estrogen `1 mg` everyday, Progesterone `200 mg` Cream cyclic, start `2026-03-07`. Lanes `cycle.lane.estrogen` and `cycle.lane.progesterone` exist. Empty-meds gone.
 - **Taken.** Tap `cycle.lane.estrogen`. `cycle.lane.estrogen.status` is `taken`.
 - **Pager.** `cycle.pager.prev` changes `cycle.pager.label`; `cycle.pager.today` restores it. Period chip exists after paging back.
 - **Symptom.** `addSymptom()` then `cycle.chip.score.hot_flash` contains `strong`.
 - **Month.** Tap `tab.month`. Today contains `selected`, `taken`, `symptom`. Period start contains `period`. `month.pager.next` shows `month.day.2026-04-01`. Select period start, `tab.cycle`, strip day is hittable in the plot.
-- **Proof.** `control-perimedi --run-id "$RUN_ID" drive --test PeriMediUITests/RequiredJourneyTests/testEnglishAppJourney`. Evidence `TEST SUCCEEDED` plus the assertions above. That method also edits and deletes the period before the medications, takes both reminder banners, and continues through More. On More it taps German until the More tab reads Mehr, then taps English until it reads More.
+- **Proof.** `control-perimedi --run-id "$RUN_ID" drive --test PeriMediUITests/RequiredJourneyTests/testEnglishAppJourney`. Evidence `TEST SUCCEEDED` plus the assertions above. That method also edits and deletes the second period before the medications, takes both reminder banners, and continues through More. On More it taps German until the More tab reads Mehr, then taps English until it reads More.
 
 ## Gotchas
 
-- This path spans Cycle, empty Trends, the period, medication, and symptom sheets, Month, More (language, reminders, visit preview, sample cancel), and a later `.trendsChart` launch. Sample load is cancelled, not confirmed. The visit sheet is closed from the preview. It does not share the PDF.
+- This path spans Cycle, empty Trends, the period sheet, no-scores Trends, medication and symptom sheets, Month, More (language, reminders, visit preview, sample cancel), and a later `.trendsChart` launch. Sample load is cancelled, not confirmed. The visit sheet is closed from the preview. It does not share the PDF.
 - Typing must use the software keyboard. The driver turns Connect Hardware Keyboard off before boot.
 - This journey opens sample data and taps cancel. It does not load the sample.

@@ -33,7 +33,7 @@ When launched for verification, the app SHALL honor a pinned English chrome flag
 - **THEN** that start date is eight calendar days before the pinned date, not eight days before the device clock
 
 ### Requirement: Empty-to-tracking journey is machine-verifiable
-An instrumented UI suite SHALL include one English app journey that drives the real controls (not by writing the resulting records into the store) and SHALL fail if a step’s UI elements or resulting state are wrong. The suite SHALL start that journey from a cleared store and a pinned today. The journey SHALL follow a first-session path: empty home, empty Trends, log a recent period, edit and delete that period, log it again, add everyday and cyclic medications, mark today’s doses taken from the in-app reminder, page back through the week and return to today, log a symptom, confirm Month agrees, page Month, then select a period day on Month and see that day on Cycle.
+An instrumented UI suite SHALL include one English app journey that drives the real controls (not by writing the resulting records into the store) and SHALL fail if a step’s UI elements or resulting state are wrong. The suite SHALL start that journey from a cleared store and a pinned today. The journey SHALL follow a first-session path: empty home, empty Trends, log two recent periods in one cycle-settings visit, cancel one empty new period, edit and delete the second period, keep the first, open Trends and see no scores, add everyday and cyclic medications, mark today’s doses taken from the in-app reminder, page back through the week and return to today, log a symptom, confirm Month agrees, page Month, then select a period day on Month and see that day on Cycle.
 
 #### Scenario: Empty Cycle
 - **WHEN** the suite launches onto Cycle with no data
@@ -43,9 +43,9 @@ An instrumented UI suite SHALL include one English app journey that drives the r
 - **WHEN** the suite opens Trends before any period is logged
 - **THEN** Trends explains that cycles are needed, no series chips are shown, and the suite returns to Cycle to continue tracking
 
-#### Scenario: Edit and delete a period, then log it again
-- **WHEN** the suite logs a period, changes its end so the history label is exactly `Mar 7, 2026 – Mar 12, 2026`, and confirms `Delete Mar 7, 2026 – Mar 12, 2026?`
-- **THEN** that history row is gone, the PeriMedi intro card returns, the requirements card names the missing period, and the suite logs the period again from eight days before the pinned today through four days before it before any medication is saved
+#### Scenario: Edit and delete a second period
+- **WHEN** the suite, in one visit to cycle settings, logs a period from eight days before the pinned today through four days before it, logs a second period from 2026-03-01 through 2026-03-03, changes that second end so the history label is exactly `Mar 1, 2026 – Mar 5, 2026`, and confirms `Delete Mar 1, 2026 – Mar 5, 2026?`
+- **THEN** the second history row is gone, the first history row remains `Mar 7, 2026 – Mar 11, 2026`, and no medication has been saved yet
 
 #### Scenario: Add a period through the UI
 - **WHEN** the suite opens cycle settings, adds a period from eight days before the pinned today through four days before it, and saves
@@ -80,7 +80,7 @@ An instrumented UI suite SHALL include one English app journey that drives the r
 - **THEN** it does not pre-load the journey’s medications, periods, doses, or remarks; those records exist only because the suite created them through the UI
 
 ### Requirement: One English app journey and one English widget journey
-The full instrumented suite SHALL include two English journeys. The app journey SHALL cover More settings (both language controls present, reminders chrome, visit PDF preview, backup confirm-cancel), taking due doses from the in-app reminder card including snooze, and Trends after several scored cycles, in addition to the first-use path. Those steps SHALL drive real controls. Trends history MAY start from a dedicated fixture so the suite does not invent months of scores through the UI. The app journey SHALL NOT load sample data. On the period sheet it SHALL open a new period card, see an empty end date, cancel that card, and see the end date go away. On More it SHALL switch to German long enough for the More tab to read Mehr, then switch back to English, and it SHALL NOT stay in German for the rest of the journey. The widget journey SHALL run in English on the device’s current calendar day, SHALL change from a medium widget to a small widget without launching the app again, and SHALL run on a full verification, including the nightly run and a local verification. A pull-request run SHALL be a shorter English smoke on one simulator at the default text size: an empty home, one medication whose name is typed, and a Take on the medium Home Screen widget. That pull-request run SHALL NOT switch language, rewrite the catalog, or capture store frames. German product chrome SHALL be checked by requiring every English product string to have a non-empty German value and every German product string to have an English value. That check SHALL NOT launch a Simulator.
+The full instrumented suite SHALL include two English journeys. The app journey SHALL cover More settings (both language controls present, reminders chrome, visit PDF preview, backup confirm-cancel), taking due doses from the in-app reminder card including snooze, and Trends after several scored cycles, in addition to the first-use path. Those steps SHALL drive real controls. Trends history MAY start from a dedicated fixture so the suite does not invent months of scores through the UI. The no-scores screen SHALL be the first-session launch after a period exists and before a symptom is logged. The app journey SHALL NOT load sample data. On the period sheet it SHALL open a new period card, see an empty end date, cancel that card, and see the end date go away. On More it SHALL switch to German long enough for the More tab to read Mehr, then switch back to English, and it SHALL NOT stay in German for the rest of the journey. The widget journey SHALL run in English on the device’s current calendar day, SHALL change from a medium widget to a small widget without launching the app again, and SHALL run on a full verification, including the nightly run and a local verification. A pull-request run SHALL be a shorter English smoke on one simulator at the default text size: an empty home, one medication whose name is typed, and a Take on the medium Home Screen widget. That pull-request run SHALL NOT switch language, rewrite the catalog, or capture store frames. German product chrome SHALL be checked by requiring every English product string to have a non-empty German value and every German product string to have an English value. That check SHALL NOT launch a Simulator.
 
 #### Scenario: Cancel a new period
 - **WHEN** the app journey opens the period sheet and starts a new period
@@ -111,8 +111,8 @@ The full instrumented suite SHALL include two English journeys. The app journey 
 - **THEN** the chart, series, a tapped dot, and a dose-change tick are identifiable, including a hot-flush dot whose count is 8 and mean is 1 and a later dot whose count is 2 and mean is 4
 
 #### Scenario: Trends with cycles but no scores
-- **WHEN** the app journey opens Trends with logged cycles and no scores
-- **THEN** Trends explains that there are no scores and shows no series chips
+- **WHEN** the app journey, still on the first-session launch, opens Trends after the kept period is saved and before any symptom is logged
+- **THEN** Trends explains that there are no scores, shows no series chips, and the suite returns to Cycle
 
 #### Scenario: Custom symptom on the scored Trends launch
 - **WHEN** the app journey, still on the scored Trends launch, adds a custom symptom named Brain fog, renames it to Fog, and confirms deleting Fog and all its past scores

@@ -22,7 +22,7 @@ Ready when stdout contains `launch: ready udid=`. The helper boots that UDID if 
 
 Teardown is `cleanup` on the same `--run-id`.
 
-`AppRobot.launch` takes a `JourneyLaunch`: `.pinnedRemindIn(seconds: 2)` (today `2026-03-15`), `.trendsChart`, `.trendsNoScores`, or `.widgetToday` (device date). Each is `-en -clear -uiTesting` plus `-today` and that case's one flag. Never `-journeyStep` or `-loadSample` on a journey. A second launch with the same case fails. `launchCatalog` is the only path that may pass `-loadSample`. It writes the sixteen English catalog names and may switch to German only to write `sheet-symptom-pill-de.png`. Frozen dates in `UITestDate`: today `2026-03-15`, yesterday `2026-03-14`, period `2026-03-07`–`2026-03-11`.
+`AppRobot.launch` takes a `JourneyLaunch`: `.pinnedRemindIn(seconds: 2)` (today `2026-03-15`), `.trendsChart`, or `.widgetToday` (device date). Each is `-en -clear -uiTesting` plus `-today` and that case's one flag. Never `-journeyStep` or `-loadSample` on a journey. A second launch with the same case fails. `launchCatalog` is the only path that may pass `-loadSample`. It writes the sixteen English catalog names and may switch to German only to write `sheet-symptom-pill-de.png`. Frozen dates in `UITestDate`: today `2026-03-15`, yesterday `2026-03-14`, period `2026-03-07`–`2026-03-11`.
 
 ## Doctor
 
