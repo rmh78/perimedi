@@ -66,6 +66,9 @@ class UiSuiteTests(unittest.TestCase):
         before_restore, _, after_restore = text.partition("name: Restore the UI test build")
         self.assertNotIn("control-perimedi boot", before_restore)
         self.assertIn("control-perimedi boot", after_restore)
+        boot = after_restore.split("name: Boot the simulator", 1)[1]
+        self.assertLess(boot.find("while kill"), boot.find("-showBuildSettings"))
+        self.assertGreater(boot.find("while kill"), -1)
         script = (
             ROOT / ".grok/skills/verify-perimedi/scripts/control-perimedi"
         ).read_text(encoding="utf-8")

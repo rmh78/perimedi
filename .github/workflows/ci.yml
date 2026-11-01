@@ -173,6 +173,10 @@ jobs:
         run: |
           .grok/skills/verify-perimedi/scripts/control-perimedi boot > /tmp/perimedi-boot.log 2>&1 &
           echo $! > /tmp/perimedi-boot.pid
+          while kill -0 "$(cat /tmp/perimedi-boot.pid)" 2>/dev/null; do
+            sleep 2
+          done
+          echo "boot step: simulator ready $(date -u +%Y-%m-%dT%H:%M:%SZ)"
           {
             set +e
             echo "plugin-warm begin $(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -189,9 +193,7 @@ jobs:
             status=$?
             echo "plugin-warm exit $status $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             grep -E 'Command line invocation|Resolve Package Graph|Resolved source packages|error:' /tmp/perimedi-plugin-warm-xcode.log | head -20 || true
-            exit $status
-          } > /tmp/perimedi-plugin-warm.log 2>&1 &
-          echo $! > /tmp/perimedi-plugin-warm.pid
+          } > /tmp/perimedi-plugin-warm.log 2>&1
       - name: UI tests
         env:
           UI_BUILD_CACHE_HIT: ${{ steps.ui-build-cache.outputs.cache-hit }}
@@ -273,6 +275,10 @@ jobs:
         run: |
           .grok/skills/verify-perimedi/scripts/control-perimedi boot > /tmp/perimedi-boot.log 2>&1 &
           echo $! > /tmp/perimedi-boot.pid
+          while kill -0 "$(cat /tmp/perimedi-boot.pid)" 2>/dev/null; do
+            sleep 2
+          done
+          echo "boot step: simulator ready $(date -u +%Y-%m-%dT%H:%M:%SZ)"
           {
             set +e
             echo "plugin-warm begin $(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -289,9 +295,7 @@ jobs:
             status=$?
             echo "plugin-warm exit $status $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             grep -E 'Command line invocation|Resolve Package Graph|Resolved source packages|error:' /tmp/perimedi-plugin-warm-xcode.log | head -20 || true
-            exit $status
-          } > /tmp/perimedi-plugin-warm.log 2>&1 &
-          echo $! > /tmp/perimedi-plugin-warm.pid
+          } > /tmp/perimedi-plugin-warm.log 2>&1
       - name: UI tests
         env:
           UI_BUILD_CACHE_HIT: ${{ steps.ui-build-cache.outputs.cache-hit }}
