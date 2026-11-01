@@ -177,6 +177,9 @@ final class AppRobot {
         default:
             break
         }
+        if id.hasSuffix(".focused") {
+            return [.any]
+        }
         if id.hasSuffix(".status") || id.hasPrefix("trends.group.") {
             return [.staticText]
         }
@@ -371,13 +374,12 @@ final class AppRobot {
     }
 
     private func focus(_ field: XCUIElement, id: String, file: StaticString, line: UInt) {
-        let keyboard = app.keyboards.firstMatch
+        func ready() -> Bool { field.hasFocus || exists(id + ".focused") }
         press(field)
-        if spin(timeout: 2, { field.hasFocus }) { return }
+        if spin(timeout: 2, ready) { return }
         press(field)
-        if spin(timeout: 2, { field.hasFocus }) { return }
         XCTAssertTrue(
-            spin(timeout: 4) { field.hasFocus || keyboard.exists },
+            spin(timeout: 4, ready),
             "focused \(id)",
             file: file,
             line: line
