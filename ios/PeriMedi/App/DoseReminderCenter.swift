@@ -155,15 +155,12 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             await scheduleSoon(using: store, delay: delay)
             return
         }
-        let center = UNUserNotificationCenter.current()
-        let pending = await center.pendingNotificationRequests()
-        let pendingIds = pending.map(\.identifier)
+        let pendingIds = Array(await ReminderDelivery.pendingIdentifiers())
         if !masterEnabled {
             Self.removePending(pendingIds.filter(Self.isReminderRequest))
             return
         }
-        let settings = await center.notificationSettings()
-        let status = ReminderAuthStatus(settings.authorizationStatus)
+        let status = await ReminderDelivery.authorization()
         guard ReminderPermissionPolicy.shouldScheduleDoseReminders(
             masterEnabled: true,
             status: status
@@ -318,15 +315,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         }
         do {
             for slot in med.pending {
-                cancelNotifications(for: slot.identity)
-                try store.setDoseStatus(
-                    medicationId: slot.medication.id,
-                    scheduleId: slot.schedule.id,
-                    date: slot.date,
-                    timeOfDay: slot.timeOfDay,
-                    status: .taken,
-                    existingLogId: slot.log?.id
-                )
+                try commitTaken(slot.identity, existingLogId: slot.log?.id)
             }
             return .taken
         } catch {
@@ -335,9 +324,49 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
     }
 
     @discardableResult
-    func markSlotTaken(_ identity: PlannedSlotIdentity) throws -> MarkSlotTakenResult {
-        guard let store else { throw MarkDoseTakenError.saveFailed }
-        cancelNotifications(for: identity)
+    func markSlotTaken(
+        _ identity: PlannedSlotIdentity,
+        shownLogId: ShownLogId = .lookup
+    ) throws -> MarkSlotTakenResult {
+        guard store != nil else { throw MarkDoseTakenError.saveFailed }
+        switch shownLogId {
+        case .lookup:
+            return try acceptLookup(identity)
+        case .shown(let existingLogId):
+            try commitTaken(identity, existingLogId: existingLogId)
+            return .taken
+        }
+    }
+
+    func setSlotStatuses(
+        medicationId: String,
+        slots: [SlotStatusWrite],
+        status: DoseStatus
+    ) {
+        for slot in slots {
+            let identity = PlannedSlotIdentity(
+                medicationId: medicationId,
+                scheduleId: slot.scheduleId,
+                date: slot.date,
+                timeOfDay: slot.timeOfDay
+            )
+            switch status {
+            case .taken:
+                _ = try? markSlotTaken(identity, shownLogId: .shown(slot.existingLogId))
+            case .pending:
+                releaseAndPend(identity, existingLogId: slot.existingLogId)
+            case .skipped:
+                break
+            }
+        }
+    }
+
+    func finishNotificationWork() {
+        Self.notificationQueue.sync {}
+    }
+
+    private func acceptLookup(_ identity: PlannedSlotIdentity) throws -> MarkSlotTakenResult {
+        guard let store else { return .notPlanned }
         switch NextPendingDose.resolve(
             identity: identity,
             medications: store.medications,
@@ -350,35 +379,61 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
             DoseWidgetBridge.publish()
             return .notPlanned
         case .alreadyTaken:
+            cancelNotifications(for: identity)
             DoseWidgetBridge.publish()
             return .alreadyTaken
         case .pending(let dose):
-            do {
-                try store.setDoseStatus(
-                    medicationId: identity.medicationId,
-                    scheduleId: identity.scheduleId,
-                    date: identity.date,
-                    timeOfDay: identity.timeOfDay,
-                    status: .taken,
-                    existingLogId: dose.log?.id
-                )
-                return .taken
-            } catch {
-                throw MarkDoseTakenError.saveFailed
-            }
+            try commitTaken(identity, existingLogId: dose.log?.id)
+            return .taken
         }
     }
 
-    private func cancelNotifications(for identity: PlannedSlotIdentity) {
-        let ids = [
-            ReminderSlot.doseId(scheduleId: identity.scheduleId, date: identity.date, timeOfDay: identity.timeOfDay),
-            ReminderSlot.snoozeId(scheduleId: identity.scheduleId, date: identity.date, timeOfDay: identity.timeOfDay),
-        ] + ReminderSlot.followUpIds(
+    private func commitTaken(_ identity: PlannedSlotIdentity, existingLogId: String?) throws {
+        guard let store else { throw MarkDoseTakenError.saveFailed }
+        do {
+            try store.setDoseStatus(
+                medicationId: identity.medicationId,
+                scheduleId: identity.scheduleId,
+                date: identity.date,
+                timeOfDay: identity.timeOfDay,
+                status: .taken,
+                existingLogId: existingLogId
+            )
+        } catch {
+            throw MarkDoseTakenError.saveFailed
+        }
+        retireAndWait(identity)
+    }
+
+    private func releaseAndPend(_ identity: PlannedSlotIdentity, existingLogId: String?) {
+        Self.notificationQueue.sync {
+            ReminderDelivery.release(identity)
+        }
+        guard let store else { return }
+        try? store.setDoseStatus(
+            medicationId: identity.medicationId,
+            scheduleId: identity.scheduleId,
+            date: identity.date,
+            timeOfDay: identity.timeOfDay,
+            status: .pending,
+            existingLogId: existingLogId
+        )
+    }
+
+    private func retireAndWait(_ identity: PlannedSlotIdentity) {
+        let ids = ReminderSlot.ids(
             scheduleId: identity.scheduleId,
             date: identity.date,
             timeOfDay: identity.timeOfDay
         )
-        Self.cancelNotifications(ids: ids)
+        Self.notificationQueue.sync {
+            ReminderDelivery.retire(identity)
+            ReminderDelivery.remove(ids, delivered: true)
+        }
+    }
+
+    private func cancelNotifications(for identity: PlannedSlotIdentity) {
+        retireAndWait(identity)
     }
 
     /// One serial queue. A concurrent queue let a slow add from an earlier
@@ -391,22 +446,31 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
 
     nonisolated private static func enqueue(_ request: UNNotificationRequest) {
         notificationQueue.async {
-            UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+            if let slot = ReminderDelivery.identity(of: request), ReminderDelivery.isRetired(slot) {
+                return
+            }
+            ReminderDelivery.add(request) {
+                notificationQueue.async {
+                    guard
+                        let slot = ReminderDelivery.identity(of: request),
+                        ReminderDelivery.isRetired(slot)
+                    else { return }
+                    ReminderDelivery.remove([request.identifier], delivered: true)
+                }
+            }
         }
     }
 
     nonisolated private static func removePending(_ ids: [String]) {
         guard !ids.isEmpty else { return }
         notificationQueue.async {
-            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ids)
+            ReminderDelivery.remove(ids, delivered: false)
         }
     }
 
     nonisolated private static func removePendingAndDelivered(_ ids: [String]) {
         notificationQueue.async {
-            let center = UNUserNotificationCenter.current()
-            center.removePendingNotificationRequests(withIdentifiers: ids)
-            center.removeDeliveredNotifications(withIdentifiers: ids)
+            ReminderDelivery.remove(ids, delivered: true)
         }
     }
 
@@ -628,6 +692,130 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
 
     private static func isDoseOrFollow(_ id: String) -> Bool {
         id.hasPrefix("dose.") || id.hasPrefix("follow.")
+    }
+}
+
+enum ShownLogId: Equatable, Sendable {
+    case lookup
+    case shown(String?)
+}
+
+struct SlotStatusWrite: Equatable, Sendable {
+    var scheduleId: String
+    var date: String
+    var timeOfDay: String
+    var existingLogId: String?
+}
+
+enum ReminderDelivery {
+    private static let lock = NSLock()
+    private static var retired = Set<PlannedSlotIdentity>()
+    private static var addHook: ((UNNotificationRequest, @escaping () -> Void) -> Void)?
+    private static var removeHook: (([String]) -> Void)?
+    private static var pendingHook: (() async -> Set<String>)?
+    private static var authHook: (() async -> ReminderAuthStatus)?
+
+    static func installForTest(
+        add: @escaping (UNNotificationRequest, @escaping () -> Void) -> Void,
+        remove: @escaping ([String]) -> Void,
+        pending: @escaping () async -> Set<String>,
+        auth: @escaping () async -> ReminderAuthStatus
+    ) {
+        lock.lock()
+        addHook = add
+        removeHook = remove
+        pendingHook = pending
+        authHook = auth
+        lock.unlock()
+    }
+
+    static func resetForTest() {
+        lock.lock()
+        retired.removeAll()
+        addHook = nil
+        removeHook = nil
+        pendingHook = nil
+        authHook = nil
+        lock.unlock()
+    }
+
+    static func retire(_ slot: PlannedSlotIdentity) {
+        lock.lock()
+        retired.insert(slot)
+        lock.unlock()
+    }
+
+    static func release(_ slot: PlannedSlotIdentity) {
+        lock.lock()
+        retired.remove(slot)
+        lock.unlock()
+    }
+
+    static func isRetired(_ slot: PlannedSlotIdentity) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return retired.contains(slot)
+    }
+
+    static func identity(of request: UNNotificationRequest) -> PlannedSlotIdentity? {
+        let info = request.content.userInfo
+        guard
+            let medicationId = info["medicationId"] as? String,
+            let scheduleId = info["scheduleId"] as? String,
+            let date = info["date"] as? String,
+            let time = info["timeOfDay"] as? String
+        else { return nil }
+        return PlannedSlotIdentity(
+            medicationId: medicationId,
+            scheduleId: scheduleId,
+            date: date,
+            timeOfDay: time
+        )
+    }
+
+    static func add(_ request: UNNotificationRequest, done: @escaping () -> Void) {
+        let hook = locked { addHook }
+        if let hook {
+            hook(request, done)
+            return
+        }
+        DispatchQueue.global(qos: .utility).async {
+            UNUserNotificationCenter.current().add(request) { _ in done() }
+        }
+    }
+
+    static func remove(_ ids: [String], delivered: Bool) {
+        guard !ids.isEmpty else { return }
+        let hook = locked { removeHook }
+        if let hook {
+            hook(ids)
+            return
+        }
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: ids)
+        if delivered {
+            center.removeDeliveredNotifications(withIdentifiers: ids)
+        }
+    }
+
+    static func pendingIdentifiers() async -> Set<String> {
+        let hook = locked { pendingHook }
+        if let hook { return await hook() }
+        let pending = await UNUserNotificationCenter.current().pendingNotificationRequests()
+        return Set(pending.map(\.identifier))
+    }
+
+    static func authorization() async -> ReminderAuthStatus {
+        let hook = locked { authHook }
+        if let hook { return await hook() }
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
+        return ReminderAuthStatus(settings.authorizationStatus)
+    }
+
+    private static func locked<T>(_ body: () -> T) -> T {
+        lock.lock()
+        defer { lock.unlock() }
+        return body()
     }
 }
 

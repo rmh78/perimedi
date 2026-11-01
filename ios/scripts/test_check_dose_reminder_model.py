@@ -89,7 +89,7 @@ class DriftTests(unittest.TestCase):
         )
         self.assertNotIn("ReminderLogic.followUpPlan", [symbol.name for symbol in self.covered])
         self.assertIn(LEFT_OUT, self.skill)
-        self.assertEqual(model.sync_commit(self.skill), "a124db5")
+        self.assertEqual(model.sync_commit(self.skill), "2cdbf5a")
         self.assertEqual(
             model.unresolved(
                 self.covered,

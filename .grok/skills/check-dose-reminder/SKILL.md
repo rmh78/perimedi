@@ -44,7 +44,7 @@ Do not weaken an invariant to make the command pass. Do not change product code 
 - `NextPendingDose.resolve` in `ios/Sources/PeriMediDomain/NextPendingDose.swift`
 - `MarkTodayMedicationTakenIntent.perform` in `ios/PeriMediDoseWidgetSupport/MarkDoseTakenIntent.swift`
 
-Sync commit: `a124db5`
+Sync commit: `2cdbf5a`
 
 ## Bounds
 

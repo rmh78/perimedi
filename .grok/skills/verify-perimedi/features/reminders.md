@@ -18,7 +18,7 @@ Turn reminders on in More. Enable remind on a medication. When a slot is due, a 
 | Control | ID | Proof |
 |---|---|---|
 | Banner | `reminder.banner` | `testEnglishAppJourney` waits up to 12s for the banner after saving estrogen, after untaking that lane, and after saving progesterone. It does not read the banner title. The More language step checks the More tab label, not the banner. |
-| Taken | `reminder.taken` | Primary action on the right. Banner gone; `cycle.lane.{slug}.status` becomes `taken`. The English journey takes estrogen, then progesterone, before Month. |
+| Taken | `reminder.taken` | Primary action on the right. Banner gone. `cycle.lane.{slug}.status` becomes `taken` when Take returns. The English journey waits for that status. It takes estrogen, then progesterone, before Month. |
 | Snooze | `reminder.snooze` | Left of Taken. Banner dismisses without taking. The English journey taps it between the untake and the second estrogen take. |
 | More master | `more.reminders` | See [more.md](more.md). |
 | Extra reminders | `more.reminderFollowUps` | Pills Off / 2× / 3× on the Reminders card. See [more.md](more.md). `testEnglishAppJourney` waits for it, taps 2×, then Off. After the master switch goes off, the Off pill is disabled. It does not open the system permission dialog. |
@@ -31,6 +31,7 @@ Turn reminders on in More. Enable remind on a medication. When a slot is due, a 
 - Springboard banners are unreliable in XCTest. Use `-remindIn`, not a real notification.
 - Banner proof is on iPhone 17e only. `testEnglishAppJourney` can save the med and still miss `reminder.banner` within 12s (`-remindIn=2`) on any other phone. Do not treat that miss as coverage.
 - Taken on the banner uses the same path as the notification action. System banners use title/subtitle/body (medication name is subtitle, not title). Springboard copy is not XCTest-asserted.
+- The dose log is saved, and that slot's reminder cancel has run, before Take returns.
 - German Taken is “Genommen” so it matches the body (“Tippe auf Genommen”).
 - Master switch off on More means no banner, even if `med.remind` is on.
 - Fresh install with master on asks for notification permission. `-uiTesting` skips that prompt so CI is not blocked. After the user allows, dose notifications are rebuilt with an explicit time zone (calendar components without a zone can be dropped on device).
