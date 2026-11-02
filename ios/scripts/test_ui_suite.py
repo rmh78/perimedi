@@ -38,7 +38,7 @@ class UiSuiteTests(unittest.TestCase):
         self.assertEqual(
             ui_suite.args("smoke"),
             [
-                "-only-testing:PeriMediUITests/RequiredJourneyTests/testEnglishSmoke",
+                "-only-testing:PeriMediUITests/RequiredJourneyTests/testUserFlow",
             ],
         )
 

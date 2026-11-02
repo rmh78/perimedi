@@ -18,31 +18,12 @@ enum UITestDate {
 }
 
 /// Never `-journeyStep` or `-loadSample`.
-/// `widgetToday` uses the device date; the widget shows rows only when that date matches.
+/// Device date, so the Home Screen widget and Cycle share today.
 enum JourneyLaunch: Equatable {
-    case pinnedRemindIn(seconds: Int)
-    case trendsChart
-    case widgetToday
+    case userFlow
 
     var arguments: [String] {
-        let base = ["-en", "-clear", "-uiTesting", "-today=\(pinnedDay)"]
-        switch self {
-        case .pinnedRemindIn(let seconds):
-            return base + ["-remindIn=\(seconds)"]
-        case .trendsChart:
-            return base + ["-fixture=trends"]
-        case .widgetToday:
-            return base
-        }
-    }
-
-    private var pinnedDay: String {
-        switch self {
-        case .widgetToday:
-            return UITestDate.deviceToday
-        case .pinnedRemindIn, .trendsChart:
-            return UITestDate.today
-        }
+        ["-en", "-clear", "-uiTesting", "-today=\(UITestDate.deviceToday)"]
     }
 }
 
@@ -415,19 +396,14 @@ final class AppRobot {
         element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
     }
 
+    /// Tap the sheet. The next step waits for its own field.
+    /// `keyboard.exists` hung for 15s on the cold PR run.
     func dismissKeyboard() {
-        let keyboard = app.keyboards.firstMatch
-        guard keyboard.exists else { return }
         for title in ["sheet.symptom", "sheet.med", "sheet.period"] {
             if let sheet = hit(title) {
                 press(sheet)
-                _ = spin(timeout: 1) { !keyboard.exists }
                 return
             }
-        }
-        if keyboard.buttons["Return"].exists {
-            press(keyboard.buttons["Return"])
-            _ = spin(timeout: 1) { !keyboard.exists }
         }
     }
 
@@ -456,8 +432,9 @@ final class AppRobot {
             if !frameInsideChrome(swatch) { app.swipeUp() }
             press(app.descendants(matching: .any)[color])
         }
-        waitFor(id: "med.since")
-        pick("med.mode", cyclic ? "med.mode.cyclic" : "med.mode.everyday")
+        if cyclic {
+            pick("med.mode", "med.mode.cyclic")
+        }
         if let start {
             setDateKey("med.start", start)
         }
@@ -499,19 +476,5 @@ final class AppRobot {
             return true
         }
         return false
-    }
-
-    func addSymptom(
-        hotFlash: Int = 3,
-        sleep: Int = 2,
-        joints: Int = 1
-    ) {
-        tap("cycle.action.symptom")
-        waitFor(id: "sheet.symptom")
-        tap("symptom.score.hot_flash.\(hotFlash)")
-        tap("symptom.score.sleep.\(sleep)")
-        tap("symptom.score.joints.\(joints)")
-        tap("sheet.close")
-        waitGone(id: "sheet.symptom", timeout: 3)
     }
 }

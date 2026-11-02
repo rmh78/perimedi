@@ -16,10 +16,10 @@ Bottom bar → More → Doctor visit → View PDF → pick cycle(s) → Continue
 
 | Control | ID | Proof |
 |---|---|---|
-| View PDF | `more.sharePdf` | `testEnglishAppJourney` scrolls, waits, taps. Opens `visit.range`, not the system share sheet. |
+| View PDF | `more.sharePdf` | `testUserFlow` scrolls, waits, taps. Opens `visit.range`, not the system share sheet. |
 | Range sheet | `visit.range` | After tapping View PDF. |
 | Cycle row | `visit.range.cycle.{start}` | `A11yID.visitRangeCycle(_:)` → `visit.range.cycle.{start}`. Catalog with sample waits `visit.range.cycle.2026-02-02`. |
-| Include previous | `visit.range.previous` | Toggle. Shown when the selected cycle has a previous completed cycle. `testEnglishAppJourney` reaches More with a period but does not wait for this toggle. Catalog with sample waits `visit.range.cycle.2026-02-02`. |
+| Include previous | `visit.range.previous` | Toggle. Shown when the selected cycle has a previous completed cycle. `testUserFlow` reaches More with one period and does not wait for this toggle. Catalog with sample waits `visit.range.cycle.2026-02-02`. |
 | Continue | `visit.range.continue` | Journey taps it. |
 | Preview | `visit.pdf.preview` | After Continue. Stay in PeriMedi. |
 | Share on preview | `visit.pdf.share` | Journey waits. Do not tap — system share sheet has no PeriMedi IDs. |
@@ -29,7 +29,7 @@ PDF contents (range, taken rate, symptom table, Effect vs in-range changes, disc
 ## Gotchas
 
 - Cycle rows and PDF period rows use `DateCopy.closed`, the same medium date pair as period history. Single dates in the PDF and the range-header words use `DateCopy.day`.
-- Do not tap `visit.pdf.share` in journeys (system share sheet).
+- Do not tap `visit.pdf.share` in the user flow. The system share sheet has no PeriMedi IDs.
 - Empty store: range sheet copy says 4-week / 12-week fallback; Continue still opens a preview.
 - Screen catalog: `more-sample-en`, `visit-range-sample-en`, `visit-pdf-sample-en`. Review Files changed, not PR comment galleries.
 - Missing symptom days are not 0. `hot_flash` is days scored. German pump unit is Hub, and a decimal in that dose or in a mean is a comma.

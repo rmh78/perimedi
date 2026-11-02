@@ -125,6 +125,7 @@ struct ScreenCatalogWriter {
         try write("month-sample-en")
 
         robot.tap("tab.more")
+        robot.waitFor(id: "more.reminders")
         robot.scrollTo("more.sharePdf")
         robot.waitFor(id: "more.sharePdf")
         try write("more-sample-en")
@@ -146,6 +147,8 @@ struct ScreenCatalogWriter {
         try write("visit-pdf-sample-en")
         robot.tap("sheet.close")
         robot.waitGone(id: "visit.pdf.preview")
+        robot.scrollTo("more.sample")
+        robot.waitFor(id: "more.sample")
     }
 
     private func captureTrendsFixture() throws {

@@ -22,20 +22,20 @@ Cycle → + Med (`cycle.action.med`) for a new one, or a lane's edit control for
 | Sheet | `sheet.med` | Present after `cycle.action.med`. Gone after save. |
 | Close | `sheet.close` | Shared across sheets. |
 | Name | `med.name` | `AppRobot.clearAndType`. |
-| Form | `med.form` | `AppRobot.pick` — first-use uses visible `Cream`. |
+| Form | `med.form` | The sheet opens on Pill. `testUserFlow` does not open the menu. `pick` still accepts a visible label such as `Cream`. |
 | Dose | `med.dose` | e.g. `1 mg`, `200 mg`. |
 | Mode | `med.mode` | Picker itself. Options are picked by ID, not English labels. |
-| Mode every day | `med.mode.everyday` | `pick("med.mode", "med.mode.everyday")` via `AppRobot.addMedication` (cyclic: false). |
-| Mode cyclic | `med.mode.cyclic` | `pick("med.mode", "med.mode.cyclic")` via first-use cyclic progesterone. |
+| Mode every day | `med.mode.everyday` | The sheet opens on Every day. `testUserFlow` does not open the menu. |
+| Mode cyclic | `med.mode.cyclic` | `pick("med.mode", "med.mode.cyclic")` when `addMedication` is called with `cyclic: true`. The user flow does not. |
 | Preset | `med.preset` | On the `A11yID` enum but **not attached** in the sheet. Do not drive it. |
 | Start | `med.start` | `AppRobot.setDateKey`. Confirm with `date.done`. |
-| Dose from (effective date) | `med.since` | Sits next to the dose field, not after the schedule. Present when dose or schedule differs from the stored med (including a new med with a dose). `AppRobot.addMedication` waits for it after typing dose. |
+| Dose from (effective date) | `med.since` | Sits next to the dose field, not after the schedule. Present when dose or schedule differs from the stored med (including a new med with a dose). `AppRobot.addMedication` saves by `med.save` and does not wait for this field. Catalog still waits for it. |
 | Time chooser done | `time.done` | Same chrome as `date.done`, for take-at times. |
 | Remind | `med.remind` | Toggle on the sheet. |
 | Save | `med.save` | Sheet dismisses. A `cycle.lane.{slug}` appears. |
 | Delete | `med.delete` | Then `confirm.delete` / `confirm.cancel`. |
 
-`AppRobot.addMedication(name:dose:form:cyclic:start:)` is the packaged path. Mode is `med.mode.everyday` or `med.mode.cyclic`. Form pick still uses the visible label (`Cream`).
+`AppRobot.addMedication(name:dose:form:cyclic:start:)` is the packaged path. It leaves the type on Every day. It opens the menu only for a cyclic medication. Form pick still uses the visible label (`Cream`). The user flow does not pick a form. Pill is the default.
 
 ## Gotchas
 
