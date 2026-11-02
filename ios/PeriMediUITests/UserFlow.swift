@@ -124,8 +124,11 @@ final class HomeScreen {
         XCUIDevice.shared.press(.home)
         rebind()
         let icon = appIcon()
-        XCTAssertTrue(ready(icon, timeout: 4), "PeriMedi icon missing")
-        longPress(icon)
+        guard let frame = onScreenFrame(icon, timeout: 4) else {
+            XCTFail("PeriMedi icon missing")
+            return
+        }
+        longPress(icon, frame: frame)
         let medium = waitButton(["Medium-sized widget", "Mittelgroßes Widget"], timeout: 4)
         tapCenter(medium)
         let take = waitButton(["Take", "Nehmen"], timeout: 8)
@@ -135,10 +138,10 @@ final class HomeScreen {
     func restoreIcon() {
         XCUIDevice.shared.press(.home)
         rebind()
-        if ready(appIcon(), timeout: 2) { return }
+        if onScreenFrame(appIcon(), timeout: 2) != nil { return }
         let widget = widgetIcon()
-        guard ready(widget, timeout: 2) else { return }
-        longPress(widget)
+        guard let frame = onScreenFrame(widget, timeout: 2) else { return }
+        longPress(widget, frame: frame)
         let chip = waitButton(["App icon", "App-Symbol"], timeout: 4)
         tapCenter(chip)
     }
@@ -173,25 +176,35 @@ final class HomeScreen {
         return springboard.buttons[labels[0]]
     }
 
-    private func ready(_ element: XCUIElement, timeout: TimeInterval) -> Bool {
+    /// A later read can be `CGRect.zero`. That is inside 0...1, so the press hits the screen corner.
+    private func onScreenFrame(_ element: XCUIElement, timeout: TimeInterval) -> CGRect? {
         let deadline = Date().addingTimeInterval(timeout)
         while true {
-            if element.exists, element.frame.width > 8 { return true }
-            if Date() >= deadline { return false }
+            if element.exists {
+                let frame = element.frame
+                if frame.width > 8, frame.height > 8, springboard.frame.intersects(frame) {
+                    return frame
+                }
+            }
+            if Date() >= deadline { return nil }
             RunLoop.current.run(until: Date().addingTimeInterval(0.05))
         }
     }
 
-    private func longPress(_ element: XCUIElement) {
-        let frame = element.frame
+    private func longPress(_ element: XCUIElement, frame: CGRect) {
         let screen = springboard.frame
         let dx = (frame.midX - screen.minX) / screen.width
         let dy = (frame.midY - screen.minY) / screen.height
-        guard dx.isFinite, dy.isFinite, (0...1).contains(dx), (0...1).contains(dy) else {
-            element.press(forDuration: 1.0)
+        let placed = frame.width > 8 && frame.height > 8
+            && screen.width > 8 && screen.height > 8
+            && dx.isFinite && dy.isFinite
+            && dx > 0 && dy > 0
+            && dx <= 1 && dy <= 1
+        if placed {
+            springboard.coordinate(withNormalizedOffset: CGVector(dx: dx, dy: dy)).press(forDuration: 1.0)
             return
         }
-        springboard.coordinate(withNormalizedOffset: CGVector(dx: dx, dy: dy)).press(forDuration: 1.0)
+        element.press(forDuration: 1.0)
     }
 
     private func tapCenter(_ element: XCUIElement) {
