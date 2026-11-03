@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Prove that a person can perform PeriMedi’s real-world jobs on iOS by driving the real controls from a cleared store and asserting UI elements and resulting state. The instrumented proof is one English user flow. A pull request and a full verification both run that flow. A full verification also runs the screen catalog. The flow is one launch on the device’s current day: empty home, one medication typed by name, one period saved as the new card opens, one symptom, Month, Trends, More, the visit preview, and one Take on the medium Home Screen widget. Screenshots are failure evidence and a committed English UX catalog, plus German pictures of the New symptom control and of More, not the pass/fail oracle. German product chrome is covered by the string-table check rather than a second Simulator pass.
+Prove that a person can perform PeriMedi’s real-world jobs on iOS by driving the real controls from a cleared store and asserting UI elements and resulting state. The instrumented proof is one English user flow. A pull request and a full verification both run that flow. A full verification also runs the screen catalog. The flow is one launch on the device’s current day: empty home, one medication typed by name, one Taken tap on that medication’s Cycle lane, that dose put back to pending, one period saved as the new card opens, one symptom, Month, Trends, More, the visit preview, and one Take on the medium Home Screen widget. Screenshots are failure evidence and a committed English UX catalog, plus German pictures of the New symptom control and of More, not the pass/fail oracle. German product chrome is covered by the string-table check rather than a second Simulator pass.
 
 ## Requirements
 
@@ -33,7 +33,7 @@ When launched for verification, the app SHALL honor a pinned English chrome flag
 - **THEN** that start date is eight calendar days before the pinned date, not eight days before the device clock
 
 ### Requirement: One English user flow
-An instrumented UI suite SHALL include one English flow that drives the real controls and SHALL fail if a step’s UI elements or resulting state are wrong. A pull request and a full verification SHALL both run that flow. A full verification SHALL also run the catalog capture. The flow SHALL start from a cleared store, pin today to the device’s current calendar day, and use one app launch. It SHALL type one everyday medication, leave the sheet on the form, type, time, and color it already shows, save one period from the new card as it opens, log one hot-flush score, open Month, Trends, and More, open the visit preview, and take the still-pending dose once from a medium Home Screen widget. Returning to the app SHALL show that dose taken. The flow SHALL NOT load sample data, switch language, snooze, page Month, change the widget size, or launch the app a second time. A pull-request run SHALL NOT rewrite the catalog or capture store frames. German product chrome SHALL be checked by requiring every English product string to have a non-empty German value and every German product string to have an English value. That check SHALL NOT launch a Simulator.
+An instrumented UI suite SHALL include one English flow that drives the real controls and SHALL fail if a step’s UI elements or resulting state are wrong. A pull request and a full verification SHALL both run that flow. A full verification SHALL also run the catalog capture. The flow SHALL start from a cleared store, pin today to the device’s current calendar day, and use one app launch. It SHALL type one everyday medication, leave the sheet on the form, type, time, and color it already shows, mark that dose taken by tapping its Cycle lane, put that dose back to pending, save one period from the new card as it opens, log one hot-flush score, open Month, Trends, and More, open the visit preview, and take it once from a medium Home Screen widget. Returning to the app SHALL show that dose taken. The flow SHALL NOT load sample data, switch language, snooze, page Month, change the widget size, or launch the app a second time. A pull-request run SHALL NOT rewrite the catalog or capture store frames. German product chrome SHALL be checked by requiring every English product string to have a non-empty German value and every German product string to have an English value. That check SHALL NOT launch a Simulator.
 
 #### Scenario: Empty Cycle
 - **WHEN** the flow launches onto Cycle with no data
@@ -42,6 +42,10 @@ An instrumented UI suite SHALL include one English flow that drives the real con
 #### Scenario: One medication typed by name
 - **WHEN** the flow saves an everyday medication named Estrogen at 1 mg by typing the name and the dose
 - **THEN** Cycle shows one lane for that name
+
+#### Scenario: Taken on Cycle
+- **WHEN** the flow taps that lane while the dose is still to take
+- **THEN** the lane reads taken, and the flow puts the dose back to pending before the Home Screen Take
 
 #### Scenario: One period and one symptom
 - **WHEN** the flow saves the new period card as it opens and logs one hot-flush score

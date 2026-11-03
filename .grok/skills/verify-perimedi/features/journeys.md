@@ -1,12 +1,12 @@
 # First-use journey
 
-A new user opens an empty app, types one medication, saves the new period card as it opens, logs one symptom, opens Month, Trends, and More, opens the visit preview, and takes the still-pending dose once on the medium Home Screen widget.
+A new user opens an empty app, types one medication, marks that dose taken on Cycle and puts it back, saves the new period card as it opens, logs one symptom, opens Month, Trends, and More, opens the visit preview, and takes the pending dose once on the medium Home Screen widget.
 
 ## Sub-features
 
 - `first-use-empty` empty Cycle (`cycle.empty.meds` contains `need-med`)
 - `first-use-meds` one everyday estrogen lane
-- `first-use-taken` one widget Take that the lane reads as `taken`. The dose stays pending until that tap.
+- `first-use-taken` a Cycle lane tap that reads `taken`, then the same tap puts the dose back. The widget Take is the second take, and the lane reads `taken` again.
 - `first-use-period` one period saved in the current month
 - `first-use-symptom` hot flash 3 shows `cycle.chip.score.hot_flash`
 - `first-use-month` today's month cell `month.day.{device date}`
@@ -23,7 +23,7 @@ Preconditions:
 - `testUserFlow` launches `JourneyLaunch.userFlow` (`-en -clear -uiTesting -today=<device date>`). One launch. No `-journeyStep`, no `-loadSample`, no `-fixture=trends`, no `-remindIn`.
 
 - **Empty home.** `AppRobot.launch` waits for `tab.cycle` and `cycle.action.med`. `cycle.empty.meds` contains `need-med`.
-- **Meds.** `addMedication` types Estrogen and `1 mg`, then saves. The sheet stays on Pill, Every day, and 20:00. `cycle.lane.estrogen` exists. The dose stays pending.
+- **Meds.** `addMedication` types Estrogen and `1 mg`, then saves. The sheet stays on Pill, Every day, and 20:00. `cycle.lane.estrogen` exists. Tap that lane. `cycle.lane.estrogen.status` reads `taken`. Tap it again so the status reads `not-taken` before the Home Screen.
 - **Period.** Open the new card and save it. Start is the selected day, the end stays empty, and the flow stays medium. Close `sheet.period`.
 - **Symptom.** Tap `symptom.score.hot_flash.3`. `cycle.chip.score.hot_flash` exists. The flow does not read the chip value.
 - **Month.** Tap `tab.month`. `month.day.` plus the device date exists. No pager.

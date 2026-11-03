@@ -85,6 +85,11 @@ class UiSuiteTests(unittest.TestCase):
             red._jobs_with_exact_if(text, red._FORCE_RED_GUARD),
             ["openspec", "domain", "ui"],
         )
+        self.assertIn(
+            "if: (github.event_name == 'pull_request' || github.ref == 'refs/heads/main') "
+            "&& (github.event.inputs.check_sha == '' || github.event.inputs.check_sha == null)",
+            text,
+        )
 
 
 if __name__ == "__main__":

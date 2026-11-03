@@ -17,7 +17,7 @@ Long-press the PeriMedi icon and choose one widget size. That replaces the icon 
 
 ## Driving it with A11yID / AppRobot
 
-`testUserFlow` is the one proof. The app is already running with Estrogen `1 mg` everyday. The flow opens Cycle first, so that lane is on screen and `not-taken` before Home Screen. The Take intent can bring the app forward, and it resumes on the tab that was open. The flow presses Home, long-presses the PeriMedi app icon, taps `Medium-sized widget` (or `Mittelgroßes Widget`), and taps `Take` (or `Nehmen`) once. It does not read helper copy, does not change size, and does not write `widget-medium-before-en.png` or `widget-medium-after-en.png`. Those two pictures stay committed files. It activates the app and `cycle.lane.estrogen.status` is `taken`. Tear-down presses Home. If the app icon is already back, it returns. If the slot is the widget, it long-presses and taps `App icon` or `App-Symbol`. If neither icon is ready, it returns and does not fail the test. SpringBoard still has no `A11yID`. Do not add widget identifiers. Queries stay on `icons` and `buttons`.
+`testUserFlow` is the one proof. The app is already running with Estrogen `1 mg` everyday. The flow taps that Cycle lane once so the status reads `taken`, taps it again so the status reads `not-taken`, and the lane is `not-taken` before Home Screen. The Take intent can bring the app forward, and it resumes on the tab that was open. The flow presses Home, long-presses the PeriMedi app icon, taps `Medium-sized widget` (or `Mittelgroßes Widget`), and taps `Take` (or `Nehmen`) once. It does not read helper copy, does not change size, and does not write `widget-medium-before-en.png` or `widget-medium-after-en.png`. Those two pictures stay committed files. It activates the app and `cycle.lane.estrogen.status` is `taken`. Tear-down presses Home. If the app icon is already back, it returns. If the slot is the widget, it long-presses and taps `App icon` or `App-Symbol`. If neither icon is ready, it returns and does not fail the test. SpringBoard still has no `A11yID`. Do not add widget identifiers. Queries stay on `icons` and `buttons`.
 
 A pull request runs this step inside `testUserFlow`. Local `verify` and the nightly full suite run the same test. The build signs the App Group. Do not pass `CODE_SIGNING_ALLOWED=NO`.
 
@@ -26,7 +26,7 @@ Domain proof stays next to that step:
 - `TodayPendingMedsTests` for today's list (today not tomorrow, group two times, taken drops, reminder-off, pause, empty)
 - `DoseWidgetSnapshotTests` for the snapshot face (check window, blank helper after the last check, helper text while another medication remains, all-taken versus nothing planned, capsule contrast)
 - `NextPendingDoseTests` for reminder `resolve` (pending, already taken, missing)
-- `testUserFlow` for the one medium widget Take. The lane stays `not-taken` until that tap, then reads `taken`.
+- `testUserFlow` for the Cycle Taken tap and the one medium widget Take. The lane reads `taken` after the Cycle tap, `not-taken` after the put-back, and `taken` after the widget Take.
 
 ## Gotchas
 

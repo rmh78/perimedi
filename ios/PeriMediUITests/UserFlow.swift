@@ -13,6 +13,20 @@ struct UserFlow {
         let lane = "cycle.lane.estrogen"
         let status = "\(lane).status"
         robot.waitFor(id: lane)
+        XCTAssertTrue(
+            robot.spin(timeout: 4) { robot.value(of: status) == "not-taken" },
+            "before Cycle Taken, \(status) is \(robot.value(of: status))"
+        )
+        robot.tap(lane)
+        XCTAssertTrue(
+            robot.spin(timeout: 4) { robot.value(of: status) == "taken" },
+            "after Cycle Taken, \(status) is \(robot.value(of: status))"
+        )
+        robot.tap(lane)
+        XCTAssertTrue(
+            robot.spin(timeout: 4) { robot.value(of: status) == "not-taken" },
+            "after putting the dose back, \(status) is \(robot.value(of: status))"
+        )
 
         logOnePeriod()
         logOneSymptom()

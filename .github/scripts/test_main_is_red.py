@@ -284,9 +284,10 @@ class WorkflowTest(unittest.TestCase):
 
 
 _FORCE_RED_GUARD = (
-    "if: github.event_name == 'pull_request' || "
+    "if: (github.event_name == 'pull_request' || "
     "(github.ref == 'refs/heads/main' && !(github.event_name == 'workflow_dispatch' && "
-    "(github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')))"
+    "(github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')))) "
+    "&& (github.event.inputs.check_sha == '' || github.event.inputs.check_sha == null)"
 )
 
 
