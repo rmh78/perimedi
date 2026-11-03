@@ -334,6 +334,21 @@ struct WrappingHStack: Layout {
     }
 }
 
+struct FocusFlag: View {
+    var id: String
+    var on: Bool
+
+    var body: some View {
+        if on {
+            Color.clear
+                .frame(width: 4, height: 4)
+                .accessibilityElement(children: .ignore)
+                .accessibilityIdentifier(id + ".focused")
+                .accessibilityLabel("focused")
+        }
+    }
+}
+
 struct SoftField<Content: View>: View {
     @ViewBuilder var content: () -> Content
     var body: some View {

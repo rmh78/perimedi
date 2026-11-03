@@ -20,9 +20,11 @@ usage() {
   cat <<'EOF'
 control-perimedi — PeriMedi iOS verification driver
 
-Full product UI proof (no --run-id):
+Full product UI proof (no --run-id). Default suite is full.
+--suite smoke or --suite full wins over PERIMEDI_UI_SUITE.
 
   control-perimedi verify
+  control-perimedi verify --suite smoke
 
 Agents. Require --run-id. Isolation is that id plus the simulator
 UDID (SIM_UDID, or SIM_OS, iPhone 17e only). Do not pass --checkout.
@@ -33,6 +35,7 @@ this run-id holds the lock.
   control-perimedi --run-id <id> launch
   control-perimedi --run-id <id> drive --test PeriMediUITests/<Class>/<method>
   control-perimedi --run-id <id> cleanup
+  control-perimedi boot
 
 Evidence: .grok/skills/verify-perimedi/evidence/<id>/
 Lock:     /tmp/perimedi-verify-<udid>.lock
@@ -43,6 +46,10 @@ EOF
 }
 
 fail() { printf 'control-perimedi: %s\n' "$*" >&2; exit 1; }
+
+mark() {
+  printf 'control-perimedi: %s %s\n' "$*" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >&2
+}
 
 udid_named() {
   local name="$1"
@@ -74,6 +81,13 @@ require_iphone_17e_env() {
 }
 
 resolve_udid() {
+  if [[ -z "${SIM_UDID:-}" && -n "${GITHUB_ACTIONS:-}" && -f /tmp/perimedi-booted-udid ]]; then
+    UDID="$(tr -d '[:space:]' < /tmp/perimedi-booted-udid)"
+    [[ -n "$UDID" ]] || fail "boot step udid file is empty"
+    DEVICE_LINE="    ${REQUIRED_DEVICE} (${UDID}) (Booted)"
+    mark "udid from boot step"
+    return
+  fi
   if [[ -n "${SIM_UDID:-}" ]]; then
     local line name
     line="$(xcrun simctl list devices | grep "${SIM_UDID}" | head -n 1 || true)"
@@ -113,6 +127,7 @@ uninstall_app() {
 
 RUN_ID=""
 TEST=""
+SUITE=""
 CMD=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -126,11 +141,16 @@ while [[ $# -gt 0 ]]; do
       TEST="$2"
       shift 2
       ;;
+    --suite)
+      [[ $# -ge 2 ]] || fail "--suite needs smoke or full"
+      SUITE="$2"
+      shift 2
+      ;;
     --help|-h)
       usage
       exit 0
       ;;
-    doctor|launch|drive|cleanup|verify)
+    doctor|launch|drive|cleanup|verify|boot)
       [[ -z "$CMD" ]] || fail "already have command $CMD"
       CMD="$1"
       shift
@@ -141,13 +161,18 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-[[ -n "$CMD" ]] || { usage >&2; fail "need doctor, launch, drive, cleanup, or verify"; }
+[[ -n "$CMD" ]] || { usage >&2; fail "need doctor, launch, drive, cleanup, verify, or boot"; }
 require_iphone_17e_env
 
 if [[ "$CMD" == "verify" ]]; then
   [[ -z "$RUN_ID" ]] || fail "verify does not take --run-id"
   [[ -z "$TEST" ]] || fail "verify does not take --test"
+elif [[ "$CMD" == "boot" ]]; then
+  [[ -z "$RUN_ID" ]] || fail "boot does not take --run-id"
+  [[ -z "$TEST" ]] || fail "boot does not take --test"
+  [[ -z "$SUITE" ]] || fail "boot does not take --suite"
 else
+  [[ -z "$SUITE" ]] || fail "$CMD does not take --suite"
   [[ -n "$RUN_ID" ]] || fail "need --run-id"
   [[ "$RUN_ID" =~ ^[A-Za-z0-9._-]+$ ]] || fail "run-id must match [A-Za-z0-9._-]+"
   EVIDENCE="$SKILL_DIR/evidence/$RUN_ID"
@@ -288,6 +313,49 @@ disable_hardware_keyboard() {
   fi
 }
 
+refresh_device_line() {
+  DEVICE_LINE="$(xcrun simctl list devices | grep "$UDID" | head -n 1 || true)"
+}
+
+# Keyboard preference first, then boot. A device that is already Booted is left up.
+boot_simulator_now() {
+  disable_hardware_keyboard
+  if [[ -n "${GITHUB_ACTIONS:-}" && -f /tmp/perimedi-booted-udid ]]; then
+    local cached
+    cached="$(tr -d '[:space:]' < /tmp/perimedi-booted-udid)"
+    if [[ -n "$cached" ]]; then
+      UDID="$cached"
+      DEVICE_LINE="    ${REQUIRED_DEVICE} (${UDID}) (Booted)"
+      mark "simulator already booted from boot step"
+      return 0
+    fi
+  fi
+  refresh_device_line
+  local state
+  state="$(sim_state)"
+  mark "simulator ${state:-unknown}"
+  if [[ "$state" == "Booted" ]]; then
+    mark "simulator already booted"
+    return 0
+  fi
+  if [[ "$state" != "Booting" ]]; then
+    mark "simctl boot"
+    xcrun simctl boot "$UDID" || true
+  fi
+  mark "bootstatus"
+  xcrun simctl bootstatus "$UDID" -b
+  mark "booted"
+}
+
+cmd_boot() {
+  [[ "$(uname -s)" == "Darwin" ]] || fail "boot needs macOS with Xcode"
+  resolve_udid
+  mark "boot begin $UDID"
+  boot_simulator_now
+  printf '%s\n' "$UDID" > /tmp/perimedi-booted-udid
+  mark "boot end"
+}
+
 cmd_launch() {
   [[ "$(uname -s)" == "Darwin" ]] || fail "launch needs macOS with Xcode"
   mkdir -p "$EVIDENCE" "$RUNS"
@@ -410,6 +478,20 @@ stop_build() {
   wait "$pid" 2>/dev/null || true
 }
 
+# The runner's Complete job waits out DTServiceHub after the step exits.
+# Shut the simulator down and kill that process while we still own it.
+stop_ci_orphans() {
+  [[ "${GITHUB_ACTIONS:-}" == "true" ]] || return 0
+  [[ -n "${UDID:-}" ]] || return 0
+  mark "shutdown simulator"
+  xcrun simctl shutdown "$UDID" 2>/dev/null || true
+  if pgrep -x DTServiceHub >/dev/null 2>&1; then
+    mark "kill DTServiceHub"
+    pkill -9 -x DTServiceHub 2>/dev/null || true
+  fi
+  mark "runner orphans cleared"
+}
+
 # xcodebuild still launches `simctl diagnose` for the result bundle and waits
 # out its 600s timeout, including after a green run. Never ask for that dump,
 # and stop it if it starts.
@@ -442,25 +524,89 @@ xcode_test() {
     action="test-without-building"
     shift
   fi
-  local team="${PERIMEDI_DEVELOPMENT_TEAM:-7H4A6PWSPS}"
-  xcodebuild "$action" \
-    -project "$PROJECT" \
-    -scheme PeriMedi \
-    -destination "$destination" \
-    -derivedDataPath "$DERIVED" \
-    -collect-test-diagnostics never \
-    "$@" \
-    DEVELOPMENT_TEAM="$team" \
-    CODE_SIGN_STYLE=Automatic \
-    CODE_SIGN_ENTITLEMENTS=PeriMediDoseWidget/PeriMediDoseWidget.entitlements \
-    -allowProvisioningUpdates &
-  local xb=$!
-  while kill -0 "$xb" 2>/dev/null; do
+  local -a cmd=(
+    xcodebuild "$action"
+    -project "$PROJECT"
+    -scheme PeriMedi
+    -destination "$destination"
+    -derivedDataPath "$DERIVED"
+    -collect-test-diagnostics never
+    "$@"
+  )
+  # test-without-building installs the cached signed products and skips
+  # provisioning updates. Build and drive still pass that flag.
+  if [[ "$action" == "test-without-building" ]]; then
+    cmd+=(
+      -disableAutomaticPackageResolution
+      -onlyUsePackageVersionsFromResolvedFile
+      -skipPackageUpdates
+      -skipPackagePluginValidation
+      -skipPackageSignatureValidation
+      -destination-timeout 30
+    )
+  else
+    local team="${PERIMEDI_DEVELOPMENT_TEAM:-7H4A6PWSPS}"
+    cmd+=(
+      DEVELOPMENT_TEAM="$team"
+      CODE_SIGN_STYLE=Automatic
+      CODE_SIGN_ENTITLEMENTS=PeriMediDoseWidget/PeriMediDoseWidget.entitlements
+      -allowProvisioningUpdates
+    )
+  fi
+  local flag="$DERIVED/xcode-first-byte"
+  local pidfile="$DERIVED/xcode-pid"
+  rm -f "$flag" "$pidfile"
+  mark "xcodebuild $action exec"
+  python3 -u - "$flag" "$pidfile" "${cmd[@]}" <<'PY' &
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+flag, pidfile, *cmd = sys.argv[1:]
+
+def stamp():
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+Path(pidfile).write_text(str(proc.pid))
+print(f"control-perimedi: xcodebuild pid {proc.pid} {stamp()}", flush=True)
+buf = b""
+marked = False
+assert proc.stdout is not None
+while True:
+    data = proc.stdout.read(4096)
+    if not data:
+        break
+    if not marked:
+        marked = True
+        Path(flag).write_text(stamp())
+        print(f"control-perimedi: xcodebuild first byte {stamp()}", flush=True)
+    buf += data
+    while b"\n" in buf:
+        line, buf = buf.split(b"\n", 1)
+        text = line.decode("utf-8", "replace")
+        print(f"xcodebuild {stamp()} {text}", flush=True)
+if buf:
+    text = buf.decode("utf-8", "replace")
+    print(f"xcodebuild {stamp()} {text}", flush=True)
+code = proc.wait()
+print(f"control-perimedi: xcodebuild exit {code} {stamp()}", flush=True)
+sys.exit(code)
+PY
+  local py=$!
+  local i
+  for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+    [[ -f "$pidfile" ]] && break
+    kill -0 "$py" 2>/dev/null || break
+    sleep 0.2
+  done
+  while kill -0 "$py" 2>/dev/null; do
     stop_sim_diagnose
     sleep 2
   done
   local status=0
-  wait "$xb" || status=$?
+  wait "$py" || status=$?
   return "$status"
 }
 
@@ -581,6 +727,12 @@ watch_taken_sample() {
 }
 
 cmd_verify() {
+  local suite="${SUITE:-${PERIMEDI_UI_SUITE:-full}}"
+  case "$suite" in
+    smoke|full) ;;
+    *) fail "suite must be smoke or full (got '$suite')" ;;
+  esac
+
   if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
     python3 "$ROOT/ios/scripts/check-feature-map.py"
     python3 "$ROOT/ios/scripts/check-feature-layout.py"
@@ -604,6 +756,7 @@ cmd_verify() {
   fi
 
   RUN_ID="$VERIFY_SUITE_ID"
+  mark "resolve udid"
   resolve_udid
   echo "device: $DEVICE_LINE"
 
@@ -612,15 +765,13 @@ cmd_verify() {
   if [[ -n "$holder" && "$holder" != "$RUN_ID" ]]; then
     fail "simulator $UDID is locked by run-id $holder (lock $(lock_dir)). Refuse double-drive. Cleanup that run."
   fi
-  if app_installed && [[ "$holder" != "$RUN_ID" ]]; then
-    if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
-      fail "PeriMedi is already installed on $UDID and this run does not hold the lock. Refuse to steal a shared instance."
-    fi
+  if [[ -z "${GITHUB_ACTIONS:-}" ]] && app_installed && [[ "$holder" != "$RUN_ID" ]]; then
+    fail "PeriMedi is already installed on $UDID and this run does not hold the lock. Refuse to steal a shared instance."
   fi
 
   acquire_lock
   VERIFY_LOCK_HELD=1
-  trap 'stop_build; if [[ "${VERIFY_LOCK_HELD:-0}" == 1 ]]; then uninstall_app; release_lock; VERIFY_LOCK_HELD=0; fi' EXIT
+  trap 'stop_build; if [[ "${VERIFY_LOCK_HELD:-0}" == 1 ]]; then uninstall_app; stop_ci_orphans; release_lock; VERIFY_LOCK_HELD=0; fi' EXIT
 
   mkdir -p "$DERIVED"
   rm -rf "$RESULT"
@@ -629,7 +780,11 @@ cmd_verify() {
   else
     rm -f /tmp/perimedi-sample-taken
   fi
-  restore_checkout_mtime
+  if [[ "${UI_BUILD_CACHE_HIT:-}" == "true" ]]; then
+    echo "control-perimedi: skip mtime restore on exact cache hit"
+  else
+    restore_checkout_mtime
+  fi
   local build_log="$DERIVED/build-for-testing.log"
   local build_ok="$DERIVED/build-ok"
   local group_ok=0
@@ -647,15 +802,18 @@ cmd_verify() {
     echo "control-perimedi: build-for-testing started"
   fi
 
-  disable_hardware_keyboard
-  # The device line is already Shutdown on a fresh runner. shutdown still
-  # talks to CoreSimulator. Boot is the part that has to run.
-  if [[ "$DEVICE_LINE" != *Shutdown* ]]; then
-    xcrun simctl shutdown "$UDID" 2>/dev/null || true
+  # Local boots sample the keyboard preference, so a booted phone is shut down
+  # and booted again. GitHub boots in the previous step. Leave that simulator up.
+  if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
+    refresh_device_line
+    if [[ "$DEVICE_LINE" != *Shutdown* ]]; then
+      mark "shutdown"
+      xcrun simctl shutdown "$UDID" 2>/dev/null || true
+    fi
+    boot_simulator_now
+  else
+    boot_simulator_now
   fi
-  xcrun simctl boot "$UDID"
-  xcrun simctl bootstatus "$UDID" -b
-  # CI skips the screen catalog. The status-bar override is for those PNGs.
   # Killing it after 5s left the next simctl in a 104s to 166s hole on the
   # three exact-cache logs. The pre-test uninstall is the call in that hole.
   # A GitHub runner starts with no PeriMedi installed. The post-test uninstall stays.
@@ -703,10 +861,7 @@ cmd_verify() {
   fi
 
   local skip_catalog=0
-  if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
-    skip_catalog=1
-    echo "Skipping ScreenCatalogTests on CI (committed PNGs; ids job checks they exist)"
-  elif [[ "${SCREEN_CATALOG:-1}" == "0" ]]; then
+  if [[ "${SCREEN_CATALOG:-1}" == "0" ]]; then
     skip_catalog=1
     echo "Skipping ScreenCatalogTests (SCREEN_CATALOG=0)"
   fi
@@ -715,15 +870,29 @@ cmd_verify() {
   if [[ "$skip_catalog" -eq 1 ]]; then
     xcode_args+=(-skip-testing:PeriMediUITests/ScreenCatalogTests)
   fi
+  mark "suite filter"
+  local suite_out=""
+  suite_out="$(python3 "$ROOT/ios/scripts/ui_suite.py" "$suite")"
+  mark "suite filter done"
+  if [[ -n "$suite_out" ]]; then
+    local word
+    while IFS= read -r word; do
+      [[ -n "$word" ]] || continue
+      xcode_args+=("$word")
+    done <<<"$suite_out"
+  fi
 
   local sample_pid=""
   if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+    mark "sampler start"
     set -m
     watch_taken_sample &
     sample_pid=$!
     set +m
+    mark "sampler started"
   fi
 
+  mark "test-without-building"
   set +e
   xcode_test test-without-building "${xcode_args[@]}"
   local status=$?
@@ -741,6 +910,7 @@ cmd_verify() {
   python3 "$ROOT/ios/scripts/check-screen-catalog.py"
 
   uninstall_app
+  stop_ci_orphans
   release_lock
   VERIFY_LOCK_HELD=0
   printf 'verify: ok\n'
@@ -752,4 +922,5 @@ case "$CMD" in
   drive) cmd_drive ;;
   cleanup) cmd_cleanup ;;
   verify) cmd_verify ;;
+  boot) cmd_boot ;;
 esac

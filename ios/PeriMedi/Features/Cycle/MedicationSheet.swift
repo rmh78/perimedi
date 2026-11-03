@@ -24,6 +24,9 @@ struct MedicationSheet: View {
     @State private var remindersEnabled = true
     @State private var effectiveDate = DateKeys.todayKey()
     @State private var error: String?
+    @FocusState private var focusedEntry: Entry?
+
+    private enum Entry: Hashable { case name, dose }
 
     enum Mode: String, CaseIterable { case everyDay, specificDays, cyclic }
 
@@ -43,7 +46,11 @@ struct MedicationSheet: View {
                 SoftField {
                     TextField("", text: $name)
                         .foregroundStyle(Theme.ink)
+                        .focused($focusedEntry, equals: .name)
                         .accessibilityIdentifier(A11yID.medName)
+                        .background(alignment: .topLeading) {
+                            FocusFlag(id: A11yID.medName, on: focusedEntry == .name)
+                        }
                 }
 
                 HStack(alignment: .top, spacing: 10) {
@@ -65,7 +72,11 @@ struct MedicationSheet: View {
                         SoftField {
                             TextField(app.t("med.dosePlaceholder"), text: $doseLabel)
                                 .foregroundStyle(Theme.ink)
+                                .focused($focusedEntry, equals: .dose)
                                 .accessibilityIdentifier(A11yID.medDose)
+                                .background(alignment: .topLeading) {
+                                    FocusFlag(id: A11yID.medDose, on: focusedEntry == .dose)
+                                }
                         }
                         if showsSinceDate {
                             FieldLabel(text: app.t("med.since"))

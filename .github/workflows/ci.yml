@@ -1,15 +1,22 @@
 name: ci
+run-name: ${{ (github.event_name == 'workflow_dispatch' && (github.event.inputs.nightly == true || github.event.inputs.nightly == 'true')) && 'nightly' || github.event_name == 'pull_request' && github.event.pull_request.title || github.workflow }}
 
 on:
   pull_request:
-  schedule:
-    - cron: '17 4 * * *'
   workflow_dispatch:
     inputs:
       force_red:
         description: Fail ids on purpose and skip openspec, domain, and ui
         type: boolean
         default: false
+      nightly:
+        description: Mark this run as the nightly. The night sets this. A manual run leaves it off.
+        type: boolean
+        default: false
+      check_sha:
+        description: Look up this SHA and do not start the suite. Empty runs the suite.
+        type: string
+        default: ""
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -84,6 +91,8 @@ jobs:
         run: python3 docs/app-store/check-listing.py
       - name: Decision script
         run: python3 .github/scripts/test_main_is_red.py
+      - name: UI suite filters
+        run: python3 ios/scripts/test_ui_suite.py
 
   openspec:
     if: github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && !(github.event_name == 'workflow_dispatch' && (github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')))
@@ -103,6 +112,32 @@ jobs:
       - uses: actions/checkout@v5
       - name: Domain tests
         run: swift test --package-path ios
+      - name: App unit tests
+        run: |
+          set -euo pipefail
+          echo "domain: app unit tests $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          udid=$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/ && $2 ~ /^[0-9A-F-]{36}$/ {print $2; exit}')
+          test -n "$udid"
+          echo "domain: simulator $udid"
+          xcodebuild test \
+            -project ios/PeriMedi.xcodeproj \
+            -scheme PeriMedi \
+            -destination "platform=iOS Simulator,id=$udid" \
+            -derivedDataPath ios/DerivedData-unit \
+            -only-testing:PeriMediTests \
+            -skip-testing:PeriMediUITests \
+            -disableAutomaticPackageResolution \
+            -onlyUsePackageVersionsFromResolvedFile \
+            -skipPackageUpdates \
+            -skipPackagePluginValidation \
+            -skipPackageSignatureValidation \
+            -collect-test-diagnostics never \
+            -destination-timeout 60 \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY=- \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            ENABLE_PREVIEWS=NO
+          echo "domain: app unit tests done $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
   ui:
     if: github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && !(github.event_name == 'workflow_dispatch' && (github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')))
@@ -141,10 +176,27 @@ jobs:
       - name: Drop a prefix-restored build marker
         if: steps.ui-build-cache.outputs.cache-hit != 'true'
         run: rm -f ios/DerivedData/build-ok
+      - name: Restore the Xcode plugin cache
+        id: plugin-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /tmp/perimedi-plugin-cache
+          key: xcode-plugincache-${{ steps.xcode-ver.outputs.hash }}
+      - name: Install the Xcode plugin cache
+        if: steps.plugin-cache.outputs.cache-hit == 'true'
+        run: |
+          dest="$(getconf DARWIN_USER_CACHE_DIR)/com.apple.DeveloperTools"
+          mkdir -p "$(dirname "$dest")"
+          rm -rf "$dest"
+          cp -R /tmp/perimedi-plugin-cache "$dest"
+          echo "plugin cache installed $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      - name: Boot the simulator
+        run: .grok/skills/verify-perimedi/scripts/control-perimedi boot
       - name: UI tests
         env:
           UI_BUILD_CACHE_HIT: ${{ steps.ui-build-cache.outputs.cache-hit }}
           TEST_RUNNER_PERIMEDI_SAMPLE_TAKEN: "1"
+          PERIMEDI_UI_SUITE: ${{ github.event_name == 'pull_request' && 'smoke' || 'full' }}
         run: .grok/skills/verify-perimedi/scripts/control-perimedi verify
       - name: Upload xcresult on failure
         if: failure()
@@ -179,6 +231,159 @@ jobs:
             ios/DerivedData/SDKStatCaches.noindex
             ios/DerivedData/build-ok
           key: ${{ steps.ui-build-cache.outputs.cache-primary-key }}
+      - name: Stage the Xcode plugin cache
+        id: plugin-stage
+        if: always() && steps.plugin-cache.outputs.cache-hit != 'true'
+        run: |
+          src="$(getconf DARWIN_USER_CACHE_DIR)/com.apple.DeveloperTools"
+          if [[ -d "$src" ]] && find "$src" -name 'PlugInCache-xcodebuild.xcplugincache' -print -quit | grep -q .; then
+            rm -rf /tmp/perimedi-plugin-cache
+            cp -R "$src" /tmp/perimedi-plugin-cache
+            du -sh /tmp/perimedi-plugin-cache
+            echo "staged=true" >> "$GITHUB_OUTPUT"
+            echo "plugin cache staged $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          else
+            echo "staged=false" >> "$GITHUB_OUTPUT"
+            echo "plugin cache missing $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          fi
+      - name: Save the Xcode plugin cache
+        if: always() && steps.plugin-cache.outputs.cache-hit != 'true' && steps.plugin-stage.outputs.staged == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: /tmp/perimedi-plugin-cache
+          key: ${{ steps.plugin-cache.outputs.cache-primary-key }}
+
+  nightly-check:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.check_sha != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v5
+      - name: Test the nightly lookup
+        run: python3 .github/scripts/test_nightly_prior.py
+      - name: Look up a green nightly
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NIGHTLY_SHA: ${{ github.event.inputs.check_sha }}
+          NIGHTLY_MODE: check
+        run: python3 .github/scripts/nightly_prior.py
+
+  full:
+    if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main' && (github.event.inputs.check_sha == '' || github.event.inputs.check_sha == null)
+    runs-on: xcode-27
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      actions: write
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.app/Contents/Developer
+      SIM_OS: "27.0"
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Xcode version for the build cache
+        id: xcode-ver
+        run: echo "hash=$(xcodebuild -version | shasum -a 256 | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+      - name: Restore the UI test build
+        id: ui-build-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ios/DerivedData/Build
+            ios/DerivedData/SourcePackages
+            ios/DerivedData/ModuleCache.noindex
+            ios/DerivedData/CompilationCache.noindex
+            ios/DerivedData/SDKExplicitPrecompiledModules
+            ios/DerivedData/SDKStatCaches.noindex
+            ios/DerivedData/build-ok
+          key: ui-derived-xcode27-v3-${{ steps.xcode-ver.outputs.hash }}-${{ hashFiles('ios/PeriMedi*/**', 'ios/Sources/**', 'ios/PeriMediUITests/**', 'ios/Package.swift', 'ios/Package.resolved') }}
+          restore-keys: |
+            ui-derived-xcode27-v3-
+            ui-derived-xcode27-v2-
+            ui-derived-xcode27-
+      - name: Drop a prefix-restored build marker
+        if: steps.ui-build-cache.outputs.cache-hit != 'true'
+        run: rm -f ios/DerivedData/build-ok
+      - name: Restore the Xcode plugin cache
+        id: plugin-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /tmp/perimedi-plugin-cache
+          key: xcode-plugincache-${{ steps.xcode-ver.outputs.hash }}
+      - name: Install the Xcode plugin cache
+        if: steps.plugin-cache.outputs.cache-hit == 'true'
+        run: |
+          dest="$(getconf DARWIN_USER_CACHE_DIR)/com.apple.DeveloperTools"
+          mkdir -p "$(dirname "$dest")"
+          rm -rf "$dest"
+          cp -R /tmp/perimedi-plugin-cache "$dest"
+          echo "plugin cache installed $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      - name: Boot the simulator
+        run: .grok/skills/verify-perimedi/scripts/control-perimedi boot
+      - name: UI tests
+        env:
+          UI_BUILD_CACHE_HIT: ${{ steps.ui-build-cache.outputs.cache-hit }}
+          TEST_RUNNER_PERIMEDI_SAMPLE_TAKEN: "1"
+          PERIMEDI_UI_SUITE: full
+        run: .grok/skills/verify-perimedi/scripts/control-perimedi verify
+      - name: Upload xcresult on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-full-xcresult
+          path: ios/DerivedData/PeriMedi.xcresult
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Prune the UI test build
+        if: always() && steps.ui-build-cache.outputs.cache-hit != 'true'
+        run: rm -rf ios/DerivedData/Index.noindex ios/DerivedData/Logs ios/DerivedData/TestResults ios/DerivedData/PeriMedi.xcresult ios/DerivedData/build-for-testing.log
+      - name: Note a successful build
+        id: build-ok
+        if: always()
+        run: |
+          if [[ -f ios/DerivedData/build-ok ]]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Save the UI test build
+        if: always() && steps.ui-build-cache.outputs.cache-hit != 'true' && steps.build-ok.outputs.ok == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ios/DerivedData/Build
+            ios/DerivedData/SourcePackages
+            ios/DerivedData/ModuleCache.noindex
+            ios/DerivedData/CompilationCache.noindex
+            ios/DerivedData/SDKExplicitPrecompiledModules
+            ios/DerivedData/SDKStatCaches.noindex
+            ios/DerivedData/build-ok
+          key: ${{ steps.ui-build-cache.outputs.cache-primary-key }}
+      - name: Stage the Xcode plugin cache
+        id: plugin-stage
+        if: always() && steps.plugin-cache.outputs.cache-hit != 'true'
+        run: |
+          src="$(getconf DARWIN_USER_CACHE_DIR)/com.apple.DeveloperTools"
+          if [[ -d "$src" ]] && find "$src" -name 'PlugInCache-xcodebuild.xcplugincache' -print -quit | grep -q .; then
+            rm -rf /tmp/perimedi-plugin-cache
+            cp -R "$src" /tmp/perimedi-plugin-cache
+            du -sh /tmp/perimedi-plugin-cache
+            echo "staged=true" >> "$GITHUB_OUTPUT"
+            echo "plugin cache staged $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          else
+            echo "staged=false" >> "$GITHUB_OUTPUT"
+            echo "plugin cache missing $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          fi
+      - name: Save the Xcode plugin cache
+        if: always() && steps.plugin-cache.outputs.cache-hit != 'true' && steps.plugin-stage.outputs.staged == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: /tmp/perimedi-plugin-cache
+          key: ${{ steps.plugin-cache.outputs.cache-primary-key }}
 
   main-status:
     needs: [ids, openspec, domain, ui]

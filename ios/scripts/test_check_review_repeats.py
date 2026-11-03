@@ -18,7 +18,7 @@ GLUE = ("10 minutes", "10 Minuten", "4. April", "Mar 7")
 DIALOG_PATH = "ios/PeriMedi/Features/Sheets/DialogChrome.swift"
 DOSE_PATH = "ios/Sources/PeriMediDomain/DoseUnitCopy.swift"
 L10N_PATH = "ios/PeriMedi/App/L10n.swift"
-UI_PATH = "ios/PeriMediUITests/AppProof.swift"
+UI_PATH = "ios/PeriMediUITests/UserFlow.swift"
 
 
 def load():

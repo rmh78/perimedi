@@ -22,20 +22,20 @@ Bottom bar → More.
 | Control | ID | Proof |
 |---|---|---|
 | More tab | `tab.more` | Exists on launch. |
-| English language pill | `more.lang.en` | `testEnglishAppJourney` taps it after German. `tab.more` reads `More` again. |
-| German language pill | `more.lang.de` | Same journey taps it and `tab.more` reads `Mehr`, then switches back. Catalog also writes `more-sample-de.png`. |
-| Reminders master switch | `more.reminders` | Toggle. On by default (`DoseReminderCenter.masterKey`). `testEnglishAppJourney` waits for it and taps it after both doses are taken. |
-| Reminder sound menu | `more.reminderSound` | Picker. `testEnglishAppJourney` waits for it after toggling reminders. |
-| Reminder sound preview | `more.reminderSoundPreview` | Speaker button. Journey taps it. |
-| Extra reminders | `more.reminderFollowUps` | Pill row (Off, 2×, 3×) on a container. Stays on screen when the master switch is off, dimmed and disabled so it does not accept a change. `testEnglishAppJourney` asserts the German helper while German is selected, then the English helper, waits for this id, taps 2×, then Off. After the master switch goes off, the Off pill is disabled. |
-| Open Settings (denied) | `more.remindersSettings` | Only visible when `notifyDenied`. Journey includes the ID string so coverage sees it; does not tap (opens iOS Settings). |
-| Privacy Policy | `more.privacyPolicy` | Opens the published privacy page in Safari. `testEnglishAppJourney` waits for it; does not tap (leaves the app). |
+| English language pill | `more.lang.en` | The user flow does not wait for it. Catalog taps it after the German More picture. |
+| German language pill | `more.lang.de` | The user flow does not tap it. Catalog writes `more-sample-de.png`. |
+| Reminders master switch | `more.reminders` | Toggle. On by default (`DoseReminderCenter.masterKey`). Catalog waits for it before the More picture. The user flow does not wait for it. |
+| Reminder sound menu | `more.reminderSound` | Picker. The user flow does not wait for it. |
+| Reminder sound preview | `more.reminderSoundPreview` | Speaker button. The user flow does not tap it. |
+| Extra reminders | `more.reminderFollowUps` | Pill row (Off, 2×, 3×) on a container. Stays on screen when the master switch is off, dimmed and disabled so it does not accept a change. The user flow does not tap these pills. |
+| Open Settings (denied) | `more.remindersSettings` | Only visible when `notifyDenied`. Do not tap it. It opens iOS Settings. |
+| Privacy Policy | `more.privacyPolicy` | Opens the published privacy page in Safari. The user flow does not wait for it. |
 | Share visit PDF | `more.sharePdf` | See [doctor-visit.md](doctor-visit.md). |
 | Backup rows | `more.sample` / `more.export` / `more.import` / `more.clear` | See [backup.md](backup.md). |
 
-`RequiredJourneyTests.testEnglishAppJourney` is the More path, after both doses are taken: `tab.more`, tap `more.lang.de` until `tab.more` reads Mehr, assert the German extra-reminder helper is on screen, tap `more.lang.en` until it reads More, assert the English helper, wait for `more.reminderFollowUps`, tap 2×, tap Off, wait/tap `more.reminders` (that turns the default-on switch off), assert the Off pill is disabled, wait for `more.reminderSound`, tap `more.reminderSoundPreview`, wait for `more.sharePdf`, tap it through range Continue to the preview, wait `visit.pdf.share`, close, wait for `more.privacyPolicy` and backup row IDs, tap `more.sample` then `confirm.cancel`. Do not tap export, import, clear, the privacy link, or the preview Share button. Do not present the system permission dialog. The other German nav strings stay `check-l10n-layout.py`.
+`testUserFlow` opens More after the symptom, scrolls to `more.sharePdf`, continues to the preview, waits for `visit.pdf.share`, and closes. It does not switch language, wait for `more.lang.en`, tap reminder controls, tap Share, or wait for `more.sample`. German nav strings stay `check-l10n-layout.py`. Catalog waits for `more.reminders` before the More picture and for `more.sample` after its preview closes.
 
-Language pills call `LocaleController`. Preference is `AppStorage` `perimedi.locale`. Default German if device preferred languages include German. The required journey forces English with `-en` and does not switch. The whole More tab box is tappable, not only the ellipsis or the word More.
+Language pills call `LocaleController`. Preference is `AppStorage` `perimedi.locale`. Default German if device preferred languages include German. The user flow forces English with `-en` and does not switch. The whole More tab box is tappable, not only the ellipsis or the word More.
 
 Disclaimer copy is a personal companion, not a demo.
 

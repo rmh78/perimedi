@@ -136,6 +136,9 @@ struct SymptomSheet: View {
                 .focused($nameFocused)
                 .submitLabel(.done)
                 .accessibilityIdentifier(A11yID.symptomCustomAdd)
+                .background(alignment: .topLeading) {
+                    FocusFlag(id: A11yID.symptomCustomAdd, on: nameFocused)
+                }
                 .onSubmit(commitDraft)
             if let nameError, let message = nameMessage(nameError) {
                 Text(message)

@@ -57,9 +57,9 @@ Simulator CLI builds can still pass `CODE_SIGNING_ALLOWED=NO`.
 
 ## UI tests (interaction proof)
 
-Instrumented XCUITests live in `PeriMediUITests/`. The required suite is `testEnglishAppJourney` (empty home through tracking, the reminder, More, and Trends) and `testEnglishWidgetJourney` (medium, then small, on the device's today). Both are English. Tests start empty and tap Cycle / sheets. Watch **iPhone 17e** (Simulator → Window → iPhone 17e). **iPhone 17** is a different Simulator and will stay idle.
+Instrumented XCUITests live in `PeriMediUITests/`. A pull request runs `testUserFlow`. Local verification and the nightly run discover that same test plus `ScreenCatalogTests`. The flow is English. It starts empty and taps Cycle, the sheets, Month, Trends, More, and one medium Home Screen Take. Watch **iPhone 17e** (Simulator → Window → iPhone 17e). **iPhone 17** is a different Simulator and will stay idle.
 
-The widget journeys run in this same `xcodebuild test`. Do not pass `CODE_SIGNING_ALLOWED=NO`. That build has no App Group, so the widget stays on the empty card.
+The widget step runs in this same `xcodebuild test`. Do not pass `CODE_SIGNING_ALLOWED=NO`. That build has no App Group, so the widget stays on the empty card.
 
 ```bash
 source ios/env.sh
@@ -74,7 +74,7 @@ xcodebuild test \
   -allowProvisioningUpdates
 ```
 
-Launch contract used by the suite: `-en -clear -today=2026-03-15 -uiTesting`. `-uiTesting` turns off UIView animations so XCTest is not blocked on springs. The reminder test also passes `-remindIn=2` so the next pending slot appears as a tappable in-app card (system banners are not asserted). Trends chart proof may pass `-fixture=trends` and `-tabTrends` (dummy multi-cycle scores; not sample data). Do not pass `-journeyStep` or `-loadSample` for these tests. The screen catalog test is the exception for sample data: it may pass `-loadSample` and writes the seventeen English pictures, including `more-sample-xxxl-en.png`. It switches to German to write `sheet-symptom-pill-de.png` and `more-sample-de.png`. Every other catalog picture stays English. The widget journey rewrites `widget-medium-before-en.png` and `widget-medium-after-en.png` on every run. CI skips rewriting the catalog pictures.
+`testUserFlow` launches with `-en -clear -uiTesting -today=<device date>`. `-uiTesting` turns off UIView animations so XCTest is not blocked on springs. Do not pass `-journeyStep`, `-loadSample`, `-fixture=trends`, or `-remindIn` on that test. The dose stays pending until the Home Screen Take. The screen catalog may pass `-loadSample` and writes the seventeen English pictures, including `more-sample-xxxl-en.png`. It switches to German to write `sheet-symptom-pill-de.png` and `more-sample-de.png`. Every other catalog picture stays English. `widget-medium-before-en.png` and `widget-medium-after-en.png` stay the committed files. CI skips rewriting the catalog pictures.
 
 Main-screen PNGs for UX review are `docs/screens/` (see [docs/screens.md](docs/screens.md)). `python3 ios/scripts/check-screen-catalog.py` fails only if an expected file is missing. Do not paste screenshot galleries on the PR. `JourneyScript` and `scripts/shot-journey.sh` remain optional extra capture, not the interaction proof.
 

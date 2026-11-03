@@ -6,7 +6,7 @@ In-app banner for a pending slot, plus the More master switch.
 
 - Banner with title, medication name, dose/time body, Taken / Snooze
 - Master toggle and sound on More
-- Extra reminders Off / 2× / 3× on More (`more.reminderFollowUps`). Default Off. Title is Remind me again. The helper says up to 2 or 3 more reminders, 10 minutes apart, until the dose is marked taken. The row stays visible. While the master switch is off it is dimmed and disabled. Proof is the English journey on More, not a system banner. Off leaves one planned reminder plus manual Snooze. 2 or 3 plants that many follow-ups. Taken, Snooze, or a slot that is no longer pending stops them. The chain does not continue after Snooze fires and does not pass the chosen count. Denied permission adds no other alert. `-remindIn` does not plant the chain.
+- Extra reminders Off / 2× / 3× on More (`more.reminderFollowUps`). Default Off. Title is Remind me again. The helper says up to 2 or 3 more reminders, 10 minutes apart, until the dose is marked taken. The row stays visible. While the master switch is off it is dimmed and disabled. The user flow does not drive these pills. A system banner is not the proof. Off leaves one planned reminder plus manual Snooze. 2 or 3 plants that many follow-ups. Taken, Snooze, or a slot that is no longer pending stops them. The chain does not continue after Snooze fires and does not pass the chosen count. Denied permission adds no other alert. `-remindIn` does not plant the chain.
 - Per-medication remind toggle on the medication sheet
 
 ## How to get to it (user POV)
@@ -17,19 +17,19 @@ Turn reminders on in More. Enable remind on a medication. When a slot is due, a 
 
 | Control | ID | Proof |
 |---|---|---|
-| Banner | `reminder.banner` | `testEnglishAppJourney` waits up to 12s for the banner after saving estrogen, after untaking that lane, and after saving progesterone. It does not read the banner title. The More language step checks the More tab label, not the banner. |
-| Taken | `reminder.taken` | Primary action on the right. Banner gone. `cycle.lane.{slug}.status` becomes `taken` when Take returns. The English journey waits for that status. It takes estrogen, then progesterone, before Month. |
-| Snooze | `reminder.snooze` | Left of Taken. Banner dismisses without taking. The English journey taps it between the untake and the second estrogen take. |
-| More master | `more.reminders` | See [more.md](more.md). |
-| Extra reminders | `more.reminderFollowUps` | Pills Off / 2× / 3× on the Reminders card. See [more.md](more.md). `testEnglishAppJourney` waits for it, taps 2×, then Off. After the master switch goes off, the Off pill is disabled. It does not open the system permission dialog. |
+| Banner | `reminder.banner` | The user flow does not open the banner. `-uiTesting` without `-remindIn` clears pending notifications. |
+| Taken | `reminder.taken` | Primary action on the right. The user flow does not wait for it. The pending dose stays pending until the Home Screen Take. |
+| Snooze | `reminder.snooze` | Left of Taken. The user flow does not tap it. |
+| More master | `more.reminders` | See [more.md](more.md). Catalog waits for it. The user flow does not. |
+| Extra reminders | `more.reminderFollowUps` | Pills Off / 2× / 3× on the Reminders card. See [more.md](more.md). The user flow does not tap them. |
 | Per-med remind | `med.remind` | On [medication-sheet.md](medication-sheet.md). |
 
-`JourneyLaunch.pinnedRemindIn(seconds: 2)` fires the next pending slot in-process on `testEnglishAppJourney`. Save estrogen first so a lane exists with `not-taken`, then wait for the banner. Do not launch a second process for the reminder.
+`JourneyLaunch.userFlow` does not pass `-remindIn`. The dose stays pending until the medium widget Take. Catalog waits for `more.reminders` on the sample More screen. Do not launch a second process for a reminder.
 
 ## Gotchas
 
 - Springboard banners are unreliable in XCTest. Use `-remindIn`, not a real notification.
-- Banner proof is on iPhone 17e only. `testEnglishAppJourney` can save the med and still miss `reminder.banner` within 12s (`-remindIn=2`) on any other phone. Do not treat that miss as coverage.
+- Take proof is the medium widget on iPhone 17e. `testUserFlow` does not wait for `reminder.taken`.
 - Taken on the banner uses the same path as the notification action. System banners use title/subtitle/body (medication name is subtitle, not title). Springboard copy is not XCTest-asserted.
 - The dose log is saved, and that slot's reminder cancel has run, before Take returns.
 - German Taken is “Genommen” so it matches the body (“Tippe auf Genommen”).

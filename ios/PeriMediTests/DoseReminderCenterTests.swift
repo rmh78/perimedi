@@ -83,6 +83,40 @@ final class DoseReminderCenterTests: XCTestCase {
         )
     }
 
+    func testSnoozeCancelsThePendingDoseAndSchedulesSnooze() async throws {
+        let (center, _, identity, _) = try await heldDose()
+        held.release()
+        center.finishNotificationWork()
+        let doseId = ReminderSlot.doseId(
+            scheduleId: identity.scheduleId,
+            date: identity.date,
+            timeOfDay: identity.timeOfDay
+        )
+        let pendingBefore = await held.pendingIds()
+        XCTAssertTrue(pendingBefore.contains(doseId))
+
+        center.snooze(
+            reminder: PendingReminder(
+                medicationId: identity.medicationId,
+                scheduleId: identity.scheduleId,
+                date: identity.date,
+                timeOfDay: identity.timeOfDay,
+                medicationName: "Estrogen",
+                doseLabel: "1 mg"
+            )
+        )
+        center.finishNotificationWork()
+
+        let pending = await held.pendingIds()
+        XCTAssertFalse(pending.contains(doseId), "pending \(pending) still has \(doseId)")
+        let snoozeId = ReminderSlot.snoozeId(
+            scheduleId: identity.scheduleId,
+            date: identity.date,
+            timeOfDay: identity.timeOfDay
+        )
+        XCTAssertTrue(held.requestIdentifiers().contains(snoozeId))
+    }
+
     func testLookupTakeIsSavedWhileTheAddIsHeld() async throws {
         let (center, store, identity, family) = try await heldDose()
         let result = try center.markSlotTaken(identity, shownLogId: .lookup)
@@ -205,6 +239,12 @@ private final class HeldAdds {
         lock.lock()
         defer { lock.unlock() }
         return pending
+    }
+
+    func requestIdentifiers() -> Set<String> {
+        lock.lock()
+        defer { lock.unlock() }
+        return Set(held.map(\.0.identifier))
     }
 
     func doseRequests() -> [UNNotificationRequest] {

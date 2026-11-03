@@ -18,12 +18,12 @@ Bottom bar → Month.
 | Control | ID | Proof |
 |---|---|---|
 | Month tab | `tab.month` | Tab exists on launch. |
-| A day cell | `month.day.{yyyy-MM-dd}` | First-use today (`2026-03-15`) value contains `selected`. Period start contains `period`. A taken+symptom day contains `taken` and `symptom`. |
+| A day cell | `month.day.{yyyy-MM-dd}` | Catalog pictures pin today to `2026-03-15`. `testUserFlow` waits for `month.day.` plus the device date and does not read the cell value. |
 | Today | `cycle.pager.today` | **Same ID as Cycle (documented choice).** On Month it jumps the month anchor to today and selects today. Do not add a Month-only today ID. |
 | Prev month | `month.pager.prev` | First-use pages back to the month that contains today. |
 | Next month | `month.pager.next` | First-use pages from March 2026 to April (`month.day.2026-04-01`). |
 
-`testEnglishAppJourney` opens Month after logging, asserts today is selected, taps `month.pager.next`, waits for `month.day.2026-04-01`, taps `month.pager.prev`, asserts today selected again, taps the shared `cycle.pager.today`, then selects the period start and returns to Cycle.
+`testUserFlow` opens Month after the symptom and waits for today's cell. It does not page, tap today, or return through a selected period day.
 
 ## Gotchas
 

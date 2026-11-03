@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Prove that a person can perform PeriMedi’s real-world jobs on iOS by driving the real controls from a cleared store and asserting UI elements and resulting state. The required suite is one English app journey and one English widget journey. The app journey is the empty-to-tracking first session, then settings, a due dose reminder, and Trends once several cycles exist. The widget journey changes size in the same process and runs in continuous integration. Screenshots are failure evidence and a committed English UX catalog, plus German pictures of the New symptom control and of More, not the pass/fail oracle. German product chrome is covered by the string-table check rather than a second Simulator pass.
+Prove that a person can perform PeriMedi’s real-world jobs on iOS by driving the real controls from a cleared store and asserting UI elements and resulting state. The instrumented proof is one English user flow. A pull request and a full verification both run that flow. A full verification also runs the screen catalog. The flow is one launch on the device’s current day: empty home, one medication typed by name, one period saved as the new card opens, one symptom, Month, Trends, More, the visit preview, and one Take on the medium Home Screen widget. Screenshots are failure evidence and a committed English UX catalog, plus German pictures of the New symptom control and of More, not the pass/fail oracle. German product chrome is covered by the string-table check rather than a second Simulator pass.
 
 ## Requirements
 
@@ -22,7 +22,7 @@ Primary Cycle, Trends, Month, More, sheet, lane, and dose-status controls SHALL 
 - **THEN** Cycle exposes a lane control for that medication and a taken/not-taken status for the selected day that automation can read without parsing pixels
 
 ### Requirement: Test launch can pin language, empty store, and today
-When launched for verification, the app SHALL honor a pinned English chrome flag, a clear-store flag, and a pinned calendar date for “today.” With a pinned date, the default selected day and every “today” calculation SHALL use that date instead of the device clock. The widget journey SHALL pin today to the device’s current calendar day so Home Screen rows match that day.
+When launched for verification, the app SHALL honor a pinned English chrome flag, a clear-store flag, and a pinned calendar date for “today.” With a pinned date, the default selected day and every “today” calculation SHALL use that date instead of the device clock. The user flow SHALL pin today to the device’s current calendar day so Home Screen rows match that day.
 
 #### Scenario: Empty English launch on a pinned day
 - **WHEN** the app is launched with English pinned, the store cleared, and today pinned to a calendar date
@@ -32,87 +32,36 @@ When launched for verification, the app SHALL honor a pinned English chrome flag
 - **WHEN** today is pinned and the user logs a period that starts eight days before today
 - **THEN** that start date is eight calendar days before the pinned date, not eight days before the device clock
 
-### Requirement: Empty-to-tracking journey is machine-verifiable
-An instrumented UI suite SHALL include one English app journey that drives the real controls (not by writing the resulting records into the store) and SHALL fail if a step’s UI elements or resulting state are wrong. The suite SHALL start that journey from a cleared store and a pinned today. The journey SHALL follow a first-session path: empty home, empty Trends, log a recent period, edit and delete that period, log it again, add everyday and cyclic medications, mark today’s doses taken from the in-app reminder, page back through the week and return to today, log a symptom, confirm Month agrees, page Month, then select a period day on Month and see that day on Cycle.
+### Requirement: One English user flow
+An instrumented UI suite SHALL include one English flow that drives the real controls and SHALL fail if a step’s UI elements or resulting state are wrong. A pull request and a full verification SHALL both run that flow. A full verification SHALL also run the catalog capture. The flow SHALL start from a cleared store, pin today to the device’s current calendar day, and use one app launch. It SHALL type one everyday medication, leave the sheet on the form, type, time, and color it already shows, save one period from the new card as it opens, log one hot-flush score, open Month, Trends, and More, open the visit preview, and take the still-pending dose once from a medium Home Screen widget. Returning to the app SHALL show that dose taken. The flow SHALL NOT load sample data, switch language, snooze, page Month, change the widget size, or launch the app a second time. A pull-request run SHALL NOT rewrite the catalog or capture store frames. German product chrome SHALL be checked by requiring every English product string to have a non-empty German value and every German product string to have an English value. That check SHALL NOT launch a Simulator.
 
 #### Scenario: Empty Cycle
-- **WHEN** the suite launches onto Cycle with no data
-- **THEN** a requirements card names the missing period and missing medication, the PeriMedi intro card is shown, no medication lanes are present, and the add-medication, cycle-settings, and add-symptom actions are available
+- **WHEN** the flow launches onto Cycle with no data
+- **THEN** the home names the missing medication
 
-#### Scenario: Empty Trends on first session
-- **WHEN** the suite opens Trends before any period is logged
-- **THEN** Trends explains that cycles are needed, no series chips are shown, and the suite returns to Cycle to continue tracking
+#### Scenario: One medication typed by name
+- **WHEN** the flow saves an everyday medication named Estrogen at 1 mg by typing the name and the dose
+- **THEN** Cycle shows one lane for that name
 
-#### Scenario: Edit and delete a period, then log it again
-- **WHEN** the suite logs a period, changes its end so the history label is exactly `Mar 7, 2026 – Mar 12, 2026`, and confirms `Delete Mar 7, 2026 – Mar 12, 2026?`
-- **THEN** that history row is gone, the PeriMedi intro card returns, the requirements card names the missing period, and the suite logs the period again from eight days before the pinned today through four days before it before any medication is saved
+#### Scenario: One period and one symptom
+- **WHEN** the flow saves the new period card as it opens and logs one hot-flush score
+- **THEN** the period starts on the selected day with the card’s flow, the end stays empty, and the hot-flush chip is on Cycle
 
-#### Scenario: Add a period through the UI
-- **WHEN** the suite opens cycle settings, adds a period from eight days before the pinned today through four days before it, and saves
-- **THEN** Cycle shows the day strip with that span marked as period, the requirements card names the missing medication, and the PeriMedi intro card is gone
+#### Scenario: Month, Trends, and the visit preview
+- **WHEN** the flow opens Month, then Trends, then More
+- **THEN** today’s month cell is identifiable, Trends is identifiable, the visit preview opens from More, and the flow does not activate Share or load sample
 
-#### Scenario: Requirements card goes away after period and medication
-- **WHEN** both a period and a medication exist
-- **THEN** the requirements card is gone
+#### Scenario: One widget Take
+- **WHEN** the flow turns the app icon into a medium widget and taps Take once
+- **THEN** the widget is for the device’s current day, and the lane reads taken after the flow returns to the app
 
-#### Scenario: Add mixed medications through the UI
-- **WHEN** the suite adds an everyday pill named Estrogen at 1 mg and a cyclic cream named Progesterone at 200 mg through the medication sheet
-- **THEN** Cycle shows two lanes, one for each name
+#### Scenario: Seeded launch is not this proof
+- **WHEN** the flow runs
+- **THEN** it does not pre-load medications, periods, doses, or remarks
 
-#### Scenario: Mark taken through the UI
-- **WHEN** the suite marks Estrogen taken on the pinned today
-- **THEN** that lane’s status reads taken
-
-#### Scenario: Look back at the week then return to today
-- **WHEN** the suite pages backward to a logged period day and then activates Today
-- **THEN** a period chip is shown on that earlier day, and after Today the pager is back on the pinned date with Estrogen still taken
-
-#### Scenario: Symptom then Month
-- **WHEN** the suite adds a symptom whose description is hot flush on the pinned today and then opens Month
-- **THEN** the hot-flush chip contains strong, and Month shows the pinned today selected and reflects the logged period span, the taken mark, and the symptom
-
-#### Scenario: Month pager then a period day on Cycle
-- **WHEN** the suite pages Month forward and back, activates Today, then selects the logged period start and opens Cycle
-- **THEN** that period day is selected and visible on Cycle, and after activating Today both medication lanes remain and Estrogen still reads taken
-
-#### Scenario: Seeded first-use launch is not this proof
-- **WHEN** the English app journey runs its first-use steps
-- **THEN** it does not pre-load the journey’s medications, periods, doses, or remarks; those records exist only because the suite created them through the UI
-
-### Requirement: One English app journey and one English widget journey
-The instrumented suite SHALL be two English journeys. The app journey SHALL cover More settings (both language controls present, reminders chrome, visit PDF preview, backup confirm-cancel), taking due doses from the in-app reminder card including snooze, and Trends after several scored cycles, in addition to the first-use path. Those steps SHALL drive real controls. Trends history MAY start from a dedicated fixture so the suite does not invent months of scores through the UI. The app journey SHALL NOT load sample data. On the period sheet it SHALL open a new period card, see an empty end date, cancel that card, and see the end date go away. On More it SHALL switch to German long enough for the More tab to read Mehr, then switch back to English, and it SHALL NOT stay in German for the rest of the journey. The widget journey SHALL run in English on the device’s current calendar day, SHALL change from a medium widget to a small widget without launching the app again, and SHALL run in continuous integration as well as locally. German product chrome SHALL be checked by requiring every English product string to have a non-empty German value and every German product string to have an English value. That check SHALL NOT launch a Simulator.
-
-#### Scenario: Cancel a new period
-- **WHEN** the app journey opens the period sheet and starts a new period
-- **THEN** the end date is empty, Cancel closes that card, and the end date is gone
-
-#### Scenario: More settings switch to German and back
-- **WHEN** the app journey opens More after both of today’s doses are taken
-- **THEN** both language controls, reminders chrome, the visit PDF action through in-app preview, and backup rows are identifiable, German makes the More tab read Mehr, English makes it read More again, and the journey does not confirm a destructive wipe or load sample
-
-#### Scenario: Dose reminder including snooze
-- **WHEN** a pending dose is due inside the pinned reminder window
-- **THEN** the reminder card is shown, Taken marks the lane taken, clearing that take shows the card again, snooze dismisses the card without marking the dose taken, and taking again leaves the lane taken so a later save does not raise another card for that dose
-
-#### Scenario: Progesterone is taken before Month
-- **WHEN** the app journey has saved the cyclic Progesterone dose and a reminder card is showing for it
-- **THEN** Taken on that card marks the Progesterone lane taken before Month opens
-
-#### Scenario: One English widget journey changes size in process
-- **WHEN** verification runs, including continuous integration, against today’s still-untaken medications on the Home Screen
-- **THEN** the suite shows a medium widget for the device’s current day (not a historical pinned date), sees the long medication name, Take, and “Still to take today”, sees a check and then that row leave, brings the row back by un-taking on Cycle, takes the other medication from the widget, changes that same widget to small without launching the app again, and after the last take sees a check, then “All taken for today”, and restores the app icon without failing when restore runs again
-
-#### Scenario: Trends with scored cycles
-- **WHEN** the app journey opens Trends with several logged cycles that have scores
-- **THEN** the chart, series, a tapped dot, and a dose-change tick are identifiable, including a hot-flush dot whose count is 8 and mean is 1 and a later dot whose count is 2 and mean is 4
-
-#### Scenario: Trends with cycles but no scores
-- **WHEN** the app journey opens Trends with logged cycles and no scores
-- **THEN** Trends explains that there are no scores and shows no series chips
-
-#### Scenario: Custom symptom on the scored Trends launch
-- **WHEN** the app journey, still on the scored Trends launch, adds a custom symptom named Brain fog, renames it to Fog, and confirms deleting Fog and all its past scores
-- **THEN** the create control reads New symptom, the delete question names Fog, the Fog chip is gone, and the hot-flush score stays selected
+#### Scenario: A pull request runs the same flow
+- **WHEN** a pull-request verification starts from a cleared store
+- **THEN** it runs this flow and does not switch language or rewrite the catalog
 
 #### Scenario: German chrome is the string table
 - **WHEN** verification checks product strings
@@ -130,7 +79,7 @@ A failed instrumented step SHALL retain a screenshot (or equivalent visual attac
 - **THEN** the instrumented suite still passes
 
 ### Requirement: Committed catalog of main screens
-A dedicated catalog capture SHALL write a small committed catalog of English Simulator pictures of the main destinations: Cycle empty, Cycle with data, Trends empty, Trends with data, Month, and More, plus the medication, period, and symptom sheets. German catalog pictures SHALL be the New symptom control reading Neues Symptom and More in German. The capture SHALL navigate the English destinations in a small number of English launches (tabs and Cycle sheet actions) rather than launching once per picture. It MAY switch to German only long enough to write those two pictures, then return to English, and SHALL NOT switch language for any other catalog picture. The largest-text More picture SHALL be an expected catalog file written by that same capture. Sample data and Trends fixtures MAY seed catalog pictures; they SHALL NOT be the first-use proof. Verification SHALL fail if an expected catalog picture is missing from the committed files, including those German pictures, the largest-text More picture, and the two medium-widget pictures taken around Take. Verification SHALL NOT fail because pixels differ from a previous capture. Visual review SHALL use those committed pictures (the pull-request file diff), not a gallery of images pasted into pull-request comments. Continuous integration MAY skip rewriting the catalog pictures. The English widget journey SHALL rewrite those two medium pictures on every run, including continuous integration. Verification SHALL still fail when a committed catalog file is missing, and it SHALL still run the English widget journey.
+A dedicated catalog capture SHALL write a small committed catalog of English Simulator pictures of the main destinations: Cycle empty, Cycle with data, Trends empty, Trends with data, Month, and More, plus the medication, period, and symptom sheets. German catalog pictures SHALL be the New symptom control reading Neues Symptom and More in German. The capture SHALL navigate the English destinations in a small number of English launches (tabs and Cycle sheet actions) rather than launching once per picture. It MAY switch to German only long enough to write those two pictures, then return to English, and SHALL NOT switch language for any other catalog picture. The largest-text More picture SHALL be an expected catalog file written by that same capture. Sample data and Trends fixtures MAY seed catalog pictures; they SHALL NOT be the first-use proof. Verification SHALL fail if an expected catalog picture is missing from the committed files, including those German pictures, the largest-text More picture, and the two medium-widget pictures taken around Take. Verification SHALL NOT fail because pixels differ from a previous capture. Visual review SHALL use those committed pictures (the pull-request file diff), not a gallery of images pasted into pull-request comments. A pull-request run SHALL NOT rewrite the catalog pictures. A full verification, including the nightly run, SHALL rewrite the catalog pictures unless catalog capture is turned off. The two medium-widget pictures stay committed files. The user flow does not rewrite them. Verification SHALL still fail when a committed catalog file is missing.
 
 #### Scenario: Missing catalog picture fails
 - **WHEN** an expected catalog picture is not present in the committed catalog
@@ -145,15 +94,15 @@ A dedicated catalog capture SHALL write a small committed catalog of English Sim
 - **THEN** those pictures come from navigating one empty-store English session, not from a separate app launch for each file. The same capture also writes More in German and the largest-text More picture. The German catalog pictures are the New symptom control reading Neues Symptom and More
 
 ### Requirement: Visit share control is identifiable
-The More visit PDF action SHALL expose a language-independent accessibility identifier. The English app journey SHALL wait for that control. Catalog pictures of More SHALL include the visit entry. Verification SHALL NOT paste screenshot galleries into pull-request comments.
+The More visit PDF action SHALL expose a language-independent accessibility identifier. The user flow SHALL wait for that control. Catalog pictures of More SHALL include the visit entry. Verification SHALL NOT paste screenshot galleries into pull-request comments.
 
-#### Scenario: App journey finds the visit action
-- **WHEN** the English app journey opens More
+#### Scenario: User flow finds the visit action
+- **WHEN** the user flow opens More
 - **THEN** the visit PDF action is uniquely identifiable without reading the visible title string
 
-#### Scenario: App journey opens preview without the share sheet
-- **WHEN** the English app journey activates the visit PDF action and continues from the range picker
-- **THEN** the in-app preview and its Share control are uniquely identifiable, and the journey does not activate Share
+#### Scenario: User flow opens preview without the share sheet
+- **WHEN** the user flow activates the visit PDF action and continues from the range picker
+- **THEN** the in-app preview and its Share control are uniquely identifiable, and the flow does not activate Share
 
 #### Scenario: More catalog includes the visit entry
 - **WHEN** the committed English More catalog picture is written

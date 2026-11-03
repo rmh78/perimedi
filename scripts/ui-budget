@@ -1,0 +1,189 @@
+#!/usr/bin/env python3
+"""Recompute the UI flow budget from ios/docs/ui-flow-budget.md.
+
+Prints the flow-table sum, the PR overhead, and whether each target fits.
+Reads an xcresult when one is present. Does not boot a simulator.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_MD = ROOT / "ios/docs/ui-flow-budget.md"
+DEFAULT_XCRESULT = ROOT / "ios/DerivedData/PeriMedi.xcresult"
+FLOW_HEADING = "## Flow"
+BUDGET_FENCE = re.compile(r"^```budget\n(.*?)^```", re.M | re.S)
+ROW = re.compile(r"^\|\s*(.*?)\s*\|\s*([0-9]+(?:\.[0-9]+)?)\s*\|")
+
+
+def parse_budget(text: str) -> dict[str, str]:
+    matched = BUDGET_FENCE.search(text)
+    if matched is None:
+        raise SystemExit("missing ```budget fence")
+    out: dict[str, str] = {}
+    for line in matched.group(1).splitlines():
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        out[key.strip()] = value.strip()
+    return out
+
+
+def flow_rows(text: str) -> list[tuple[str, float]]:
+    lines = text.splitlines()
+    try:
+        start = lines.index(FLOW_HEADING)
+    except ValueError as exc:
+        raise SystemExit("missing ## Flow") from exc
+    rows: list[tuple[str, float]] = []
+    seen_separator = False
+    for line in lines[start + 1 :]:
+        if not line.startswith("|"):
+            if rows:
+                break
+            continue
+        if re.fullmatch(r"\|\s*-+\s*\|.*", line):
+            seen_separator = True
+            continue
+        if not seen_separator:
+            continue
+        matched = ROW.match(line)
+        if matched is None:
+            raise SystemExit(f"flow row has no seconds: {line}")
+        rows.append((matched.group(1), float(matched.group(2))))
+    if not rows:
+        raise SystemExit("flow table is empty")
+    return rows
+
+
+def need_float(keys: dict[str, str], name: str) -> float:
+    try:
+        return float(keys[name])
+    except (KeyError, ValueError) as exc:
+        raise SystemExit(f"budget fence missing {name}") from exc
+
+
+def fmt(value: float) -> str:
+    return f"{value:.3f}".rstrip("0").rstrip(".")
+
+
+def xcresult_duration(path: Path) -> str:
+    if not path.exists():
+        return "none"
+    command = [
+        "xcrun",
+        "xcresulttool",
+        "get",
+        "test-results",
+        "tests",
+        "--path",
+        str(path),
+        "--format",
+        "json",
+    ]
+    try:
+        completed = subprocess.run(command, check=False, capture_output=True, text=True)
+    except OSError as exc:
+        return f"unreadable ({exc})"
+    if completed.returncode != 0:
+        err = (completed.stderr or completed.stdout).strip().splitlines()
+        detail = err[-1] if err else f"exit {completed.returncode}"
+        return f"unreadable ({detail})"
+    try:
+        payload = json.loads(completed.stdout)
+    except json.JSONDecodeError:
+        return "unreadable (not json)"
+    found = find_duration(payload, "testUserFlow")
+    if found is None:
+        return "no testUserFlow"
+    return fmt(found)
+
+
+def find_duration(node: object, name: str) -> float | None:
+    if isinstance(node, dict):
+        node_name = str(node.get("name") or node.get("identifier") or "")
+        if name in node_name:
+            for key in ("duration", "durationInSeconds"):
+                raw = node.get(key)
+                if isinstance(raw, (int, float)):
+                    return float(raw)
+                if isinstance(raw, str):
+                    try:
+                        return float(raw)
+                    except ValueError:
+                        pass
+        for value in node.values():
+            found = find_duration(value, name)
+            if found is not None:
+                return found
+    elif isinstance(node, list):
+        for item in node:
+            found = find_duration(item, name)
+            if found is not None:
+                return found
+    return None
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--md", type=Path, default=DEFAULT_MD)
+    parser.add_argument("--xcresult", type=Path, default=DEFAULT_XCRESULT)
+    args = parser.parse_args()
+    text = args.md.read_text(encoding="utf-8")
+    keys = parse_budget(text)
+    rows = flow_rows(text)
+    body = sum(seconds for _, seconds in rows)
+    body_target = need_float(keys, "body-target-s")
+    job_target = need_float(keys, "job-target-s")
+    job_wall = need_float(keys, "measured-pr-job-s")
+    smoke = need_float(keys, "measured-pr-smoke-s")
+    declared = keys.get("job-fits", "")
+    overhead = job_wall - smoke
+    predicted = overhead + body
+    job_fits = predicted <= job_target
+    expected = "yes" if job_fits else "no"
+    body_fits = body <= body_target
+
+    print(f"rows: {len(rows)}")
+    for name, seconds in rows:
+        print(f"  {fmt(seconds):>8}  {name}")
+    print(f"body-s: {fmt(body)}")
+    print(f"body-target-s: {fmt(body_target)}")
+    print(f"body: {'fits' if body_fits else 'over'}")
+    print(f"overhead-s: {fmt(overhead)}")
+    print(f"predicted-job-s: {fmt(predicted)}")
+    print(f"job-target-s: {fmt(job_target)}")
+    print(f"job: {'fits' if job_fits else 'does not fit'}")
+    measured = xcresult_duration(args.xcresult)
+    print(f"xcresult: {measured}")
+    if measured not in {"none", "no testUserFlow"} and not measured.startswith("unreadable"):
+        try:
+            actual = float(measured)
+        except ValueError:
+            actual = None
+        if actual is not None and body > 0:
+            gap = abs(actual - body) / body
+            print(f"xcresult-vs-body: {gap:.1%}")
+
+    if declared not in {"yes", "no"}:
+        print("job-fits fence must be yes or no", file=sys.stderr)
+        return 1
+    if declared != expected:
+        print(
+            f"job-fits fence says {declared}, arithmetic says {expected}",
+            file=sys.stderr,
+        )
+        return 1
+    if not body_fits:
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
