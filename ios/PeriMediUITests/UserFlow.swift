@@ -143,21 +143,41 @@ final class HomeScreen {
             return
         }
         longPress(icon, frame: frame)
-        let medium = waitButton(["Medium-sized widget", "Mittelgroßes Widget"], timeout: 4)
+        guard let medium = waitButton(["Medium-sized widget", "Mittelgroßes Widget"], timeout: 4) else {
+            XCTFail("missing widget size")
+            return
+        }
         tapCenter(medium)
-        let take = waitButton(["Take", "Nehmen"], timeout: 8)
+        guard let take = waitButton(["Take", "Nehmen"], timeout: 8) else {
+            XCTFail("missing Take")
+            return
+        }
         tapCenter(take)
     }
 
     func restoreIcon() {
         XCUIDevice.shared.press(.home)
         rebind()
-        if onScreenFrame(appIcon(), timeout: 2) != nil { return }
-        let widget = widgetIcon()
-        guard let frame = onScreenFrame(widget, timeout: 2) else { return }
-        longPress(widget, frame: frame)
-        let chip = waitButton(["App icon", "App-Symbol"], timeout: 4)
-        tapCenter(chip)
+        let icon = onScreenFrame(appIcon(), timeout: 2)
+        let widget = icon == nil ? onScreenFrame(widgetIcon(), timeout: 2) : nil
+        switch RestoreTargetPlan.decide(appIcon: icon, widget: widget) {
+        case .alreadyIcon:
+            return
+        case .absent:
+            XCTFail("PeriMedi icon missing")
+        case .widget(let frame):
+            longPress(widgetIcon(), frame: frame)
+            let chip = waitButton(["App icon", "App-Symbol"], timeout: 4)
+            let menu = RestoreMenuPlan.decide(
+                buttonExists: chip?.exists == true,
+                buttonWidth: chip?.frame.width ?? 0
+            )
+            guard menu == .tap, let chip else {
+                XCTFail("restore menu missing")
+                return
+            }
+            tapCenter(chip)
+        }
     }
 
     private func rebind() {
@@ -176,21 +196,18 @@ final class HomeScreen {
         ).firstMatch
     }
 
-    private func waitButton(_ labels: [String], timeout: TimeInterval) -> XCUIElement {
+    private func waitButton(_ labels: [String], timeout: TimeInterval) -> XCUIElement? {
         let deadline = Date().addingTimeInterval(timeout)
         while true {
             for label in labels {
                 let button = springboard.buttons[label]
                 if button.exists, button.frame.width > 8 { return button }
             }
-            if Date() >= deadline { break }
+            if Date() >= deadline { return nil }
             RunLoop.current.run(until: Date().addingTimeInterval(0.05))
         }
-        XCTFail("missing \(labels.joined(separator: ", "))")
-        return springboard.buttons[labels[0]]
     }
 
-    /// A later read can be `CGRect.zero`. That is inside 0...1, so the press hits the screen corner.
     private func onScreenFrame(_ element: XCUIElement, timeout: TimeInterval) -> CGRect? {
         let deadline = Date().addingTimeInterval(timeout)
         while true {
@@ -206,19 +223,19 @@ final class HomeScreen {
     }
 
     private func longPress(_ element: XCUIElement, frame: CGRect) {
-        let screen = springboard.frame
-        let dx = (frame.midX - screen.minX) / screen.width
-        let dy = (frame.midY - screen.minY) / screen.height
-        let placed = frame.width > 8 && frame.height > 8
-            && screen.width > 8 && screen.height > 8
-            && dx.isFinite && dy.isFinite
-            && dx > 0 && dy > 0
-            && dx <= 1 && dy <= 1
-        if placed {
-            springboard.coordinate(withNormalizedOffset: CGVector(dx: dx, dy: dy)).press(forDuration: 1.0)
-            return
+        switch IconLongPressPlan.decide(
+            frame: frame,
+            screen: springboard.frame,
+            elementExists: element.exists
+        ) {
+        case .at(let point):
+            springboard.coordinate(withNormalizedOffset: CGVector(dx: point.dx, dy: point.dy))
+                .press(forDuration: 1.0)
+        case .element:
+            element.press(forDuration: 1.0)
+        case .skip:
+            XCTFail("icon is not on screen")
         }
-        element.press(forDuration: 1.0)
     }
 
     private func tapCenter(_ element: XCUIElement) {

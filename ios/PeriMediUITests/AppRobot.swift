@@ -156,7 +156,7 @@ final class AppRobot {
             break
         }
         if id.hasSuffix(".focused") {
-            return [.any]
+            return [.textField]
         }
         if id.hasSuffix(".status") || id.hasPrefix("trends.group.") {
             return [.staticText]
@@ -352,7 +352,9 @@ final class AppRobot {
     }
 
     private func focus(_ field: XCUIElement, id: String, file: StaticString, line: UInt) {
-        func ready() -> Bool { field.hasFocus || exists(id + ".focused") }
+        func ready() -> Bool {
+            NameFieldLookupPlan.focusWalk(id: id) == .textField && field.hasFocus
+        }
         press(field)
         if spin(timeout: 2, ready) { return }
         press(field)

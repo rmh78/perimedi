@@ -402,7 +402,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         } catch {
             throw MarkDoseTakenError.saveFailed
         }
-        retireAndWait(identity)
+        retire(identity)
     }
 
     private func releaseAndPend(_ identity: PlannedSlotIdentity, existingLogId: String?) {
@@ -420,20 +420,20 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         )
     }
 
-    private func retireAndWait(_ identity: PlannedSlotIdentity) {
+    private func retire(_ identity: PlannedSlotIdentity) {
         let ids = ReminderSlot.ids(
             scheduleId: identity.scheduleId,
             date: identity.date,
             timeOfDay: identity.timeOfDay
         )
-        Self.notificationQueue.sync {
-            ReminderDelivery.retire(identity)
+        ReminderDelivery.retire(identity)
+        Self.notificationQueue.async {
             ReminderDelivery.remove(ids, delivered: true)
         }
     }
 
     private func cancelNotifications(for identity: PlannedSlotIdentity) {
-        retireAndWait(identity)
+        retire(identity)
     }
 
     /// One serial queue. A concurrent queue let a slow add from an earlier
