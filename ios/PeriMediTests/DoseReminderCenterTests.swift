@@ -83,6 +83,34 @@ final class DoseReminderCenterTests: XCTestCase {
         )
     }
 
+    func testTakeReturnsWhileNotificationRemovalIsStillRunning() async throws {
+        let (center, _, identity, _) = try await heldDose()
+        let release = DispatchSemaphore(value: 0)
+        ReminderDelivery.installForTest(
+            add: { _, done in done() },
+            remove: { _ in _ = release.wait(timeout: .now() + 2) },
+            pending: { [] },
+            auth: { .authorized }
+        )
+        let started = Date()
+        center.setSlotStatuses(
+            medicationId: identity.medicationId,
+            slots: [
+                SlotStatusWrite(
+                    scheduleId: identity.scheduleId,
+                    date: identity.date,
+                    timeOfDay: identity.timeOfDay,
+                    existingLogId: nil
+                ),
+            ],
+            status: .taken
+        )
+        let elapsed = Date().timeIntervalSince(started)
+        release.signal()
+        center.finishNotificationWork()
+        XCTAssertLessThan(elapsed, 0.4)
+    }
+
     func testSnoozeCancelsThePendingDoseAndSchedulesSnooze() async throws {
         let (center, _, identity, _) = try await heldDose()
         held.release()

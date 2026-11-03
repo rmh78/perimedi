@@ -36,6 +36,26 @@ final class StoreBehaviorTests: XCTestCase {
         XCTAssertNil(store.lastError)
     }
 
+    func testRefreshAfterTheCallerReleasesTheContainer() async throws {
+        let suite = "perimedi.drop-container"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defaults.removePersistentDomain(forName: suite)
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let store: Store? = autoreleasepool {
+            var container: ModelContainer? = try? Self.memoryContainer(name: "drop-\(UUID().uuidString)")
+            guard let created = container else { return nil }
+            let store = Store(container: created, foldDefaults: defaults)
+            container = nil
+            return store
+        }
+        let kept = try XCTUnwrap(store)
+        NotificationCenter.default.post(name: .NSPersistentStoreRemoteChange, object: nil)
+        try await Task.sleep(nanoseconds: 400_000_000)
+        kept.refresh()
+        XCTAssertEqual(kept.medications, [])
+        XCTAssertNil(kept.lastError)
+    }
+
     func testPreviousSchemaOpensAndRowsSurvive() throws {
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent("perimedi-previous-schema-\(UUID().uuidString)", isDirectory: true)

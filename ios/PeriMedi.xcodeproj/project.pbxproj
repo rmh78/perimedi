@@ -69,6 +69,9 @@
 		A11C0DE00000000000000002 /* CustomSymptomSyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11C0DE00000000000000001 /* CustomSymptomSyncTests.swift */; };
 		B2F75D8E01C0DE0000000002 /* DoseWidgetBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2F75D8E01C0DE0000000001 /* DoseWidgetBridgeTests.swift */; };
 		D127A7E00000000000000002 /* DoseReminderCenterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D127A7E00000000000000001 /* DoseReminderCenterTests.swift */; };
+		F150A11C0DE15000000002 /* ScreenProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = F150A11C0DE15000000001 /* ScreenProbe.swift */; };
+		F150A11C0DE15000000004 /* ScreenProbeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F150A11C0DE15000000003 /* ScreenProbeTests.swift */; };
+		F150A11C0DE15000000005 /* ScreenProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = F150A11C0DE15000000001 /* ScreenProbe.swift */; };
 		C4A1E0010000000000000002 /* EqualWidthPillRowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A1E0010000000000000001 /* EqualWidthPillRowTests.swift */; };
 		S70REBEH0000000000000002 /* StoreBehaviorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = S70REBEH0000000000000001 /* StoreBehaviorTests.swift */; };
 		A11C0DE0000000000000000E /* PeriMediDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A11C0DE0000000000000000F /* PeriMediDomain */; };
@@ -138,6 +141,8 @@
 		A11C0DE00000000000000001 /* CustomSymptomSyncTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomSymptomSyncTests.swift; sourceTree = "<group>"; };
 		B2F75D8E01C0DE0000000001 /* DoseWidgetBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseWidgetBridgeTests.swift; sourceTree = "<group>"; };
 		D127A7E00000000000000001 /* DoseReminderCenterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseReminderCenterTests.swift; sourceTree = "<group>"; };
+		F150A11C0DE15000000001 /* ScreenProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenProbe.swift; sourceTree = "<group>"; };
+		F150A11C0DE15000000003 /* ScreenProbeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenProbeTests.swift; sourceTree = "<group>"; };
 		C4A1E0010000000000000001 /* EqualWidthPillRowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EqualWidthPillRowTests.swift; sourceTree = "<group>"; };
 		S70REBEH0000000000000001 /* StoreBehaviorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreBehaviorTests.swift; sourceTree = "<group>"; };
 		A11C0DE00000000000000003 /* PeriMediTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PeriMediTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -317,6 +322,8 @@
 				A11C0DE00000000000000001 /* CustomSymptomSyncTests.swift */,
 				B2F75D8E01C0DE0000000001 /* DoseWidgetBridgeTests.swift */,
 				D127A7E00000000000000001 /* DoseReminderCenterTests.swift */,
+				F150A11C0DE15000000001 /* ScreenProbe.swift */,
+				F150A11C0DE15000000003 /* ScreenProbeTests.swift */,
 				C4A1E0010000000000000001 /* EqualWidthPillRowTests.swift */,
 				S70REBEH0000000000000001 /* StoreBehaviorTests.swift */,
 			);
@@ -553,6 +560,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				834CC77C763103E8F47C99A4 /* AppRobot.swift in Sources */,
+				F150A11C0DE15000000005 /* ScreenProbe.swift in Sources */,
 				A70A11CE0000000000000002 /* UserFlow.swift in Sources */,
 				A70A11CE0000000000000004 /* RequiredJourneyTests.swift in Sources */,
 				65BE1A8523834B5702F7EEF4 /* ScreenCatalog.swift in Sources */,
@@ -568,6 +576,8 @@
 				A11C0DE00000000000000002 /* CustomSymptomSyncTests.swift in Sources */,
 				B2F75D8E01C0DE0000000002 /* DoseWidgetBridgeTests.swift in Sources */,
 				D127A7E00000000000000002 /* DoseReminderCenterTests.swift in Sources */,
+				F150A11C0DE15000000002 /* ScreenProbe.swift in Sources */,
+				F150A11C0DE15000000004 /* ScreenProbeTests.swift in Sources */,
 				C4A1E0010000000000000002 /* EqualWidthPillRowTests.swift in Sources */,
 				S70REBEH0000000000000002 /* StoreBehaviorTests.swift in Sources */,
 			);
