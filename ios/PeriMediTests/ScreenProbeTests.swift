@@ -42,7 +42,7 @@ final class ScreenProbeTests: XCTestCase {
     }
 
     func testMedicationNameFocusDoesNotWalkTheWholeTree() {
-        XCTAssertEqual(NameFieldLookupPlan.focusWalk(id: "med.name.focused"), .textField)
+        XCTAssertEqual(NameFieldLookupPlan.focusWalk(id: "med.name.focused"), .focusFlag)
         XCTAssertEqual(NameFieldLookupPlan.focusWalk(id: "med.name"), .textField)
     }
 }

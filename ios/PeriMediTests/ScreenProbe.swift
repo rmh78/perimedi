@@ -62,11 +62,15 @@ enum RestoreTargetPlan {
 
 enum NameFieldLookup: Equatable {
     case textField
+    case focusFlag
     case entireHierarchy
 }
 
 enum NameFieldLookupPlan {
-    static func focusWalk(id _: String) -> NameFieldLookup {
-        .textField
+    static func focusWalk(id: String) -> NameFieldLookup {
+        if id.hasSuffix(".focused") {
+            return .focusFlag
+        }
+        return .textField
     }
 }
