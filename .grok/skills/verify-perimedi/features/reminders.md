@@ -18,13 +18,13 @@ Turn reminders on in More. Enable remind on a medication. When a slot is due, a 
 | Control | ID | Proof |
 |---|---|---|
 | Banner | `reminder.banner` | The user flow does not open the banner. `-uiTesting` without `-remindIn` clears pending notifications. |
-| Taken | `reminder.taken` | Primary action on the right. The user flow does not wait for it. The pending dose stays pending until the Home Screen Take. |
+| Taken | `reminder.taken` | Primary action on the right. The user flow does not wait for it. The Cycle lane tap is the in-app Taken. |
 | Snooze | `reminder.snooze` | Left of Taken. The user flow does not tap it. |
 | More master | `more.reminders` | See [more.md](more.md). Catalog waits for it. The user flow does not. |
 | Extra reminders | `more.reminderFollowUps` | Pills Off / 2× / 3× on the Reminders card. See [more.md](more.md). The user flow does not tap them. |
 | Per-med remind | `med.remind` | On [medication-sheet.md](medication-sheet.md). |
 
-`JourneyLaunch.userFlow` does not pass `-remindIn`. The dose stays pending until the medium widget Take. Catalog waits for `more.reminders` on the sample More screen. Do not launch a second process for a reminder.
+`JourneyLaunch.userFlow` does not pass `-remindIn`. The flow marks the Cycle lane taken and puts it back before the medium widget Take. Catalog waits for `more.reminders` on the sample More screen. Do not launch a second process for a reminder.
 
 ## Gotchas
 

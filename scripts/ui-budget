@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-"""Recompute the UI flow budget from ios/docs/ui-flow-budget.md.
-
-Prints the flow-table sum, the PR overhead, and whether each target fits.
-Reads an xcresult when one is present. Does not boot a simulator.
-"""
 
 from __future__ import annotations
 
@@ -35,12 +30,16 @@ def parse_budget(text: str) -> dict[str, str]:
     return out
 
 
-def flow_rows(text: str) -> list[tuple[str, float]]:
+SIGNED_ROW = re.compile(r"^\|\s*(.*?)\s*\|\s*(-?[0-9]+(?:\.[0-9]+)?)\s*\|")
+
+
+def table_rows(text: str, heading: str, *, signed: bool = False) -> list[tuple[str, float]]:
     lines = text.splitlines()
     try:
-        start = lines.index(FLOW_HEADING)
+        start = lines.index(heading)
     except ValueError as exc:
-        raise SystemExit("missing ## Flow") from exc
+        raise SystemExit(f"missing {heading}") from exc
+    row_re = SIGNED_ROW if signed else ROW
     rows: list[tuple[str, float]] = []
     seen_separator = False
     for line in lines[start + 1 :]:
@@ -53,13 +52,17 @@ def flow_rows(text: str) -> list[tuple[str, float]]:
             continue
         if not seen_separator:
             continue
-        matched = ROW.match(line)
+        matched = row_re.match(line)
         if matched is None:
-            raise SystemExit(f"flow row has no seconds: {line}")
+            raise SystemExit(f"{heading} row has no seconds: {line}")
         rows.append((matched.group(1), float(matched.group(2))))
     if not rows:
-        raise SystemExit("flow table is empty")
+        raise SystemExit(f"{heading} table is empty")
     return rows
+
+
+def flow_rows(text: str) -> list[tuple[str, float]]:
+    return table_rows(text, FLOW_HEADING)
 
 
 def need_float(keys: dict[str, str], name: str) -> float:
@@ -131,7 +134,7 @@ def find_duration(node: object, name: str) -> float | None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser()
     parser.add_argument("--md", type=Path, default=DEFAULT_MD)
     parser.add_argument("--xcresult", type=Path, default=DEFAULT_XCRESULT)
     args = parser.parse_args()
@@ -139,27 +142,30 @@ def main() -> int:
     keys = parse_budget(text)
     rows = flow_rows(text)
     body = sum(seconds for _, seconds in rows)
-    body_target = need_float(keys, "body-target-s")
-    job_target = need_float(keys, "job-target-s")
-    job_wall = need_float(keys, "measured-pr-job-s")
-    smoke = need_float(keys, "measured-pr-smoke-s")
-    declared = keys.get("job-fits", "")
-    overhead = job_wall - smoke
-    predicted = overhead + body
-    job_fits = predicted <= job_target
-    expected = "yes" if job_fits else "no"
-    body_fits = body <= body_target
+    body_declared = need_float(keys, "body-s")
+    warm_rows = table_rows(text, "## Warm exact hit")
+    warm_sum = sum(seconds for _, seconds in warm_rows)
+    warm_wall = need_float(keys, "warm-wall-s")
+    warm2_rows = table_rows(text, "## Second warm exact hit")
+    warm2_sum = sum(seconds for _, seconds in warm2_rows)
+    warm2_wall = need_float(keys, "warm2-wall-s")
+    cut_rows = table_rows(text, "## Paper cuts", signed=True)
+    paper = warm2_sum + sum(seconds for _, seconds in cut_rows)
+    paper_declared = need_float(keys, "paper-s")
 
     print(f"rows: {len(rows)}")
     for name, seconds in rows:
         print(f"  {fmt(seconds):>8}  {name}")
     print(f"body-s: {fmt(body)}")
-    print(f"body-target-s: {fmt(body_target)}")
-    print(f"body: {'fits' if body_fits else 'over'}")
-    print(f"overhead-s: {fmt(overhead)}")
-    print(f"predicted-job-s: {fmt(predicted)}")
-    print(f"job-target-s: {fmt(job_target)}")
-    print(f"job: {'fits' if job_fits else 'does not fit'}")
+    print(f"warm-s: {fmt(warm_sum)}")
+    for name, seconds in warm_rows:
+        print(f"  {fmt(seconds):>8}  {name}")
+    print(f"warm2-s: {fmt(warm2_sum)}")
+    for name, seconds in warm2_rows:
+        print(f"  {fmt(seconds):>8}  {name}")
+    print(f"paper-s: {fmt(paper)}")
+    for name, seconds in cut_rows:
+        print(f"  {fmt(seconds):>8}  {name}")
     measured = xcresult_duration(args.xcresult)
     print(f"xcresult: {measured}")
     if measured not in {"none", "no testUserFlow"} and not measured.startswith("unreadable"):
@@ -171,16 +177,29 @@ def main() -> int:
             gap = abs(actual - body) / body
             print(f"xcresult-vs-body: {gap:.1%}")
 
-    if declared not in {"yes", "no"}:
-        print("job-fits fence must be yes or no", file=sys.stderr)
-        return 1
-    if declared != expected:
+    if abs(body - body_declared) > 0.05:
         print(
-            f"job-fits fence says {declared}, arithmetic says {expected}",
+            f"flow table sums to {fmt(body)}, fence says {fmt(body_declared)}",
             file=sys.stderr,
         )
         return 1
-    if not body_fits:
+    if abs(warm_sum - warm_wall) > 0.05:
+        print(
+            f"warm table sums to {fmt(warm_sum)}, fence says {fmt(warm_wall)}",
+            file=sys.stderr,
+        )
+        return 1
+    if abs(warm2_sum - warm2_wall) > 0.05:
+        print(
+            f"second warm table sums to {fmt(warm2_sum)}, fence says {fmt(warm2_wall)}",
+            file=sys.stderr,
+        )
+        return 1
+    if abs(paper - paper_declared) > 0.05:
+        print(
+            f"paper sums to {fmt(paper)}, fence says {fmt(paper_declared)}",
+            file=sys.stderr,
+        )
         return 1
     return 0
 

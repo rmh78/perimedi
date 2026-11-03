@@ -39,7 +39,7 @@ Walk this map top to bottom for a broad regression. Order is Cycle, Month, Trend
 
 Practical test walk for that order:
 
-1. `PeriMediUITests/RequiredJourneyTests/testUserFlow` — empty Cycle, one typed medication on the sheet defaults, one period saved as the card opens, one symptom, Month, Trends, More, visit preview, one medium widget Take
+1. `PeriMediUITests/RequiredJourneyTests/testUserFlow` — empty Cycle, one typed medication on the sheet defaults, one Cycle Taken tap put back to pending, one period saved as the card opens, one symptom, Month, Trends, More, visit preview, one medium widget Take
 
 PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verify`. A pull request runs `testUserFlow` and does not run `ScreenCatalogTests`. Local `verify` and the nightly full suite discover `testUserFlow` and the catalog writer.
 

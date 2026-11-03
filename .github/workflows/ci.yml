@@ -27,7 +27,7 @@ permissions:
 
 jobs:
   ids:
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    if: (github.event_name == 'pull_request' || github.ref == 'refs/heads/main') && (github.event.inputs.check_sha == '' || github.event.inputs.check_sha == null)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -93,9 +93,11 @@ jobs:
         run: python3 .github/scripts/test_main_is_red.py
       - name: UI suite filters
         run: python3 ios/scripts/test_ui_suite.py
+      - name: UI flow budget
+        run: python3 scripts/ui-budget
 
   openspec:
-    if: github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && !(github.event_name == 'workflow_dispatch' && (github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')))
+    if: (github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && !(github.event_name == 'workflow_dispatch' && (github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')))) && (github.event.inputs.check_sha == '' || github.event.inputs.check_sha == null)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -103,7 +105,7 @@ jobs:
         run: python3 ios/scripts/check-openspec-sync.py
 
   domain:
-    if: github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && !(github.event_name == 'workflow_dispatch' && (github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')))
+    if: (github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && !(github.event_name == 'workflow_dispatch' && (github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')))) && (github.event.inputs.check_sha == '' || github.event.inputs.check_sha == null)
     runs-on: macos-26
     timeout-minutes: 20
     env:
@@ -140,7 +142,7 @@ jobs:
           echo "domain: app unit tests done $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
   ui:
-    if: github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && !(github.event_name == 'workflow_dispatch' && (github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')))
+    if: (github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && !(github.event_name == 'workflow_dispatch' && (github.event.inputs.force_red == true || github.event.inputs.force_red == 'true')))) && (github.event.inputs.check_sha == '' || github.event.inputs.check_sha == null)
     runs-on: xcode-27
     timeout-minutes: 45
     permissions:

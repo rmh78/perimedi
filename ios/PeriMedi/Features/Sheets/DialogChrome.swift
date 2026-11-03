@@ -339,7 +339,7 @@ struct FocusFlag: View {
     var on: Bool
 
     var body: some View {
-        if on {
+        if on, ProcessInfo.processInfo.arguments.contains("-uiTesting") {
             Color.clear
                 .frame(width: 4, height: 4)
                 .accessibilityElement(children: .ignore)
