@@ -406,7 +406,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
     }
 
     private func releaseAndPend(_ identity: PlannedSlotIdentity, existingLogId: String?) {
-        Self.notificationQueue.sync {
+        Self.notificationQueue.async {
             ReminderDelivery.release(identity)
         }
         guard let store else { return }
