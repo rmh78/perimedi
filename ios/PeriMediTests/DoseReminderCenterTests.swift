@@ -143,6 +143,57 @@ final class DoseReminderCenterTests: XCTestCase {
         XCTAssertLessThan(elapsed, 0.4)
     }
 
+    func testPutBackThenTakeAgainKeepsTheSlotRetired() async throws {
+        let (center, store, identity, family) = try await heldDose()
+        let gate = OpenGate()
+        ReminderDelivery.installForTest(
+            add: { [held] request, done in held.add(request, done: done) },
+            remove: { [held] ids in
+                gate.wait()
+                held.remove(ids)
+            },
+            pending: { [held] in await held.pendingIds() },
+            auth: { .authorized }
+        )
+        let write = SlotStatusWrite(
+            scheduleId: identity.scheduleId,
+            date: identity.date,
+            timeOfDay: identity.timeOfDay,
+            existingLogId: nil
+        )
+        center.setSlotStatuses(
+            medicationId: identity.medicationId,
+            slots: [write],
+            status: .taken
+        )
+        center.setSlotStatuses(
+            medicationId: identity.medicationId,
+            slots: [write],
+            status: .pending
+        )
+        for _ in 0..<12 {
+            await Task.yield()
+        }
+        center.setSlotStatuses(
+            medicationId: identity.medicationId,
+            slots: [write],
+            status: .taken
+        )
+        let before = held.recordedIdentifiers()
+        gate.open()
+        center.finishNotificationWork()
+        let posted = held.recordedIdentifiers().dropFirst(before.count)
+        XCTAssertEqual(logStatus(store, identity: identity), .taken)
+        XCTAssertTrue(
+            ReminderDelivery.isRetired(identity),
+            "slot \(identity) was released after it was taken again"
+        )
+        XCTAssertTrue(
+            Set(posted).isDisjoint(with: family),
+            "posted \(Array(posted)) for \(family)"
+        )
+    }
+
     func testSnoozeCancelsThePendingDoseAndSchedulesSnooze() async throws {
         let (center, _, identity, _) = try await heldDose()
         held.release()
@@ -307,6 +358,12 @@ private final class HeldAdds {
         return Set(held.map(\.0.identifier))
     }
 
+    func recordedIdentifiers() -> [String] {
+        lock.lock()
+        defer { lock.unlock() }
+        return held.map(\.0.identifier)
+    }
+
     func doseRequests() -> [UNNotificationRequest] {
         lock.lock()
         defer { lock.unlock() }
@@ -324,6 +381,35 @@ private final class HeldAdds {
         lock.unlock()
         for (_, done) in batch {
             done()
+        }
+    }
+}
+
+private final class OpenGate {
+    private let lock = NSLock()
+    private var opened = false
+    private var parked: [DispatchSemaphore] = []
+
+    func wait() {
+        lock.lock()
+        if opened {
+            lock.unlock()
+            return
+        }
+        let sem = DispatchSemaphore(value: 0)
+        parked.append(sem)
+        lock.unlock()
+        sem.wait()
+    }
+
+    func open() {
+        lock.lock()
+        opened = true
+        let waiting = parked
+        parked.removeAll()
+        lock.unlock()
+        for sem in waiting {
+            sem.signal()
         }
     }
 }
