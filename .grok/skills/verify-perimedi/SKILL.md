@@ -22,7 +22,7 @@ Ready when stdout contains `launch: ready udid=`. The helper boots that UDID if 
 
 Teardown is `cleanup` on the same `--run-id`.
 
-`AppRobot.launch` takes `JourneyLaunch.userFlow`. Arguments are `-en -clear -uiTesting -today=<device date>`. Never `-journeyStep`, `-loadSample`, or `-remindIn` on that launch. A second launch of the same plan fails. `launchCatalog` is the only path that may pass `-loadSample` or `-fixture=trends`. It writes the seventeen English catalog names, including `more-sample-xxxl-en.png`, and may switch to German to write `sheet-symptom-pill-de.png` and `more-sample-de.png`. Frozen catalog dates in `UITestDate` stay `2026-03-15`, `2026-03-14`, and period `2026-03-07`–`2026-03-11`.
+`AppRobot.launch` takes `JourneyLaunch.userFlow`. Arguments are `-en -clear -uiTesting -today=<device date>`. Never `-journeyStep`, `-loadSample`, or `-remindIn` on that launch. A second launch of the same plan fails. `launchCatalog` is the only path that may pass `-loadSample` or `-fixture=trends`. It writes the English catalog names in `ios/docs/screens/expected.txt`, including `cycle-taken-en.png`, `cycle-not-taken-en.png`, `trends-off-en.png`, and `more-sample-xxxl-en.png`, and may switch to German to write `sheet-symptom-pill-de.png` and `more-sample-de.png`. The visit preview picture shows Back. Frozen catalog dates in `UITestDate` stay `2026-03-15`, `2026-03-14`, and period `2026-03-07`–`2026-03-11`.
 
 ## Doctor
 
@@ -53,7 +53,7 @@ Mapped tests:
 
 | Surface | `--test` |
 |---|---|
-| User flow (empty Cycle, one medication on the sheet defaults, one period saved as the card opens, one symptom, Month, Trends, More, visit preview, one medium widget Take) | `PeriMediUITests/RequiredJourneyTests/testUserFlow` |
+| User flow (empty Cycle, one medication on the sheet defaults, status word Taken then Not taken, one period saved as the card opens, one symptom, Month, Trends with that symptom turned off so the chart drops the point, More, Back from the visit preview to the picker, one medium widget Take) | `PeriMediUITests/RequiredJourneyTests/testUserFlow` |
 
 `AppRobot.pick` tries an accessibility identifier first, then a visible label. Tests launch `-en`. `addMedication` opens the type menu only when called with `cyclic: true`. The user flow leaves Every day, Pill, and 20:00 selected.
 
@@ -76,7 +76,7 @@ Named location: `.grok/skills/verify-perimedi/evidence/<run-id>/`
 
 Each `drive` writes a subdirectory named after the `--test` path (slashes become dashes), for example `…/evidence/<run-id>/PeriMediUITests-RequiredJourneyTests-testUserFlow/`. That slot holds `xcodebuild.log` (`TEST SUCCEEDED`), `summary.txt`, `test.txt`, `command.txt`, and `PeriMedi.xcresult`. Later drives on the same run-id must not delete earlier slots. `drives.txt` lists slot names in order. Exercise the real user path (`AppRobot` taps and `clearAndType`), not `-loadSample`, `-journeyStep`, or test-only setters. `testUserFlow` never passes those flags.
 
-Main-screen PNGs for UX review are the seventeen English files in `ios/docs/screens/`, including `more-sample-xxxl-en.png`, plus `sheet-symptom-pill-de.png`, `more-sample-de.png`, and the two widget pictures in `expected.txt`. `ScreenCatalogTests` writes the English files and those two German pictures on a local `control-perimedi verify` unless `SCREEN_CATALOG=0`. Commit those after UI changes. UX reviews the Files changed image diff. Do not paste screenshot galleries into PR comments. `control-perimedi drive` does not rewrite that catalog. A pull request does not run the catalog writer. Local `verify` and the nightly full suite run it unless `SCREEN_CATALOG=0`. `widget-medium-before-en.png` and `widget-medium-after-en.png` stay the committed files. `testUserFlow` does not rewrite them.
+Main-screen PNGs for UX review are the English files named in `ios/docs/screens/expected.txt`, including `cycle-taken-en.png`, `cycle-not-taken-en.png`, `trends-off-en.png`, and `more-sample-xxxl-en.png`, plus `sheet-symptom-pill-de.png`, `more-sample-de.png`, and the two widget pictures. The visit preview picture shows Back. `ScreenCatalogTests` writes the English files and those two German pictures on a local `control-perimedi verify` unless `SCREEN_CATALOG=0`. Commit those after UI changes. UX reviews the Files changed image diff. Do not paste screenshot galleries into PR comments. `control-perimedi drive` does not rewrite that catalog. A pull request does not run the catalog writer. Local `verify` and the nightly full suite run it unless `SCREEN_CATALOG=0`. `widget-medium-before-en.png` and `widget-medium-after-en.png` stay the committed files. `testUserFlow` does not rewrite them.
 
 ## Cleanup
 
