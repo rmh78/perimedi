@@ -37,6 +37,7 @@ final class Store: ObservableObject {
     var settings: CycleSettings { snapshot.settings }
     var medicationChanges: [MedicationChange] { snapshot.medicationChanges }
 
+    private let container: ModelContainer
     private let context: ModelContext
     private let foldDefaults: UserDefaults
     private var afterChangeHandlers: [() -> Void] = []
@@ -44,7 +45,8 @@ final class Store: ObservableObject {
     private var remoteRefreshTask: Task<Void, Never>?
 
     init(container: ModelContainer, foldDefaults: UserDefaults = .standard) {
-        self.context = container.mainContext
+        self.container = container
+        self.context = self.container.mainContext
         self.foldDefaults = foldDefaults
         refresh()
         ensureSettings()
