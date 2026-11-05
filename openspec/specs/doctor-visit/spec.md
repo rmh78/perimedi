@@ -36,6 +36,21 @@ The system SHALL let the user choose which completed cycle (and optionally the c
 - **WHEN** the user is on Cycle
 - **THEN** there is no control whose only purpose is to generate the visit PDF
 
+### Requirement: Back returns the same cycle choice
+The visit preview SHALL offer Back. Activating Back SHALL return the cycle picker with the same choice Continue just used. Close and a tap on the dimmed backdrop SHALL dismiss both the preview and the picker and show More. When no completed cycle exists, the picker SHALL show the empty-cycle sentence. This SHALL NOT add a new tab.
+
+#### Scenario: Back keeps the chosen cycle
+- **WHEN** the user continues from a chosen completed cycle and then activates Back on the preview
+- **THEN** the cycle picker is shown with that same cycle still chosen
+
+#### Scenario: Close and the backdrop show More
+- **WHEN** the user activates Close or taps the dimmed backdrop while the picker or the preview is open
+- **THEN** both are dismissed and More is shown
+
+#### Scenario: No completed cycle shows the empty sentence
+- **WHEN** no completed cycle exists and the user opens the picker
+- **THEN** the picker shows the empty-cycle sentence and the bottom navigation is still Cycle, Month, Trends, and More
+
 ### Requirement: Cycle-aligned range
 The system SHALL choose the PDF date range from logged period starts, not from a rolling seven-day window. A completed cycle SHALL be a logged period start through the day before the next logged period start. Predicted period starts SHALL NOT define the range. When two or more completed cycles exist, the range SHALL be the last two completed cycles. When only one completed cycle exists, the range SHALL be that cycle. When no completed cycle exists and at least one logged period start exists, the range SHALL be the last four weeks ending today. When no logged period start exists, or period tracking is off, the range SHALL be the last twelve weeks ending today.
 

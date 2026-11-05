@@ -13,20 +13,11 @@ struct UserFlow {
         let lane = "cycle.lane.estrogen"
         let status = "\(lane).status"
         robot.waitFor(id: lane)
-        XCTAssertTrue(
-            robot.spin(timeout: 4) { robot.value(of: status) == "not-taken" },
-            "before Cycle Taken, \(status) is \(robot.value(of: status))"
-        )
+        robot.assertStatus(status, word: "Not taken", token: "not-taken")
         robot.tap(lane)
-        XCTAssertTrue(
-            robot.spin(timeout: 4) { robot.value(of: status) == "taken" },
-            "after Cycle Taken, \(status) is \(robot.value(of: status))"
-        )
+        robot.assertStatus(status, word: "Taken", token: "taken")
         robot.tap(lane)
-        XCTAssertTrue(
-            robot.spin(timeout: 4) { robot.value(of: status) == "not-taken" },
-            "after putting the dose back, \(status) is \(robot.value(of: status))"
-        )
+        robot.assertStatus(status, word: "Not taken", token: "not-taken")
 
         logOnePeriod()
         logOneSymptom()
@@ -36,6 +27,26 @@ struct UserFlow {
 
         robot.tap("tab.trends")
         robot.waitFor(id: "trends.status")
+        let hotFlush = "trends.dot.hot_flash.\(UITestDate.deviceToday)"
+        XCTAssertTrue(
+            robot.spin(timeout: 4) { robot.value(of: "trends.status") == "ids:hot_flash" && robot.exists(hotFlush) },
+            "trends before the sheet is \(robot.value(of: "trends.status"))"
+        )
+        robot.scrollTo("trends.change")
+        robot.tap("trends.change")
+        robot.waitFor(id: "sheet.trends")
+        XCTAssertEqual(robot.value(of: "trends.series.hot_flash"), "on")
+        robot.tap("trends.series.hot_flash")
+        XCTAssertEqual(robot.value(of: "trends.series.hot_flash"), "off")
+        robot.tap("sheet.close")
+        robot.waitGone(id: "sheet.trends")
+        XCTAssertTrue(
+            robot.spin(timeout: 4) {
+                robot.value(of: "trends.status") == "ids:" && !robot.exists(hotFlush)
+            },
+            "trends after turning hot flushes off is \(robot.value(of: "trends.status"))"
+        )
+        XCTAssertFalse(robot.exists("trends.series.hot_flash"))
 
         robot.tap("tab.more")
         robot.scrollTo("more.sharePdf")
@@ -44,8 +55,13 @@ struct UserFlow {
         robot.tap("visit.range.continue")
         robot.waitFor(id: "visit.pdf.preview")
         robot.waitFor(id: "visit.pdf.share")
-        robot.tap("sheet.close")
+        robot.tap("visit.pdf.back")
+        robot.waitFor(id: "visit.range")
         robot.waitGone(id: "visit.pdf.preview")
+        robot.waitGone(id: "visit.pdf.back")
+        XCTAssertFalse(robot.exists("visit.range.previous"))
+        robot.tap("sheet.close")
+        robot.waitGone(id: "visit.range")
         robot.tap("tab.cycle")
         robot.waitFor(id: lane)
 
@@ -53,10 +69,7 @@ struct UserFlow {
         home.installMediumAndTake()
         robot.app.activate()
         robot.waitFor(id: lane)
-        XCTAssertTrue(
-            robot.spin(timeout: 4) { robot.value(of: status) == "taken" },
-            "after widget Take, \(status) is \(robot.value(of: status))"
-        )
+        robot.assertStatus(status, word: "Taken", token: "taken")
     }
 
     private func logOnePeriod() {

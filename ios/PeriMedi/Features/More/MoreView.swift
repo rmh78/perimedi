@@ -182,7 +182,7 @@ struct MoreView: View {
                             label: app.t("more.visitLabel"),
                             identifier: A11yID.moreSharePdf
                         ) {
-                            app.showVisitRange = true
+                            app.openVisitPicker()
                             error = nil
                         }
                     }

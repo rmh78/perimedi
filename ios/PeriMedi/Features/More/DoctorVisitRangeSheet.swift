@@ -6,8 +6,6 @@ struct DoctorVisitRangeSheet: View {
     @EnvironmentObject private var store: Store
     @Environment(\.dialogClose) private var dialogClose
 
-    @State private var selectedStart: String?
-    @State private var includePrevious = true
     @State private var error: String?
 
     private var cycles: [LoggedCycle] {
@@ -42,7 +40,10 @@ struct DoctorVisitRangeSheet: View {
                         }
                     }
                     if previousCycle != nil {
-                        Toggle(isOn: $includePrevious) {
+                        Toggle(isOn: Binding(
+                            get: { app.pickingChoice?.includePrevious ?? false },
+                            set: { app.setIncludePrevious($0) }
+                        )) {
                             Text(app.t("visit.range.previous"))
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(Theme.ink)
@@ -69,23 +70,23 @@ struct DoctorVisitRangeSheet: View {
             .padding(.vertical, 12)
         }
         .onAppear {
-            selectedStart = cycles.last?.start
-            includePrevious = cycles.count >= 2
+            app.seedVisitPicker(lastStart: cycles.last?.start, cycleCount: cycles.count)
         }
     }
 
     private var previousCycle: LoggedCycle? {
-        guard let selectedStart, let index = cycles.firstIndex(where: { $0.start == selectedStart }), index > 0 else {
+        guard let selectedStart = app.pickingChoice?.start,
+              let index = cycles.firstIndex(where: { $0.start == selectedStart }),
+              index > 0 else {
             return nil
         }
         return cycles[index - 1]
     }
 
     private func cycleRow(_ cycle: LoggedCycle) -> some View {
-        let selected = selectedStart == cycle.start
+        let selected = app.pickingChoice?.start == cycle.start
         return Button {
-            selectedStart = cycle.start
-            includePrevious = false
+            app.selectVisitCycle(cycle.start)
         } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
@@ -112,18 +113,18 @@ struct DoctorVisitRangeSheet: View {
     }
 
     private func continueToPreview() {
+        let choice = app.pickingChoice
         var selected: [LoggedCycle] = []
-        if let selectedStart, let cycle = cycles.first(where: { $0.start == selectedStart }) {
+        if let selectedStart = choice?.start, let cycle = cycles.first(where: { $0.start == selectedStart }) {
             selected.append(cycle)
-            if includePrevious, let previousCycle {
+            if choice?.includePrevious == true, let previousCycle {
                 selected.insert(previousCycle, at: 0)
             }
         }
         do {
             let url = try DoctorVisitShare.file(store: store, app: app, selectedCycles: selected)
             error = nil
-            app.visitPdfURL = url
-            app.showVisitRange = false
+            app.continueVisit(to: url)
         } catch {
             self.error = app.t("more.visitFailed")
         }

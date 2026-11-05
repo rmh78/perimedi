@@ -33,7 +33,7 @@ When launched for verification, the app SHALL honor a pinned English chrome flag
 - **THEN** that start date is eight calendar days before the pinned date, not eight days before the device clock
 
 ### Requirement: One English user flow
-An instrumented UI suite SHALL include one English flow that drives the real controls and SHALL fail if a step’s UI elements or resulting state are wrong. A pull request and a full verification SHALL both run that flow. A full verification SHALL also run the catalog capture. The flow SHALL start from a cleared store, pin today to the device’s current calendar day, and use one app launch. It SHALL type one everyday medication, leave the sheet on the form, type, time, and color it already shows, mark that dose taken by tapping its Cycle lane, put that dose back to pending, save one period from the new card as it opens, log one hot-flush score, open Month, Trends, and More, open the visit preview, and take it once from a medium Home Screen widget. Returning to the app SHALL show that dose taken. The flow SHALL NOT load sample data, switch language, snooze, page Month, change the widget size, or launch the app a second time. A pull-request run SHALL NOT rewrite the catalog or capture store frames. German product chrome SHALL be checked by requiring every English product string to have a non-empty German value and every German product string to have an English value. That check SHALL NOT launch a Simulator.
+An instrumented UI suite SHALL include one English flow that drives the real controls and SHALL fail if a step’s UI elements or resulting state are wrong. A pull request and a full verification SHALL both run that flow. A full verification SHALL also run the catalog capture. The flow SHALL start from a cleared store, pin today to the device’s current calendar day, and use one app launch. It SHALL type one everyday medication, leave the sheet on the form, type, time, and color it already shows, mark that dose taken by tapping its Cycle lane so the visible word is Taken and the status token is taken, put that dose back so the visible word is Not taken and the token is not-taken, save one period from the new card as it opens, log one hot-flush score, open Month, open Trends, turn that scored symptom off in Choose Symptoms so the chart drops that point, open More, open the visit preview, go Back from that preview to the cycle picker, and take the dose once from a medium Home Screen widget. Returning to the app SHALL show that dose taken, with the visible word Taken. The flow SHALL NOT load sample data, switch language, snooze, page Month, change the widget size, or launch the app a second time. A pull-request run SHALL NOT rewrite the catalog or capture store frames. German product chrome SHALL be checked by requiring every English product string to have a non-empty German value and every German product string to have an English value. That check SHALL NOT launch a Simulator.
 
 #### Scenario: Empty Cycle
 - **WHEN** the flow launches onto Cycle with no data
@@ -45,7 +45,7 @@ An instrumented UI suite SHALL include one English flow that drives the real con
 
 #### Scenario: Taken on Cycle
 - **WHEN** the flow taps that lane while the dose is still to take
-- **THEN** the lane reads taken, and the flow puts the dose back to pending before the Home Screen Take
+- **THEN** the status word is Taken and the token is taken, and the flow puts the dose back so the word is Not taken and the token is not-taken before the Home Screen Take
 
 #### Scenario: One period and one symptom
 - **WHEN** the flow saves the new period card as it opens and logs one hot-flush score
@@ -53,11 +53,11 @@ An instrumented UI suite SHALL include one English flow that drives the real con
 
 #### Scenario: Month, Trends, and the visit preview
 - **WHEN** the flow opens Month, then Trends, then More
-- **THEN** today’s month cell is identifiable, Trends is identifiable, the visit preview opens from More, and the flow does not activate Share or load sample
+- **THEN** today’s month cell is identifiable, Choose Symptoms turns the scored symptom off and the chart drops that point, Back from the visit preview returns the cycle picker, and the flow does not activate Share or load sample
 
 #### Scenario: One widget Take
 - **WHEN** the flow turns the app icon into a medium widget and taps Take once
-- **THEN** the widget is for the device’s current day, and the lane reads taken after the flow returns to the app
+- **THEN** the widget is for the device’s current day, and after the flow returns to the app the status word is Taken and the token is taken
 
 #### Scenario: Seeded launch is not this proof
 - **WHEN** the flow runs
@@ -83,7 +83,7 @@ A failed instrumented step SHALL retain a screenshot (or equivalent visual attac
 - **THEN** the instrumented suite still passes
 
 ### Requirement: Committed catalog of main screens
-A dedicated catalog capture SHALL write a small committed catalog of English Simulator pictures of the main destinations: Cycle empty, Cycle with data, Trends empty, Trends with data, Month, and More, plus the medication, period, and symptom sheets. German catalog pictures SHALL be the New symptom control reading Neues Symptom and More in German. The capture SHALL navigate the English destinations in a small number of English launches (tabs and Cycle sheet actions) rather than launching once per picture. It MAY switch to German only long enough to write those two pictures, then return to English, and SHALL NOT switch language for any other catalog picture. The largest-text More picture SHALL be an expected catalog file written by that same capture. Sample data and Trends fixtures MAY seed catalog pictures; they SHALL NOT be the first-use proof. Verification SHALL fail if an expected catalog picture is missing from the committed files, including those German pictures, the largest-text More picture, and the two medium-widget pictures taken around Take. Verification SHALL NOT fail because pixels differ from a previous capture. Visual review SHALL use those committed pictures (the pull-request file diff), not a gallery of images pasted into pull-request comments. A pull-request run SHALL NOT rewrite the catalog pictures. A full verification, including the nightly run, SHALL rewrite the catalog pictures unless catalog capture is turned off. The two medium-widget pictures stay committed files. The user flow does not rewrite them. Verification SHALL still fail when a committed catalog file is missing.
+A dedicated catalog capture SHALL write a small committed catalog of English Simulator pictures of the main destinations: Cycle empty, Cycle with data, Trends empty, Trends with data, Month, and More, plus the medication, period, and symptom sheets. German catalog pictures SHALL be the New symptom control reading Neues Symptom and More in German. The capture SHALL navigate the English destinations in a small number of English launches (tabs and Cycle sheet actions) rather than launching once per picture. It MAY switch to German only long enough to write those two pictures, then return to English, and SHALL NOT switch language for any other catalog picture. The largest-text More picture SHALL be an expected catalog file written by that same capture. The catalog SHALL also include a Cycle picture of a dose marked taken, a Cycle picture of that dose put back, a Trends picture after a selected series is turned off, and a visit preview that shows Back. The expected catalog file is the list of those names. Sample data and Trends fixtures MAY seed catalog pictures; they SHALL NOT be the first-use proof. Verification SHALL fail if an expected catalog picture is missing from the committed files, including those German pictures, the largest-text More picture, and the two medium-widget pictures taken around Take. Verification SHALL NOT fail because pixels differ from a previous capture. Visual review SHALL use those committed pictures (the pull-request file diff), not a gallery of images pasted into pull-request comments. A pull-request run SHALL NOT rewrite the catalog pictures. A full verification, including the nightly run, SHALL rewrite the catalog pictures unless catalog capture is turned off. The two medium-widget pictures stay committed files. The user flow does not rewrite them. Verification SHALL still fail when a committed catalog file is missing.
 
 #### Scenario: Missing catalog picture fails
 - **WHEN** an expected catalog picture is not present in the committed catalog
@@ -95,7 +95,7 @@ A dedicated catalog capture SHALL write a small committed catalog of English Sim
 
 #### Scenario: Catalog capture is one English empty session
 - **WHEN** the catalog capture writes English pictures of empty Cycle, empty Trends, and the add sheets
-- **THEN** those pictures come from navigating one empty-store English session, not from a separate app launch for each file. The same capture also writes More in German and the largest-text More picture. The German catalog pictures are the New symptom control reading Neues Symptom and More
+- **THEN** those pictures come from navigating one empty-store English session, not from a separate app launch for each file. That same session then shows the dose as taken and puts it back. The same capture also writes More in German and the largest-text More picture. The German catalog pictures are the New symptom control reading Neues Symptom and More
 
 ### Requirement: Visit share control is identifiable
 The More visit PDF action SHALL expose a language-independent accessibility identifier. The user flow SHALL wait for that control. Catalog pictures of More SHALL include the visit entry. Verification SHALL NOT paste screenshot galleries into pull-request comments.
@@ -114,4 +114,4 @@ The More visit PDF action SHALL expose a language-independent accessibility iden
 
 #### Scenario: Catalog includes the range picker and in-app preview
 - **WHEN** the committed screen catalog is written
-- **THEN** it includes English pictures of the cycle picker and the in-app visit PDF preview from sample data
+- **THEN** it includes English pictures of the cycle picker and the in-app visit PDF preview from sample data, and that preview picture shows Back

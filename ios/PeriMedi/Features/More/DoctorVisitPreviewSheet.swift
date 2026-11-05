@@ -18,6 +18,12 @@ struct DoctorVisitPreviewSheet: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         } footer: {
             HStack {
+                PillButton(
+                    title: app.t("visit.back"),
+                    kind: .secondary,
+                    identifier: A11yID.visitPdfBack,
+                    action: { app.backToVisitPicker() }
+                )
                 Spacer()
                 PillButton(
                     title: app.t("visit.share"),

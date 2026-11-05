@@ -39,7 +39,7 @@ Walk this map top to bottom for a broad regression. Order is Cycle, Month, Trend
 
 Practical test walk for that order:
 
-1. `PeriMediUITests/RequiredJourneyTests/testUserFlow` — empty Cycle, one typed medication on the sheet defaults, one Cycle Taken tap put back to pending, one period saved as the card opens, one symptom, Month, Trends, More, visit preview, one medium widget Take
+1. `PeriMediUITests/RequiredJourneyTests/testUserFlow` — empty Cycle, one typed medication on the sheet defaults, the lane word Taken then Not taken, one period saved as the card opens, one symptom, Month, Trends with that symptom turned off so the chart drops the point, More, Back from the visit preview to the picker, one medium widget Take
 
 PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verify`. A pull request runs `testUserFlow` and does not run `ScreenCatalogTests`. Local `verify` and the nightly full suite discover `testUserFlow` and the catalog writer.
 
@@ -54,7 +54,7 @@ PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verif
 - [Symptom sheet](./symptom-sheet.md) — scores 1–4 over Cycle
 - [Dose reminders](./reminders.md) — in-app banner Taken / Snooze
 - [Home Screen today's-meds widget](./home-dose-widget.md) — one medium Take inside `testUserFlow`. A pull request runs that step. The nightly full suite runs the same test.
-- [Doctor visit PDF](./doctor-visit.md) — More → range → in-app preview
+- [Doctor visit PDF](./doctor-visit.md) — More → range → in-app preview. Back returns to the same picker. Close returns to More.
 - [Backup / sample](./backup.md) — catalog waits for `more.sample` after the visit preview and does not tap it
 - [First-use journey](./journeys.md) — empty app through tracking and Month
 

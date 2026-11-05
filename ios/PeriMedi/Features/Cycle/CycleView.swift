@@ -295,6 +295,8 @@ struct CycleView: View {
             .frame(height: stripH, alignment: .center)
 
             ForEach(snap.lanes) { lane in
+                let word = statusLabel(for: lane, snap: snap)
+                let token = statusValue(for: lane, snap: snap)
                 HStack(spacing: 6) {
                     Button {
                         toggleLane(lane, snap: snap)
@@ -315,13 +317,14 @@ struct CycleView: View {
                                 .font(.system(size: 12, weight: .semibold))
                                 .foregroundStyle(Theme.ink)
                                 .lineLimit(2)
-                            Text(statusLabel(for: lane, snap: snap))
+                            Text(word)
                                 .font(.system(size: 10, weight: .semibold))
                                 .foregroundStyle(statusColor(for: lane, snap: snap))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.85)
                                 .accessibilityIdentifier(A11yID.laneStatus(lane.name))
-                                .accessibilityValue(statusValue(for: lane, snap: snap))
+                                .accessibilityLabel(word)
+                                .accessibilityValue(token)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }

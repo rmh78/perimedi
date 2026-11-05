@@ -78,6 +78,10 @@ The system SHALL draw at most three symptom series. The default series SHALL be 
 - **WHEN** the Choose Symptoms sheet is open
 - **THEN** the top-left close control dismisses it and there is no Done button
 
+#### Scenario: Turning off every selected symptom keeps the chart
+- **WHEN** the user turns off every selected symptom in Choose Symptoms
+- **THEN** the chart and Choose Symptoms stay up, no point is drawn for that symptom, a point caption is not shown, and the no-scores explanation is not shown
+
 #### Scenario: Sheet choices match the language pills
 - **WHEN** the Choose Symptoms sheet is open
 - **THEN** a selected name uses the same filled pill as the active language, an unselected name uses the same outlined pill as an inactive language choice, and the sheet does not paint a series color or a status dot

@@ -85,7 +85,9 @@ struct TrendsView: View {
                 .foregroundStyle(Theme.inkMuted)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier(A11yID.trendsSizeKey)
-            if let selected {
+            if let selected, chart.series.contains(where: {
+                $0.id == selected.id && $0.points.contains { $0.cycleStart == selected.point.cycleStart }
+            }) {
                 detail(selected)
             }
             if let selectedTick {
