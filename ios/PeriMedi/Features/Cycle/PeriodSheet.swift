@@ -1,6 +1,7 @@
 import SwiftUI
 import UIKit
 import PeriMediDomain
+import PeriDesign
 
 struct PeriodSheet: View {
     var startInAddEditor = false
@@ -35,9 +36,9 @@ struct PeriodSheet: View {
                 Toggle(isOn: $tracksPeriods) {
                     Text(app.t("period.track"))
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Theme.ink)
+                        .foregroundStyle(PeriColor.ink)
                 }
-                .tint(Theme.blush600)
+                .tint(PeriColor.blush600)
                 .onChange(of: tracksPeriods) { _, on in
                     persistSettings(tracks: on)
                     if !on { closeDraft() }
@@ -61,9 +62,9 @@ struct PeriodSheet: View {
                         }
                     }
 
-                    Text(app.t("period.history")).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
+                    Text(app.t("period.history")).font(.subheadline.weight(.semibold)).foregroundStyle(PeriColor.ink)
                     if store.periods.isEmpty {
-                        Text(app.t("period.none")).font(.caption).foregroundStyle(Theme.inkMuted)
+                        Text(app.t("period.none")).font(.caption).foregroundStyle(PeriColor.inkMuted)
                     }
 
                     VStack(spacing: 0) {
@@ -75,13 +76,13 @@ struct PeriodSheet: View {
                                     Text(rangeLabel(period))
                                         .font(.subheadline.weight(.semibold))
                                         .underline()
-                                        .foregroundStyle(Theme.blush700)
+                                        .foregroundStyle(PeriColor.blush700)
                                         .lineLimit(2)
                                         .multilineTextAlignment(.leading)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                     Text(meta(period))
                                         .font(.caption)
-                                        .foregroundStyle(Theme.inkMuted)
+                                        .foregroundStyle(PeriColor.inkMuted)
                                         .lineLimit(1)
                                         .layoutPriority(1)
                                 }
@@ -94,14 +95,14 @@ struct PeriodSheet: View {
                             .accessibilityValue(meta(period))
                             .padding(.vertical, 8)
                             if index < store.periods.count - 1 {
-                                Rectangle().fill(Theme.blush100).frame(height: 1)
+                                Rectangle().fill(PeriColor.blush100).frame(height: 1)
                             }
                         }
                     }
                 } else {
                     Text(app.t("period.trackOffHint"))
                         .font(.subheadline)
-                        .foregroundStyle(Theme.inkSoft)
+                        .foregroundStyle(PeriColor.inkSoft)
                 }
             }
         }
@@ -126,7 +127,7 @@ struct PeriodSheet: View {
 
     private var periodCard: some View {
         ZStack {
-            Theme.ink.opacity(0.28)
+            PeriColor.ink.opacity(0.28)
             GeometryReader { geo in
                 ScrollView {
                     cardSurface
@@ -153,11 +154,11 @@ struct PeriodSheet: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.cream)
+        .background(PeriColor.cream)
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .stroke(Theme.blush100, lineWidth: 1)
+                .stroke(PeriColor.blush100, lineWidth: 1)
         )
         .padding(.horizontal, 16)
         .padding(.bottom, 12)
@@ -167,7 +168,7 @@ struct PeriodSheet: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(draft == .create ? app.t("period.new") : app.t("period.edit"))
                 .font(.title3.weight(.semibold))
-                .foregroundStyle(Theme.ink)
+                .foregroundStyle(PeriColor.ink)
             PeriodDatePair(spacing: 10) {
                 VStack(alignment: .leading, spacing: 6) {
                     FieldLabel(text: app.t("period.startDate"))
@@ -182,7 +183,7 @@ struct PeriodSheet: View {
                     }
                     Text(app.t("period.endHint"))
                         .font(.caption2)
-                        .foregroundStyle(Theme.inkMuted)
+                        .foregroundStyle(PeriColor.inkMuted)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -239,10 +240,10 @@ struct PeriodSheet: View {
         return VStack(alignment: .leading, spacing: 12) {
             Text(app.t("confirm.title"))
                 .font(.title3.weight(.semibold))
-                .foregroundStyle(Theme.ink)
+                .foregroundStyle(PeriColor.ink)
             Text(app.t("period.deleteNamed", ["name": name]))
                 .font(.subheadline)
-                .foregroundStyle(Theme.inkSoft)
+                .foregroundStyle(PeriColor.inkSoft)
             HStack(spacing: 8) {
                 PillButton(title: app.t("common.cancel"), kind: .secondary, identifier: A11yID.confirmCancel) {
                     draft = .edit(id)
@@ -353,7 +354,7 @@ struct PeriodSheet: View {
         let scale = nextPeriodScale(date: date, lineWidth: nextPeriodLineWidth)
         return Text(sentence)
             .font(nextPeriodFont(scale: scale))
-            .foregroundStyle(Theme.inkSoft)
+            .foregroundStyle(PeriColor.inkSoft)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background {
                 GeometryReader { proxy in

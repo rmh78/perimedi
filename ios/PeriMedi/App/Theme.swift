@@ -1,38 +1,20 @@
 import SwiftUI
 import UIKit
 import PeriMediDomain
+import PeriDesign
 
 enum Theme {
-    static let blush25 = Color(hex: "#fffafb")
-    static let blush50 = Color(hex: "#fff1f4")
-    static let blush100 = Color(hex: "#ffe4eb")
-    static let blush200 = Color(hex: "#fecdd9")
-    static let blush300 = Color(hex: "#fda4b8")
-    static let blush400 = Color(hex: "#f4729a")
-    static let blush500 = Color(hex: "#e85a84")
-    static let blush600 = Color(hex: "#d43d6c")
-    static let blush700 = Color(hex: "#b12d57")
-    static let blush800 = Color(hex: "#94274b")
-    static let lilac50 = Color(hex: "#f7f3fb")
-    static let cream = Color(hex: "#fff9f6")
-    static let ink = Color(hex: "#3d2c33")
-    static let inkSoft = Color(hex: "#6b5560")
-    static let inkMuted = Color(hex: "#9a8490")
-    static let taken = Color(hex: "#5a9e7a")
-    static let pending = Color(hex: "#b8a0ab")
-    static let symptom = Color(hex: "#c47f00")
-
     static var pageBackground: some View {
         ZStack {
-            cream
+            PeriColor.cream
             RadialGradient(
-                colors: [Color(hex: "#fde2ea"), .clear],
+                colors: [PeriColor.pageWash, .clear],
                 center: UnitPoint(x: 0.1, y: -0.05),
                 startRadius: 10,
                 endRadius: 280
             )
             RadialGradient(
-                colors: [Color(hex: "#ebe0f5").opacity(0.9), .clear],
+                colors: [PeriColor.pageWashLilac.opacity(0.9), .clear],
                 center: UnitPoint(x: 1, y: 0),
                 startRadius: 10,
                 endRadius: 260
@@ -47,14 +29,14 @@ struct GlassCard<Content: View>: View {
     var body: some View {
         content()
             .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                RoundedRectangle(cornerRadius: PeriRadius.card, style: .continuous)
                     .fill(Color.white.opacity(0.82))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                RoundedRectangle(cornerRadius: PeriRadius.card, style: .continuous)
                     .stroke(Color.white.opacity(0.7), lineWidth: 1)
             )
-            .shadow(color: Theme.blush700.opacity(0.12), radius: 16, y: 8)
+            .shadow(color: PeriColor.blush700.opacity(0.12), radius: 16, y: 8)
     }
 }
 
@@ -63,10 +45,10 @@ struct PillButton: View {
         case primary, secondary, destructive
     }
 
-    static let horizontalPadding: CGFloat = 14
-    static let minHeight: CGFloat = 36
+    static let horizontalPadding: CGFloat = PeriSpace.pad
+    static let minHeight: CGFloat = PeriSpace.minControl
     static let fillsWidthFloor: CGFloat = 0.8
-    static let strokeWidth: CGFloat = 1
+    static let strokeWidth: CGFloat = PeriSpace.hairline
 
     var title: String
     var kind: Kind = .secondary
@@ -104,14 +86,14 @@ struct PillButton: View {
         if let labelScale {
             return .system(size: subheadlineSize * labelScale, weight: .semibold)
         }
-        return .subheadline.weight(.semibold)
+        return PeriFont.pillLabel
     }
 
     private var foreground: Color {
         switch kind {
         case .primary: return .white
-        case .secondary: return Theme.blush700
-        case .destructive: return Theme.blush800
+        case .secondary: return PeriColor.blush700
+        case .destructive: return PeriColor.blush800
         }
     }
 
@@ -119,20 +101,20 @@ struct PillButton: View {
         switch kind {
         case .primary:
             return AnyShapeStyle(LinearGradient(
-                colors: [Theme.blush500, Color(hex: "#c45a9a")],
+                colors: [PeriColor.blush500, PeriColor.pillGradientEnd],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             ))
         case .secondary, .destructive:
-            return AnyShapeStyle(Theme.cream)
+            return AnyShapeStyle(PeriColor.cream)
         }
     }
 
     private var stroke: Color {
         switch kind {
         case .primary: return .clear
-        case .secondary: return Theme.blush200
-        case .destructive: return Theme.blush300
+        case .secondary: return PeriColor.blush200
+        case .destructive: return PeriColor.blush300
         }
     }
 }
@@ -151,7 +133,7 @@ struct EqualWidthPillRow: View {
         var lines: Int
     }
 
-    static let spacing: CGFloat = 8
+    static let spacing: CGFloat = PeriSpace.row
     static let minLabelScale: CGFloat = 0.5
     static let fitSlack: CGFloat = 4
 
@@ -368,15 +350,4 @@ private struct EqualWidthRowHeightKey: PreferenceKey {
 
 func medFormImage(_ form: MedForm) -> String {
     form.assetName
-}
-
-extension Color {
-    init(hex: String) {
-        let h = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: h).scanHexInt64(&int)
-        let r, g, b: UInt64
-        (r, g, b) = ((int >> 16) & 0xFF, (int >> 8) & 0xFF, int & 0xFF)
-        self.init(.sRGB, red: Double(r) / 255, green: Double(g) / 255, blue: Double(b) / 255, opacity: 1)
-    }
 }

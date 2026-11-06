@@ -1,5 +1,6 @@
 import SwiftUI
 import PeriMediDomain
+import PeriDesign
 
 struct DoctorVisitRangeSheet: View {
     @EnvironmentObject private var app: AppModel
@@ -26,15 +27,15 @@ struct DoctorVisitRangeSheet: View {
                 if cycles.isEmpty {
                     Text(app.t("visit.range.empty"))
                         .font(.subheadline)
-                        .foregroundStyle(Theme.inkSoft)
+                        .foregroundStyle(PeriColor.inkSoft)
                 } else {
                     Text(app.t("visit.range.hint"))
                         .font(.subheadline)
-                        .foregroundStyle(Theme.inkSoft)
+                        .foregroundStyle(PeriColor.inkSoft)
                     VStack(spacing: 0) {
                         ForEach(Array(cycles.reversed().enumerated()), id: \.element.start) { index, cycle in
                             if index > 0 {
-                                Rectangle().fill(Theme.blush100).frame(height: 1)
+                                Rectangle().fill(PeriColor.blush100).frame(height: 1)
                             }
                             cycleRow(cycle)
                         }
@@ -46,14 +47,14 @@ struct DoctorVisitRangeSheet: View {
                         )) {
                             Text(app.t("visit.range.previous"))
                                 .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(Theme.ink)
+                                .foregroundStyle(PeriColor.ink)
                         }
-                        .tint(Theme.blush600)
+                        .tint(PeriColor.blush600)
                         .accessibilityIdentifier(A11yID.visitRangePrevious)
                     }
                 }
                 if let error {
-                    Text(error).font(.caption).foregroundStyle(Theme.blush700)
+                    Text(error).font(.caption).foregroundStyle(PeriColor.blush700)
                 }
             }
         } footer: {
@@ -96,14 +97,14 @@ struct DoctorVisitRangeSheet: View {
                         locale: app.locale.language.locale
                     ))
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Theme.ink)
+                        .foregroundStyle(PeriColor.ink)
                     Text(app.t("visit.range.completed"))
                         .font(.caption)
-                        .foregroundStyle(Theme.inkMuted)
+                        .foregroundStyle(PeriColor.inkMuted)
                 }
                 Spacer()
                 Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(selected ? Theme.blush600 : Theme.inkMuted)
+                    .foregroundStyle(selected ? PeriColor.blush600 : PeriColor.inkMuted)
             }
             .padding(.vertical, 10)
         }

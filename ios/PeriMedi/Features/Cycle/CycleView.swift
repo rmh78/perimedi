@@ -1,5 +1,6 @@
 import SwiftUI
 import PeriMediDomain
+import PeriDesign
 
 struct CycleView: View {
     @EnvironmentObject private var app: AppModel
@@ -75,7 +76,7 @@ struct CycleView: View {
             chevron("right", app.t("diagram.nextDay"), false) { page(snap, 1) }
             Text(pagerLabel(snap))
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Theme.ink)
+                .foregroundStyle(PeriColor.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
                 .accessibilityIdentifier(A11yID.pagerLabel)
@@ -88,7 +89,7 @@ struct CycleView: View {
         Button(action: action) {
             Image(systemName: "chevron.\(dir)")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(Theme.blush700)
+                .foregroundStyle(PeriColor.blush700)
                 .frame(width: 36, height: 36)
         }
         .disabled(disabled)
@@ -116,7 +117,7 @@ struct CycleView: View {
                         HStack(spacing: 5) {
                             Image(systemName: "bolt.fill")
                                 .font(.system(size: 10, weight: .bold))
-                                .foregroundStyle(Theme.symptom)
+                                .foregroundStyle(PeriColor.symptom)
                             Text(scoreChipName(score))
                                 .font(.caption)
                                 .foregroundStyle(Color(hex: "#7a4a00"))
@@ -147,7 +148,7 @@ struct CycleView: View {
                         HStack(spacing: 6) {
                             Image(systemName: "bolt.fill")
                                 .font(.system(size: 10, weight: .bold))
-                                .foregroundStyle(Theme.symptom)
+                                .foregroundStyle(PeriColor.symptom)
                             Text(note.body)
                                 .font(.caption)
                                 .foregroundStyle(Color(hex: "#7a4a00"))
@@ -177,7 +178,7 @@ struct CycleView: View {
         HStack(alignment: .center) {
             Text(app.t("diagram.medsAndDoses"))
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(Theme.inkMuted)
+                .foregroundStyle(PeriColor.inkMuted)
                 .textCase(.uppercase)
                 .tracking(1.1)
             Spacer()
@@ -193,15 +194,15 @@ struct CycleView: View {
 
     private var miniLegend: some View {
         HStack(spacing: 10) {
-            legendDot(Theme.taken, app.t("diagram.taken"))
+            legendDot(PeriColor.taken, app.t("diagram.taken"))
             legendDot(Color.slate, app.t("diagram.notTaken"))
             HStack(spacing: 4) {
                 Image(systemName: "drop.fill").font(.system(size: 9)).foregroundStyle(.red)
-                Text(app.t("diagram.periodTitle")).font(.system(size: 11)).foregroundStyle(Theme.inkMuted)
+                Text(app.t("diagram.periodTitle")).font(.system(size: 11)).foregroundStyle(PeriColor.inkMuted)
             }
             HStack(spacing: 4) {
-                Image(systemName: "bolt.fill").font(.system(size: 9)).foregroundStyle(Theme.symptom)
-                Text(app.t("legend.symptom")).font(.system(size: 11)).foregroundStyle(Theme.inkMuted)
+                Image(systemName: "bolt.fill").font(.system(size: 9)).foregroundStyle(PeriColor.symptom)
+                Text(app.t("legend.symptom")).font(.system(size: 11)).foregroundStyle(PeriColor.inkMuted)
             }
         }
     }
@@ -223,7 +224,7 @@ struct CycleView: View {
                     stickyLabels(snap)
                         .frame(width: labelCol, alignment: .leading)
                         .clipped()
-                        .background(Theme.cream)
+                        .background(PeriColor.cream)
                     GeometryReader { geo in
                         let colW = fittedColumnWidth(available: geo.size.width)
                         let plotWidth = max(CGFloat(snap.days.count) * colW, colW)
@@ -280,7 +281,7 @@ struct CycleView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(app.t("diagram.cycleDays"))
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(Theme.inkMuted)
+                    .foregroundStyle(PeriColor.inkMuted)
                     .textCase(.uppercase)
                 if store.settings.tracksPeriods {
                     Text(app.t("diagram.cyclePeriodMeta", [
@@ -288,7 +289,7 @@ struct CycleView: View {
                         "period": "\(store.settings.averagePeriodLength)",
                     ]))
                     .font(.system(size: 11))
-                    .foregroundStyle(Theme.inkMuted)
+                    .foregroundStyle(PeriColor.inkMuted)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -315,7 +316,7 @@ struct CycleView: View {
                         VStack(alignment: .leading, spacing: 1) {
                             Text(lane.name)
                                 .font(.system(size: 12, weight: .semibold))
-                                .foregroundStyle(Theme.ink)
+                                .foregroundStyle(PeriColor.ink)
                                 .lineLimit(2)
                             Text(word)
                                 .font(.system(size: 10, weight: .semibold))
@@ -385,17 +386,17 @@ struct CycleView: View {
                     .frame(height: 10)
                     Text("\(DateKeys.dayOfMonth(day.dateKey) ?? (day.index + 1))")
                         .font(.system(size: 11, weight: isToday || isSelected ? .semibold : .regular).monospacedDigit())
-                        .foregroundStyle(isToday ? .white : isSelected ? Theme.blush700 : info.isLoggedPeriod ? Color(hex: "#9f1239") : Theme.inkMuted)
+                        .foregroundStyle(isToday ? .white : isSelected ? PeriColor.blush700 : info.isLoggedPeriod ? Color(hex: "#9f1239") : PeriColor.inkMuted)
                         .frame(width: 18, height: 18)
                         .background {
                             if isToday {
-                                Circle().fill(Theme.blush600)
+                                Circle().fill(PeriColor.blush600)
                             }
                         }
                 }
                 .frame(width: columnWidth, height: stripH)
                 .overlay(alignment: .trailing) {
-                    Rectangle().fill(Theme.blush50).frame(width: 1)
+                    Rectangle().fill(PeriColor.blush50).frame(width: 1)
                 }
                 .background(
                     info.isLoggedPeriod
@@ -411,7 +412,7 @@ struct CycleView: View {
             }
         }
         .background(Rectangle().fill(Color.white.opacity(0.82)))
-        .overlay(Rectangle().stroke(Theme.blush100, lineWidth: 1))
+        .overlay(Rectangle().stroke(PeriColor.blush100, lineWidth: 1))
     }
 
     private func doseTrack(_ lane: MedLane, plotWidth: CGFloat, columnWidth colW: CGFloat) -> some View {
@@ -421,12 +422,12 @@ struct CycleView: View {
             context.fill(
                 track,
                 with: .linearGradient(
-                    Gradient(colors: [Theme.blush50.opacity(0.4), Theme.lilac50.opacity(0.3)]),
+                    Gradient(colors: [PeriColor.blush50.opacity(0.4), PeriColor.lilac50.opacity(0.3)]),
                     startPoint: .zero,
                     endPoint: CGPoint(x: size.width, y: 0)
                 )
             )
-            context.stroke(track, with: .color(Theme.blush100.opacity(0.8)), lineWidth: 1)
+            context.stroke(track, with: .color(PeriColor.blush100.opacity(0.8)), lineWidth: 1)
             for seg in lane.segments {
                 let x = CGFloat(seg.fromDay - 1) * colW + 1.5
                 let w = max(CGFloat(seg.toDay - seg.fromDay + 1) * colW - 3, 6)
@@ -451,7 +452,7 @@ struct CycleView: View {
     private func statusColor(for lane: MedLane, snap: CycleSnapshot) -> Color {
         let label = statusLabel(for: lane, snap: snap)
         if label == app.t("diagram.taken") { return Color(hex: lane.color) }
-        if label == app.t("diagram.noDose") { return Theme.inkMuted }
+        if label == app.t("diagram.noDose") { return PeriColor.inkMuted }
         return Color(hex: "#64748b")
     }
 
@@ -573,7 +574,7 @@ struct CycleView: View {
                 .scaledToFill()
                 .frame(width: 36, height: 36)
                 .clipShape(Circle())
-                .overlay(Circle().stroke(Theme.blush200, lineWidth: 1))
+                .overlay(Circle().stroke(PeriColor.blush200, lineWidth: 1))
             if plus { plusBadge }
         }
     }
@@ -583,7 +584,7 @@ struct CycleView: View {
             .font(.system(size: 9, weight: .bold))
             .foregroundStyle(.white)
             .frame(width: 18, height: 18)
-            .background(Circle().fill(Theme.blush600))
+            .background(Circle().fill(PeriColor.blush600))
             .overlay(Circle().stroke(Color.white, lineWidth: 2))
             .offset(x: 3, y: 3)
     }
@@ -608,14 +609,14 @@ struct CycleView: View {
     private var stripBolt: some View {
         Image(systemName: "bolt.fill")
             .font(.system(size: 8, weight: .bold))
-            .foregroundStyle(Theme.symptom)
-            .shadow(color: Theme.symptom.opacity(0.45), radius: 0.5, y: 0.5)
+            .foregroundStyle(PeriColor.symptom)
+            .shadow(color: PeriColor.symptom.opacity(0.45), radius: 0.5, y: 0.5)
     }
 
     private func legendDot(_ color: Color, _ label: String) -> some View {
         HStack(spacing: 4) {
             Circle().fill(color).frame(width: 8, height: 8)
-            Text(label).font(.system(size: 11)).foregroundStyle(Theme.inkMuted)
+            Text(label).font(.system(size: 11)).foregroundStyle(PeriColor.inkMuted)
         }
     }
 
@@ -637,13 +638,13 @@ struct CycleView: View {
     private var requirementsCard: some View {
         Text(requirementsTitle)
             .font(.subheadline.weight(.semibold))
-            .foregroundStyle(Theme.ink)
+            .foregroundStyle(PeriColor.ink)
             .frame(maxWidth: .infinity)
             .padding(16)
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
                     .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [5]))
-                    .foregroundStyle(Theme.blush200)
+                    .foregroundStyle(PeriColor.blush200)
             )
             .accessibilityIdentifier(A11yID.emptyMeds)
             .accessibilityValue(requirementsValue)
@@ -654,10 +655,10 @@ struct CycleView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text(app.t("diagram.emptyTitle"))
                     .font(.headline)
-                    .foregroundStyle(Theme.ink)
+                    .foregroundStyle(PeriColor.ink)
                 Text(app.t("diagram.emptyBody"))
                     .font(.caption)
-                    .foregroundStyle(Theme.inkSoft)
+                    .foregroundStyle(PeriColor.inkSoft)
                 hintRow("ActionPeriod", app.t("diagram.emptyAddPeriod"), plus: false) { app.showPeriod = true }
                 hintRow("ActionMed", app.t("diagram.emptyAddMedHint"), plus: true) {
                     app.medSheet = MedSheetState(isNew: true, medication: nil)
@@ -667,7 +668,7 @@ struct CycleView: View {
                     takenHintGlyph
                     Text(app.t("diagram.emptyToggleTaken"))
                         .font(.subheadline)
-                        .foregroundStyle(Theme.ink)
+                        .foregroundStyle(PeriColor.ink)
                         .multilineTextAlignment(.leading)
                     Spacer()
                 }
@@ -701,7 +702,7 @@ struct CycleView: View {
         Button(action: action) {
             HStack(spacing: 12) {
                 actionGlyph(image, plus: plus)
-                Text(text).font(.subheadline).foregroundStyle(Theme.ink).multilineTextAlignment(.leading)
+                Text(text).font(.subheadline).foregroundStyle(PeriColor.ink).multilineTextAlignment(.leading)
                 Spacer()
             }
         }
@@ -745,11 +746,11 @@ private struct DoseLabelOverlay: View {
                         VStack(alignment: .leading, spacing: 0) {
                             Text(DoseUnitCopy.display(seg.doseLabel, languageCode: languageCode))
                                 .font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(Theme.ink)
+                                .foregroundStyle(PeriColor.ink)
                                 .lineLimit(1)
                             Text(daysRange(seg.fromDay, seg.toDay))
                                 .font(.system(size: 10, weight: .medium))
-                                .foregroundStyle(Theme.inkSoft)
+                                .foregroundStyle(PeriColor.inkSoft)
                                 .lineLimit(1)
                         }
                         .padding(.horizontal, 6)

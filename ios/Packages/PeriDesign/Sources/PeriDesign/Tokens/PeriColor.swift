@@ -1,0 +1,26 @@
+import SwiftUI
+
+public enum PeriColor {
+    public static let blush25 = Color(hex: "#fffafb")
+    public static let blush50 = Color(hex: "#fff1f4")
+    public static let blush100 = Color(hex: "#ffe4eb")
+    public static let blush200 = Color(hex: "#fecdd9")
+    public static let blush300 = Color(hex: "#fda4b8")
+    public static let blush400 = Color(hex: "#f4729a")
+    public static let blush500 = Color(hex: "#e85a84")
+    public static let blush600 = Color(hex: "#d43d6c")
+    public static let blush700 = Color(hex: "#b12d57")
+    public static let blush800 = Color(hex: "#94274b")
+    public static let lilac50 = Color(hex: "#f7f3fb")
+    public static let cream = Color(hex: "#fff9f6")
+    public static let ink = Color(hex: "#3d2c33")
+    public static let inkSoft = Color(hex: "#6b5560")
+    public static let inkMuted = Color(hex: "#9a8490")
+    public static let taken = Color(hex: "#5a9e7a")
+    public static let pending = Color(hex: "#b8a0ab")
+    public static let symptom = Color(hex: "#c47f00")
+    public static let pageWash = Color(hex: "#fde2ea")
+    public static let pageWashLilac = Color(hex: "#ebe0f5")
+    public static let pillGradientEnd = Color(hex: "#c45a9a")
+    public static let launchPeach = Color(hex: "#ffe4d6")
+}

@@ -1,4 +1,5 @@
 import SwiftUI
+import PeriDesign
 
 enum TrendsStyle {
     static let seriesColors: [Color] = [

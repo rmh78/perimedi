@@ -1,5 +1,6 @@
 import SwiftUI
 import PeriMediDomain
+import PeriDesign
 
 struct EffectLine: View {
     @EnvironmentObject private var app: AppModel
@@ -17,7 +18,7 @@ struct EffectLine: View {
         if let text = EffectCopy.sentence(result, t: app.t, symptomName: app.symptomTitle) {
             Text(text)
                 .font(.caption)
-                .foregroundStyle(Theme.inkSoft)
+                .foregroundStyle(PeriColor.inkSoft)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier(A11yID.cycleEffect)
                 .accessibilityValue(effectValue(result))

@@ -1,5 +1,6 @@
 import SwiftUI
 import PeriMediDomain
+import PeriDesign
 
 struct TrendsPickerSheet: View {
     @EnvironmentObject private var app: AppModel
@@ -61,7 +62,7 @@ struct TrendsPickerSheet: View {
     private func groupTitle(_ title: String, id: String) -> some View {
         Text(title)
             .font(.caption.weight(.semibold))
-            .foregroundStyle(Theme.inkMuted)
+            .foregroundStyle(PeriColor.inkMuted)
             .textCase(.uppercase)
             .tracking(0.6)
             .frame(maxWidth: .infinity)

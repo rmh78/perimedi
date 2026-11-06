@@ -1,5 +1,6 @@
 import SwiftUI
 import PeriMediDomain
+import PeriDesign
 
 struct SymptomSheet: View {
     @EnvironmentObject private var app: AppModel
@@ -34,16 +35,16 @@ struct SymptomSheet: View {
             VStack(alignment: .leading, spacing: 0) {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 4) {
-                        Text(app.t("symptom.date")).foregroundStyle(Theme.inkSoft)
+                        Text(app.t("symptom.date")).foregroundStyle(PeriColor.inkSoft)
                         Text(DateCopy.day(dateKey, locale: app.locale.language.locale))
                             .fontWeight(.semibold)
-                            .foregroundStyle(Theme.ink)
+                            .foregroundStyle(PeriColor.ink)
                     }
                     .font(.subheadline)
 
                     Text(app.t("symptom.scaleBlank"))
                         .font(.caption2)
-                        .foregroundStyle(Theme.inkMuted)
+                        .foregroundStyle(PeriColor.inkMuted)
                 }
 
                 ForEach(Array(store.symptomDirectory.blocks.enumerated()), id: \.offset) { _, block in
@@ -85,7 +86,7 @@ struct SymptomSheet: View {
             if atCap {
                 Text(app.t("symptom.tooMany"))
                     .font(.caption2)
-                    .foregroundStyle(Theme.blush800)
+                    .foregroundStyle(PeriColor.blush800)
             } else if nameDraft == nil {
                 PillButton(
                     title: app.t("symptom.addPlaceholder"),
@@ -101,7 +102,7 @@ struct SymptomSheet: View {
 
     private var nameDialog: some View {
         ZStack(alignment: .bottom) {
-            Theme.ink.opacity(0.28)
+            PeriColor.ink.opacity(0.28)
                 .onTapGesture { closeDraft() }
             Group {
                 if case .confirmDelete(let id) = nameDraft {
@@ -112,11 +113,11 @@ struct SymptomSheet: View {
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.cream)
+            .background(PeriColor.cream)
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .stroke(Theme.blush100, lineWidth: 1)
+                    .stroke(PeriColor.blush100, lineWidth: 1)
             )
             .padding(.horizontal, 16)
             .padding(.bottom, 12)
@@ -129,7 +130,7 @@ struct SymptomSheet: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(nameDraft == .create ? app.t("symptom.addPlaceholder") : app.t("symptom.edit"))
                 .font(.title3.weight(.semibold))
-                .foregroundStyle(Theme.ink)
+                .foregroundStyle(PeriColor.ink)
             TextField(app.t("symptom.addPlaceholder"), text: $draft)
                 .textFieldStyle(.roundedBorder)
                 .font(.footnote)
@@ -143,7 +144,7 @@ struct SymptomSheet: View {
             if let nameError, let message = nameMessage(nameError) {
                 Text(message)
                     .font(.caption2)
-                    .foregroundStyle(Theme.blush800)
+                    .foregroundStyle(PeriColor.blush800)
             }
             EqualWidthPillRow(items: nameActions)
         }
@@ -154,10 +155,10 @@ struct SymptomSheet: View {
         return VStack(alignment: .leading, spacing: 12) {
             Text(app.t("confirm.title"))
                 .font(.title3.weight(.semibold))
-                .foregroundStyle(Theme.ink)
+                .foregroundStyle(PeriColor.ink)
             Text(app.t("symptom.deleteScores", ["name": name]))
                 .font(.subheadline)
-                .foregroundStyle(Theme.inkSoft)
+                .foregroundStyle(PeriColor.inkSoft)
             HStack(spacing: 8) {
                 PillButton(title: app.t("common.cancel"), kind: .secondary, identifier: A11yID.confirmCancel) {
                     nameDraft = .edit(id)
@@ -233,13 +234,13 @@ struct SymptomSheet: View {
     private func groupTitle(_ title: String) -> some View {
         VStack(spacing: 0) {
             Rectangle()
-                .fill(Theme.blush100)
+                .fill(PeriColor.blush100)
                 .frame(height: 1)
                 .padding(.horizontal, -16)
                 .padding(.top, 8)
             Text(title)
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Theme.ink)
+                .foregroundStyle(PeriColor.ink)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
         }
@@ -259,7 +260,7 @@ struct SymptomSheet: View {
                         Text(title)
                             .font(.footnote)
                             .underline()
-                            .foregroundStyle(Theme.blush700)
+                            .foregroundStyle(PeriColor.blush700)
                             .multilineTextAlignment(.leading)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -268,7 +269,7 @@ struct SymptomSheet: View {
                 } else {
                     Text(title)
                         .font(.footnote)
-                        .foregroundStyle(Theme.ink)
+                        .foregroundStyle(PeriColor.ink)
                         .lineLimit(1)
                         .minimumScaleFactor(0.72)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -290,12 +291,12 @@ struct SymptomSheet: View {
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
                         }
-                        .foregroundStyle(selected ? .white : Theme.blush800)
+                        .foregroundStyle(selected ? .white : PeriColor.blush800)
                         .frame(maxWidth: .infinity)
                         .frame(height: 34)
                         .background(
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .fill(selected ? Theme.blush600 : Theme.blush50)
+                                .fill(selected ? PeriColor.blush600 : PeriColor.blush50)
                         )
                     }
                     .buttonStyle(.plain)

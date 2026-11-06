@@ -1,5 +1,6 @@
 import SwiftUI
 import PeriMediDomain
+import PeriDesign
 
 struct MedicationSheet: View {
     @EnvironmentObject private var app: AppModel
@@ -45,7 +46,7 @@ struct MedicationSheet: View {
                 FieldLabel(text: app.t("med.name"))
                 SoftField {
                     TextField("", text: $name)
-                        .foregroundStyle(Theme.ink)
+                        .foregroundStyle(PeriColor.ink)
                         .focused($focusedEntry, equals: .name)
                         .accessibilityIdentifier(A11yID.medName)
                         .background(alignment: .topLeading) {
@@ -63,7 +64,7 @@ struct MedicationSheet: View {
                                 }
                             }
                             .labelsHidden()
-                            .tint(Theme.ink)
+                            .tint(PeriColor.ink)
                             .accessibilityIdentifier(A11yID.medForm)
                         }
                     }
@@ -71,7 +72,7 @@ struct MedicationSheet: View {
                         FieldLabel(text: app.t("med.defaultDose"))
                         SoftField {
                             TextField(app.t("med.dosePlaceholder"), text: $doseLabel)
-                                .foregroundStyle(Theme.ink)
+                                .foregroundStyle(PeriColor.ink)
                                 .focused($focusedEntry, equals: .dose)
                                 .accessibilityIdentifier(A11yID.medDose)
                                 .background(alignment: .topLeading) {
@@ -92,7 +93,7 @@ struct MedicationSheet: View {
                     palette
                 }
 
-                Rectangle().fill(Theme.blush100).frame(height: 1)
+                Rectangle().fill(PeriColor.blush100).frame(height: 1)
 
                 SectionLabel(text: app.t("med.sectionSchedule"))
 
@@ -116,9 +117,9 @@ struct MedicationSheet: View {
                 Toggle(isOn: $remindersEnabled) {
                     Text(app.t("med.remind"))
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Theme.ink)
+                        .foregroundStyle(PeriColor.ink)
                 }
-                .tint(Theme.blush600)
+                .tint(PeriColor.blush600)
                 .accessibilityIdentifier(A11yID.medRemind)
 
                 VStack(alignment: .leading, spacing: 6) {
@@ -133,7 +134,7 @@ struct MedicationSheet: View {
                         }
                         .labelsHidden()
                         .pickerStyle(.menu)
-                        .tint(Theme.ink)
+                        .tint(PeriColor.ink)
                         .accessibilityIdentifier(A11yID.medMode)
                     }
                     .fixedSize(horizontal: true, vertical: false)
@@ -150,7 +151,7 @@ struct MedicationSheet: View {
                 }
 
                 if let error {
-                    Text(error).font(.caption).foregroundStyle(Theme.blush700)
+                    Text(error).font(.caption).foregroundStyle(PeriColor.blush700)
                 }
 
                 HStack(spacing: 10) {
@@ -219,7 +220,7 @@ struct MedicationSheet: View {
                         .frame(width: size, height: size)
                         .overlay(
                             Circle().stroke(
-                                selected ? Theme.ink : Color.white.opacity(0.7),
+                                selected ? PeriColor.ink : Color.white.opacity(0.7),
                                 lineWidth: selected ? 2 : 1
                             )
                         )
@@ -248,7 +249,7 @@ struct MedicationSheet: View {
                             } label: {
                                 Image(systemName: "xmark")
                                     .font(.system(size: 10, weight: .bold))
-                                    .foregroundStyle(Theme.inkMuted)
+                                    .foregroundStyle(PeriColor.inkMuted)
                             }
                             .buttonStyle(.plain)
                         }
@@ -261,7 +262,7 @@ struct MedicationSheet: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .stroke(Theme.blush200, lineWidth: 1)
+                            .stroke(PeriColor.blush200, lineWidth: 1)
                     )
                 }
                 Button {
@@ -269,9 +270,9 @@ struct MedicationSheet: View {
                 } label: {
                     Text("+")
                         .font(.body.weight(.semibold))
-                        .foregroundStyle(Theme.blush600)
+                        .foregroundStyle(PeriColor.blush600)
                         .frame(width: 36, height: 36)
-                        .background(Circle().fill(Theme.blush50))
+                        .background(Circle().fill(PeriColor.blush50))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(app.t("med.anotherTime"))
@@ -288,9 +289,9 @@ struct MedicationSheet: View {
                     if on { daysOfWeek.removeAll { $0 == d } } else { daysOfWeek.append(d) }
                 }
                 .font(.caption2.weight(.semibold))
-                .foregroundStyle(on ? .white : Theme.blush700)
+                .foregroundStyle(on ? .white : PeriColor.blush700)
                 .frame(maxWidth: .infinity, minHeight: 32)
-                .background(Capsule().fill(on ? Theme.blush600 : Theme.blush50))
+                .background(Capsule().fill(on ? PeriColor.blush600 : PeriColor.blush50))
                 .buttonStyle(.plain)
             }
         }
