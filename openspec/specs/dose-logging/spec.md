@@ -83,6 +83,10 @@ The system SHALL allow the user to record a medication as taken from a Home Scre
 - **WHEN** the user marks a medication taken on Cycle or from a reminder
 - **THEN** the widget does not show a check for that take
 
+#### Scenario: Unstored snapshot does not reload the widget
+- **WHEN** a medication is recorded as taken and that attempt does not store the widget snapshot
+- **THEN** the system does not reload the Home Screen widget timeline for that attempt
+
 ### Requirement: Taken visual uses medication color
 The system SHALL reflect taken status on the cycle chart using the medication’s color for taken-day fills and taken indicator styling.
 

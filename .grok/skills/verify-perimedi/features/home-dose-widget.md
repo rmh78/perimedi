@@ -31,6 +31,7 @@ Domain proof stays next to that step:
 ## Gotchas
 
 - The widget reads App Group JSON only. It does not call `TodayPendingMeds.list` and does not open SwiftData.
+- If the snapshot is not stored, publish does not reload timelines, and the previous face stays until a later publish stores one.
 - Take is `medicationId` only on an App Intent. The tap may leave the Home Screen in front. If the intent is not hosted by the app it fails closed and does not write the log or the snapshot.
 - Today only: `visible(at:)` shows `meds` when the device date matches `date`, or `nextMeds` after midnight until the app republishes. It never shows a later day as the visible list. The brief check does not appear on tomorrow's rows.
 - `CODE_SIGNING_ALLOWED=NO` never stamps `group.app.perimedi.ios`. `containerURL` is nil, `publish` cannot write `next-dose.json`, and the widget shows the missing-file empty chrome (`Heute nichts zu nehmen` / `Nothing to take today`) even when Cycle has pending slots. `verify` signs that group and runs `testUserFlow` on the booted iPhone 17e.

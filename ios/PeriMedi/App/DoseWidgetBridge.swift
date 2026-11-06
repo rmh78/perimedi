@@ -72,12 +72,22 @@ enum DoseWidgetBridge {
                 snapshot.ack = nil
             }
         }
-        try? DoseWidgetSnapshotFile.write(snapshot)
-        // reloadAllTimelines talks to the widget daemon. Calling it on the
-        // main actor froze the app for about 190s after Taken while XCTest
-        // waited for the run loop to go idle.
+        guard case .visible(let stored) = DoseWidgetSnapshotFile.write(snapshot) else {
+            return
+        }
+        reloadOffMain(after: stored)
+    }
+
+    // reloadAllTimelines talks to the widget daemon. Calling it on the
+    // main actor froze the app for about 190s after Taken while XCTest
+    // waited for the run loop to go idle.
+    static var runOffMain: (@escaping () -> Void) -> Void = { body in
+        DispatchQueue.global(qos: .utility).async(execute: body)
+    }
+
+    private static func reloadOffMain(after _: VisibleSnapshot) {
         let kind = DoseWidgetKind.id
-        DispatchQueue.global(qos: .utility).async {
+        runOffMain {
             WidgetCenter.shared.reloadTimelines(ofKind: kind)
             WidgetCenter.shared.reloadAllTimelines()
         }

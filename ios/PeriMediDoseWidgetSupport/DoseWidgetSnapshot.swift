@@ -5,6 +5,17 @@ enum DoseWidgetKind {
     static let id = "app.perimedi.ios.today"
 }
 
+#if PERIMEDI_APP
+struct VisibleSnapshot: Equatable, Sendable {
+    fileprivate init() {}
+}
+
+enum WidgetSnapshotCommit: Equatable, Sendable {
+    case visible(VisibleSnapshot)
+    case held
+}
+#endif
+
 enum DoseWidgetSnapshotFile {
     static let appGroupId = "group.app.perimedi.ios"
     static let fileName = "next-dose.json"
@@ -38,23 +49,38 @@ enum DoseWidgetSnapshotFile {
     }
 
 #if PERIMEDI_APP
-    static func write(_ snapshot: DoseWidgetSnapshot) throws {
-        let data = try JSONEncoder().encode(snapshot)
+    static var refuseNextWrite = false
+
+    static func write(_ snapshot: DoseWidgetSnapshot) -> WidgetSnapshotCommit {
+        if refuseNextWrite {
+            refuseNextWrite = false
+            return .held
+        }
+        guard let data = try? JSONEncoder().encode(snapshot) else {
+            return .held
+        }
         guard let suite = suite() else {
-            throw CocoaError(.fileNoSuchFile)
+            return .held
         }
         suite.set(data, forKey: fileName)
         suite.synchronize()
-        guard let dir = containerURL() else { return }
-        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let dest = dir.appendingPathComponent(fileName)
-        let tmp = dir.appendingPathComponent("\(fileName).tmp")
-        try data.write(to: tmp, options: .atomic)
-        if FileManager.default.fileExists(atPath: dest.path) {
-            _ = try FileManager.default.replaceItemAt(dest, withItemAt: tmp)
-        } else {
-            try FileManager.default.moveItem(at: tmp, to: dest)
+        guard let dir = containerURL() else {
+            return .visible(VisibleSnapshot())
         }
+        do {
+            try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            let dest = dir.appendingPathComponent(fileName)
+            let tmp = dir.appendingPathComponent("\(fileName).tmp")
+            try data.write(to: tmp, options: .atomic)
+            if FileManager.default.fileExists(atPath: dest.path) {
+                _ = try FileManager.default.replaceItemAt(dest, withItemAt: tmp)
+            } else {
+                try FileManager.default.moveItem(at: tmp, to: dest)
+            }
+        } catch {
+            return .visible(VisibleSnapshot())
+        }
+        return .visible(VisibleSnapshot())
     }
 #endif
 }
