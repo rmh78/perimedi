@@ -312,12 +312,30 @@ final class Store: ObservableObject {
     ) throws {
         try commitWrite {
             let plannedFor = ScheduleLogic.plannedForIso(dateKey: date, timeOfDay: timeOfDay)
-            let id = existingLogId ?? createId()
-            let row = try fetchOne(SDDoseLog.self, #Predicate { $0.id == id }) ?? {
-                let created = SDDoseLog()
-                context.insert(created)
-                return created
-            }()
+            let id: String
+            let row: SDDoseLog
+            if let existingLogId {
+                let logId = existingLogId
+                id = logId
+                row = try fetchOne(SDDoseLog.self, #Predicate { $0.id == logId }) ?? {
+                    let created = SDDoseLog()
+                    context.insert(created)
+                    return created
+                }()
+            } else {
+                let slotScheduleId: String? = scheduleId
+                if let found = try fetchOne(SDDoseLog.self, #Predicate {
+                    $0.scheduleId == slotScheduleId && $0.plannedFor == plannedFor
+                }) {
+                    id = found.id
+                    row = found
+                } else {
+                    id = createId()
+                    let created = SDDoseLog()
+                    context.insert(created)
+                    row = created
+                }
+            }
             let log = DoseLog(
                 id: id,
                 medicationId: medicationId,

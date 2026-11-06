@@ -45,6 +45,6 @@ Open the app, or tap Cycle in the bottom bar. Sheets for med / period / symptom 
 - `A11yID.chipScore(_:)` builds `cycle.chip.score.{id}`. Keep the `cycle.chip.score.` literal in this map so `check-features.py` still sees it.
 - Tapping a lane toggles dose status. Editing is the separate `.edit` control. Do not query the legend or the checkmark for Taken. `value(of:)` returns the token, not the word.
 - Cycle windows and planned doses come from domain (`CycleLogic` / `ScheduleLogic` / `DoseRangeLogic`). Do not reimplement that math in the app.
-- Lane taken and untake go through `DoseReminderCenter`. That center is the only caller of `Store.setDoseStatus` for the toggle. The lane does not see the notification center. A nil shown id still inserts a row. A read after the take call returns sees taken. Untake writes pending before the call returns.
+- Lane taken and untake go through `DoseReminderCenter`. That center is the only caller of `Store.setDoseStatus` for the toggle. The lane does not see the notification center. A nil shown id updates the log already stored for that slot, and inserts a row only when the slot has none. A read after the take call returns sees taken. Untake writes pending before the call returns.
 - Keep med lane labels and dose tracks row-aligned. Period UI is label + background only (no duplicate red bar). No follicular/luteal labels.
 - German lane dose text maps pump/pumps to Hub and a decimal point to a comma. The medication sheet field keeps the stored string. The Home Screen widget dose label stays as typed.
