@@ -90,6 +90,9 @@ final class DoseWidgetBridgeTests: XCTestCase {
     }
 
     func testRefusedWidgetWriteAfterTakeDoesNotReload() throws {
+        let prior = DoseWidgetSnapshotFile.read()
+        defer { _ = DoseWidgetSnapshotFile.write(prior) }
+
         let container = try ModelContainer(
             for: PersistenceController.schema,
             configurations: [

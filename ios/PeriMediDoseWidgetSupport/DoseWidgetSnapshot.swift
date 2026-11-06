@@ -78,8 +78,6 @@ enum DoseWidgetSnapshotFile {
                 try FileManager.default.moveItem(at: tmp, to: dest)
             }
         } catch {
-            // The suite already holds the snapshot, and read() prefers it,
-            // so the failure still counts as stored.
             return .visible(VisibleSnapshot())
         }
         return .visible(VisibleSnapshot())
