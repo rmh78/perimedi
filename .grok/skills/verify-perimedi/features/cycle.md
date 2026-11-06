@@ -30,7 +30,7 @@ Open the app, or tap Cycle in the bottom bar. Sheets for med / period / symptom 
 | Symptom chip | `cycle.chip.score.{id}` | `A11yID.chipScore(_:)` returns `cycle.chip.score.{id}` (literal prefix `cycle.chip.score.`). CycleView attaches that ID. After logging hot flash 3, `cycle.chip.score.hot_flash` value contains `strong` (en). |
 | Pager prev / next / today / label | `cycle.pager.prev` `cycle.pager.next` `cycle.pager.today` `cycle.pager.label` | Prev changes label; next then today restores it. |
 | Lane | `cycle.lane.{slug}` | Slug from `A11yID.slug(name)`: lowercased, whitespace/`_` → `-`. `Estrogen` → `cycle.lane.estrogen`. |
-| Lane status | `cycle.lane.{slug}.status` | Tap the lane avatar to mark taken when a dose is planned. Values: `taken`, `not-taken`, `no-dose` (selected day has no planned dose). |
+| Lane status | `cycle.lane.{slug}.status` | The element's label is the visible word. Values stay `taken`, `not-taken`, `no-dose` (selected day has no planned dose). `assertStatus` reads both. The legend is not a target. The checkmark stays on the avatar and has no identifier. |
 | Lane edit | `cycle.lane.{slug}.edit` | Opens the medication sheet for that med. |
 | Strip day | `cycle.strip.day.{yyyy-MM-dd}` | Period days include `period` in the value. |
 | Effect sentence | `cycle.effect` | After two logged cycles with overlapping scores: value lists `id:down` / `id:worse`. First-use after one period: `no-previous`. Empty home (no cycle): absent. |
@@ -43,7 +43,7 @@ Open the app, or tap Cycle in the bottom bar. Sheets for med / period / symptom 
 - German calls a symptom Symptom. The legend, the empty-home sentence, and the add hint use that word.
 - First-use only asserts `cycle.effect` absent on empty home and `no-previous` after one period. Two-cycle `id:down` / `id:worse` values are domain tests (`EffectLogicTests`); journey tests do not load sample.
 - `A11yID.chipScore(_:)` builds `cycle.chip.score.{id}`. Keep the `cycle.chip.score.` literal in this map so check-feature-map still sees it.
-- Tapping a lane toggles dose status. Editing is the separate `.edit` control.
+- Tapping a lane toggles dose status. Editing is the separate `.edit` control. Do not query the legend or the checkmark for Taken. `value(of:)` returns the token, not the word.
 - Cycle windows and planned doses come from domain (`CycleLogic` / `ScheduleLogic` / `DoseRangeLogic`). Do not reimplement that math in the app.
 - Lane taken and untake go through `DoseReminderCenter`. That center is the only caller of `Store.setDoseStatus` for the toggle. The lane does not see the notification center. A nil shown id still inserts a row. A read after the take call returns sees taken. Untake writes pending before the call returns.
 - Keep med lane labels and dose tracks row-aligned. Period UI is label + background only (no duplicate red bar). No follicular/luteal labels.

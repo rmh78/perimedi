@@ -2,6 +2,21 @@ import Foundation
 import SwiftUI
 import PeriMediDomain
 
+struct ChosenVisit: Equatable {
+    var start: String?
+    var includePrevious: Bool
+}
+
+enum VisitDraft: Equatable {
+    case unseeded
+    case chosen(ChosenVisit)
+}
+
+enum VisitStep: Equatable {
+    case picking(VisitDraft)
+    case preview(URL, restoring: ChosenVisit)
+}
+
 @MainActor
 final class AppModel: ObservableObject {
     @Published var selectedDate: String
@@ -12,8 +27,7 @@ final class AppModel: ObservableObject {
     @Published var showPeriod = false
     @Published var showSymptom = false
     @Published var showTrendsPicker = false
-    @Published var showVisitRange = false
-    @Published var visitPdfURL: URL?
+    @Published private(set) var visit: VisitStep?
     @Published var confirm: ConfirmPrompt?
     @Published var pendingReminder: PendingReminder?
     /// Bumped when Cycle should snap the plot to today (launch / return from background).
@@ -68,9 +82,47 @@ final class AppModel: ObservableObject {
         showPeriod = false
         showSymptom = false
         showTrendsPicker = false
-        showVisitRange = false
-        visitPdfURL = nil
+        visit = nil
         launchPeriodEditor = false
+    }
+
+    var pickingChoice: ChosenVisit? {
+        guard case .picking(.chosen(let choice)) = visit else { return nil }
+        return choice
+    }
+
+    func openVisitPicker() {
+        visit = .picking(.unseeded)
+    }
+
+    func seedVisitPicker(lastStart: String?, cycleCount: Int) {
+        guard case .picking(.unseeded) = visit else { return }
+        if cycleCount == 0 || lastStart == nil {
+            visit = .picking(.chosen(ChosenVisit(start: nil, includePrevious: false)))
+            return
+        }
+        visit = .picking(.chosen(ChosenVisit(start: lastStart, includePrevious: cycleCount >= 2)))
+    }
+
+    func selectVisitCycle(_ start: String) {
+        guard case .picking(.chosen) = visit else { return }
+        visit = .picking(.chosen(ChosenVisit(start: start, includePrevious: false)))
+    }
+
+    func setIncludePrevious(_ on: Bool) {
+        guard case .picking(.chosen(var choice)) = visit else { return }
+        choice.includePrevious = on
+        visit = .picking(.chosen(choice))
+    }
+
+    func continueVisit(to url: URL) {
+        guard case .picking(.chosen(let choice)) = visit else { return }
+        visit = .preview(url, restoring: choice)
+    }
+
+    func backToVisitPicker() {
+        guard case .preview(_, let restoring) = visit else { return }
+        visit = .picking(.chosen(restoring))
     }
 
     func askConfirm(

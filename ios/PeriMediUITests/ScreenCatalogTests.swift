@@ -65,6 +65,16 @@ struct ScreenCatalogWriter {
         try write("sheet-symptom-en")
         try captureWrappedCustomName()
         robot.closeSheet(id: "sheet.symptom")
+
+        robot.addMedication(name: "Estrogen", dose: "1 mg")
+        let status = "cycle.lane.estrogen.status"
+        robot.assertStatus(status, word: "Not taken", token: "not-taken")
+        robot.tap("cycle.lane.estrogen")
+        robot.assertStatus(status, word: "Taken", token: "taken")
+        try write("cycle-taken-en")
+        robot.tap("cycle.lane.estrogen")
+        robot.assertStatus(status, word: "Not taken", token: "not-taken")
+        try write("cycle-not-taken-en")
     }
 
     private func captureWrappedCustomName() throws {
@@ -144,11 +154,48 @@ struct ScreenCatalogWriter {
         robot.tap("visit.range.continue")
         robot.waitFor(id: "visit.pdf.preview")
         robot.waitFor(id: "visit.pdf.share")
+        robot.waitFor(id: "visit.pdf.back")
         try write("visit-pdf-sample-en")
-        robot.tap("sheet.close")
+        robot.tap("visit.pdf.back")
+        robot.waitFor(id: "visit.range")
         robot.waitGone(id: "visit.pdf.preview")
+        let picked = visitCycleChoice()
+        robot.tap(picked.off)
+        robot.tap("visit.range.continue")
+        robot.waitFor(id: "visit.pdf.back")
+        robot.tap("visit.pdf.back")
+        robot.waitFor(id: "visit.range")
+        XCTAssertEqual(robot.value(of: picked.off), "on")
+        XCTAssertEqual(robot.value(of: picked.on), "off")
+        robot.tap("sheet.close")
+        robot.waitGone(id: "visit.range")
         robot.scrollTo("more.sample")
         robot.waitFor(id: "more.sample")
+    }
+
+    private func visitCycleChoice() -> (off: String, on: String) {
+        let query = robot.app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", "visit.range.cycle.")
+        )
+        var off: String?
+        var on: String?
+        XCTAssertTrue(
+            robot.spin(timeout: 4) {
+                off = nil
+                on = nil
+                for index in 0..<query.count {
+                    let row = query.element(boundBy: index)
+                    let id = row.identifier
+                    guard id.hasPrefix("visit.range.cycle.") else { continue }
+                    let raw = row.value as? String ?? ""
+                    if raw == "off", off == nil { off = id }
+                    if raw == "on", on == nil { on = id }
+                }
+                return off != nil && on != nil
+            },
+            "cycle rows off=\(off ?? "none") on=\(on ?? "none")"
+        )
+        return (off ?? "", on ?? "")
     }
 
     private func captureTrendsFixture() throws {
@@ -161,6 +208,14 @@ struct ScreenCatalogWriter {
         robot.tap("trends.dot.hot_flash.2026-03-01")
         robot.waitFor(id: "trends.detail")
         try write("trends-tap-en")
+        robot.scrollTo("trends.change")
+        robot.tap("trends.change")
+        robot.waitFor(id: "sheet.trends")
+        robot.tap("trends.series.hot_flash")
+        robot.tap("sheet.close")
+        robot.waitGone(id: "sheet.trends")
+        robot.waitGone(id: "trends.dot.hot_flash.2026-03-01")
+        try write("trends-off-en")
     }
 
     private func captureTrendsNoScores() throws {

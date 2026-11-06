@@ -31,7 +31,7 @@ Turn reminders on in More. Enable remind on a medication. When a slot is due, a 
 - Springboard banners are unreliable in XCTest. Use `-remindIn`, not a real notification.
 - Take proof is the medium widget on iPhone 17e. `testUserFlow` does not wait for `reminder.taken`.
 - Taken on the banner uses the same path as the notification action. System banners use title/subtitle/body (medication name is subtitle, not title). Springboard copy is not XCTest-asserted.
-- The dose log is saved, and that slot's reminder cancel has run, before Take returns.
+- Marking a dose taken shows it as taken before removal of that dose's pending and delivered system notification finishes. The system notification may remain until that background removal returns. Take does not wait. Put-back shows not taken without waiting and does not remove a notification that was already delivered.
 - German Taken is “Genommen” so it matches the body (“Tippe auf Genommen”).
 - Master switch off on More means no banner, even if `med.remind` is on.
 - Fresh install with master on asks for notification permission. `-uiTesting` skips that prompt so CI is not blocked. After the user allows, dose notifications are rebuilt with an explicit time zone (calendar components without a zone can be dropped on device).

@@ -33,7 +33,7 @@ Bottom bar → More.
 | Share visit PDF | `more.sharePdf` | See [doctor-visit.md](doctor-visit.md). |
 | Backup rows | `more.sample` / `more.export` / `more.import` / `more.clear` | See [backup.md](backup.md). |
 
-`testUserFlow` opens More after the symptom, scrolls to `more.sharePdf`, continues to the preview, waits for `visit.pdf.share`, and closes. It does not switch language, wait for `more.lang.en`, tap reminder controls, tap Share, or wait for `more.sample`. German nav strings stay `check-l10n-layout.py`. Catalog waits for `more.reminders` before the More picture and for `more.sample` after its preview closes.
+`testUserFlow` opens More after Trends, scrolls to `more.sharePdf`, continues to the preview, waits for `visit.pdf.share`, taps `visit.pdf.back`, sees `visit.range`, then closes so `visit.range` is gone. It does not switch language, wait for `more.lang.en`, tap reminder controls, tap Share, or wait for `more.sample`. German nav strings stay `check-l10n-layout.py`. Catalog waits for `more.reminders` before the More picture and for `more.sample` after its preview closes.
 
 Language pills call `LocaleController`. Preference is `AppStorage` `perimedi.locale`. Default German if device preferred languages include German. The user flow forces English with `-en` and does not switch. The whole More tab box is tappable, not only the ellipsis or the word More.
 

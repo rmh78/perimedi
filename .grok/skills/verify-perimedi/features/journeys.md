@@ -1,12 +1,12 @@
 # First-use journey
 
-A new user opens an empty app, types one medication, marks that dose taken on Cycle and puts it back, saves the new period card as it opens, logs one symptom, opens Month, Trends, and More, opens the visit preview, and takes the pending dose once on the medium Home Screen widget.
+A new user opens an empty app, types one medication, sees the dose word change to Taken and back to Not taken, saves the new period card as it opens, logs one symptom, opens Month, turns that symptom off on Trends so the chart drops the point, opens More, goes Back from the visit preview to the cycle picker, and takes the pending dose once on the medium Home Screen widget.
 
 ## Sub-features
 
 - `first-use-empty` empty Cycle (`cycle.empty.meds` contains `need-med`)
 - `first-use-meds` one everyday estrogen lane
-- `first-use-taken` a Cycle lane tap that reads `taken`, then the same tap puts the dose back. The widget Take is the second take, and the lane reads `taken` again.
+- `first-use-taken` a Cycle lane tap whose status label is Taken and whose value is `taken`, then the same tap puts the dose back so the label is Not taken and the value is `not-taken`. The widget Take is the second take. `assertStatus` reads Taken and `taken` again. Do not query the legend or the checkmark.
 - `first-use-period` one period saved in the current month
 - `first-use-symptom` hot flash 3 shows `cycle.chip.score.hot_flash`
 - `first-use-month` today's month cell `month.day.{device date}`
@@ -23,13 +23,13 @@ Preconditions:
 - `testUserFlow` launches `JourneyLaunch.userFlow` (`-en -clear -uiTesting -today=<device date>`). One launch. No `-journeyStep`, no `-loadSample`, no `-fixture=trends`, no `-remindIn`.
 
 - **Empty home.** `AppRobot.launch` waits for `tab.cycle` and `cycle.action.med`. `cycle.empty.meds` contains `need-med`.
-- **Meds.** `addMedication` types Estrogen and `1 mg`, then saves. The sheet stays on Pill, Every day, and 20:00. `cycle.lane.estrogen` exists. Tap that lane. `cycle.lane.estrogen.status` reads `taken`. Tap it again so the status reads `not-taken` before the Home Screen.
+- **Meds.** `addMedication` types Estrogen and `1 mg`, then saves. The sheet stays on Pill, Every day, and 20:00. `cycle.lane.estrogen` exists. `assertStatus` on `cycle.lane.estrogen.status` reads the word Not taken and the token `not-taken`. Tap that lane. The word is Taken and the token is `taken`. Tap it again. The word is Not taken and the token is `not-taken`. Do not query the legend, `staticTexts["Taken"]`, or the checkmark.
 - **Period.** Open the new card and save it. Start is the selected day, the end stays empty, and the flow stays medium. Close `sheet.period`.
 - **Symptom.** Tap `symptom.score.hot_flash.3`. `cycle.chip.score.hot_flash` exists. The flow does not read the chip value.
 - **Month.** Tap `tab.month`. `month.day.` plus the device date exists. No pager.
-- **Trends.** Tap `tab.trends`. `trends.status` exists. The flow does not read its value and does not launch a chart fixture.
-- **More.** Tap `tab.more`. Scroll to `more.sharePdf`, continue from `visit.range`, wait for `visit.pdf.preview` and `visit.pdf.share`, then close. Do not tap Share. The catalog waits for `more.sample` after its own preview.
-- **Widget.** Tap `tab.cycle` so the lane is on screen, then Home. Long-press the app icon, tap `Medium-sized widget`, tap `Take` once. Activate the app. The resumed screen is Cycle, and `cycle.lane.estrogen.status` is `taken`. Tear-down restores the app icon when the slot is a widget.
+- **Trends.** Tap `tab.trends`. After the one period and the one hot-flush score, `trends.status` is `ids:hot_flash` and `trends.dot.hot_flash.` plus the device date exists. Open `trends.change`. While `sheet.trends` is up, `trends.series.hot_flash` is `on`. Tap it. The value is `off`. Close. `trends.status` is `ids:` and that dot is gone. Do not read the chip after the sheet closes. The legend reuses the id. Do not launch a chart fixture.
+- **More.** Tap `tab.more`. Scroll to `more.sharePdf`, continue from `visit.range`, wait for `visit.pdf.preview` and `visit.pdf.share`. Tap `visit.pdf.back`. `visit.range` is present and `visit.pdf.preview` is gone. With one open period there is no cycle row. Then `sheet.close`, and `visit.range` is gone. Do not tap Share. The catalog waits for `more.sample` after its own preview.
+- **Widget.** Tap `tab.cycle` so the lane is on screen, then Home. Long-press the app icon, tap `Medium-sized widget`, tap `Take` once. Activate the app. The resumed screen is Cycle. `assertStatus` reads the word Taken and the token `taken` on `cycle.lane.estrogen.status`. Tear-down restores the app icon when the slot is a widget.
 - **Proof.** `control-perimedi --run-id "$RUN_ID" drive --test PeriMediUITests/RequiredJourneyTests/testUserFlow`. Evidence is `TEST SUCCEEDED`.
 
 ## Gotchas

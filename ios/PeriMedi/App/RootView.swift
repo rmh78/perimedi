@@ -35,7 +35,7 @@ struct RootView: View {
         .ignoresSafeArea(edges: [.top, .bottom])
         .overlay {
             if app.medSheet != nil || app.showPeriod || app.showSymptom || app.showTrendsPicker
-                || app.showVisitRange || app.visitPdfURL != nil {
+                || app.visit != nil {
                 DialogBackdrop(onClose: { app.closeDialog() }) {
                     if let state = app.medSheet {
                         MedicationSheet(isNew: state.isNew, medication: state.medication)
@@ -45,10 +45,15 @@ struct RootView: View {
                         SymptomSheet(dateKey: app.selectedDate)
                     } else if app.showTrendsPicker {
                         TrendsPickerSheet()
-                    } else if app.showVisitRange {
-                        DoctorVisitRangeSheet()
-                    } else if let url = app.visitPdfURL {
-                        DoctorVisitPreviewSheet(url: url)
+                    } else {
+                        switch app.visit {
+                        case .picking:
+                            DoctorVisitRangeSheet()
+                        case .preview(let url, _):
+                            DoctorVisitPreviewSheet(url: url)
+                        case nil:
+                            EmptyView()
+                        }
                     }
                 }
             }

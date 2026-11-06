@@ -77,6 +77,7 @@ enum A11yID {
     static let visitRangePrevious = "visit.range.previous"
     static let visitPdfPreview = "visit.pdf.preview"
     static let visitPdfShare = "visit.pdf.share"
+    static let visitPdfBack = "visit.pdf.back"
     static func visitRangeCycle(_ start: String) -> String {
         "visit.range.cycle.\(start)"
     }

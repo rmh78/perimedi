@@ -271,6 +271,25 @@ final class AppRobot {
         return el.label
     }
 
+    func word(of id: String) -> String {
+        element(id).label
+    }
+
+    func assertStatus(
+        _ id: String,
+        word: String,
+        token: String,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        XCTAssertTrue(
+            spin(timeout: 4) { self.word(of: id) == word && value(of: id) == token },
+            "\(id) word \(self.word(of: id).debugDescription) value \(value(of: id).debugDescription), wanted \(word) / \(token)",
+            file: file,
+            line: line
+        )
+    }
+
     func exists(_ id: String) -> Bool {
         hit(id) != nil
     }

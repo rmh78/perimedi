@@ -33,6 +33,17 @@ The system SHALL schedule an on-device reminder for each future pending planned 
 - **WHEN** the user turns the device reminders switch off
 - **THEN** pending dose reminders are cleared
 
+### Requirement: Taken is visible before notification removal finishes
+The system SHALL show a planned dose as taken before removal of that dose’s pending and delivered system notification finishes. That system notification MAY remain visible until the background removal returns. Take SHALL NOT wait for the removal. Putting the dose back SHALL show the dose as not taken without waiting, and SHALL NOT remove a notification that was already delivered. After that removal finishes, no reminder SHALL remain scheduled for that slot.
+
+#### Scenario: Taken while a notification is on screen
+- **WHEN** a planned dose’s system notification is on screen and the person marks that dose taken on Cycle
+- **THEN** the dose shows as taken without waiting for notification removal to finish, and the notification may remain until that removal returns
+
+#### Scenario: Put-back does not wait
+- **WHEN** the person puts that dose back
+- **THEN** it shows as not taken without waiting, and a notification that was already delivered is not removed by the put-back
+
 ### Requirement: Notification content and actions
 The system SHALL present a reminder whose title is a dose prompt, whose subtitle is the medication name, and whose body names the dose label and planned take time and tells the user to choose Taken after taking it. English title SHALL be “Time for your dose”; German title SHALL be “Zeit für deine Dosis”. English body SHALL be “Take {dose} · planned {time}. Tap Taken when you’ve taken it.”; German body SHALL be “Nimm {dose} · geplant {time}. Tippe auf Genommen, wenn erledigt.” The in-app reminder banner SHALL use the same title, medication name, and body. The reminder SHALL offer Taken (first) and Snooze actions. Taken SHALL record that planned slot as taken. Snooze SHALL schedule one follow-up reminder about ten minutes later for the same slot. Activating the reminder (not an action) SHALL open Cycle on that slot’s date.
 
