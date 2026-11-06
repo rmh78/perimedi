@@ -37,6 +37,7 @@ def agent_checks(base: str) -> tuple[GateCheck, ...]:
         GateCheck("check-agent-rails.py"),
         GateCheck("check-review-repeats.py", base_arg),
         GateCheck("check-pr-attachments.py"),
+        GateCheck("check-design-system.py", base_arg),
         GateCheck("check-one-way-door.py", base_arg, blocks=False),
     )
 

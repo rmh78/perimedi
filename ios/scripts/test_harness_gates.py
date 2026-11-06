@@ -49,6 +49,7 @@ class GateTableTests(unittest.TestCase):
                 ("check-agent-rails.py", (), True),
                 ("check-review-repeats.py", ("--base", "origin/topic"), True),
                 ("check-pr-attachments.py", (), True),
+                ("check-design-system.py", ("--base", "origin/topic"), True),
                 ("check-one-way-door.py", ("--base", "origin/topic"), False),
             ],
         )
@@ -62,6 +63,7 @@ class GateTableTests(unittest.TestCase):
                 "check-agent-rails.py",
                 "check-review-repeats.py",
                 "check-pr-attachments.py",
+                "check-design-system.py",
                 "check-one-way-door.py",
             ],
         )

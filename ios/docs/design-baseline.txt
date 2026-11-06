@@ -1,0 +1,45 @@
+ios/PeriMedi/App/PillTabBar.swift	font-literal	.system(size: 11)	1
+ios/PeriMedi/App/PillTabBar.swift	font-literal	.system(size: 16)	1
+ios/PeriMedi/Features/Cycle/CycleView.swift	color-init	Color(red:	1
+ios/PeriMedi/Features/Cycle/CycleView.swift	font-literal	.system(size: 10)	7
+ios/PeriMedi/Features/Cycle/CycleView.swift	font-literal	.system(size: 11)	8
+ios/PeriMedi/Features/Cycle/CycleView.swift	font-literal	.system(size: 12)	1
+ios/PeriMedi/Features/Cycle/CycleView.swift	font-literal	.system(size: 14)	1
+ios/PeriMedi/Features/Cycle/CycleView.swift	font-literal	.system(size: 7)	1
+ios/PeriMedi/Features/Cycle/CycleView.swift	font-literal	.system(size: 8)	1
+ios/PeriMedi/Features/Cycle/CycleView.swift	font-literal	.system(size: 9)	3
+ios/PeriMedi/Features/Cycle/CycleView.swift	hex	#64748b	1
+ios/PeriMedi/Features/Cycle/CycleView.swift	hex	#7a4a00	3
+ios/PeriMedi/Features/Cycle/CycleView.swift	hex	#94a3b8	1
+ios/PeriMedi/Features/Cycle/CycleView.swift	hex	#9b6fc9	1
+ios/PeriMedi/Features/Cycle/CycleView.swift	hex	#9f1239	2
+ios/PeriMedi/Features/Cycle/CycleView.swift	hex	#be123c	1
+ios/PeriMedi/Features/Cycle/CycleView.swift	hex	#c4a24e	1
+ios/PeriMedi/Features/Cycle/CycleView.swift	hex	#e11d48	1
+ios/PeriMedi/Features/Cycle/CycleView.swift	hex	#f0d0da	1
+ios/PeriMedi/Features/Cycle/CycleView.swift	hex	#f0dc9a	2
+ios/PeriMedi/Features/Cycle/CycleView.swift	hex	#f43f5e	1
+ios/PeriMedi/Features/Cycle/CycleView.swift	hex	#fda4af	1
+ios/PeriMedi/Features/Cycle/CycleView.swift	hex	#fecdd3	1
+ios/PeriMedi/Features/Cycle/CycleView.swift	hex	#ffe4e6	1
+ios/PeriMedi/Features/Cycle/CycleView.swift	hex	#fff1f2	1
+ios/PeriMedi/Features/Cycle/CycleView.swift	hex	#fff6e0	2
+ios/PeriMedi/Features/Cycle/CycleView.swift	hex	#fffafb	2
+ios/PeriMedi/Features/Cycle/MedicationSheet.swift	font-literal	.system(size: 10)	1
+ios/PeriMedi/Features/Cycle/SymptomSheet.swift	font-literal	.system(size: 8)	1
+ios/PeriMedi/Features/Month/MonthView.swift	font-literal	.system(size: 10)	1
+ios/PeriMedi/Features/Month/MonthView.swift	font-literal	.system(size: 14)	2
+ios/PeriMedi/Features/Month/MonthView.swift	font-literal	.system(size: 7)	1
+ios/PeriMedi/Features/Month/MonthView.swift	font-literal	.system(size: 8)	3
+ios/PeriMedi/Features/Month/MonthView.swift	font-literal	.system(size: 9)	2
+ios/PeriMedi/Features/Month/MonthView.swift	hex	#64748b	1
+ios/PeriMedi/Features/Month/MonthView.swift	hex	#7a4a00	1
+ios/PeriMedi/Features/More/MoreView.swift	font-literal	.system(size: 11)	1
+ios/PeriMedi/Features/More/MoreView.swift	font-literal	.system(size: 14)	1
+ios/PeriMedi/Features/Sheets/DialogChrome.swift	font-literal	.system(size: 11)	1
+ios/PeriMedi/Features/Sheets/DialogChrome.swift	font-literal	.system(size: 14)	1
+ios/PeriMedi/Features/Trends/TrendsStyle.swift	hex	#6b5ca5	1
+ios/PeriMedi/Features/Trends/TrendsStyle.swift	hex	#c47f00	1
+ios/PeriMedi/Features/Trends/TrendsStyle.swift	hex	#d43d6c	1
+ios/PeriMedi/Features/Trends/TrendsView.swift	font-literal	.system(size: 12)	1
+ios/PeriMedi/Features/Trends/TrendsView.swift	font-literal	.system(size: 9)	2
