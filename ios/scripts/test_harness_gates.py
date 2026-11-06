@@ -94,7 +94,11 @@ class GateTableTests(unittest.TestCase):
                     check=False,
                 )
                 self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
-                self.assertNotIn("::notice", proc.stdout)
+                door_yes = "one-way door: yes\n" in proc.stdout
+                if os.environ.get("GITHUB_ACTIONS") == "true" and door_yes:
+                    self.assertIn("::notice title=One-way door::", proc.stdout)
+                else:
+                    self.assertNotIn("::notice", proc.stdout)
 
 
 if __name__ == "__main__":
