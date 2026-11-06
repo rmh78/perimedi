@@ -1,4 +1,5 @@
 import SwiftUI
+import PeriDesign
 
 enum LaunchBeat {
     /// Skip the in-app fade under UI tests and reminder instrumentation.
@@ -11,7 +12,7 @@ enum LaunchBeat {
 }
 
 struct BrandHeader: View {
-    private let peach = Color(hex: "#ffe4d6")
+    private let peach = PeriColor.launchPeach
     /// Pulls Cycle/Month/More up into the fade so the header reads shorter.
     private let fadeOverlap: CGFloat = 36
 
@@ -25,8 +26,8 @@ struct BrandHeader: View {
                     stops: [
                         .init(color: .clear, location: 0.74),
                         .init(color: peach.opacity(0.22), location: 0.86),
-                        .init(color: Theme.cream.opacity(0.78), location: 0.94),
-                        .init(color: Theme.cream, location: 1)
+                        .init(color: PeriColor.cream.opacity(0.78), location: 0.94),
+                        .init(color: PeriColor.cream, location: 1)
                     ],
                     startPoint: .top,
                     endPoint: .bottom
@@ -41,14 +42,14 @@ struct BrandHeader: View {
 
 /// Matches the system launch storyboard so the first SwiftUI frame does not flash.
 struct LaunchBrandOverlay: View {
-    private let peach = Color(hex: "#ffe4d6")
+    private let peach = PeriColor.launchPeach
 
     var body: some View {
         ZStack {
             peach
             Text("PeriMedi")
-                .font(.custom("Palatino-Bold", size: 44))
-                .foregroundStyle(Theme.blush800)
+                .font(PeriFont.brand)
+                .foregroundStyle(PeriColor.blush800)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .ignoresSafeArea()

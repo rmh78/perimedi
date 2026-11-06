@@ -1,5 +1,6 @@
 import SwiftUI
 import PeriMediDomain
+import PeriDesign
 
 struct MonthView: View {
     @EnvironmentObject private var app: AppModel
@@ -48,7 +49,7 @@ struct MonthView: View {
             Button {
                 monthAnchor = DateKeys.addMonths(monthAnchor, -1)
             } label: {
-                Image(systemName: "chevron.left").font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.blush700).frame(width: 32, height: 32)
+                Image(systemName: "chevron.left").font(.system(size: 14, weight: .semibold)).foregroundStyle(PeriColor.blush700).frame(width: 32, height: 32)
             }
             .accessibilityLabel(app.t("month.prevMonth"))
             .accessibilityIdentifier(A11yID.monthPagerPrev)
@@ -56,14 +57,14 @@ struct MonthView: View {
             Button {
                 monthAnchor = DateKeys.addMonths(monthAnchor, 1)
             } label: {
-                Image(systemName: "chevron.right").font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.blush700).frame(width: 32, height: 32)
+                Image(systemName: "chevron.right").font(.system(size: 14, weight: .semibold)).foregroundStyle(PeriColor.blush700).frame(width: 32, height: 32)
             }
             .accessibilityLabel(app.t("month.nextMonth"))
             .accessibilityIdentifier(A11yID.monthPagerNext)
             .buttonStyle(.plain)
             Text(monthTitle)
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Theme.ink)
+                .foregroundStyle(PeriColor.ink)
             Spacer(minLength: 0)
         }
     }
@@ -78,13 +79,13 @@ struct MonthView: View {
                 ForEach(0..<7, id: \.self) { i in
                     Text(app.t("weekday.\(i)"))
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(Theme.inkMuted)
+                        .foregroundStyle(PeriColor.inkMuted)
                         .textCase(.uppercase)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
                 }
             }
-            .background(Theme.blush50)
+            .background(PeriColor.blush50)
 
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: 0) {
                 ForEach(model.cells) { item in
@@ -93,7 +94,7 @@ struct MonthView: View {
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Theme.blush100, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(PeriColor.blush100, lineWidth: 1))
     }
 
     private func cell(_ item: MonthDayCell) -> some View {
@@ -114,10 +115,10 @@ struct MonthView: View {
                 HStack(spacing: 2) {
                     Text("\(DateKeys.calendar.component(.day, from: date))")
                         .font(.caption.weight(isToday || selected ? .bold : .regular))
-                        .foregroundStyle(isToday ? .white : Theme.ink)
+                        .foregroundStyle(isToday ? .white : PeriColor.ink)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 3)
-                        .background(Capsule().fill(isToday ? Theme.blush600 : .clear))
+                        .background(Capsule().fill(isToday ? PeriColor.blush600 : .clear))
                     if info.isLoggedPeriod || info.isPredictedPeriod {
                         Image(systemName: "drop.fill")
                             .font(.system(size: 8))
@@ -133,7 +134,7 @@ struct MonthView: View {
                 }
                 HStack(spacing: 2) {
                     if hasSymptom {
-                        Image(systemName: "bolt.fill").font(.system(size: 7)).foregroundStyle(Theme.symptom)
+                        Image(systemName: "bolt.fill").font(.system(size: 7)).foregroundStyle(PeriColor.symptom)
                     }
                     if !item.scoreSummary.isEmpty {
                         Text(item.scoreSummary)
@@ -143,7 +144,7 @@ struct MonthView: View {
                     }
                     ForEach(dayDoses.prefix(3)) { dose in
                         Circle()
-                            .fill(dose.status == .taken ? Theme.taken : Theme.pending)
+                            .fill(dose.status == .taken ? PeriColor.taken : PeriColor.pending)
                             .frame(width: 5, height: 5)
                     }
                 }
@@ -182,7 +183,7 @@ struct MonthView: View {
                 }
             }
             .overlay(
-                Rectangle().stroke(selected ? Theme.blush500 : Theme.blush50, lineWidth: selected ? 2 : 0.5)
+                Rectangle().stroke(selected ? PeriColor.blush500 : PeriColor.blush50, lineWidth: selected ? 2 : 0.5)
             )
             .opacity(inMonth ? 1 : 0.35)
         }
@@ -214,10 +215,10 @@ struct MonthView: View {
         Button(action: action) {
             Text(title)
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(Theme.blush700)
+                .foregroundStyle(PeriColor.blush700)
                 .padding(.horizontal, 12)
                 .frame(minHeight: 34)
-                .overlay(Capsule().stroke(Theme.blush300, lineWidth: 1))
+                .overlay(Capsule().stroke(PeriColor.blush300, lineWidth: 1))
         }
         .buttonStyle(.plain)
     }
@@ -324,7 +325,7 @@ private struct FlowLegend: View {
                         HStack { Rectangle().fill(Color.slate).frame(width: 2, height: 6); Spacer() }
                     }
                     .frame(width: 12, height: 10)
-                    Text(app.t("legend.cycleStart")).font(.caption2).foregroundStyle(Theme.inkSoft)
+                    Text(app.t("legend.cycleStart")).font(.caption2).foregroundStyle(PeriColor.inkSoft)
                 }
                 HStack(spacing: 4) {
                     VStack(spacing: 0) {
@@ -332,22 +333,22 @@ private struct FlowLegend: View {
                         Rectangle().fill(Color.slate).frame(width: 12, height: 2)
                     }
                     .frame(width: 12, height: 10)
-                    Text(app.t("legend.cycleEnd")).font(.caption2).foregroundStyle(Theme.inkSoft)
+                    Text(app.t("legend.cycleEnd")).font(.caption2).foregroundStyle(PeriColor.inkSoft)
                 }
                 HStack(spacing: 4) {
                     Text("D12").font(.system(size: 9, weight: .semibold)).padding(.horizontal, 4).background(Capsule().fill(Color.black.opacity(0.06)))
-                    Text(app.t("legend.cycleDay")).font(.caption2).foregroundStyle(Theme.inkSoft)
+                    Text(app.t("legend.cycleDay")).font(.caption2).foregroundStyle(PeriColor.inkSoft)
                 }
             }
             WrappingHStack(spacing: 10, lineSpacing: 6) {
                 legend(app.t("legend.period"), Color.red)
                 legend(app.t("legend.predicted"), Color.pink.opacity(0.6))
                 HStack(spacing: 4) {
-                    Image(systemName: "bolt.fill").font(.system(size: 8)).foregroundStyle(Theme.symptom)
-                    Text(app.t("legend.symptom")).font(.caption2).foregroundStyle(Theme.inkSoft)
+                    Image(systemName: "bolt.fill").font(.system(size: 8)).foregroundStyle(PeriColor.symptom)
+                    Text(app.t("legend.symptom")).font(.caption2).foregroundStyle(PeriColor.inkSoft)
                 }
-                legend(app.t("legend.taken"), Theme.taken)
-                legend(app.t("legend.notTaken"), Theme.pending)
+                legend(app.t("legend.taken"), PeriColor.taken)
+                legend(app.t("legend.notTaken"), PeriColor.pending)
             }
         }
     }
@@ -355,7 +356,7 @@ private struct FlowLegend: View {
     private func legend(_ title: String, _ color: Color) -> some View {
         HStack(spacing: 4) {
             Circle().fill(color).frame(width: 7, height: 7)
-            Text(title).font(.caption2).foregroundStyle(Theme.inkSoft)
+            Text(title).font(.caption2).foregroundStyle(PeriColor.inkSoft)
         }
     }
 }

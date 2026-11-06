@@ -1,5 +1,6 @@
 import SwiftUI
 import PeriMediDomain
+import PeriDesign
 
 struct TrendsView: View {
     @EnvironmentObject private var app: AppModel
@@ -60,10 +61,10 @@ struct TrendsView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text(app.t("\(key)Title"))
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Theme.ink)
+                .foregroundStyle(PeriColor.ink)
             Text(app.t(key))
                 .font(.caption)
-                .foregroundStyle(Theme.inkSoft)
+                .foregroundStyle(PeriColor.inkSoft)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier(A11yID.trendsEmpty)
                 .accessibilityValue(value)
@@ -75,14 +76,14 @@ struct TrendsView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(app.t("trends.axis"))
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(Theme.inkSoft)
+                .foregroundStyle(PeriColor.inkSoft)
                 .accessibilityIdentifier(A11yID.trendsAxis)
                 .accessibilityValue("days-scored")
             plot(chart)
             legend(chart)
             Text(app.t("trends.sizeKey"))
                 .font(.caption2)
-                .foregroundStyle(Theme.inkMuted)
+                .foregroundStyle(PeriColor.inkMuted)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier(A11yID.trendsSizeKey)
             if let selected, chart.series.contains(where: {
@@ -116,7 +117,7 @@ struct TrendsView: View {
                         .frame(width: 8, height: 8)
                     Text(app.symptomTitle(series.id))
                         .font(.caption)
-                        .foregroundStyle(Theme.ink)
+                        .foregroundStyle(PeriColor.ink)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .accessibilityElement(children: .combine)
@@ -169,7 +170,7 @@ struct TrendsView: View {
             ForEach([0, yMax], id: \.self) { value in
                 Text("\(value)")
                     .font(.system(size: 9))
-                    .foregroundStyle(Theme.inkMuted)
+                    .foregroundStyle(PeriColor.inkMuted)
                     .position(x: 12, y: yPos(value, yMax: yMax, plot: plot))
             }
         }
@@ -224,7 +225,7 @@ struct TrendsView: View {
                             ZStack {
                                 if on {
                                     Circle()
-                                        .stroke(Theme.ink, lineWidth: 3)
+                                        .stroke(PeriColor.ink, lineWidth: 3)
                                         .frame(width: d + 14, height: d + 14)
                                     Circle()
                                         .stroke(Color.white, lineWidth: 2)
@@ -260,7 +261,7 @@ struct TrendsView: View {
                         ZStack {
                             if on {
                                 Circle()
-                                    .stroke(Theme.ink, lineWidth: 3)
+                                    .stroke(PeriColor.ink, lineWidth: 3)
                                     .frame(width: 26, height: 26)
                                 Circle()
                                     .stroke(Color.white, lineWidth: 2)
@@ -268,11 +269,11 @@ struct TrendsView: View {
                             }
                             Image(systemName: "triangle.fill")
                                 .font(.system(size: 12, weight: .bold))
-                                .foregroundStyle(on ? Theme.blush800 : Theme.blush600)
+                                .foregroundStyle(on ? PeriColor.blush800 : PeriColor.blush600)
                                 .rotationEffect(.degrees(180))
                         }
                         .frame(width: side, height: side)
-                        .shadow(color: on ? Theme.blush600.opacity(0.5) : .clear, radius: on ? 5 : 0)
+                        .shadow(color: on ? PeriColor.blush600.opacity(0.5) : .clear, radius: on ? 5 : 0)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -287,7 +288,7 @@ struct TrendsView: View {
                 if let x = xs[cycle.start] {
                     Text(DateCopy.shortDay(cycle.start, locale: app.locale.language.locale))
                         .font(.system(size: 9))
-                        .foregroundStyle(Theme.inkMuted)
+                        .foregroundStyle(PeriColor.inkMuted)
                         .position(x: x, y: plot.maxY + 12)
                         .allowsHitTesting(false)
                 }
@@ -346,7 +347,7 @@ struct TrendsView: View {
                 .padding(.top, 4)
             Text(text)
                 .font(.caption)
-                .foregroundStyle(Theme.inkSoft)
+                .foregroundStyle(PeriColor.inkSoft)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .accessibilityElement(children: .ignore)
@@ -366,7 +367,7 @@ struct TrendsView: View {
         ])
         return Text(text)
             .font(.caption)
-            .foregroundStyle(Theme.inkMuted)
+            .foregroundStyle(PeriColor.inkMuted)
             .fixedSize(horizontal: false, vertical: true)
             .accessibilityIdentifier(A11yID.trendsTickCopy)
             .accessibilityValue("\(tick.nameSnapshot):\(tick.newValue)")
@@ -435,7 +436,7 @@ struct TrendsView: View {
         axis.move(to: CGPoint(x: plot.minX, y: plot.minY))
         axis.addLine(to: CGPoint(x: plot.minX, y: baseline))
         axis.addLine(to: CGPoint(x: plot.maxX, y: baseline))
-        ctx.stroke(axis, with: .color(Theme.inkMuted.opacity(0.35)), lineWidth: 0.8)
+        ctx.stroke(axis, with: .color(PeriColor.inkMuted.opacity(0.35)), lineWidth: 0.8)
     }
 
     private func formatMean(_ value: Double) -> String {

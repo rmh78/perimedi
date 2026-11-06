@@ -1,4 +1,5 @@
 import SwiftUI
+import PeriDesign
 
 struct PillTabBar: View {
     @EnvironmentObject private var app: AppModel
@@ -14,8 +15,8 @@ struct PillTabBar: View {
         .padding(.horizontal, 6)
         .padding(.top, 6)
         .padding(.bottom, 10)
-        .background(Theme.cream.opacity(0.95))
-        .overlay(alignment: .top) { Rectangle().fill(Theme.blush100).frame(height: 1) }
+        .background(PeriColor.cream.opacity(0.95))
+        .overlay(alignment: .top) { Rectangle().fill(PeriColor.blush100).frame(height: 1) }
         .accessibilityElement(children: .contain)
     }
 
@@ -33,12 +34,12 @@ struct PillTabBar: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
             }
-            .foregroundStyle(active ? Theme.blush800 : Theme.inkMuted)
+            .foregroundStyle(active ? PeriColor.blush800 : PeriColor.inkMuted)
             .frame(maxWidth: .infinity)
             .frame(height: 48)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(active ? Theme.blush100 : Color.clear)
+                    .fill(active ? PeriColor.blush100 : Color.clear)
             )
             .contentShape(Rectangle())
         }

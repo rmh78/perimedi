@@ -1,6 +1,7 @@
 import SwiftUI
 import UIKit
 import PeriMediDomain
+import PeriDesign
 
 struct RootView: View {
     @EnvironmentObject private var app: AppModel
@@ -92,12 +93,12 @@ struct RootView: View {
             if let persistError = store.lastError {
                 Text(app.t(persistError == .saveFailed ? "persist.saveFailed" : "persist.refreshFailed"))
                     .font(.caption)
-                    .foregroundStyle(Theme.blush700)
+                    .foregroundStyle(PeriColor.blush700)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
                     .frame(maxWidth: .infinity)
-                    .background(Theme.cream.opacity(0.96))
+                    .background(PeriColor.cream.opacity(0.96))
                     .onTapGesture { store.dismissError() }
             }
         }

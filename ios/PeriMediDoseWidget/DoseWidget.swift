@@ -2,6 +2,7 @@ import PeriMediDomain
 import SwiftUI
 import UIKit
 import WidgetKit
+import PeriDesign
 
 struct DoseWidgetEntry: TimelineEntry {
     var date: Date
@@ -45,15 +46,6 @@ struct DoseWidgetTimeline: TimelineProvider {
     }
 }
 
-enum DoseWidgetTheme {
-    static let cream = Color(widgetHex: "#fff9f6") ?? Color.white
-    static let blush500 = Color(widgetHex: "#e85a84") ?? Color.pink
-    static let blush800 = Color(widgetHex: "#94274b") ?? Color.pink
-    static let ink = Color(widgetHex: "#3d2c33") ?? Color.black
-    static let inkSoft = Color(widgetHex: "#6b5560") ?? Color.gray
-    static let pageWash = Color(widgetHex: "#fde2ea") ?? Color.clear
-}
-
 struct DoseWidgetView: View {
     var face: DoseWidgetFace
     var entryDate: Date
@@ -63,13 +55,13 @@ struct DoseWidgetView: View {
         VStack(alignment: .leading, spacing: family == .systemSmall ? 2 : 4) {
             Text(face.brandTitle)
                 .font(.headline.weight(.bold))
-                .foregroundStyle(DoseWidgetTheme.blush800)
+                .foregroundStyle(PeriColor.blush800)
                 .lineLimit(1)
                 .fixedSize(horizontal: false, vertical: true)
             if let helper = face.helper {
                 Text(helper)
                     .font(.caption)
-                    .foregroundStyle(DoseWidgetTheme.ink)
+                    .foregroundStyle(PeriColor.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                     .allowsTightening(true)
@@ -80,7 +72,7 @@ struct DoseWidgetView: View {
                 if let emptyTitle = face.emptyTitle {
                     Text(emptyTitle)
                         .font(.subheadline)
-                        .foregroundStyle(DoseWidgetTheme.ink)
+                        .foregroundStyle(PeriColor.ink)
                 }
             } else if family == .systemMedium {
                 mediumList(face.rows)
@@ -91,9 +83,9 @@ struct DoseWidgetView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .containerBackground(for: .widget) {
             ZStack {
-                DoseWidgetTheme.cream
+                PeriColor.cream
                 RadialGradient(
-                    colors: [DoseWidgetTheme.pageWash, .clear],
+                    colors: [PeriColor.pageWash, .clear],
                     center: UnitPoint(x: 0.1, y: 0),
                     startRadius: 4,
                     endRadius: 180
@@ -111,11 +103,11 @@ struct DoseWidgetView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     Text(front.name)
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(DoseWidgetTheme.ink)
+                        .foregroundStyle(PeriColor.ink)
                         .lineLimit(1)
                     Text(front.detail)
                         .font(.caption)
-                        .foregroundStyle(DoseWidgetTheme.inkSoft)
+                        .foregroundStyle(PeriColor.inkSoft)
                         .lineLimit(1)
                 }
             }
@@ -123,7 +115,7 @@ struct DoseWidgetView: View {
             if extra > 0 {
                 Text("+\(extra)")
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(DoseWidgetTheme.blush800)
+                    .foregroundStyle(PeriColor.blush800)
             }
         }
     }
@@ -138,7 +130,7 @@ struct DoseWidgetView: View {
             if extra > 0 {
                 Text("+\(extra)")
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(DoseWidgetTheme.blush800)
+                    .foregroundStyle(PeriColor.blush800)
             }
         }
     }
@@ -149,11 +141,11 @@ struct DoseWidgetView: View {
             VStack(alignment: .leading, spacing: 0) {
                 Text(row.name)
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(DoseWidgetTheme.ink)
+                    .foregroundStyle(PeriColor.ink)
                     .lineLimit(1)
                 Text(row.detail)
                     .font(.caption)
-                    .foregroundStyle(DoseWidgetTheme.inkSoft)
+                    .foregroundStyle(PeriColor.inkSoft)
                     .lineLimit(1)
             }
             Spacer(minLength: 4)
@@ -162,7 +154,7 @@ struct DoseWidgetView: View {
     }
 
     private func medIcon(_ row: DoseWidgetFace.Row) -> some View {
-        let ring = Color(widgetHex: row.color) ?? DoseWidgetTheme.blush500
+        let ring = medColor(row.color) ?? PeriColor.blush500
         return formImage(row.icon)
             .scaledToFill()
             .frame(width: 28, height: 28)
@@ -237,7 +229,7 @@ private func doseCapsule(_ text: String, widthOf match: String, color: String) -
     }
     .padding(.horizontal, 10)
     .padding(.vertical, 6)
-    .background(Capsule().fill(Color(widgetHex: WidgetCapsuleFill.hex(color)) ?? DoseWidgetTheme.blush500))
+    .background(Capsule().fill(medColor(WidgetCapsuleFill.hex(color)) ?? PeriColor.blush500))
 }
 
 private struct TakeControl: View {
@@ -295,17 +287,11 @@ private enum TakeGlyph: Equatable {
     }
 }
 
-private extension Color {
-    init?(widgetHex: String) {
-        var hex = widgetHex.trimmingCharacters(in: .whitespacesAndNewlines)
-        if hex.hasPrefix("#") {
-            hex.removeFirst()
-        }
-        guard hex.count == 6, let value = UInt64(hex, radix: 16) else { return nil }
-        self.init(
-            red: Double((value >> 16) & 0xFF) / 255,
-            green: Double((value >> 8) & 0xFF) / 255,
-            blue: Double(value & 0xFF) / 255
-        )
+private func medColor(_ hex: String) -> Color? {
+    var body = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+    if body.hasPrefix("#") {
+        body.removeFirst()
     }
+    guard body.count == 6, UInt64(body, radix: 16) != nil else { return nil }
+    return Color(hex: hex)
 }

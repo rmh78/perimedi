@@ -2,6 +2,7 @@ import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 import PeriMediDomain
+import PeriDesign
 
 struct MoreView: View {
     @EnvironmentObject private var app: AppModel
@@ -75,21 +76,21 @@ struct MoreView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(app.t("more.reminders"))
                                     .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(Theme.ink)
+                                    .foregroundStyle(PeriColor.ink)
                                 Text(app.t("more.remindersBody"))
                                     .font(.caption)
-                                    .foregroundStyle(Theme.inkMuted)
+                                    .foregroundStyle(PeriColor.inkMuted)
                             }
                             Spacer(minLength: 8)
                             Toggle("", isOn: $remindersOn)
                                 .labelsHidden()
-                                .tint(Theme.blush600)
+                                .tint(PeriColor.blush600)
                                 .accessibilityIdentifier(A11yID.moreReminders)
                         }
                         HStack(alignment: .center, spacing: 10) {
                             Text(app.t("more.reminderSound"))
                                 .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(Theme.ink)
+                                .foregroundStyle(PeriColor.ink)
                             Spacer(minLength: 8)
                             HStack(spacing: 8) {
                                 Picker("", selection: $reminderSoundRaw) {
@@ -101,7 +102,7 @@ struct MoreView: View {
                                 }
                                 .labelsHidden()
                                 .pickerStyle(.menu)
-                                .tint(Theme.ink)
+                                .tint(PeriColor.ink)
                                 .fixedSize(horizontal: true, vertical: false)
                                 .accessibilityIdentifier(A11yID.moreReminderSound)
                                 Button {
@@ -109,9 +110,9 @@ struct MoreView: View {
                                 } label: {
                                     Image(systemName: "speaker.wave.2")
                                         .font(.system(size: 14, weight: .semibold))
-                                        .foregroundStyle(Theme.blush700)
+                                        .foregroundStyle(PeriColor.blush700)
                                         .frame(width: 36, height: 36)
-                                        .background(Circle().fill(Theme.blush50))
+                                        .background(Circle().fill(PeriColor.blush50))
                                 }
                                 .buttonStyle(.plain)
                                 .accessibilityLabel(app.t("more.reminderSoundPreview"))
@@ -121,11 +122,11 @@ struct MoreView: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Text(app.t("more.reminderFollowUps"))
                                 .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(Theme.ink)
+                                .foregroundStyle(PeriColor.ink)
                             EqualWidthPillRow(items: followUpItems)
                             Text(app.t("more.reminderFollowUpsBody"))
                                 .font(.caption)
-                                .foregroundStyle(Theme.inkMuted)
+                                .foregroundStyle(PeriColor.inkMuted)
                         }
                         .opacity(remindersOn ? 1 : 0.4)
                         .disabled(!remindersOn)
@@ -134,7 +135,7 @@ struct MoreView: View {
                         if remindersOn, notifyDenied {
                             Text(app.t("more.remindersDenied"))
                                 .font(.caption)
-                                .foregroundStyle(Theme.blush700)
+                                .foregroundStyle(PeriColor.blush700)
                             PillButton(title: app.t("more.remindersSettings"), kind: .secondary, identifier: A11yID.moreRemindersSettings) {
                                 if let url = URL(string: UIApplication.openSettingsURLString) {
                                     UIApplication.shared.open(url)
@@ -164,10 +165,10 @@ struct MoreView: View {
                 }
 
                 if let status {
-                    Text(status).font(.caption).foregroundStyle(Theme.taken).padding(.horizontal, 4)
+                    Text(status).font(.caption).foregroundStyle(PeriColor.taken).padding(.horizontal, 4)
                 }
                 if let error {
-                    Text(error).font(.caption).foregroundStyle(Theme.blush700).padding(.horizontal, 4)
+                    Text(error).font(.caption).foregroundStyle(PeriColor.blush700).padding(.horizontal, 4)
                 }
 
                 GlassCard {
@@ -263,7 +264,7 @@ struct MoreView: View {
                 } label: {
                     Text(app.t("more.privacyPolicy"))
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(Theme.blush700)
+                        .foregroundStyle(PeriColor.blush700)
                 }
                 .buttonStyle(.plain)
                 .accessibilityIdentifier(A11yID.morePrivacyPolicy)
@@ -271,7 +272,7 @@ struct MoreView: View {
 
                 Text(app.t("more.disclaimer"))
                     .font(.caption2)
-                    .foregroundStyle(Theme.inkMuted)
+                    .foregroundStyle(PeriColor.inkMuted)
                     .padding(.horizontal, 6)
             }
             .padding(12)
@@ -292,13 +293,13 @@ struct MoreView: View {
     }
 
     private var divider: some View {
-        Rectangle().fill(Theme.blush100).frame(height: 1).padding(.leading, 14)
+        Rectangle().fill(PeriColor.blush100).frame(height: 1).padding(.leading, 14)
     }
 
     private func sectionLabel(_ text: String) -> some View {
         Text(text)
             .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(Theme.inkMuted)
+            .foregroundStyle(PeriColor.inkMuted)
             .textCase(.uppercase)
             .tracking(0.8)
     }
@@ -306,8 +307,8 @@ struct MoreView: View {
     private func backupRow(title: String, body: String, label: String, identifier: String, destructive: Bool = false, action: @escaping () -> Void) -> some View {
         HStack(alignment: .center, spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ink)
-                Text(body).font(.caption).foregroundStyle(Theme.inkMuted)
+                Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(PeriColor.ink)
+                Text(body).font(.caption).foregroundStyle(PeriColor.inkMuted)
             }
             Spacer(minLength: 8)
             PillButton(title: label, kind: destructive ? .destructive : .secondary, identifier: identifier, action: action)

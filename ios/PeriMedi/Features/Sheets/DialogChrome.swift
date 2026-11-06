@@ -1,6 +1,7 @@
 import SwiftUI
 import UIKit
 import PeriMediDomain
+import PeriDesign
 
 private struct DialogCloseKey: EnvironmentKey {
     static let defaultValue: () -> Void = {}
@@ -53,11 +54,11 @@ struct DialogChrome<Content: View, Footer: View>: View {
                         .frame(width: 32, height: 32)
                         .clipShape(Circle())
                         .padding(3)
-                        .background(Circle().fill(iconAccent ?? Theme.blush50))
+                        .background(Circle().fill(iconAccent ?? PeriColor.blush50))
                 }
                 Text(title)
                     .font(.title3.weight(.semibold))
-                    .foregroundStyle(Theme.ink)
+                    .foregroundStyle(PeriColor.ink)
                     .lineLimit(2)
                     .minimumScaleFactor(0.85)
                     .multilineTextAlignment(.leading)
@@ -69,9 +70,9 @@ struct DialogChrome<Content: View, Footer: View>: View {
                 Button(action: onClose) {
                     Image(systemName: "xmark")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Theme.blush800)
+                        .foregroundStyle(PeriColor.blush800)
                         .frame(width: 44, height: 44)
-                        .background(Circle().fill(Theme.blush50))
+                        .background(Circle().fill(PeriColor.blush50))
                 }
                 .accessibilityLabel("Close")
                 .accessibilityIdentifier(A11yID.sheetClose)
@@ -86,7 +87,7 @@ struct DialogChrome<Content: View, Footer: View>: View {
                 }
             )
 
-            Rectangle().fill(Theme.blush100).frame(height: 1)
+            Rectangle().fill(PeriColor.blush100).frame(height: 1)
 
             ScrollView {
                 content()
@@ -110,11 +111,11 @@ struct DialogChrome<Content: View, Footer: View>: View {
                     }
                 )
         }
-        .background(Theme.cream)
+        .background(PeriColor.cream)
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .stroke(Theme.blush100, lineWidth: 1)
+                .stroke(PeriColor.blush100, lineWidth: 1)
         )
         .padding(.horizontal, 12)
         .padding(.bottom, 12)
@@ -171,7 +172,7 @@ struct DateKeyPicker: View {
         } label: {
             Text(displayText)
                 .font(.body)
-                .foregroundStyle(key.isEmpty ? Theme.inkMuted : Theme.ink)
+                .foregroundStyle(key.isEmpty ? PeriColor.inkMuted : PeriColor.ink)
                 .fixedSize(horizontal: usesTextWidth, vertical: false)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -186,7 +187,7 @@ struct DateKeyPicker: View {
                     .labelsHidden()
                     .environment(\.calendar, DateKeys.calendar)
                     .environment(\.locale, locale)
-                    .tint(Theme.blush600)
+                    .tint(PeriColor.blush600)
                     .onChange(of: date) { _, new in
                         key = DateKeys.toDateKey(new)
                     }
@@ -196,12 +197,12 @@ struct DateKeyPicker: View {
                             key = ""
                             showPicker = false
                         }
-                        .foregroundStyle(Theme.inkMuted)
+                        .foregroundStyle(PeriColor.inkMuted)
                     }
                     Spacer()
                     Button("Done") { showPicker = false }
                         .fontWeight(.semibold)
-                        .foregroundStyle(Theme.blush700)
+                        .foregroundStyle(PeriColor.blush700)
                         .accessibilityIdentifier(A11yID.dateDone)
                 }
                 .padding(.horizontal, 4)
@@ -247,7 +248,7 @@ struct TimeOfDayPicker: View {
         } label: {
             Text(time.isEmpty ? "08:00" : time)
                 .font(.body)
-                .foregroundStyle(Theme.ink)
+                .foregroundStyle(PeriColor.ink)
                 .monospacedDigit()
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
@@ -263,7 +264,7 @@ struct TimeOfDayPicker: View {
                     .labelsHidden()
                     .environment(\.calendar, DateKeys.calendar)
                     .environment(\.locale, locale)
-                    .tint(Theme.blush600)
+                    .tint(PeriColor.blush600)
                     .onChange(of: date) { _, new in
                         time = DateKeys.formatTimeOfDay(new)
                     }
@@ -271,7 +272,7 @@ struct TimeOfDayPicker: View {
                     Spacer()
                     Button("Done") { showPicker = false }
                         .fontWeight(.semibold)
-                        .foregroundStyle(Theme.blush700)
+                        .foregroundStyle(PeriColor.blush700)
                         .accessibilityIdentifier(A11yID.timeDone)
                 }
                 .padding(.horizontal, 4)
@@ -361,7 +362,7 @@ struct SoftField<Content: View>: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(Theme.blush200, lineWidth: 1)
+                    .stroke(PeriColor.blush200, lineWidth: 1)
             )
     }
 }
@@ -371,7 +372,7 @@ struct FieldLabel: View {
     var body: some View {
         Text(text)
             .font(.subheadline.weight(.medium))
-            .foregroundStyle(Theme.ink)
+            .foregroundStyle(PeriColor.ink)
     }
 }
 
@@ -380,7 +381,7 @@ struct SectionLabel: View {
     var body: some View {
         Text(text)
             .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(Theme.inkMuted)
+            .foregroundStyle(PeriColor.inkMuted)
             .textCase(.uppercase)
             .tracking(0.8)
     }
@@ -404,8 +405,8 @@ struct DialogBackdrop<Content: View>: View {
                 ZStack {
                     // Real alpha, not UIVisualEffectView. Materials in this overlay
                     // composite as an opaque light-gray slab on LCD phones (SE).
-                    Theme.cream.opacity(shown ? 0.22 : 0)
-                    Theme.ink.opacity(shown ? 0.28 : 0)
+                    PeriColor.cream.opacity(shown ? 0.22 : 0)
+                    PeriColor.ink.opacity(shown ? 0.28 : 0)
                 }
                 .ignoresSafeArea()
                 .onTapGesture(perform: requestClose)
@@ -480,10 +481,10 @@ struct ConfirmCard: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text(app.t("confirm.title"))
                     .font(.title3.weight(.semibold))
-                    .foregroundStyle(Theme.ink)
+                    .foregroundStyle(PeriColor.ink)
                 Text(prompt.message)
                     .font(.subheadline)
-                    .foregroundStyle(Theme.inkSoft)
+                    .foregroundStyle(PeriColor.inkSoft)
                 HStack(spacing: 8) {
                     Spacer()
                     PillButton(title: app.t("common.cancel"), kind: .secondary, identifier: A11yID.confirmCancel) {
@@ -502,11 +503,11 @@ struct ConfirmCard: View {
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.cream)
+            .background(PeriColor.cream)
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .stroke(Theme.blush100, lineWidth: 1)
+                    .stroke(PeriColor.blush100, lineWidth: 1)
             )
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
@@ -523,13 +524,13 @@ struct ReminderCard: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text(app.t("reminder.title"))
                     .font(.title3.weight(.semibold))
-                    .foregroundStyle(Theme.ink)
+                    .foregroundStyle(PeriColor.ink)
                 Text(reminder.medicationName)
                     .font(.subheadline.weight(.medium))
-                    .foregroundStyle(Theme.ink)
+                    .foregroundStyle(PeriColor.ink)
                 Text(app.t("reminder.body", ["dose": reminder.doseLabel, "time": reminder.timeOfDay]))
                     .font(.subheadline)
-                    .foregroundStyle(Theme.inkSoft)
+                    .foregroundStyle(PeriColor.inkSoft)
                 HStack(spacing: 8) {
                     Spacer()
                     PillButton(
@@ -550,11 +551,11 @@ struct ReminderCard: View {
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.cream)
+            .background(PeriColor.cream)
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .stroke(Theme.blush100, lineWidth: 1)
+                    .stroke(PeriColor.blush100, lineWidth: 1)
             )
             .padding(.horizontal, 16)
             .padding(.bottom, 16)

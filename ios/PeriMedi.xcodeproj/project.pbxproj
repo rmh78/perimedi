@@ -47,6 +47,7 @@
 		D317D8AA58269D6EFBF7B675 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = EED13F982945208C9FC6A0DC /* InfoPlist.xcstrings */; };
 		B397C018A17BFBF166508EA2 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5DDA5CC6F789DD9514150A1D /* PrivacyInfo.xcprivacy */; };
 		9A0984188720DF949837D929 /* PeriMediDomain in Frameworks */ = {isa = PBXBuildFile; productRef = C81CD5F22406E4B780AC870D /* PeriMediDomain */; };
+		A9C2E4B71F8D40C6B5A3D1E0 /* PeriDesign in Frameworks */ = {isa = PBXBuildFile; productRef = C3A8F0E21B7D49A4C5E6F2A1 /* PeriDesign */; };
 		EECBAEF4AD57AF7707C45321 /* ReminderChime.caf in Resources */ = {isa = PBXBuildFile; fileRef = B1A6A2553ACC7D112DD0BFBA /* ReminderChime.caf */; };
 		64125C6868394BDC68482E52 /* ReminderDrop.caf in Resources */ = {isa = PBXBuildFile; fileRef = 97D2A202B1D02AB51BD678E2 /* ReminderDrop.caf */; };
 		F261E760DC0163A9DB08475B /* ReminderPulse.caf in Resources */ = {isa = PBXBuildFile; fileRef = FDA84AAE569584D90954F2AC /* ReminderPulse.caf */; };
@@ -60,6 +61,7 @@
 		556A9AD85C4E8C5D8733E802 /* ScreenCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D7ECE05280DF3A9B1D9FD1F /* ScreenCatalogTests.swift */; };
 		B7E4A91C0D2F4A6E8B1C3D51 /* StoreScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7E4A91C0D2F4A6E8B1C3D50 /* StoreScreenshotTests.swift */; };
 		22E653FA472344C15E92C92E /* PeriMediDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 14300107B9E3EB1D420E4B3B /* PeriMediDomain */; };
+		F0B3C5D82A1E49C7D6E4A8B2 /* PeriDesign in Frameworks */ = {isa = PBXBuildFile; productRef = D1F6B2C84E0A47B9A3D5E7C2 /* PeriDesign */; };
 		7D564784EAF9A538A66ADDAB /* PeriMediDoseWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7E8C6E6A7CE57809166DFBF0 /* PeriMediDoseWidget.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		49E14E9F8072F447C5D24F92 /* DoseWidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C5C3A69A20F9E8D61C43308 /* DoseWidgetSnapshot.swift */; };
 		57317151F64A3B9D86D02CC6 /* MarkDoseTakenIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC4EBBA48FBA9CA676374398 /* MarkDoseTakenIntent.swift */; };
@@ -192,6 +194,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9A0984188720DF949837D929 /* PeriMediDomain in Frameworks */,
+				A9C2E4B71F8D40C6B5A3D1E0 /* PeriDesign in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -207,6 +210,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				22E653FA472344C15E92C92E /* PeriMediDomain in Frameworks */,
+				F0B3C5D82A1E49C7D6E4A8B2 /* PeriDesign in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -370,6 +374,7 @@
 			name = PeriMedi;
 			packageProductDependencies = (
 				C81CD5F22406E4B780AC870D /* PeriMediDomain */,
+				C3A8F0E21B7D49A4C5E6F2A1 /* PeriDesign */,
 			);
 			productName = PeriMedi;
 			productReference = 595C479D7AC91F29089D5228 /* PeriMedi.app */;
@@ -429,6 +434,7 @@
 			name = PeriMediDoseWidget;
 			packageProductDependencies = (
 				14300107B9E3EB1D420E4B3B /* PeriMediDomain */,
+				D1F6B2C84E0A47B9A3D5E7C2 /* PeriDesign */,
 			);
 			productName = PeriMediDoseWidget;
 			productReference = 7E8C6E6A7CE57809166DFBF0 /* PeriMediDoseWidget.appex */;
@@ -456,6 +462,7 @@
 			mainGroup = BDE88D77EBDC01774960BE71;
 			packageReferences = (
 				0B2C5848BF186D63E30F5575 /* XCLocalSwiftPackageReference "." */,
+				B7E4D1A90C2F48E5A6B1D3C8 /* XCLocalSwiftPackageReference "Packages/PeriDesign" */,
 			);
 			productRefGroup = 4FDE57E4B72FFCEE306CEB0F /* Products */;
 			projectDirPath = "";
@@ -893,6 +900,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = .;
 		};
+		B7E4D1A90C2F48E5A6B1D3C8 /* XCLocalSwiftPackageReference "Packages/PeriDesign" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "Packages/PeriDesign";
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -910,6 +921,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 0B2C5848BF186D63E30F5575 /* XCLocalSwiftPackageReference "." */;
 			productName = PeriMediDomain;
+		};
+		C3A8F0E21B7D49A4C5E6F2A1 /* PeriDesign */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B7E4D1A90C2F48E5A6B1D3C8 /* XCLocalSwiftPackageReference "Packages/PeriDesign" */;
+			productName = PeriDesign;
+		};
+		D1F6B2C84E0A47B9A3D5E7C2 /* PeriDesign */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B7E4D1A90C2F48E5A6B1D3C8 /* XCLocalSwiftPackageReference "Packages/PeriDesign" */;
+			productName = PeriDesign;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
