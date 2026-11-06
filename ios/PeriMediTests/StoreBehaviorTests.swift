@@ -92,6 +92,88 @@ final class StoreBehaviorTests: XCTestCase {
         XCTAssertNil(store.lastError)
     }
 
+    func testStaleLaneTapAfterNotificationTakeKeepsOneLog() throws {
+        let container = try Self.memoryContainer(name: "stale-lane-\(UUID().uuidString)")
+        let store = Store(container: container)
+        let medicationId = "stale-lane-med"
+        let scheduleId = "stale-lane-schedule"
+        try store.upsertMedication(
+            Medication(
+                id: medicationId,
+                name: "Estrogen",
+                form: .PILL,
+                doseLabel: "1 mg",
+                createdAt: "t"
+            )
+        )
+        try store.upsertSchedule(
+            Schedule(
+                id: scheduleId,
+                medicationId: medicationId,
+                daysOfWeek: [],
+                timeOfDay: "09:00",
+                times: ["09:00"],
+                active: true,
+                cycleRule: .none
+            )
+        )
+        let identity = PlannedSlotIdentity(
+            medicationId: medicationId,
+            scheduleId: scheduleId,
+            date: DateKeys.todayKey(),
+            timeOfDay: "09:00"
+        )
+        let center = DoseReminderCenter.shared
+        let savedStore = center.store
+        ReminderDelivery.installForTest(
+            add: { _, done in done() },
+            remove: { _ in },
+            pending: { [] },
+            auth: { .authorized }
+        )
+        center.store = store
+        defer {
+            center.store = savedStore
+            ReminderDelivery.resetForTest()
+        }
+
+        let taken = try center.markSlotTaken(identity)
+        let afterNotification = Self.slotLogs(store, identity: identity)
+        XCTAssertEqual(taken, .taken)
+        XCTAssertEqual(
+            afterNotification.map(\.status),
+            [.taken],
+            "notification take logs \(afterNotification.map { "\($0.id) \($0.status)" })"
+        )
+
+        center.setSlotStatuses(
+            medicationId: medicationId,
+            slots: [
+                SlotStatusWrite(
+                    scheduleId: identity.scheduleId,
+                    date: identity.date,
+                    timeOfDay: identity.timeOfDay,
+                    existingLogId: nil
+                ),
+            ],
+            status: .taken
+        )
+
+        let afterLane = Self.slotLogs(store, identity: identity)
+        XCTAssertEqual(
+            afterLane.map(\.status),
+            [.taken],
+            "stale lane tap logs \(afterLane.map { "\($0.id) \($0.status)" })"
+        )
+    }
+
+    private static func slotLogs(_ store: Store, identity: PlannedSlotIdentity) -> [DoseLog] {
+        let planned = ScheduleLogic.plannedForIso(dateKey: identity.date, timeOfDay: identity.timeOfDay)
+        return store.doseLogs.filter {
+            $0.scheduleId == identity.scheduleId && $0.plannedFor == planned
+        }
+    }
+
     private static func writePreviousStore(schema: Schema, url: URL) throws {
         let config = ModelConfiguration(
             "previous",
