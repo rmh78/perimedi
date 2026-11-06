@@ -37,52 +37,22 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - name: One-way door
-        if: github.event_name == 'pull_request'
-        continue-on-error: true
-        env:
-          BASE_REF: ${{ github.base_ref }}
-        run: |
-          git fetch --no-tags origin "$BASE_REF"
-          echo 'sample model diff'
-          python3 ios/scripts/check-one-way-door.py --diff-file ios/scripts/testdata/one-way-model.diff
-          echo 'sample copy diff'
-          python3 ios/scripts/check-one-way-door.py --diff-file ios/scripts/testdata/one-way-copy.diff
-          out=$(python3 ios/scripts/check-one-way-door.py --base "origin/$BASE_REF")
-          printf '%s\n' "$out"
-          first=${out%%$'\n'*}
-          if [ "$first" = "one-way door: yes" ]; then
-            reason=${out#*$'\n'reason: }
-            reason=${reason//$'\n'/ }
-            reason=${reason//::/}
-            echo "::notice title=One-way door::${reason:0:400}"
-          fi
-      - name: One-way door unit tests
-        run: python3 ios/scripts/test_check_one_way_door.py
-      - name: Wired scripts are named in Agents.md
-        run: python3 ios/scripts/check-agent-rails.py
-      - name: UI test methods are named
-        run: python3 ios/scripts/check-ui-test-names.py
-      - name: PR text does not link user-attachment hosts
-        run: python3 ios/scripts/check-pr-attachments.py
-      - name: Added lines that repeat a review finding
+      - name: check-features
+        run: python3 ios/scripts/check-features.py
+      - name: check-agent
         env:
           BASE_REF: ${{ github.base_ref || 'main' }}
         run: |
           git fetch --no-tags origin "$BASE_REF"
-          python3 ios/scripts/check-review-repeats.py --base "origin/$BASE_REF"
+          python3 ios/scripts/check-agent.py --base "origin/$BASE_REF"
+      - name: Harness gate unit tests
+        run: python3 ios/scripts/test_harness_gates.py
+      - name: One-way door unit tests
+        run: python3 ios/scripts/test_check_one_way_door.py
       - name: Review-repeat unit tests
         run: python3 ios/scripts/test_check_review_repeats.py
       - name: Agent rails unit tests
         run: python3 ios/scripts/test_check_agent_rails.py
-      - name: Every A11yID is named in the feature map
-        run: python3 ios/scripts/check-feature-map.py
-      - name: Feature map vs UITest coverage
-        run: python3 ios/scripts/check-ui-coverage.py --fail-uncovered
-      - name: Screen catalog files exist
-        run: python3 ios/scripts/check-screen-catalog.py
-      - name: Feature sheets live under Cycle/Month/More
-        run: python3 ios/scripts/check-feature-layout.py
       - name: Trends and Visit keys stay out of L10n.swift
         run: python3 ios/scripts/check-l10n-layout.py
       - name: Domain owns math; persistence writes logs
