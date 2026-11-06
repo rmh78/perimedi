@@ -17,6 +17,10 @@ The system SHALL allow the user to toggle planned doses for the selected day bet
 - **WHEN** a dose reminder fires for one planned slot and the user chooses Taken on that reminder
 - **THEN** that slot is recorded as taken the same way as logging it on Cycle
 
+#### Scenario: Lane tap after a reminder take
+- **WHEN** a planned slot was recorded as taken from its reminder and the user then activates that medication's icon on Cycle while the lane still shows not taken
+- **THEN** the slot remains taken and no second log is recorded for that slot
+
 #### Scenario: Mark not taken
 - **WHEN** the selected day has planned doses for a medication recorded as taken and the user activates that medication’s icon
 - **THEN** those doses are recorded as not taken (pending)
