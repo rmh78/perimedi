@@ -403,8 +403,6 @@ struct DialogBackdrop<Content: View>: View {
             let overlap = keyboardOverlap(in: geo)
             ZStack(alignment: .bottom) {
                 ZStack {
-                    // Real alpha, not UIVisualEffectView. Materials in this overlay
-                    // composite as an opaque light-gray slab on LCD phones (SE).
                     PeriColor.cream.opacity(shown ? 0.22 : 0)
                     PeriColor.ink.opacity(shown ? 0.28 : 0)
                 }

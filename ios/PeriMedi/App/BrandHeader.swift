@@ -13,7 +13,6 @@ enum LaunchBeat {
 
 struct BrandHeader: View {
     private let peach = PeriColor.launchPeach
-    /// Pulls Cycle/Month/More up into the fade so the header reads shorter.
     private let fadeOverlap: CGFloat = 36
 
     var body: some View {
@@ -40,7 +39,6 @@ struct BrandHeader: View {
     }
 }
 
-/// Matches the system launch storyboard so the first SwiftUI frame does not flash.
 struct LaunchBrandOverlay: View {
     private let peach = PeriColor.launchPeach
 
