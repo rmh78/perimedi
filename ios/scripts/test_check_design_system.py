@@ -90,6 +90,14 @@ class DesignTests(unittest.TestCase):
         let scaled = UIFont.systemFont(ofSize: subheadlineSize * fit.scale)
         let fixed = UIFont.systemFont(ofSize: 15)
         Text("C").font(Font.custom("Palatino-Bold", size: 44))
+        Text("D").font(.custom("Palatino-Bold", size: 44))
+        let inferred: Font = .custom("Palatino-Bold", size: 44)
+        .font(
+            .custom("Palatino-Bold", size: 44)
+        )
+        case .custom(let rows):
+        scoreRow(ref: .custom(symptom.id))
+        scoreRow(ref: .custom( symptom.id))
         // "#abcdef"
         /* "#112233" */
         // .system(size: 9)
@@ -115,7 +123,7 @@ class DesignTests(unittest.TestCase):
                 key("font-literal", ".system(size: 11)"): 1,
                 key("font-literal", ".system(size: 12)"): 1,
                 key("font-literal", "UIFont.systemFont(ofSize: 15)"): 1,
-                key("font-literal", ".custom("): 1,
+                key("font-literal", ".custom("): 4,
             },
         )
         self.assertNotIn("space-literal", {kind for _, kind, _ in found})

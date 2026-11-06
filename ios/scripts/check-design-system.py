@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Fail when SwiftUI hex or font literals drift from the design baseline."""
 
 from __future__ import annotations
 
@@ -38,7 +37,9 @@ _SYSTEM = re.compile(r"\.system\(\s*size:\s*(\d+(?:\.\d+)?|\.\d+)")
 _UIFONT = re.compile(
     r"(?<![\w])UIFont\.systemFont\(\s*ofSize:\s*(\d+(?:\.\d+)?|\.\d+)"
 )
-_CUSTOM = re.compile(r"(?<![\w])Font\.custom\(")
+_CUSTOM = re.compile(
+    r"(?<![\w])(?:Font\.custom\(|\.font\(\s*\.custom\(|\.custom\(\s{2,})"
+)
 
 
 def violations_in(path: str, source: str) -> dict[Key, int]:
