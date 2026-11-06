@@ -72,8 +72,10 @@ enum DoseWidgetBridge {
                 snapshot.ack = nil
             }
         }
-        try? DoseWidgetSnapshotFile.write(snapshot)
-        reloadOffMain()
+        guard case .visible(let stored) = DoseWidgetSnapshotFile.write(snapshot) else {
+            return
+        }
+        reloadOffMain(after: stored)
     }
 
     // reloadAllTimelines talks to the widget daemon. Calling it on the
@@ -83,7 +85,7 @@ enum DoseWidgetBridge {
         DispatchQueue.global(qos: .utility).async(execute: body)
     }
 
-    private static func reloadOffMain() {
+    private static func reloadOffMain(after _: VisibleSnapshot) {
         let kind = DoseWidgetKind.id
         runOffMain {
             WidgetCenter.shared.reloadTimelines(ofKind: kind)

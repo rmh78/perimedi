@@ -18,7 +18,7 @@ final class DoseWidgetBridgeTests: XCTestCase {
 
     func testFailedTakeRepublishesTakeWithoutAck() throws {
         let prior = DoseWidgetSnapshotFile.read()
-        defer { try? DoseWidgetSnapshotFile.write(prior) }
+        defer { _ = DoseWidgetSnapshotFile.write(prior) }
 
         let container = try ModelContainer(
             for: PersistenceController.schema,
@@ -66,7 +66,10 @@ final class DoseWidgetBridgeTests: XCTestCase {
             nextMeds: []
         )
         blank.ack = nil
-        try DoseWidgetSnapshotFile.write(blank)
+        guard case .visible = DoseWidgetSnapshotFile.write(blank) else {
+            XCTFail("blank snapshot was not stored")
+            return
+        }
 
         DoseWidgetBridge.install(store: store, locale: locale)
         let reminder = DoseReminderCenter.shared
