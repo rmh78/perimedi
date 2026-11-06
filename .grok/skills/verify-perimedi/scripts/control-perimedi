@@ -237,17 +237,11 @@ cmd_doctor() {
   echo "developer_dir: ${DEVELOPER_DIR:-}"
   xcodebuild -version | sed 's/^/xcode: /'
 
-  python3 "$ROOT/ios/scripts/check-feature-map.py" || rc=1
-  python3 "$ROOT/ios/scripts/check-feature-layout.py" || rc=1
+  python3 "$ROOT/ios/scripts/check-features.py" || rc=1
   python3 "$ROOT/ios/scripts/check-l10n-layout.py" || rc=1
   python3 "$ROOT/ios/scripts/check-domain-boundary.py" || rc=1
   python3 "$ROOT/ios/scripts/check-openspec-sync.py" || rc=1
-  python3 "$ROOT/ios/scripts/check-ui-coverage.py" --fail-uncovered || rc=1
-  python3 "$ROOT/ios/scripts/check-screen-catalog.py" || rc=1
-  python3 "$ROOT/ios/scripts/check-agent-rails.py" || rc=1
-  python3 "$ROOT/ios/scripts/check-ui-test-names.py" || rc=1
-  python3 "$ROOT/ios/scripts/check-pr-attachments.py" || rc=1
-  python3 "$ROOT/ios/scripts/check-review-repeats.py" --base origin/main || rc=1
+  python3 "$ROOT/ios/scripts/check-agent.py" --base origin/main || rc=1
   python3 "$ROOT/docs/app-store/check-listing.py" || rc=1
 
   load_state
@@ -734,18 +728,11 @@ cmd_verify() {
   esac
 
   if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
-    python3 "$ROOT/ios/scripts/check-feature-map.py"
-    python3 "$ROOT/ios/scripts/check-feature-layout.py"
+    python3 "$ROOT/ios/scripts/check-features.py"
     python3 "$ROOT/ios/scripts/check-l10n-layout.py"
     python3 "$ROOT/ios/scripts/check-domain-boundary.py"
     python3 "$ROOT/ios/scripts/check-openspec-sync.py"
-    python3 "$ROOT/ios/scripts/check-ui-coverage.py" --fail-uncovered
-    python3 "$ROOT/ios/scripts/check-screen-catalog.py"
-    python3 "$ROOT/ios/scripts/check-agent-rails.py"
-    python3 "$ROOT/ios/scripts/check-ui-test-names.py"
-    python3 "$ROOT/ios/scripts/check-pr-attachments.py"
-    python3 "$ROOT/ios/scripts/check-review-repeats.py" --base origin/main
-    python3 "$ROOT/ios/scripts/check-one-way-door.py" --base origin/main
+    python3 "$ROOT/ios/scripts/check-agent.py" --base origin/main
     python3 "$ROOT/docs/app-store/check-listing.py"
   fi
 

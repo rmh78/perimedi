@@ -16,7 +16,7 @@ This directory is the maintained verification source. Open one feature file for 
 
 - Start every recipe from the baseline launch unless the feature file says otherwise (`-fixture=trends`, `-tabTrends` on catalog launches).
 - Prefer `A11yID` strings over coordinates and visible copy. Chrome is en/de; IDs are language-independent. Tests force English with `-en`.
-- Treat every identifier as literal. Keep backtick IDs unchanged so `check-feature-map.py` still sees them.
+- Treat every identifier as literal. Keep backtick IDs unchanged so `check-features.py` still sees them.
 - Type with `clearAndType` / `typeText` after the field is focused. Do not paste.
 - Restore isolation with `cleanup` on the same `--run-id`. Do not remove proof artifacts.
 
@@ -60,4 +60,4 @@ PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verif
 
 Canonical ID source: `ios/PeriMedi/App/A11yID.swift`. Tests: `ios/PeriMediUITests/`. Catalog PNGs: `ios/docs/screens/`.
 
-`python3 ios/scripts/check-ui-coverage.py --fail-uncovered` fails when a surface with distinctive IDs is never driven. `tab.*` does not count as coverage.
+`python3 ios/scripts/check-features.py` fails when a surface with distinctive IDs is never driven. `tab.*` does not count as coverage.

@@ -32,7 +32,7 @@ Read-only. Run first, and again whenever anything looks off. A capture against a
 .grok/skills/verify-perimedi/scripts/control-perimedi --run-id "$RUN_ID" doctor
 ```
 
-Pass is a final `doctor: ok`. It checks Darwin/Xcode, the python rails (`check-feature-map.py`, `check-feature-layout.py`, `check-l10n-layout.py`, `check-domain-boundary.py`, `check-openspec-sync.py`, `check-ui-coverage.py --fail-uncovered`, `check-screen-catalog.py`, `check-agent-rails.py`, `check-ui-test-names.py`, `check-pr-attachments.py`), that this run-id owns the UDID lock after launch, that the sim is Booted, and that Connect Hardware Keyboard is false. It fails if PeriMedi is already installed on the target UDID without this run-id.
+Pass is a final `doctor: ok`. It checks Darwin/Xcode, then `check-features.py`, `check-agent.py` (`--base origin/main`), `check-l10n-layout.py`, `check-domain-boundary.py`, `check-openspec-sync.py`, and `docs/app-store/check-listing.py`. It checks that this run-id owns the UDID lock after launch, that the sim is Booted, and that Connect Hardware Keyboard is false. It fails if PeriMedi is already installed on the target UDID without this run-id.
 
 PR-wide proof is `control-perimedi verify`. Do not use `doctor` as the product UI suite.
 
@@ -68,7 +68,7 @@ Do not submit "look, it opens." Proof is a production user path plus an observab
 - A proof that drives one convenient entry point is incomplete when the map lists others.
 - For a broad regression, walk `features/README.md` top to bottom (Full sweep). Driving one feature is not a sweep.
 
-PR-wide UI proof is `verify: ok` from `.grok/skills/verify-perimedi/scripts/control-perimedi verify` (or CI job `ui`). A pull request runs `testUserFlow`. Local `verify` and the nightly full suite discover `testUserFlow` and `ScreenCatalogTests`. Domain `swift test --package-path ios` alone is not UI proof. The same `verify` command runs `ios/scripts/check-one-way-door.py --base origin/main`. That check warns and exits 0. `doctor` does not run it.
+PR-wide UI proof is `verify: ok` from `.grok/skills/verify-perimedi/scripts/control-perimedi verify` (or CI job `ui`). A pull request runs `testUserFlow`. Local `verify` and the nightly full suite discover `testUserFlow` and `ScreenCatalogTests`. Domain `swift test --package-path ios` alone is not UI proof. The same `verify` command runs `check-agent.py` with `--base origin/main`. The door checker inside that gate warns and exits 0. `doctor` runs that gate too.
 
 ## Evidence
 
