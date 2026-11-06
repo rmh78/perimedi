@@ -38,7 +38,13 @@ enum DoseWidgetSnapshotFile {
     }
 
 #if PERIMEDI_APP
+    static var refuseNextWrite = false
+
     static func write(_ snapshot: DoseWidgetSnapshot) throws {
+        if refuseNextWrite {
+            refuseNextWrite = false
+            throw CocoaError(.fileWriteUnknown)
+        }
         let data = try JSONEncoder().encode(snapshot)
         guard let suite = suite() else {
             throw CocoaError(.fileNoSuchFile)

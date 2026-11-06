@@ -73,11 +73,19 @@ enum DoseWidgetBridge {
             }
         }
         try? DoseWidgetSnapshotFile.write(snapshot)
-        // reloadAllTimelines talks to the widget daemon. Calling it on the
-        // main actor froze the app for about 190s after Taken while XCTest
-        // waited for the run loop to go idle.
+        reloadOffMain()
+    }
+
+    // reloadAllTimelines talks to the widget daemon. Calling it on the
+    // main actor froze the app for about 190s after Taken while XCTest
+    // waited for the run loop to go idle.
+    static var runOffMain: (@escaping () -> Void) -> Void = { body in
+        DispatchQueue.global(qos: .utility).async(execute: body)
+    }
+
+    private static func reloadOffMain() {
         let kind = DoseWidgetKind.id
-        DispatchQueue.global(qos: .utility).async {
+        runOffMain {
             WidgetCenter.shared.reloadTimelines(ofKind: kind)
             WidgetCenter.shared.reloadAllTimelines()
         }
