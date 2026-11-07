@@ -30,7 +30,7 @@ Cycle → + Med (`cycle.action.med`) for a new one, or a lane's edit control for
 | Preset | `med.preset` | On the `A11yID` enum but **not attached** in the sheet. Do not drive it. |
 | Start | `med.start` | `AppRobot.setDateKey`. Confirm with `date.done`. |
 | Dose from (effective date) | `med.since` | Sits next to the dose field, not after the schedule. Present when dose or schedule differs from the stored med (including a new med with a dose). `AppRobot.addMedication` saves by `med.save` and does not wait for this field. Catalog still waits for it. |
-| Time chooser done | `time.done` | Done dismisses the chooser. `testImmediateActionsKeepWhatTheyShow` moves the default 20:00 to 21:00, taps Done, and reads 21:00 on the still-open new-medication sheet. It reopens the chooser and reads the same hour. The sheet is then closed without Save, so that time is not stored on a medication. |
+| Time chooser done | `time.done` | Done dismisses the chooser. `testImmediateActionsKeepWhatTheyShow` moves the default 20:00 to 21:00, taps Done, and reads 21:00 on the still-open new-medication sheet. It reopens the chooser and reads the same hour. The sheet is then closed without Save. The test does not open it again after that close. |
 | Remind | `med.remind` | Toggle on the sheet. |
 | Save | `med.save` | Pinned footer, right side. Sheet dismisses. A `cycle.lane.{slug}` appears. |
 | Delete | `med.delete` | Pinned footer, between Cancel and Save, on edit only. Then `confirm.delete` / `confirm.cancel`. |
