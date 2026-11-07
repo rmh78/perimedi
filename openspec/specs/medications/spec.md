@@ -33,7 +33,7 @@ The system SHALL support medication forms pill, cream, drops, injection, and oth
 - **THEN** the avatar icon matches that form and fills the circle
 
 ### Requirement: Medication color
-The system SHALL allow the user to choose a color from a single-row palette of mid and deep tones (not powder-light swatches) and SHALL apply that color to the medication icon ring, dose bands, and taken-day fills. While the dialog is open, picking a swatch SHALL tint only the circle around the medication icon, not the icon artwork.
+The system SHALL allow the user to choose a color from a single-row palette of mid and deep tones (not powder-light swatches) and SHALL apply that color to the medication icon ring, dose bands, and taken-day fills. Each swatch SHALL keep its color. The chosen swatch SHALL have a dark ring. Every other swatch SHALL have a visible blush edge. While the dialog is open, picking a swatch SHALL tint only the circle around the medication icon, not the icon artwork.
 
 #### Scenario: Color choice
 - **WHEN** the user selects a palette color and saves the medication
@@ -42,6 +42,10 @@ The system SHALL allow the user to choose a color from a single-row palette of m
 #### Scenario: Dialog icon ring follows the palette
 - **WHEN** the user picks a palette color while the medication dialog is open
 - **THEN** the colored circle around the medication icon updates to that color and the icon artwork itself is unchanged
+
+#### Scenario: Unselected swatches keep a blush edge
+- **WHEN** the medication dialog shows the color palette
+- **THEN** the chosen swatch has a dark ring and every other swatch keeps its fill with a visible blush edge
 
 #### Scenario: Default color by form
 - **WHEN** a medication has no custom color stored

@@ -112,7 +112,7 @@ The More screen SHALL present a Language block (English and German as selectable
 - **THEN** language pills appear first, then the reminders switch, then the visit PDF action, then backup rows, then a Privacy Policy control, and each backup action sits on the trailing side of its row
 
 ### Requirement: Dialog layout
-The medication, period-settings, and symptom editors SHALL use an inset rounded panel over the current screen (not a full-bleed gray system form as the primary look), a header with a fully visible title (not truncated) and a dedicated close control, and grouped fields. The add-medication dialog title SHALL read New medication in English and Neues Medikament in German. Its create action SHALL read Save in English and Speichern in German. The edit title SHALL stay Edit medication (German: Medikament bearbeiten) and its save action SHALL read Save (German: Speichern), the same label as the create action. The medication dialog SHALL NOT repeat a second medication heading under the title. The medication color palette SHALL be a single row of swatches with no horizontal scrolling. Take times SHALL sit on a compact row with the Take at label and SHALL wrap onto additional rows when they no longer fit, without shrinking a time chip so its digits stack. Field order under the schedule heading SHALL be start and end dates, then take times, then a labeled Type dropdown (every day, specific days, cyclic) that is only as wide as its selected label. Mode-specific extras SHALL appear only after that dropdown: weekday chips for specific days, and apply/pause day counts for cyclic (no cyclic preset list). The medication dialog SHALL pin Cancel on the left and Save on the right in a footer that stays in place while the fields scroll. Cancel SHALL dismiss without saving. When editing, Delete SHALL sit between Cancel and Save and SHALL open the delete confirmation.
+The medication, period-settings, and symptom editors SHALL use an inset rounded panel over the current screen (not a full-bleed gray system form as the primary look), a header with a fully visible title (not truncated) and a dedicated close control, and grouped fields. The add-medication dialog title SHALL read New medication in English and Neues Medikament in German. Its create action SHALL read Save in English and Speichern in German. The edit title SHALL stay Edit medication (German: Medikament bearbeiten) and its save action SHALL read Save (German: Speichern), the same label as the create action. The medication dialog SHALL NOT repeat a second medication heading under the title. The medication color palette SHALL be a single row of swatches with no horizontal scrolling. Take times SHALL sit on a compact row with the Take at label and SHALL wrap onto additional rows when they no longer fit, without shrinking a time chip so its digits stack. Field order under the schedule heading SHALL be start and end dates, then take times, then a labeled Type dropdown (every day, specific days, cyclic) that is only as wide as its selected label. Mode-specific extras SHALL appear only after that dropdown: weekday chips for specific days, and apply/pause day counts for cyclic (no cyclic preset list). A closed menu in the medication or period dialog SHALL show ink, not system blue. A chosen weekday chip SHALL be reported as selected, and its label SHALL stay the weekday name. The medication dialog SHALL pin Cancel on the left and Save on the right in a footer that stays in place while the fields scroll. Cancel SHALL dismiss without saving. When editing, Delete SHALL sit between Cancel and Save and SHALL open the delete confirmation.
 
 #### Scenario: Add medication dialog
 - **WHEN** the user opens add medication
@@ -129,6 +129,14 @@ The medication, period-settings, and symptom editors SHALL use an inset rounded 
 #### Scenario: Cyclic shows custom day counts
 - **WHEN** the user chooses cyclic
 - **THEN** apply-days and pause-days controls are shown, pause days start at 1 (not 0), and no cyclic preset list is shown
+
+#### Scenario: Closed menus show ink
+- **WHEN** the user views a closed day-count or flow menu in the medication or period dialog
+- **THEN** the value shows ink, not system blue
+
+#### Scenario: A chosen weekday stays named and selected
+- **WHEN** the user chooses specific days and a weekday chip is on
+- **THEN** that chip is reported as selected and its label stays the weekday name
 
 #### Scenario: Extra take times wrap
 - **WHEN** the user adds more take times than fit beside Take at on a narrow phone
