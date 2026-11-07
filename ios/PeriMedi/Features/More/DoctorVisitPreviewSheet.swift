@@ -1,6 +1,7 @@
 import PDFKit
 import SwiftUI
 import UIKit
+import PeriDesign
 
 struct DoctorVisitPreviewSheet: View {
     @EnvironmentObject private var app: AppModel
@@ -17,24 +18,22 @@ struct DoctorVisitPreviewSheet: View {
                 .frame(minHeight: 420, maxHeight: 520)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         } footer: {
-            HStack {
-                PillButton(
+            DialogActions(
+                cancel: DialogAction(
+                    id: "back",
                     title: app.t("visit.back"),
-                    kind: .secondary,
-                    identifier: A11yID.visitPdfBack,
+                    accessibilityIdentifier: A11yID.visitPdfBack,
                     action: { app.backToVisitPicker() }
-                )
-                Spacer()
-                PillButton(
+                ),
+                primary: DialogAction(
+                    id: "share",
                     title: app.t("visit.share"),
-                    kind: .primary,
-                    identifier: A11yID.visitPdfShare
+                    accessibilityIdentifier: A11yID.visitPdfShare
                 ) {
                     showShare = true
                 }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            )
+            .dialogFooterInset()
         }
         .sheet(isPresented: $showShare) {
             ShareSheet(items: [url])

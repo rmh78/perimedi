@@ -41,7 +41,7 @@ Practical test walk for that order:
 
 1. `PeriMediUITests/RequiredJourneyTests/testUserFlow` — empty Cycle, one typed medication on the sheet defaults, the lane word Taken then Not taken, one period saved as the card opens, one symptom, Month, Trends with that symptom turned off so the chart drops the point, More, Back from the visit preview to the picker, one medium widget Take
 
-PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verify`. A pull request runs `testUserFlow` and does not run `ScreenCatalogTests`. Local `verify` and the nightly full suite discover `testUserFlow` and the catalog writer.
+PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verify`. A pull request runs `testUserFlow` and does not run `ScreenCatalogTests`. Local `verify` and the nightly full suite discover `testUserFlow` and the catalog writer. `DialogFooterShotTests.testWriteDialogFooters` skips unless `DIALOG_SHOTS=1`. `ios/scripts/dialog-footer-shots.sh` calls `control-perimedi launch` and `drive` for that test. It does not boot the simulator or call `xcodebuild` itself. A skipped test still fails the script. `testWriteCorrectedDialogFooters` skips the same way and is the `corrected` phase of that runner. `testImmediateActionsKeepWhatTheyShow` runs in the full suite, and a pull request does not run it. Done keeps a changed cycle length and a tapped symptom score. Clear empties a period end date on the open card, which is then cancelled. The start date and the take time stay on the unsaved medication sheet. The take time moves from 20:00 to 21:00, Done leaves 21:00, and reopening the chooser shows that hour. The sheet is then closed. The test does not open it again, and the next launch clears the store, so that close is not a check that nothing was saved. Close on the dose banner leaves the dose not taken and leaves `med.remind` on.
 
 ## Features
 
@@ -52,7 +52,7 @@ PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verif
 - [Medication sheet](./medication-sheet.md) — create/edit med and schedule over Cycle
 - [Period sheet](./period-sheet.md) — log bleeds over Cycle
 - [Symptom sheet](./symptom-sheet.md) — scores 1–4 over Cycle
-- [Dose reminders](./reminders.md) — in-app banner Taken / Snooze
+- [Dose reminders](./reminders.md) — in-app banner Close / Snooze / Taken
 - [Home Screen today's-meds widget](./home-dose-widget.md) — one medium Take inside `testUserFlow`. A pull request runs that step. The nightly full suite runs the same test.
 - [Doctor visit PDF](./doctor-visit.md) — More → range → in-app preview. Back returns to the same picker. Close returns to More.
 - [Backup / sample](./backup.md) — catalog waits for `more.sample` after the visit preview and does not tap it

@@ -112,11 +112,11 @@ The More screen SHALL present a Language block (English and German as selectable
 - **THEN** language pills appear first, then the reminders switch, then the visit PDF action, then backup rows, then a Privacy Policy control, and each backup action sits on the trailing side of its row
 
 ### Requirement: Dialog layout
-The medication, period-settings, and symptom editors SHALL use an inset rounded panel over the current screen (not a full-bleed gray system form as the primary look), a header with a fully visible title (not truncated) and a dedicated close control, and grouped fields. The add-medication dialog title SHALL read New medication in English and Neues Medikament in German. Its create action SHALL read Save in English and Speichern in German. The edit title SHALL stay Edit medication (German: Medikament bearbeiten) and its save action SHALL read Save (German: Speichern), the same label as the create action. The medication dialog SHALL NOT repeat a second medication heading under the title. The medication color palette SHALL be a single row of swatches with no horizontal scrolling. Take times SHALL sit on a compact row with the Take at label and SHALL wrap onto additional rows when they no longer fit, without shrinking a time chip so its digits stack. Field order under the schedule heading SHALL be start and end dates, then take times, then a labeled Type dropdown (every day, specific days, cyclic) that is only as wide as its selected label. Mode-specific extras SHALL appear only after that dropdown: weekday chips for specific days, and apply/pause day counts for cyclic (no cyclic preset list).
+The medication, period-settings, and symptom editors SHALL use an inset rounded panel over the current screen (not a full-bleed gray system form as the primary look), a header with a fully visible title (not truncated) and a dedicated close control, and grouped fields. The add-medication dialog title SHALL read New medication in English and Neues Medikament in German. Its create action SHALL read Save in English and Speichern in German. The edit title SHALL stay Edit medication (German: Medikament bearbeiten) and its save action SHALL read Save (German: Speichern), the same label as the create action. The medication dialog SHALL NOT repeat a second medication heading under the title. The medication color palette SHALL be a single row of swatches with no horizontal scrolling. Take times SHALL sit on a compact row with the Take at label and SHALL wrap onto additional rows when they no longer fit, without shrinking a time chip so its digits stack. Field order under the schedule heading SHALL be start and end dates, then take times, then a labeled Type dropdown (every day, specific days, cyclic) that is only as wide as its selected label. Mode-specific extras SHALL appear only after that dropdown: weekday chips for specific days, and apply/pause day counts for cyclic (no cyclic preset list). The medication dialog SHALL pin Cancel on the left and Save on the right in a footer that stays in place while the fields scroll. Cancel SHALL dismiss without saving. When editing, Delete SHALL sit between Cancel and Save and SHALL open the delete confirmation.
 
 #### Scenario: Add medication dialog
 - **WHEN** the user opens add medication
-- **THEN** the panel shows a close control, a fully visible title (English “New medication”, German “Neues Medikament”), name, form, dose, a Color-labeled single-row palette, start/end dates, compact take times, then a Type dropdown sized to its selected label, a create action that reads Save (German: Speichern), and it does not show a second medication heading under the title
+- **THEN** the panel shows a close control, a fully visible title (English “New medication”, German “Neues Medikament”), name, form, dose, a Color-labeled single-row palette, start/end dates, compact take times, then a Type dropdown sized to its selected label, Cancel on the left and a create action that reads Save (German: Speichern) on the right, and it does not show a second medication heading under the title
 
 #### Scenario: Dose-from date next to dose
 - **WHEN** the user types a dose on add medication
@@ -136,15 +136,15 @@ The medication, period-settings, and symptom editors SHALL use an inset rounded 
 
 #### Scenario: Date fields open a date chooser
 - **WHEN** the user activates a start or end date field in a medication or period editor
-- **THEN** a calendar date chooser is shown instead of a text keyboard
+- **THEN** a calendar date chooser is shown instead of a text keyboard, with Done in the active language, and Clear when that date may be empty
 
 #### Scenario: Time fields open a time chooser
 - **WHEN** the user activates a take-time field in the medication editor
-- **THEN** a time chooser is shown instead of a text keyboard
+- **THEN** a time chooser is shown instead of a text keyboard, with Done in the active language
 
 #### Scenario: Period and symptom dialogs
 - **WHEN** the user opens period settings or the symptom editor
-- **THEN** each is an inset closable panel (period: settings, an Add control, then history whose underlined range opens one card for a new or existing period; symptoms: the eleven 1–4 rows in Body / Mood / Intimacy groups with words that fit each name, then a Custom group (Eigene in German) whose underlined names and a control labeled New symptom (German: Neues Symptom) open one name card, no daily note, closed with the header close control)
+- **THEN** each is an inset closable panel (period: settings, an Add control, then history whose underlined range opens one card for a new or existing period; symptoms: the eleven 1–4 rows in Body / Mood / Intimacy groups with words that fit each name, then a Custom group (Eigene in German) whose underlined names and a control labeled New symptom (German: Neues Symptom) open one name card, no daily note, and Done, which dismisses it, as does the header close control)
 
 #### Scenario: Dialog actions are capsule buttons
 - **WHEN** the user sees add, save, or cancel in a medication, period, or symptom dialog

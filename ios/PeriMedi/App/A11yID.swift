@@ -86,6 +86,8 @@ enum A11yID {
     static let moreImport = "more.import"
     static let moreClear = "more.clear"
 
+    static let periodCycleDays = "period.cycleDays"
+    static let periodPeriodDays = "period.periodDays"
     static let periodAdd = "period.add"
     static let periodStart = "period.start"
     static let periodEnd = "period.end"

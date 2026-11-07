@@ -1,13 +1,13 @@
 # Trends (Verlauf)
 
-Third bottom tab: Cycle · Month · Trends · More. Own screen under `Features/Trends/`, not a card on Cycle. One point per logged cycle: Y is days scored, dot size is mean intensity 1–4. German tab label **Verlauf**. Spec id `symptom-trends`. Chart first; catalog lives in a Choose Symptoms sheet (`Show on chart` / `Im Diagramm zeigen`). Close is enough; there is no Done button.
+Third bottom tab: Cycle · Month · Trends · More. Own screen under `Features/Trends/`, not a card on Cycle. One point per logged cycle: Y is days scored, dot size is mean intensity 1–4. German tab label **Verlauf**. Spec id `symptom-trends`. Chart first; catalog lives in a Choose Symptoms sheet (`Show on chart` / `Im Diagramm zeigen`). The header close dismisses it. There is no Cancel and no Done. The selection stays as tapped.
 
 ## Sub-features
 
 - Empty store: title plus `need-cycles` (`trends.status` / `trends.empty`)
 - Logged cycles with no scores, on the first-session launch after one period and before any symptom: `no-scores`
 - Chart: days-scored axis, size key, stacked series, dots, dose ticks
-- Choose Symptoms sheet (`trends.change` → `sheet.trends`); close is enough
+- Choose Symptoms sheet (`trends.change` → `sheet.trends`); the header close dismisses it and there is no Cancel or Done
 
 ## How to get to it (user POV)
 
@@ -27,7 +27,7 @@ Bottom bar → Trends. Launch flag `-tabTrends` (same pattern as `-tabMonth` / `
 | Axis label | `trends.axis` | Chart only. Value `days-scored`. |
 | Size key | `trends.sizeKey` | Chart only. Bigger dot = stronger. |
 | Choose Symptoms | `trends.change` | Chart only, button at the bottom of the card (EN Choose Symptoms / DE Symptome wählen). Opens `sheet.trends`. Missing on empty. |
-| Sheet | `sheet.trends` | After `trends.change`. Title Show on chart / Im Diagramm zeigen. Close with `sheet.close`. |
+| Sheet | `sheet.trends` | After `trends.change`. Title Show on chart / Im Diagramm zeigen. Close with `sheet.close`. There is no Cancel and no Done. Closing does not undo a chip tap. |
 | Group title | `trends.group.{id}` | `A11yID.trendsGroup(_:)` → `trends.group.{id}`. Body / mood / urogenital inside the sheet. `trends.group.custom` appears when the user has a custom symptom. |
 | Series | `trends.series.{id}` | `A11yID.trendsSeries(_:)` → `trends.series.{id}`. On the chart: stacked legend of the three selected, value `on`, each name with its series-color dot. In the sheet, on is the filled language pill and off is the outlined language pill. The test proof stays the value `on` or `off`. The sheet does not paint a series color or a status dot. Off ids exist only in the sheet. Fixture defaults: `hot_flash`, `mood`, `sleep` on the legend; `anxiety` after opening the sheet, value `off`. Selecting `anxiety` turns it `on` and `sleep` `off`. |
 | Dot | `trends.dot.{id}.{cycleStart}` | `A11yID.trendsDot(_:_:)` → `trends.dot.{id}.{cycleStart}`. Fixture `hot_flash` on `2026-01-04`: value contains `count:8` and `mean:1`. On `2026-02-01`: `count:2` and `mean:4`. Sleep on `2026-01-04` does not exist (gap, not a zero). |
