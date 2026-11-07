@@ -11,7 +11,7 @@ struct PeriodSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dialogClose) private var dialogClose
 
-    private enum PeriodDraft: Equatable {
+    fileprivate enum PeriodDraft: Equatable {
         case create
         case edit(String)
         case confirmDelete(String)
@@ -31,6 +31,7 @@ struct PeriodSheet: View {
     }
 
     var body: some View {
+        ZStack(alignment: .bottom) {
         DialogChrome(title: app.t("period.title"), icon: "ActionPeriod", identifier: A11yID.sheetPeriod, onClose: close) {
             VStack(alignment: .leading, spacing: 14) {
                 Toggle(isOn: $tracksPeriods) {
@@ -111,10 +112,18 @@ struct PeriodSheet: View {
             )
             .dialogFooterInset()
         }
-        .overlay {
-            if draft != nil {
-                periodCard
-            }
+        if draft != nil {
+            PeriodEditorCard(
+                draft: $draft,
+                start: $start,
+                end: $end,
+                flow: $flow,
+                deleteName: deleteName,
+                onSave: saveDraft,
+                onDelete: deletePeriod
+            )
+            .periDialog(onClose: closeDraft)
+        }
         }
         .onAppear {
             tracksPeriods = store.settings.tracksPeriods
@@ -128,142 +137,6 @@ struct PeriodSheet: View {
             }
         }
         .onDisappear { persistSettings(tracks: tracksPeriods) }
-    }
-
-    private var periodCard: some View {
-        ZStack {
-            PeriColor.ink.opacity(0.28)
-            GeometryReader { geo in
-                ScrollView {
-                    cardSurface
-                        .frame(minHeight: geo.size.height, alignment: .bottom)
-                        .background {
-                            Color.clear
-                                .contentShape(Rectangle())
-                                .onTapGesture { closeDraft() }
-                        }
-                }
-                .scrollBounceBehavior(.basedOnSize)
-            }
-        }
-        .accessibilityAddTraits(.isModal)
-    }
-
-    private var cardSurface: some View {
-        Group {
-            if case .confirmDelete(let id) = draft {
-                periodDeletePrompt(id)
-            } else {
-                periodFields
-            }
-        }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PeriColor.cream)
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .stroke(PeriColor.blush100, lineWidth: 1)
-        )
-        .padding(.horizontal, 16)
-        .padding(.bottom, 12)
-    }
-
-    private var periodFields: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(draft == .create ? app.t("period.new") : app.t("period.edit"))
-                .font(.title3.weight(.semibold))
-                .foregroundStyle(PeriColor.ink)
-            PeriodDatePair(spacing: 10) {
-                VStack(alignment: .leading, spacing: 6) {
-                    FieldLabel(text: app.t("period.startDate"))
-                    SoftField {
-                        DateKeyPicker(key: $start, identifier: A11yID.periodStart, usesTextWidth: true)
-                    }
-                }
-                VStack(alignment: .leading, spacing: 6) {
-                    FieldLabel(text: app.t("period.endDate"))
-                    SoftField {
-                        DateKeyPicker(key: $end, allowEmpty: true, identifier: A11yID.periodEnd, usesTextWidth: true)
-                    }
-                    Text(app.t("period.endHint"))
-                        .font(.caption2)
-                        .foregroundStyle(PeriColor.inkMuted)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            FieldLabel(text: app.t("period.flow"))
-            SoftField {
-                Picker("", selection: $flow) {
-                    ForEach(FlowNote.allCases, id: \.self) { note in
-                        Text(app.t("flow.\(note.rawValue)")).tag(note)
-                    }
-                }
-                .labelsHidden()
-                .pickerStyle(.menu)
-            }
-            periodActions
-        }
-    }
-
-    @ViewBuilder
-    private var periodActions: some View {
-        let cancel = DialogAction(
-            id: "cancel",
-            title: app.t("common.cancel"),
-            accessibilityIdentifier: A11yID.confirmCancel,
-            action: closeDraft
-        )
-        let save = DialogAction(
-            id: "save",
-            title: app.t("common.save"),
-            accessibilityIdentifier: A11yID.periodSave,
-            action: saveDraft
-        )
-        if case .edit(let id) = draft {
-            DialogActions(
-                cancel: cancel,
-                destructive: DialogAction(
-                    id: "delete",
-                    title: app.t("common.delete"),
-                    accessibilityIdentifier: A11yID.periodDelete
-                ) {
-                    draft = .confirmDelete(id)
-                },
-                primary: save
-            )
-        } else {
-            DialogActions(cancel: cancel, primary: save)
-        }
-    }
-
-    private func periodDeletePrompt(_ id: String) -> some View {
-        let name = store.periods.first { $0.id == id }.map(rangeLabel) ?? id
-        return VStack(alignment: .leading, spacing: 12) {
-            Text(app.t("confirm.title"))
-                .font(.title3.weight(.semibold))
-                .foregroundStyle(PeriColor.ink)
-            Text(app.t("period.deleteNamed", ["name": name]))
-                .font(.subheadline)
-                .foregroundStyle(PeriColor.inkSoft)
-            DialogActions(
-                cancel: DialogAction(
-                    id: "cancel",
-                    title: app.t("common.cancel"),
-                    accessibilityIdentifier: A11yID.confirmCancel
-                ) {
-                    draft = .edit(id)
-                },
-                destructivePrimary: DialogAction(
-                    id: "delete",
-                    title: app.t("common.delete"),
-                    accessibilityIdentifier: A11yID.confirmDelete
-                ) {
-                    try? store.deletePeriod(id: id)
-                    closeDraft()
-                }
-            )
-        }
     }
 
     private func openCreate() {
@@ -280,11 +153,20 @@ struct PeriodSheet: View {
         draft = .edit(period.id)
     }
 
+    private var deleteName: String {
+        guard case .confirmDelete(let id) = draft else { return "" }
+        return store.periods.first { $0.id == id }.map(rangeLabel) ?? id
+    }
+
     private func closeDraft() {
         draft = nil
     }
 
-    private func saveDraft() {
+    private func deletePeriod(_ id: String) {
+        try? store.deletePeriod(id: id)
+    }
+
+    private func saveDraft() -> Bool {
         let existing = store.periods.first { period in
             if case .edit(let id) = draft { return period.id == id }
             return false
@@ -305,8 +187,10 @@ struct PeriodSheet: View {
                     notes: existing?.notes
                 )
             )
-            closeDraft()
-        } catch {}
+            return true
+        } catch {
+            return false
+        }
     }
 
     private func dayCountField(_ label: String, _ value: Binding<Int>, _ range: ClosedRange<Int>, id: String) -> some View {
@@ -397,6 +281,135 @@ struct PeriodSheet: View {
     private func nextPeriodFont(scale: CGFloat) -> Font {
         let base = UIFont.preferredFont(forTextStyle: .subheadline)
         return Font(UIFont(descriptor: base.fontDescriptor, size: base.pointSize * scale))
+    }
+}
+
+private struct PeriodEditorCard: View {
+    @EnvironmentObject private var app: AppModel
+    @Environment(\.dialogClose) private var dialogClose
+    @Binding var draft: PeriodSheet.PeriodDraft?
+    @Binding var start: String
+    @Binding var end: String
+    @Binding var flow: FlowNote
+    var deleteName: String
+    var onSave: () -> Bool
+    var onDelete: (String) -> Void
+
+    var body: some View {
+        Group {
+            if case .confirmDelete(let id) = draft {
+                deletePrompt(id)
+            } else {
+                fields
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(PeriColor.cream)
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(PeriColor.blush100, lineWidth: 1)
+        )
+        .padding(.horizontal, 16)
+        .padding(.bottom, 12)
+    }
+
+    private var fields: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(draft == .create ? app.t("period.new") : app.t("period.edit"))
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(PeriColor.ink)
+            PeriodDatePair(spacing: 10) {
+                VStack(alignment: .leading, spacing: 6) {
+                    FieldLabel(text: app.t("period.startDate"))
+                    SoftField {
+                        DateKeyPicker(key: $start, identifier: A11yID.periodStart, usesTextWidth: true)
+                    }
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    FieldLabel(text: app.t("period.endDate"))
+                    SoftField {
+                        DateKeyPicker(key: $end, allowEmpty: true, identifier: A11yID.periodEnd, usesTextWidth: true)
+                    }
+                    Text(app.t("period.endHint"))
+                        .font(.caption2)
+                        .foregroundStyle(PeriColor.inkMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            FieldLabel(text: app.t("period.flow"))
+            SoftField {
+                Picker("", selection: $flow) {
+                    ForEach(FlowNote.allCases, id: \.self) { note in
+                        Text(app.t("flow.\(note.rawValue)")).tag(note)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+            }
+            actions
+        }
+    }
+
+    @ViewBuilder
+    private var actions: some View {
+        let cancel = DialogAction(
+            id: "cancel",
+            title: app.t("common.cancel"),
+            accessibilityIdentifier: A11yID.confirmCancel,
+            action: dialogClose
+        )
+        let save = DialogAction(
+            id: "save",
+            title: app.t("common.save"),
+            accessibilityIdentifier: A11yID.periodSave
+        ) {
+            if onSave() { dialogClose() }
+        }
+        if case .edit(let id) = draft {
+            DialogActions(
+                cancel: cancel,
+                destructive: DialogAction(
+                    id: "delete",
+                    title: app.t("common.delete"),
+                    accessibilityIdentifier: A11yID.periodDelete
+                ) {
+                    draft = .confirmDelete(id)
+                },
+                primary: save
+            )
+        } else {
+            DialogActions(cancel: cancel, primary: save)
+        }
+    }
+
+    private func deletePrompt(_ id: String) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(app.t("confirm.title"))
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(PeriColor.ink)
+            Text(app.t("period.deleteNamed", ["name": deleteName]))
+                .font(.subheadline)
+                .foregroundStyle(PeriColor.inkSoft)
+            DialogActions(
+                cancel: DialogAction(
+                    id: "cancel",
+                    title: app.t("common.cancel"),
+                    accessibilityIdentifier: A11yID.confirmCancel
+                ) {
+                    draft = .edit(id)
+                },
+                destructivePrimary: DialogAction(
+                    id: "delete",
+                    title: app.t("common.delete"),
+                    accessibilityIdentifier: A11yID.confirmDelete
+                ) {
+                    onDelete(id)
+                    dialogClose()
+                }
+            )
+        }
     }
 }
 

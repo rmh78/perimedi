@@ -10,7 +10,7 @@ struct SymptomSheet: View {
 
     let dateKey: String
 
-    private enum NameDraft: Equatable {
+    fileprivate enum NameDraft: Equatable {
         case create
         case edit(CustomSymptomId)
         case confirmDelete(CustomSymptomId)
@@ -20,7 +20,6 @@ struct SymptomSheet: View {
     @State private var draft = ""
     @State private var nameError: SymptomEditError?
     @State private var nameDraft: NameDraft?
-    @FocusState private var nameFocused: Bool
     private let nameColumn: CGFloat = 108
 
     private var dayScores: [SymptomScore] {
@@ -28,6 +27,7 @@ struct SymptomSheet: View {
     }
 
     var body: some View {
+        ZStack(alignment: .bottom) {
         DialogChrome(title: app.t("symptom.title"), icon: "ActionSymptom", identifier: A11yID.sheetSymptom, onClose: closeSheet, content: {
             VStack(alignment: .leading, spacing: 0) {
                 VStack(alignment: .leading, spacing: 4) {
@@ -72,10 +72,16 @@ struct SymptomSheet: View {
             )
             .dialogFooterInset()
         })
-        .overlay {
-            if nameDraft != nil {
-                nameDialog
-            }
+        if nameDraft != nil {
+            SymptomNameCard(
+                nameDraft: $nameDraft,
+                draft: $draft,
+                nameError: nameError,
+                onCommit: commitDraft,
+                onDelete: deleteNamed
+            )
+            .periDialog(onClose: closeDraft)
+        }
         }
     }
 
@@ -100,129 +106,6 @@ struct SymptomSheet: View {
             }
         }
         .padding(.top, 12)
-    }
-
-    private var nameDialog: some View {
-        ZStack(alignment: .bottom) {
-            PeriColor.ink.opacity(0.28)
-                .onTapGesture { closeDraft() }
-            Group {
-                if case .confirmDelete(let id) = nameDraft {
-                    deletePrompt(id)
-                } else {
-                    editorFields
-                }
-            }
-            .padding(20)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(PeriColor.cream)
-            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .stroke(PeriColor.blush100, lineWidth: 1)
-            )
-            .padding(.horizontal, 16)
-            .padding(.bottom, 12)
-        }
-        .accessibilityAddTraits(.isModal)
-        .onAppear { nameFocused = nameDraft != nil }
-    }
-
-    private var editorFields: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(nameDraft == .create ? app.t("symptom.addPlaceholder") : app.t("symptom.edit"))
-                .font(.title3.weight(.semibold))
-                .foregroundStyle(PeriColor.ink)
-            TextField(app.t("symptom.addPlaceholder"), text: $draft)
-                .textFieldStyle(.roundedBorder)
-                .font(.footnote)
-                .focused($nameFocused)
-                .submitLabel(.done)
-                .accessibilityIdentifier(A11yID.symptomCustomAdd)
-                .background(alignment: .topLeading) {
-                    FocusFlag(id: A11yID.symptomCustomAdd, on: nameFocused)
-                }
-                .onSubmit(commitDraft)
-            if let nameError, let message = nameMessage(nameError) {
-                Text(message)
-                    .font(.caption2)
-                    .foregroundStyle(PeriColor.blush800)
-            }
-            nameActions
-        }
-    }
-
-    private func deletePrompt(_ id: CustomSymptomId) -> some View {
-        let name = store.symptomDirectory.customs.first { $0.id == id }?.name ?? draft
-        return VStack(alignment: .leading, spacing: 12) {
-            Text(app.t("confirm.title"))
-                .font(.title3.weight(.semibold))
-                .foregroundStyle(PeriColor.ink)
-            Text(app.t("symptom.deleteScores", ["name": name]))
-                .font(.subheadline)
-                .foregroundStyle(PeriColor.inkSoft)
-            DialogActions(
-                cancel: DialogAction(
-                    id: "cancel",
-                    title: app.t("common.cancel"),
-                    accessibilityIdentifier: A11yID.confirmCancel
-                ) {
-                    nameDraft = .edit(id)
-                    nameFocused = true
-                },
-                destructivePrimary: DialogAction(
-                    id: "delete",
-                    title: app.t("common.delete"),
-                    accessibilityIdentifier: A11yID.confirmDelete
-                ) {
-                    try? store.deleteCustomSymptom(id: id)
-                    severity[id.rawValue] = nil
-                    closeDraft()
-                }
-            )
-        }
-    }
-
-    @ViewBuilder
-    private var nameActions: some View {
-        let cancel = DialogAction(
-            id: "cancel",
-            title: app.t("common.cancel"),
-            accessibilityIdentifier: A11yID.confirmCancel,
-            action: closeDraft
-        )
-        switch nameDraft {
-        case .edit(let id):
-            DialogActions(
-                cancel: cancel,
-                destructive: DialogAction(
-                    id: "delete",
-                    title: app.t("common.delete"),
-                    accessibilityIdentifier: A11yID.symptomCustomDelete(id.rawValue)
-                ) {
-                    nameFocused = false
-                    nameDraft = .confirmDelete(id)
-                },
-                primary: DialogAction(
-                    id: "save",
-                    title: app.t("common.save"),
-                    accessibilityIdentifier: A11yID.symptomCustomSave(id.rawValue),
-                    action: commitDraft
-                )
-            )
-        case .create:
-            DialogActions(
-                cancel: cancel,
-                primary: DialogAction(
-                    id: "save",
-                    title: app.t("common.save"),
-                    accessibilityIdentifier: A11yID.symptomCustomCreate,
-                    action: commitDraft
-                )
-            )
-        case .confirmDelete, nil:
-            EmptyView()
-        }
     }
 
     private func closeSheet() {
@@ -324,19 +207,22 @@ struct SymptomSheet: View {
         nameDraft = mode
         draft = name
         nameError = nil
-        nameFocused = true
     }
 
     private func closeDraft() {
         nameDraft = nil
         draft = ""
         nameError = nil
-        nameFocused = false
     }
 
-    private func commitDraft() {
+    private func deleteNamed(_ id: CustomSymptomId) {
+        try? store.deleteCustomSymptom(id: id)
+        severity[id.rawValue] = nil
+    }
+
+    private func commitDraft() -> Bool {
         let trimmed = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
+        guard !trimmed.isEmpty else { return false }
         do {
             switch nameDraft {
             case .create:
@@ -344,20 +230,14 @@ struct SymptomSheet: View {
             case .edit(let id):
                 try store.renameCustomSymptom(id: id, name: draft)
             case .confirmDelete, nil:
-                return
+                return false
             }
-            closeDraft()
+            return true
         } catch let error as SymptomEditError {
             nameError = error
-        } catch {}
-    }
-
-    private func nameMessage(_ error: SymptomEditError) -> String? {
-        switch error {
-        case .duplicateName: return app.t("symptom.nameDuplicate")
-        case .nameTooLong: return app.t("symptom.nameTooLong")
-        case .tooMany: return app.t("symptom.tooMany")
-        case .blankName, .unknownId: return nil
+            return false
+        } catch {
+            return false
         }
     }
 
@@ -370,4 +250,146 @@ struct SymptomSheet: View {
         severity = next
     }
 
+}
+
+private struct SymptomNameCard: View {
+    @EnvironmentObject private var app: AppModel
+    @EnvironmentObject private var store: Store
+    @Environment(\.dialogClose) private var dialogClose
+    @Binding var nameDraft: SymptomSheet.NameDraft?
+    @Binding var draft: String
+    var nameError: SymptomEditError?
+    var onCommit: () -> Bool
+    var onDelete: (CustomSymptomId) -> Void
+    @FocusState private var nameFocused: Bool
+
+    var body: some View {
+        Group {
+            if case .confirmDelete(let id) = nameDraft {
+                deletePrompt(id)
+            } else {
+                fields
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(PeriColor.cream)
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(PeriColor.blush100, lineWidth: 1)
+        )
+        .padding(.horizontal, 16)
+        .padding(.bottom, 12)
+        .onAppear { nameFocused = true }
+    }
+
+    private var fields: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(nameDraft == .create ? app.t("symptom.addPlaceholder") : app.t("symptom.edit"))
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(PeriColor.ink)
+            TextField(app.t("symptom.addPlaceholder"), text: $draft)
+                .textFieldStyle(.roundedBorder)
+                .font(.footnote)
+                .focused($nameFocused)
+                .submitLabel(.done)
+                .accessibilityIdentifier(A11yID.symptomCustomAdd)
+                .background(alignment: .topLeading) {
+                    FocusFlag(id: A11yID.symptomCustomAdd, on: nameFocused)
+                }
+                .onSubmit {
+                    if onCommit() { dialogClose() }
+                }
+            if let nameError, let message = nameMessage(nameError) {
+                Text(message)
+                    .font(.caption2)
+                    .foregroundStyle(PeriColor.blush800)
+            }
+            actions
+        }
+    }
+
+    @ViewBuilder
+    private var actions: some View {
+        let cancel = DialogAction(
+            id: "cancel",
+            title: app.t("common.cancel"),
+            accessibilityIdentifier: A11yID.confirmCancel,
+            action: dialogClose
+        )
+        switch nameDraft {
+        case .edit(let id):
+            DialogActions(
+                cancel: cancel,
+                destructive: DialogAction(
+                    id: "delete",
+                    title: app.t("common.delete"),
+                    accessibilityIdentifier: A11yID.symptomCustomDelete(id.rawValue)
+                ) {
+                    nameFocused = false
+                    nameDraft = .confirmDelete(id)
+                },
+                primary: DialogAction(
+                    id: "save",
+                    title: app.t("common.save"),
+                    accessibilityIdentifier: A11yID.symptomCustomSave(id.rawValue)
+                ) {
+                    if onCommit() { dialogClose() }
+                }
+            )
+        case .create:
+            DialogActions(
+                cancel: cancel,
+                primary: DialogAction(
+                    id: "save",
+                    title: app.t("common.save"),
+                    accessibilityIdentifier: A11yID.symptomCustomCreate
+                ) {
+                    if onCommit() { dialogClose() }
+                }
+            )
+        case .confirmDelete, nil:
+            EmptyView()
+        }
+    }
+
+    private func deletePrompt(_ id: CustomSymptomId) -> some View {
+        let name = store.symptomDirectory.customs.first { $0.id == id }?.name ?? draft
+        return VStack(alignment: .leading, spacing: 12) {
+            Text(app.t("confirm.title"))
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(PeriColor.ink)
+            Text(app.t("symptom.deleteScores", ["name": name]))
+                .font(.subheadline)
+                .foregroundStyle(PeriColor.inkSoft)
+            DialogActions(
+                cancel: DialogAction(
+                    id: "cancel",
+                    title: app.t("common.cancel"),
+                    accessibilityIdentifier: A11yID.confirmCancel
+                ) {
+                    nameDraft = .edit(id)
+                    nameFocused = true
+                },
+                destructivePrimary: DialogAction(
+                    id: "delete",
+                    title: app.t("common.delete"),
+                    accessibilityIdentifier: A11yID.confirmDelete
+                ) {
+                    onDelete(id)
+                    dialogClose()
+                }
+            )
+        }
+    }
+
+    private func nameMessage(_ error: SymptomEditError) -> String? {
+        switch error {
+        case .duplicateName: return app.t("symptom.nameDuplicate")
+        case .nameTooLong: return app.t("symptom.nameTooLong")
+        case .tooMany: return app.t("symptom.tooMany")
+        case .blankName, .unknownId: return nil
+        }
+    }
 }

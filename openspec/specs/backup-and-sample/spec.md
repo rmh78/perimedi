@@ -65,7 +65,7 @@ The system SHALL provide a loadable sample dataset for a typical woman about 40 
 
 #### Scenario: Sample and clear use a confirm card
 - **WHEN** the user activates load sample or clear data
-- **THEN** an inset cream confirm card appears over a light blur of the app (not a system action sheet), with Cancel on the left and one confirm action on the right. Clear uses the destructive confirm. Load sample uses the primary confirm.
+- **THEN** an inset cream confirm card appears over a light veil of the app (not a system action sheet), with Cancel on the left and one confirm action on the right. Clear uses the destructive confirm. Load sample uses the primary confirm.
 
 ### Requirement: Clear data
 The system SHALL allow the user to clear local app data and restore default cycle settings.

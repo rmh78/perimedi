@@ -95,6 +95,12 @@ final class DialogFooterShotTests: PeriMediUITestCase {
         try writer.write("07-delete-period")
         robot.tap("confirm.cancel")
         robot.waitFor(id: "period.delete")
+        robot.app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12)).tap()
+        robot.waitGone(id: "period.save")
+        robot.waitFor(id: "sheet.period")
+        robot.waitFor(id: "period.add")
+        tapFirst(matching: "period.history.")
+        robot.waitFor(id: "period.save")
         robot.tap("confirm.cancel")
         robot.waitFor(id: "period.add")
         robot.closeSheet(id: "sheet.period")
@@ -110,17 +116,21 @@ final class DialogFooterShotTests: PeriMediUITestCase {
         robot.tap("symptom.custom.create")
         let saved = button(matching: "symptom.custom.name.")
         XCTAssertTrue(saved.waitForExistence(timeout: 4), "saved custom name")
-        robot.scrollTo(saved.identifier)
-        let opened = button(matching: "symptom.custom.name.")
-        opened.tap()
+        let nameId = saved.identifier
+        let raw = nameId.replacingOccurrences(of: "symptom.custom.name.", with: "")
+        robot.scrollTo(nameId)
+        robot.tap(nameId)
         robot.waitFor(id: "symptom.custom.add")
         try writer.write("10-symptom-name-edit")
-        let raw = opened.identifier.replacingOccurrences(of: "symptom.custom.name.", with: "")
         robot.tap("symptom.custom.delete.\(raw)")
         robot.waitFor(id: "confirm.delete")
         try writer.write("11-delete-symptom")
         robot.tap("confirm.cancel")
+        robot.waitFor(id: "symptom.custom.delete.\(raw)")
         robot.app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12)).tap()
+        robot.waitGone(id: "symptom.custom.add")
+        robot.waitFor(id: "sheet.symptom")
+        XCTAssertTrue(robot.app.buttons[nameId].waitForExistence(timeout: 4), "dim left the name")
         robot.closeSheet(id: "sheet.symptom")
 
         robot.tap("tab.trends")
@@ -226,6 +236,21 @@ final class DialogFooterShotTests: PeriMediUITestCase {
         robot.tap("period.add")
         robot.tap("period.save")
         robot.waitFor(id: "period.add")
+        let history = robot.app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", "period.history.")
+        ).firstMatch
+        XCTAssertTrue(history.waitForExistence(timeout: 4), "saved period")
+        let historyId = history.identifier
+        robot.tap(historyId)
+        robot.waitFor(id: "period.delete")
+        robot.tap("period.delete")
+        robot.waitFor(id: "confirm.delete")
+        robot.tap("confirm.cancel")
+        robot.waitFor(id: "period.delete")
+        robot.app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12)).tap()
+        robot.waitGone(id: "period.delete")
+        robot.waitFor(id: "sheet.period")
+        XCTAssertTrue(robot.app.buttons[historyId].waitForExistence(timeout: 4), "dim did not delete the period")
         robot.tap("sheet.close")
         robot.waitGone(id: "sheet.period")
 
@@ -239,6 +264,32 @@ final class DialogFooterShotTests: PeriMediUITestCase {
         robot.tap("cycle.action.symptom")
         robot.waitFor(id: "sheet.symptom")
         XCTAssertTrue(robot.app.buttons["symptom.score.hot_flash.2"].isSelected)
+        robot.scrollTo("symptom.custom.create")
+        robot.tap("symptom.custom.create")
+        robot.waitFor(id: "symptom.custom.add")
+        robot.clearAndType("symptom.custom.add", "Fog", dismiss: false)
+        let nameField = robot.app.textFields["symptom.custom.add"]
+        let keyboard = robot.app.keyboards.firstMatch
+        if keyboard.waitForExistence(timeout: 2) {
+            XCTAssertLessThan(nameField.frame.maxY, keyboard.frame.minY + 8, "name sits above the keyboard")
+        }
+        robot.tap("symptom.custom.create")
+        let named = robot.app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", "symptom.custom.name.")
+        ).firstMatch
+        XCTAssertTrue(named.waitForExistence(timeout: 4), "saved custom name")
+        let nameId = named.identifier
+        let raw = nameId.replacingOccurrences(of: "symptom.custom.name.", with: "")
+        robot.tap(nameId)
+        robot.waitFor(id: "symptom.custom.add")
+        robot.tap("symptom.custom.delete.\(raw)")
+        robot.waitFor(id: "confirm.delete")
+        robot.tap("confirm.cancel")
+        robot.waitFor(id: "symptom.custom.delete.\(raw)")
+        robot.app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12)).tap()
+        robot.waitGone(id: "symptom.custom.add")
+        robot.waitFor(id: "sheet.symptom")
+        XCTAssertTrue(robot.app.buttons[nameId].waitForExistence(timeout: 4), "dim left the name")
         robot.tap("sheet.close")
         robot.waitGone(id: "sheet.symptom")
 
@@ -288,9 +339,56 @@ final class DialogFooterShotTests: PeriMediUITestCase {
             robot.app.swipeUp()
         }
         XCTAssertTrue(toggle.waitForExistence(timeout: 3), "med.remind switch")
-        let raw = toggle.value
-        let on = (raw as? String) == "1" || (raw as? NSNumber)?.intValue == 1
-        XCTAssertTrue(on, "med.remind \(String(describing: raw))")
+        let remindValue = toggle.value
+        let on = (remindValue as? String) == "1" || (remindValue as? NSNumber)?.intValue == 1
+        XCTAssertTrue(on, "med.remind \(String(describing: remindValue))")
+    }
+
+    func testNestedDimKeepsParent() {
+        robot.launch(arguments: ["-en", "-clear", "-uiTesting", "-today=\(today)", "-loadSample"])
+        robot.tap("cycle.action.period")
+        robot.waitFor(id: "sheet.period")
+        robot.scrollTo("period.add")
+        tapFirst(matching: "period.history.")
+        robot.waitFor(id: "period.delete")
+        robot.tap("period.delete")
+        robot.waitFor(id: "confirm.delete")
+        robot.tap("confirm.cancel")
+        robot.waitFor(id: "period.delete")
+        tapAboveSheet()
+        robot.waitGone(id: "period.delete")
+        robot.waitFor(id: "sheet.period")
+        XCTAssertTrue(button(matching: "period.history.").waitForExistence(timeout: 4), "dim did not delete the period")
+        tapAboveSheet()
+        robot.waitGone(id: "sheet.period")
+
+        robot.tap("cycle.action.symptom")
+        robot.waitFor(id: "sheet.symptom")
+        robot.scrollTo("symptom.custom.create")
+        robot.tap("symptom.custom.create")
+        robot.waitFor(id: "symptom.custom.add")
+        robot.clearAndType("symptom.custom.add", "Fog", dismiss: false)
+        robot.tap("symptom.custom.create")
+        let named = button(matching: "symptom.custom.name.")
+        XCTAssertTrue(named.waitForExistence(timeout: 4), "saved custom name")
+        let nameId = named.identifier
+        let symptomRaw = nameId.replacingOccurrences(of: "symptom.custom.name.", with: "")
+        robot.tap(nameId)
+        robot.waitFor(id: "symptom.custom.add")
+        robot.tap("symptom.custom.delete.\(symptomRaw)")
+        robot.waitFor(id: "confirm.delete")
+        robot.tap("confirm.cancel")
+        robot.waitFor(id: "symptom.custom.delete.\(symptomRaw)")
+        tapAboveSheet()
+        robot.waitGone(id: "symptom.custom.add")
+        robot.waitFor(id: "sheet.symptom")
+        XCTAssertTrue(robot.app.buttons[nameId].waitForExistence(timeout: 4), "dim left the name")
+        robot.app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.09)).tap()
+        robot.waitGone(id: "sheet.symptom")
+    }
+
+    private func tapAboveSheet() {
+        robot.app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12)).tap()
     }
 
     private func captureCorrected(locale: String, tag: String, root: URL) throws {

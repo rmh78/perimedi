@@ -34,6 +34,7 @@ Cycle → cycle settings (`cycle.action.period`).
 
 ## Gotchas
 
+- The period card is its own layer on the settings sheet. A tap on the dim, including the page above the sheet, drops the card and leaves settings. It does not save. Cancel on the editor does the same. On the delete question, Cancel returns to the editor. A dim tap on that question drops the card and does not delete. `testNestedDimKeepsParent` opens that question, taps Cancel, then taps the page above the sheet. The history row is still there and the settings sheet is still open. A second tap there, with no card up, closes the settings sheet.
 - No menstrual phase labels.
 - Period UI on Cycle is label + background only.
 - `period.add` is easy to miss without a swipe. Don't treat "missing" as "not implemented" until you scroll.
