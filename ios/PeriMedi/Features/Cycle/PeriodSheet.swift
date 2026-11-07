@@ -48,8 +48,8 @@ struct PeriodSheet: View {
                     nextPeriodLine
 
                     HStack(alignment: .top, spacing: 10) {
-                        dayCountField(app.t("period.avgCycle"), $cycleLen, 15...45)
-                        dayCountField(app.t("period.avgPeriod"), $periodLen, 1...15)
+                        dayCountField(app.t("period.avgCycle"), $cycleLen, 15...45, id: A11yID.periodCycleDays)
+                        dayCountField(app.t("period.avgPeriod"), $periodLen, 1...15, id: A11yID.periodPeriodDays)
                     }
 
                     if draft == nil {
@@ -107,7 +107,6 @@ struct PeriodSheet: View {
             }
         } footer: {
             DialogActions(
-                cancel: DialogAction(id: "cancel", title: app.t("common.cancel"), action: close),
                 primary: DialogAction(id: "done", title: app.t("common.done"), action: close)
             )
             .dialogFooterInset()
@@ -310,7 +309,7 @@ struct PeriodSheet: View {
         } catch {}
     }
 
-    private func dayCountField(_ label: String, _ value: Binding<Int>, _ range: ClosedRange<Int>) -> some View {
+    private func dayCountField(_ label: String, _ value: Binding<Int>, _ range: ClosedRange<Int>, id: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             FieldLabel(text: label)
             SoftField {
@@ -321,6 +320,7 @@ struct PeriodSheet: View {
                 }
                 .labelsHidden()
                 .pickerStyle(.menu)
+                .accessibilityIdentifier(id)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

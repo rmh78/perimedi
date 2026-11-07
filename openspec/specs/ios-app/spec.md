@@ -136,15 +136,15 @@ The medication, period-settings, and symptom editors SHALL use an inset rounded 
 
 #### Scenario: Date fields open a date chooser
 - **WHEN** the user activates a start or end date field in a medication or period editor
-- **THEN** a calendar date chooser is shown instead of a text keyboard, with Cancel on the left and Done on the right in the active language, and Clear between them when that date may be empty
+- **THEN** a calendar date chooser is shown instead of a text keyboard, with Done in the active language, and Clear when that date may be empty
 
 #### Scenario: Time fields open a time chooser
 - **WHEN** the user activates a take-time field in the medication editor
-- **THEN** a time chooser is shown instead of a text keyboard, with Cancel on the left and Done on the right in the active language
+- **THEN** a time chooser is shown instead of a text keyboard, with Done in the active language
 
 #### Scenario: Period and symptom dialogs
 - **WHEN** the user opens period settings or the symptom editor
-- **THEN** each is an inset closable panel (period: settings, an Add control, then history whose underlined range opens one card for a new or existing period; symptoms: the eleven 1–4 rows in Body / Mood / Intimacy groups with words that fit each name, then a Custom group (Eigene in German) whose underlined names and a control labeled New symptom (German: Neues Symptom) open one name card, no daily note, and Cancel on the left and Done on the right, both of which dismiss it, as does the header close control)
+- **THEN** each is an inset closable panel (period: settings, an Add control, then history whose underlined range opens one card for a new or existing period; symptoms: the eleven 1–4 rows in Body / Mood / Intimacy groups with words that fit each name, then a Custom group (Eigene in German) whose underlined names and a control labeled New symptom (German: Neues Symptom) open one name card, no daily note, and Done, which dismisses it, as does the header close control)
 
 #### Scenario: Dialog actions are capsule buttons
 - **WHEN** the user sees add, save, or cancel in a medication, period, or symptom dialog

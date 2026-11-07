@@ -6,7 +6,13 @@ cd "$ROOT"
 source "$ROOT/ios/env.sh"
 PHASE="${1:-before}"
 DIR="${DIALOG_SHOTS_DIR:-/tmp/dialog-buttons/$PHASE}"
-PASSES="${DIALOG_SHOTS_PASSES:-en-light,de-light,en-dark}"
+if [[ "$PHASE" == "corrected" ]]; then
+  PASSES="${DIALOG_SHOTS_PASSES:-en-light,de-light}"
+  TEST="testWriteCorrectedDialogFooters"
+else
+  PASSES="${DIALOG_SHOTS_PASSES:-en-light,de-light,en-dark}"
+  TEST="testWriteDialogFooters"
+fi
 UDID="$(xcrun simctl list devices | sed -n 's/.*iPhone 17e (\([^)]*\)).*/\1/p' | head -n 1)"
 if [[ -z "$UDID" ]]; then
   echo "dialog-footer-shots: iPhone 17e not installed" >&2
@@ -38,7 +44,7 @@ xcodebuild test \
   -scheme PeriMedi \
   -destination "platform=iOS Simulator,id=${UDID}" \
   -derivedDataPath ios/DerivedData \
-  -only-testing:PeriMediUITests/DialogFooterShotTests/testWriteDialogFooters \
+  -only-testing:PeriMediUITests/DialogFooterShotTests/${TEST} \
   -collect-test-diagnostics never \
   CODE_SIGNING_ALLOWED=NO \
   TEST_RUNNER_DIALOG_SHOTS=1 \
@@ -47,11 +53,11 @@ xcodebuild test \
   2>&1 | tee "$LOG"
 status=${PIPESTATUS[0]}
 set -e
-if grep -F "testWriteDialogFooters" "$LOG" | grep -q "skipped"; then
+if grep -F "$TEST" "$LOG" | grep -q "skipped"; then
   echo "dialog-footer-shots: skipped; DIALOG_SHOTS did not reach the test" >&2
   exit 1
 fi
-if ! grep -F "testWriteDialogFooters" "$LOG" | grep -q "passed"; then
+if ! grep -F "$TEST" "$LOG" | grep -q "passed"; then
   echo "dialog-footer-shots: did not pass" >&2
   exit 1
 fi

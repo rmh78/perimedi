@@ -221,9 +221,6 @@ struct DateKeyPicker: View {
 
     @ViewBuilder
     private var dateActions: some View {
-        let cancel = DialogAction(id: "cancel", title: app.t("common.cancel")) {
-            showPicker = false
-        }
         let done = DialogAction(
             id: "done",
             title: app.t("common.done"),
@@ -233,7 +230,6 @@ struct DateKeyPicker: View {
         }
         if allowEmpty {
             DialogActions(
-                cancel: cancel,
                 secondary: DialogAction(id: "clear", title: app.t("common.clear")) {
                     key = ""
                     showPicker = false
@@ -241,7 +237,7 @@ struct DateKeyPicker: View {
                 primary: done
             )
         } else {
-            DialogActions(cancel: cancel, primary: done)
+            DialogActions(primary: done)
         }
     }
 }
@@ -283,9 +279,6 @@ struct TimeOfDayPicker: View {
                         time = DateKeys.formatTimeOfDay(new)
                     }
                 DialogActions(
-                    cancel: DialogAction(id: "cancel", title: app.t("common.cancel")) {
-                        showPicker = false
-                    },
                     primary: DialogAction(
                         id: "done",
                         title: app.t("common.done"),
@@ -559,10 +552,10 @@ struct ReminderCard: View {
                     .font(.subheadline)
                     .foregroundStyle(PeriColor.inkSoft)
                 DialogActions(
-                    cancel: DialogAction(id: "cancel", title: app.t("common.cancel")) {
+                    secondary: DialogAction(id: "close", title: app.t("common.close")) {
                         app.pendingReminder = nil
                     },
-                    secondary: DialogAction(
+                    middle: DialogAction(
                         id: "snooze",
                         title: app.t("reminder.snooze"),
                         accessibilityIdentifier: A11yID.reminderSnooze

@@ -52,12 +52,6 @@ struct TrendsPickerSheet: View {
                     }
                 }
             }
-        } footer: {
-            DialogActions(
-                cancel: DialogAction(id: "cancel", title: app.t("common.cancel"), action: close),
-                primary: DialogAction(id: "done", title: app.t("common.done"), action: close)
-            )
-            .dialogFooterInset()
         }
     }
 

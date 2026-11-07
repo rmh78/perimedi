@@ -76,7 +76,7 @@ The system SHALL draw at most three symptom series. The default series SHALL be 
 
 #### Scenario: Close is enough
 - **WHEN** the Choose Symptoms sheet is open
-- **THEN** the top-left close control, Cancel, and Done each dismiss it, and the symptoms selected for the chart stay as they were when that control was used
+- **THEN** the top-left close control dismisses it, the sheet has no Cancel and no Done, and the symptoms selected for the chart stay as they were when that control was used
 
 #### Scenario: Turning off every selected symptom keeps the chart
 - **WHEN** the user turns off every selected symptom in Choose Symptoms

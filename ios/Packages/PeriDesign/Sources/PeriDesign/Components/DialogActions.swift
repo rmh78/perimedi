@@ -47,6 +47,22 @@ public struct DialogActions: View {
         slots = [Slot(cancel, role: .secondary), Slot(destructivePrimary, role: .destructive)]
     }
 
+    public init(primary: DialogAction) {
+        slots = [Slot(primary, role: .primary)]
+    }
+
+    public init(secondary: DialogAction, primary: DialogAction) {
+        slots = [Slot(secondary, role: .secondary), Slot(primary, role: .primary)]
+    }
+
+    public init(secondary: DialogAction, middle: DialogAction, primary: DialogAction) {
+        slots = [
+            Slot(secondary, role: .secondary),
+            Slot(middle, role: .secondary),
+            Slot(primary, role: .primary),
+        ]
+    }
+
     @ScaledMetric(relativeTo: .subheadline) private var subheadlineSize: CGFloat = 15
     @Environment(\.legibilityWeight) private var legibilityWeight
     @Environment(\.locale) private var locale

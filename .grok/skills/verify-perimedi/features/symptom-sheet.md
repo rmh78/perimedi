@@ -5,7 +5,7 @@ Structured scores (1–4). Untouched catalog ids stay missing (not stored as 0).
 ## Sub-features
 
 - Per-symptom score buttons (tap again clears; persist on each tap)
-- Close, Cancel, and Done dismiss the log. None of them revert a score. Each score tap already saved. There is no Save for the day’s scores.
+- Close and Done dismiss the log. Neither reverts a score. Each score tap already saved. There is no Cancel and no Save for the day’s scores.
 - Create pill `symptom.custom.create` reads New symptom (German: Neues Symptom) and opens one dialog titled New symptom. The name field in that dialog is `symptom.custom.add`. The commit button on that id reads Save. Custom and catalog names share one 108pt column. A long custom name wraps in that column at full size. Their 1–4 numbers share one column
 - Underlined custom name `symptom.custom.name.{id}` opens the same dialog titled Edit symptom. Save is `symptom.custom.save.{id}`. Delete is `symptom.custom.delete.{id}`
 - `symptom.body` / `symptom.save` exist on the `A11yID` enum only — **not attached**

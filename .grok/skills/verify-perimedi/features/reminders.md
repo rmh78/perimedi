@@ -4,7 +4,7 @@ In-app banner for a pending slot, plus the More master switch.
 
 ## Sub-features
 
-- Banner with title, medication name, dose/time body, Cancel / Snooze / Taken. Cancel dismisses the banner. Snooze is not destructive.
+- Banner with title, medication name, dose/time body, Close / Snooze / Taken. Close dismisses the banner. It does not record the dose, snooze, or turn reminders off. Snooze is not destructive.
 - Master toggle and sound on More
 - Extra reminders Off / 2× / 3× on More (`more.reminderFollowUps`). Default Off. Title is Remind me again. The helper says up to 2 or 3 more reminders, 10 minutes apart, until the dose is marked taken. The row stays visible. While the master switch is off it is dimmed and disabled. The user flow does not drive these pills. A system banner is not the proof. Off leaves one planned reminder plus manual Snooze. 2 or 3 plants that many follow-ups. Taken, Snooze, or a slot that is no longer pending stops them. The chain does not continue after Snooze fires and does not pass the chosen count. Denied permission adds no other alert. `-remindIn` does not plant the chain.
 - Per-medication remind toggle on the medication sheet
@@ -19,7 +19,8 @@ Turn reminders on in More. Enable remind on a medication. When a slot is due, a 
 |---|---|---|
 | Banner | `reminder.banner` | The user flow does not open the banner. `-uiTesting` without `-remindIn` clears pending notifications. |
 | Taken | `reminder.taken` | Primary action on the right. The user flow does not wait for it. The Cycle lane tap is the in-app Taken. |
-| Snooze | `reminder.snooze` | Middle of the banner row, between Cancel and Taken. The user flow does not tap it. |
+| Close | the word Close (German: Schließen) | Left of the banner row. `testImmediateActionsKeepWhatTheyShow` taps it. The banner goes away, the lane stays Not taken, and `med.remind` stays on. |
+| Snooze | `reminder.snooze` | Middle of the banner row, between Close and Taken. The user flow does not tap it. |
 | More master | `more.reminders` | See [more.md](more.md). Catalog waits for it. The user flow does not. |
 | Extra reminders | `more.reminderFollowUps` | Pills Off / 2× / 3× on the Reminders card. See [more.md](more.md). The user flow does not tap them. |
 | Per-med remind | `med.remind` | On [medication-sheet.md](medication-sheet.md). |

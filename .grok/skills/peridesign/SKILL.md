@@ -16,9 +16,9 @@ Tokens live in `ios/Packages/PeriDesign/Sources/PeriDesign/Tokens/`.
 
 Use `PeriColor`, `PeriSpace`, `PeriRadius`, `PeriFont`. Never a hex string, `Color(red:)`, a literal font size, or a magic padding number.
 
-Prefer an existing PeriDesign component before ad hoc UI: `PeriButtonStyle(role:)`, `DialogActions`, `.periDialog`, pill, badge, empty state, section header, form row. Those types are not in the package yet. Do not build them in the app. A new primitive goes in the package with a preview.
+Prefer an existing PeriDesign component before ad hoc UI: `PeriButtonStyle(role:)`, `DialogActions`, `.periDialog`, pill, badge, empty state, section header, form row. Use the package types. Do not rebuild them in the app. A new primitive goes in the package with a preview.
 
-Dialog footer order: Cancel on the left, optional destructive in the middle, one primary on the right. Every dialog has Cancel.
+Dialog footer order when the dialog discards a draft or cancels a workflow: Cancel on the left, optional destructive or secondary in the middle, one primary on the right. A row may be one primary. An immediate update uses Done, or Close when dismiss does not discard. Do not add Cancel there.
 
 Run `python3 ios/scripts/check-design-system.py --base origin/main`. Never add a baseline line. If you remove a violation in a file you touch, lower or delete that baseline row.
 

@@ -68,7 +68,6 @@ struct SymptomSheet: View {
             .onAppear(perform: loadDay)
         }, footer: {
             DialogActions(
-                cancel: DialogAction(id: "cancel", title: app.t("common.cancel"), action: closeSheet),
                 primary: DialogAction(id: "done", title: app.t("common.done"), action: closeSheet)
             )
             .dialogFooterInset()
