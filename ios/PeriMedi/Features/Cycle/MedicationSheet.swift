@@ -153,38 +153,10 @@ struct MedicationSheet: View {
                 if let error {
                     Text(error).font(.caption).foregroundStyle(PeriColor.blush700)
                 }
-
-                HStack(spacing: 10) {
-                    PillButton(
-                        title: app.t("common.save"),
-                        kind: .primary,
-                        identifier: A11yID.medSave,
-                        action: save
-                    )
-                    if !isNew, let medication {
-                        PillButton(
-                            title: app.t("common.delete"),
-                            kind: .destructive,
-                            identifier: A11yID.medDelete
-                        ) {
-                            app.askConfirm(
-                                message: app.t("med.deleteConfirm", ["name": medication.name]),
-                                confirmLabel: app.t("common.delete"),
-                                destructive: true
-                            ) {
-                                do {
-                                    try store.deleteMedication(id: medication.id)
-                                    dialogClose()
-                                    dismiss()
-                                } catch {
-                                    self.error = app.t("persist.saveFailed")
-                                }
-                            }
-                        }
-                    }
-                    Spacer()
-                }
             }
+        } footer: {
+            medicationActions
+                .dialogFooterInset()
         }
         .onAppear(perform: hydrate)
         .onChange(of: mode) { _, new in
@@ -400,6 +372,47 @@ struct MedicationSheet: View {
             cycleRule: .none,
             therapyCycle: therapy
         )
+    }
+
+    @ViewBuilder
+    private var medicationActions: some View {
+        let cancel = DialogAction(id: "cancel", title: app.t("common.cancel")) {
+            dialogClose()
+            dismiss()
+        }
+        let saveAction = DialogAction(
+            id: "save",
+            title: app.t("common.save"),
+            accessibilityIdentifier: A11yID.medSave,
+            action: save
+        )
+        if !isNew, let medication {
+            DialogActions(
+                cancel: cancel,
+                destructive: DialogAction(
+                    id: "delete",
+                    title: app.t("common.delete"),
+                    accessibilityIdentifier: A11yID.medDelete
+                ) {
+                    app.askConfirm(
+                        message: app.t("med.deleteConfirm", ["name": medication.name]),
+                        confirmLabel: app.t("common.delete"),
+                        destructive: true
+                    ) {
+                        do {
+                            try store.deleteMedication(id: medication.id)
+                            dialogClose()
+                            dismiss()
+                        } catch {
+                            self.error = app.t("persist.saveFailed")
+                        }
+                    }
+                },
+                primary: saveAction
+            )
+        } else {
+            DialogActions(cancel: cancel, primary: saveAction)
+        }
     }
 
     private func save() {

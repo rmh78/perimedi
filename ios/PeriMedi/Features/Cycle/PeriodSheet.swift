@@ -105,6 +105,12 @@ struct PeriodSheet: View {
                         .foregroundStyle(PeriColor.inkSoft)
                 }
             }
+        } footer: {
+            DialogActions(
+                cancel: DialogAction(id: "cancel", title: app.t("common.cancel"), action: close),
+                primary: DialogAction(id: "done", title: app.t("common.done"), action: close)
+            )
+            .dialogFooterInset()
         }
         .overlay {
             if draft != nil {
@@ -197,42 +203,39 @@ struct PeriodSheet: View {
                 .labelsHidden()
                 .pickerStyle(.menu)
             }
-            EqualWidthPillRow(items: periodActions)
+            periodActions
         }
     }
 
-    private var periodActions: [EqualWidthPillRow.Item] {
-        var items = [
-            EqualWidthPillRow.Item(
-                id: "cancel",
-                title: app.t("common.cancel"),
-                kind: .secondary,
-                identifier: A11yID.confirmCancel,
-                action: closeDraft
-            )
-        ]
+    @ViewBuilder
+    private var periodActions: some View {
+        let cancel = DialogAction(
+            id: "cancel",
+            title: app.t("common.cancel"),
+            accessibilityIdentifier: A11yID.confirmCancel,
+            action: closeDraft
+        )
+        let save = DialogAction(
+            id: "save",
+            title: app.t("common.save"),
+            accessibilityIdentifier: A11yID.periodSave,
+            action: saveDraft
+        )
         if case .edit(let id) = draft {
-            items.append(
-                EqualWidthPillRow.Item(
+            DialogActions(
+                cancel: cancel,
+                destructive: DialogAction(
                     id: "delete",
                     title: app.t("common.delete"),
-                    kind: .destructive,
-                    identifier: A11yID.periodDelete
+                    accessibilityIdentifier: A11yID.periodDelete
                 ) {
                     draft = .confirmDelete(id)
-                }
+                },
+                primary: save
             )
+        } else {
+            DialogActions(cancel: cancel, primary: save)
         }
-        items.append(
-            EqualWidthPillRow.Item(
-                id: "save",
-                title: app.t("common.save"),
-                kind: .primary,
-                identifier: A11yID.periodSave,
-                action: saveDraft
-            )
-        )
-        return items
     }
 
     private func periodDeletePrompt(_ id: String) -> some View {
@@ -244,20 +247,23 @@ struct PeriodSheet: View {
             Text(app.t("period.deleteNamed", ["name": name]))
                 .font(.subheadline)
                 .foregroundStyle(PeriColor.inkSoft)
-            HStack(spacing: 8) {
-                PillButton(title: app.t("common.cancel"), kind: .secondary, identifier: A11yID.confirmCancel) {
+            DialogActions(
+                cancel: DialogAction(
+                    id: "cancel",
+                    title: app.t("common.cancel"),
+                    accessibilityIdentifier: A11yID.confirmCancel
+                ) {
                     draft = .edit(id)
-                }
-                Spacer(minLength: 0)
-                PillButton(
+                },
+                destructivePrimary: DialogAction(
+                    id: "delete",
                     title: app.t("common.delete"),
-                    kind: .destructive,
-                    identifier: A11yID.confirmDelete
+                    accessibilityIdentifier: A11yID.confirmDelete
                 ) {
                     try? store.deletePeriod(id: id)
                     closeDraft()
                 }
-            }
+            )
         }
     }
 

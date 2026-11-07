@@ -5,7 +5,7 @@ Structured scores (1–4). Untouched catalog ids stay missing (not stored as 0).
 ## Sub-features
 
 - Per-symptom score buttons (tap again clears; persist on each tap)
-- Close (does not write; each score tap already saved)
+- Close, Cancel, and Done dismiss the log. None of them revert a score. Each score tap already saved. There is no Save for the day’s scores.
 - Create pill `symptom.custom.create` reads New symptom (German: Neues Symptom) and opens one dialog titled New symptom. The name field in that dialog is `symptom.custom.add`. The commit button on that id reads Save. Custom and catalog names share one 108pt column. A long custom name wraps in that column at full size. Their 1–4 numbers share one column
 - Underlined custom name `symptom.custom.name.{id}` opens the same dialog titled Edit symptom. Save is `symptom.custom.save.{id}`. Delete is `symptom.custom.delete.{id}`
 - `symptom.body` / `symptom.save` exist on the `A11yID` enum only — **not attached**
@@ -25,7 +25,7 @@ Cycle → + Symptom (`cycle.action.symptom`).
 | Custom name field | `symptom.custom.add` | In the dialog on top of the sheet, for a new name and for a rename. |
 | Custom name | `symptom.custom.name.{id}` | Underlined name on the row. The test taps it to open the same dialog, then types Fog. |
 | Rename save | `symptom.custom.save.{id}` | Primary pill in that dialog. The dialog title is Edit symptom. The chip then contains Fog. |
-| Delete | `symptom.custom.delete.{id}` | Delete sits on the edit card's button row, between Cancel and Save. That row matches the period card (equal-width pills). The labels share one type size. If one must shrink, they all shrink together. The row grows with the text size. A label never drops below half size. When one would, every label on the row wraps to two lines at that shared half size. The break is a space between words, or a hyphen at a real hyphenation point. VoiceOver reads the whole word. The add card is Cancel and Save only, with no Delete. German Abbrechen, Löschen, and Speichern use that same size. The user flow does not open a custom symptom and does not tap `symptom.custom.delete.{id}`. Catalog types a long name and does not delete. |
+| Delete | `symptom.custom.delete.{id}` | Delete sits on the edit card's button row, between Cancel and Save. That row matches the period card (equal-width pills). The labels share one type size. If one must shrink, they all shrink together. The row grows with the text size. A label never drops below half size. When one would, every label on the row wraps to two lines at that shared half size. The break is a space between words, or a hyphen at a real hyphenation point. VoiceOver reads the whole word. The add card is Cancel and Save only, with no Delete. German Abbrechen, Löschen, and Speichern use that same size. The delete question uses the same row, Cancel on the left and Delete on the right (`confirm.delete`). The user flow does not open a custom symptom and does not tap `symptom.custom.delete.{id}`. Catalog types a long name and does not delete. |
 | Body / note | `symptom.body` | On the `A11yID` enum only; the sheet has no note field (`persist` always passes `note: nil`). Do not drive it. |
 | Save | `symptom.save` | On the `A11yID` enum only. First-use uses `sheet.close`. Do not drive it. |
 

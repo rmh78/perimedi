@@ -58,17 +58,20 @@ struct DoctorVisitRangeSheet: View {
                 }
             }
         } footer: {
-            HStack {
-                Spacer()
-                PillButton(
+            DialogActions(
+                cancel: DialogAction(
+                    id: "cancel",
+                    title: app.t("common.cancel"),
+                    action: { app.closeDialog() }
+                ),
+                primary: DialogAction(
+                    id: "continue",
                     title: app.t("visit.range.continue"),
-                    kind: .primary,
-                    identifier: A11yID.visitRangeContinue,
+                    accessibilityIdentifier: A11yID.visitRangeContinue,
                     action: continueToPreview
                 )
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            )
+            .dialogFooterInset()
         }
         .onAppear {
             app.seedVisitPicker(lastStart: cycles.last?.start, cycleCount: cycles.count)

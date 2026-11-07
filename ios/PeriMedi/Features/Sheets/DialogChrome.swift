@@ -157,6 +157,7 @@ struct DateKeyPicker: View {
     var identifier: String? = nil
     var usesTextWidth = false
 
+    @EnvironmentObject private var app: AppModel
     @Environment(\.locale) private var locale
     @State private var date = Date()
     @State private var showPicker = false
@@ -191,23 +192,9 @@ struct DateKeyPicker: View {
                     .onChange(of: date) { _, new in
                         key = DateKeys.toDateKey(new)
                     }
-                HStack {
-                    if allowEmpty {
-                        Button("Clear") {
-                            key = ""
-                            showPicker = false
-                        }
-                        .foregroundStyle(PeriColor.inkMuted)
-                    }
-                    Spacer()
-                    Button("Done") { showPicker = false }
-                        .fontWeight(.semibold)
-                        .foregroundStyle(PeriColor.blush700)
-                        .accessibilityIdentifier(A11yID.dateDone)
-                }
-                .padding(.horizontal, 4)
+                dateActions
             }
-            .padding()
+            .padding(PeriSpace.pad)
             .environment(\.locale, locale)
             .environment(\.calendar, DateKeys.calendar)
             .presentationDetents([.medium])
@@ -231,6 +218,32 @@ struct DateKeyPicker: View {
             date = parsed
         }
     }
+
+    @ViewBuilder
+    private var dateActions: some View {
+        let cancel = DialogAction(id: "cancel", title: app.t("common.cancel")) {
+            showPicker = false
+        }
+        let done = DialogAction(
+            id: "done",
+            title: app.t("common.done"),
+            accessibilityIdentifier: A11yID.dateDone
+        ) {
+            showPicker = false
+        }
+        if allowEmpty {
+            DialogActions(
+                cancel: cancel,
+                secondary: DialogAction(id: "clear", title: app.t("common.clear")) {
+                    key = ""
+                    showPicker = false
+                },
+                primary: done
+            )
+        } else {
+            DialogActions(cancel: cancel, primary: done)
+        }
+    }
 }
 
 struct TimeOfDayPicker: View {
@@ -238,6 +251,7 @@ struct TimeOfDayPicker: View {
     var identifier: String? = nil
     var compact = false
 
+    @EnvironmentObject private var app: AppModel
     @Environment(\.locale) private var locale
     @State private var date = Date()
     @State private var showPicker = false
@@ -268,16 +282,20 @@ struct TimeOfDayPicker: View {
                     .onChange(of: date) { _, new in
                         time = DateKeys.formatTimeOfDay(new)
                     }
-                HStack {
-                    Spacer()
-                    Button("Done") { showPicker = false }
-                        .fontWeight(.semibold)
-                        .foregroundStyle(PeriColor.blush700)
-                        .accessibilityIdentifier(A11yID.timeDone)
-                }
-                .padding(.horizontal, 4)
+                DialogActions(
+                    cancel: DialogAction(id: "cancel", title: app.t("common.cancel")) {
+                        showPicker = false
+                    },
+                    primary: DialogAction(
+                        id: "done",
+                        title: app.t("common.done"),
+                        accessibilityIdentifier: A11yID.timeDone
+                    ) {
+                        showPicker = false
+                    }
+                )
             }
-            .padding()
+            .padding(PeriSpace.pad)
             .environment(\.locale, locale)
             .environment(\.calendar, DateKeys.calendar)
             .presentationDetents([.height(280)])
@@ -483,21 +501,7 @@ struct ConfirmCard: View {
                 Text(prompt.message)
                     .font(.subheadline)
                     .foregroundStyle(PeriColor.inkSoft)
-                HStack(spacing: 8) {
-                    Spacer()
-                    PillButton(title: app.t("common.cancel"), kind: .secondary, identifier: A11yID.confirmCancel) {
-                        app.dismissConfirm()
-                    }
-                    PillButton(
-                        title: prompt.confirmLabel,
-                        kind: prompt.destructive ? .destructive : .primary,
-                        identifier: prompt.destructive ? A11yID.confirmDelete : A11yID.confirmAction
-                    ) {
-                        let action = prompt.action
-                        app.dismissConfirm()
-                        action()
-                    }
-                }
+                confirmActions
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -509,6 +513,31 @@ struct ConfirmCard: View {
             )
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
+        }
+    }
+
+    @ViewBuilder
+    private var confirmActions: some View {
+        let cancel = DialogAction(
+            id: "cancel",
+            title: app.t("common.cancel"),
+            accessibilityIdentifier: A11yID.confirmCancel
+        ) {
+            app.dismissConfirm()
+        }
+        let confirm = DialogAction(
+            id: "confirm",
+            title: prompt.confirmLabel,
+            accessibilityIdentifier: prompt.destructive ? A11yID.confirmDelete : A11yID.confirmAction
+        ) {
+            let action = prompt.action
+            app.dismissConfirm()
+            action()
+        }
+        if prompt.destructive {
+            DialogActions(cancel: cancel, destructivePrimary: confirm)
+        } else {
+            DialogActions(cancel: cancel, primary: confirm)
         }
     }
 }
@@ -529,23 +558,25 @@ struct ReminderCard: View {
                 Text(app.t("reminder.body", ["dose": reminder.doseLabel, "time": reminder.timeOfDay]))
                     .font(.subheadline)
                     .foregroundStyle(PeriColor.inkSoft)
-                HStack(spacing: 8) {
-                    Spacer()
-                    PillButton(
+                DialogActions(
+                    cancel: DialogAction(id: "cancel", title: app.t("common.cancel")) {
+                        app.pendingReminder = nil
+                    },
+                    secondary: DialogAction(
+                        id: "snooze",
                         title: app.t("reminder.snooze"),
-                        kind: .secondary,
-                        identifier: A11yID.reminderSnooze
+                        accessibilityIdentifier: A11yID.reminderSnooze
                     ) {
                         DoseReminderCenter.shared.snooze(reminder: reminder)
-                    }
-                    PillButton(
+                    },
+                    primary: DialogAction(
+                        id: "taken",
                         title: app.t("reminder.taken"),
-                        kind: .primary,
-                        identifier: A11yID.reminderTaken
+                        accessibilityIdentifier: A11yID.reminderTaken
                     ) {
                         DoseReminderCenter.shared.take(reminder: reminder)
                     }
-                }
+                )
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -574,5 +605,10 @@ private struct DialogPresentation: ViewModifier {
 extension View {
     func periDialog() -> some View {
         modifier(DialogPresentation())
+    }
+
+    func dialogFooterInset() -> some View {
+        padding(.horizontal, PeriSpace.pad)
+            .padding(.vertical, PeriSpace.row)
     }
 }

@@ -7,7 +7,7 @@ Give the user an on-device PDF she can share from More before a gynecologist vis
 ## Requirements
 
 ### Requirement: Share visit PDF from More
-The system SHALL provide one action on the More screen that opens a cycle picker, then an in-app preview of the generated PDF. Share SHALL be a control on that preview that opens the platform share sheet (for example Mail, Files, or Print). The user SHALL stay in the app until they choose Share. The system SHALL NOT add a new primary destination for this action. The system SHALL NOT place this action on Cycle. The PDF SHALL be produced without a PeriMedi account or server.
+The system SHALL provide one action on the More screen that opens a cycle picker, then an in-app preview of the generated PDF. The cycle picker SHALL show Cancel on the left and Continue on the right. Cancel SHALL dismiss the picker and show More. Continue SHALL open the preview. Share SHALL be a control on that preview that opens the platform share sheet (for example Mail, Files, or Print). The user SHALL stay in the app until they choose Share. The system SHALL NOT add a new primary destination for this action. The system SHALL NOT place this action on Cycle. The PDF SHALL be produced without a PeriMedi account or server.
 
 #### Scenario: Preview from More
 - **WHEN** the user activates the visit PDF action on More, chooses a range, and continues
@@ -37,7 +37,7 @@ The system SHALL let the user choose which completed cycle (and optionally the c
 - **THEN** there is no control whose only purpose is to generate the visit PDF
 
 ### Requirement: Back returns the same cycle choice
-The visit preview SHALL offer Back. Activating Back SHALL return the cycle picker with the same choice Continue just used. Close and a tap on the dimmed backdrop SHALL dismiss both the preview and the picker and show More. When no completed cycle exists, the picker SHALL show the empty-cycle sentence. This SHALL NOT add a new tab.
+The visit preview SHALL offer Back on the left and Share on the right of one footer row. Activating Back SHALL return the cycle picker with the same choice Continue just used. Close and a tap on the dimmed backdrop SHALL dismiss both the preview and the picker and show More. When no completed cycle exists, the picker SHALL show the empty-cycle sentence. This SHALL NOT add a new tab.
 
 #### Scenario: Back keeps the chosen cycle
 - **WHEN** the user continues from a chosen completed cycle and then activates Back on the preview

@@ -9,7 +9,7 @@ Create or edit a medication and its schedule. Presented over Cycle.
 - Remind toggle
 - Optional Dose-from date next to the dose field when default dose or primary schedule actually changed
 - Schedule mode: every day / specific days / cyclic
-- Save / delete (delete confirms). A new medication is titled New medication (German: Neues Medikament). Edit keeps Edit medication (German: Medikament bearbeiten). Both actions say Save (German: Speichern).
+- Save / delete (delete confirms). A new medication is titled New medication (German: Neues Medikament). Edit keeps Edit medication (German: Medikament bearbeiten). Both actions say Save (German: Speichern). Cancel sits on the left of the pinned footer and Save on the right. Edit places Delete between them. The footer stays put while the fields scroll.
 
 ## How to get to it (user POV)
 
@@ -32,8 +32,8 @@ Cycle → + Med (`cycle.action.med`) for a new one, or a lane's edit control for
 | Dose from (effective date) | `med.since` | Sits next to the dose field, not after the schedule. Present when dose or schedule differs from the stored med (including a new med with a dose). `AppRobot.addMedication` saves by `med.save` and does not wait for this field. Catalog still waits for it. |
 | Time chooser done | `time.done` | Same chrome as `date.done`, for take-at times. |
 | Remind | `med.remind` | Toggle on the sheet. |
-| Save | `med.save` | Sheet dismisses. A `cycle.lane.{slug}` appears. |
-| Delete | `med.delete` | Then `confirm.delete` / `confirm.cancel`. |
+| Save | `med.save` | Pinned footer, right side. Sheet dismisses. A `cycle.lane.{slug}` appears. |
+| Delete | `med.delete` | Pinned footer, between Cancel and Save, on edit only. Then `confirm.delete` / `confirm.cancel`. |
 
 `AppRobot.addMedication(name:dose:form:cyclic:start:)` is the packaged path. It leaves the type on Every day. It opens the menu only for a cyclic medication. Form pick still uses the visible label (`Cream`). The user flow does not pick a form. Pill is the default.
 

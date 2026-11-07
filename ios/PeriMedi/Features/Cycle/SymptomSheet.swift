@@ -28,10 +28,7 @@ struct SymptomSheet: View {
     }
 
     var body: some View {
-        DialogChrome(title: app.t("symptom.title"), icon: "ActionSymptom", identifier: A11yID.sheetSymptom, onClose: {
-            dialogClose()
-            dismiss()
-        }, content: {
+        DialogChrome(title: app.t("symptom.title"), icon: "ActionSymptom", identifier: A11yID.sheetSymptom, onClose: closeSheet, content: {
             VStack(alignment: .leading, spacing: 0) {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 4) {
@@ -69,6 +66,12 @@ struct SymptomSheet: View {
             }
             .padding(.bottom, 28)
             .onAppear(perform: loadDay)
+        }, footer: {
+            DialogActions(
+                cancel: DialogAction(id: "cancel", title: app.t("common.cancel"), action: closeSheet),
+                primary: DialogAction(id: "done", title: app.t("common.done"), action: closeSheet)
+            )
+            .dialogFooterInset()
         })
         .overlay {
             if nameDraft != nil {
@@ -146,7 +149,7 @@ struct SymptomSheet: View {
                     .font(.caption2)
                     .foregroundStyle(PeriColor.blush800)
             }
-            EqualWidthPillRow(items: nameActions)
+            nameActions
         }
     }
 
@@ -159,70 +162,73 @@ struct SymptomSheet: View {
             Text(app.t("symptom.deleteScores", ["name": name]))
                 .font(.subheadline)
                 .foregroundStyle(PeriColor.inkSoft)
-            HStack(spacing: 8) {
-                PillButton(title: app.t("common.cancel"), kind: .secondary, identifier: A11yID.confirmCancel) {
+            DialogActions(
+                cancel: DialogAction(
+                    id: "cancel",
+                    title: app.t("common.cancel"),
+                    accessibilityIdentifier: A11yID.confirmCancel
+                ) {
                     nameDraft = .edit(id)
                     nameFocused = true
-                }
-                Spacer(minLength: 0)
-                PillButton(
+                },
+                destructivePrimary: DialogAction(
+                    id: "delete",
                     title: app.t("common.delete"),
-                    kind: .destructive,
-                    identifier: A11yID.confirmDelete
+                    accessibilityIdentifier: A11yID.confirmDelete
                 ) {
                     try? store.deleteCustomSymptom(id: id)
                     severity[id.rawValue] = nil
                     closeDraft()
                 }
-            }
+            )
         }
     }
 
-    private var nameActions: [EqualWidthPillRow.Item] {
-        var items = [
-            EqualWidthPillRow.Item(
-                id: "cancel",
-                title: app.t("common.cancel"),
-                kind: .secondary,
-                action: closeDraft
-            )
-        ]
+    @ViewBuilder
+    private var nameActions: some View {
+        let cancel = DialogAction(
+            id: "cancel",
+            title: app.t("common.cancel"),
+            accessibilityIdentifier: A11yID.confirmCancel,
+            action: closeDraft
+        )
         switch nameDraft {
         case .edit(let id):
-            items.append(
-                EqualWidthPillRow.Item(
+            DialogActions(
+                cancel: cancel,
+                destructive: DialogAction(
                     id: "delete",
                     title: app.t("common.delete"),
-                    kind: .destructive,
-                    identifier: A11yID.symptomCustomDelete(id.rawValue)
+                    accessibilityIdentifier: A11yID.symptomCustomDelete(id.rawValue)
                 ) {
                     nameFocused = false
                     nameDraft = .confirmDelete(id)
-                }
-            )
-            items.append(
-                EqualWidthPillRow.Item(
+                },
+                primary: DialogAction(
                     id: "save",
                     title: app.t("common.save"),
-                    kind: .primary,
-                    identifier: A11yID.symptomCustomSave(id.rawValue),
+                    accessibilityIdentifier: A11yID.symptomCustomSave(id.rawValue),
                     action: commitDraft
                 )
             )
         case .create:
-            items.append(
-                EqualWidthPillRow.Item(
+            DialogActions(
+                cancel: cancel,
+                primary: DialogAction(
                     id: "save",
                     title: app.t("common.save"),
-                    kind: .primary,
-                    identifier: A11yID.symptomCustomCreate,
+                    accessibilityIdentifier: A11yID.symptomCustomCreate,
                     action: commitDraft
                 )
             )
         case .confirmDelete, nil:
-            break
+            EmptyView()
         }
-        return items
+    }
+
+    private func closeSheet() {
+        dialogClose()
+        dismiss()
     }
 
     private func customRow(_ symptom: CustomSymptom) -> some View {
