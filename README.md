@@ -38,7 +38,7 @@ xcodebuild -project ios/PeriMedi.xcodeproj -scheme PeriMedi \
 
 Open `ios/PeriMedi.xcodeproj` in Xcode and Run on an iPhone Simulator (prefer a narrow device such as **iPhone 17e**).
 
-Data stays on device. iCloud (same Apple ID) is the sync path when available. Device-switch notes: [`ios/docs/icloud-device-switch.md`](ios/docs/icloud-device-switch.md).
+Data stays on device. iCloud (same Apple ID) is the sync path when available. Device-switch notes: [`ios/internal/icloud-device-switch.md`](ios/internal/icloud-device-switch.md).
 
 ## Specs (OpenSpec)
 

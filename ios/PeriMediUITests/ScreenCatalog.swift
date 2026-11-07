@@ -6,7 +6,7 @@ enum ScreenCatalog {
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
-            .appendingPathComponent("docs/screens")
+            .appendingPathComponent("internal/screens")
     }
 
     static var expectedNames: [String] {

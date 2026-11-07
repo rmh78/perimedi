@@ -58,6 +58,6 @@ PR-wide equivalent: `.grok/skills/verify-perimedi/scripts/control-perimedi verif
 - [Backup / sample](./backup.md) — catalog waits for `more.sample` after the visit preview and does not tap it
 - [First-use journey](./journeys.md) — empty app through tracking and Month
 
-Canonical ID source: `ios/PeriMedi/App/A11yID.swift`. Tests: `ios/PeriMediUITests/`. Catalog PNGs: `ios/docs/screens/`.
+Canonical ID source: `ios/PeriMedi/App/A11yID.swift`. Tests: `ios/PeriMediUITests/`. Catalog PNGs: `ios/internal/screens/`.
 
 `python3 ios/scripts/check-features.py` fails when a surface with distinctive IDs is never driven. `tab.*` does not count as coverage.

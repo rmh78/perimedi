@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-BASELINE_REL = "ios/docs/design-baseline.txt"
+BASELINE_REL = "ios/internal/design-baseline.txt"
 PBXPROJ_REL = "ios/PeriMedi.xcodeproj/project.pbxproj"
 
 KINDS = frozenset({"hex", "color-init", "font-literal"})

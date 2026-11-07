@@ -66,18 +66,13 @@ def missing_script_names(runner_text: str, agents_text: str) -> list[str]:
     return problems
 
 
-_ATTACHMENT_HOSTS = (
-    "github.com/user-attachments",
-    "user-images.githubusercontent.com",
-)
-
-
-def attachment_links(text: str) -> list[str]:
+def docs_folder_problems(paths: list[str]) -> list[str]:
     problems: list[str] = []
-    for host in _ATTACHMENT_HOSTS:
-        if host in text:
-            problems.append(
-                f"Link host {host} 404s for reviewers. "
-                "Commit the PNG under ios/docs/screens/ and link that path."
-            )
+    for raw in paths:
+        parts = tuple(part for part in raw.split("/") if part not in ("", "."))
+        if "docs" not in parts[:-1]:
+            continue
+        if len(parts) >= 2 and parts[0] == "docs" and parts[1] == "app-store":
+            continue
+        problems.append(f"{raw} sits in a docs folder outside docs/app-store.")
     return problems

@@ -27,7 +27,7 @@ struct ScreenCatalogWriter {
         try write("more-sample-xxxl-en")
 
         let expected = ScreenCatalog.expectedNames
-        XCTAssertFalse(expected.isEmpty, "ios/docs/screens/expected.txt")
+        XCTAssertFalse(expected.isEmpty, "ios/internal/screens/expected.txt")
         for name in expected {
             let url = ScreenCatalog.directory.appendingPathComponent(name)
             XCTAssertTrue(
