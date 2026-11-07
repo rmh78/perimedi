@@ -21,7 +21,7 @@ struct DoctorVisitRangeSheet: View {
         DialogChrome(
             title: app.t("visit.range.sheet"),
             identifier: A11yID.visitRange,
-            onClose: { app.closeDialog() }
+            onClose: { dialogClose() }
         ) {
             VStack(alignment: .leading, spacing: 12) {
                 if cycles.isEmpty {
@@ -62,7 +62,7 @@ struct DoctorVisitRangeSheet: View {
                 cancel: DialogAction(
                     id: "cancel",
                     title: app.t("common.cancel"),
-                    action: { app.closeDialog() }
+                    action: { dialogClose() }
                 ),
                 primary: DialogAction(
                     id: "continue",

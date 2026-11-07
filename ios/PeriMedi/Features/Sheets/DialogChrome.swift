@@ -3,30 +3,10 @@ import UIKit
 import PeriMediDomain
 import PeriDesign
 
-private struct DialogCloseKey: EnvironmentKey {
-    static let defaultValue: () -> Void = {}
-}
-
-private struct DialogMaxHeightKey: EnvironmentKey {
-    static let defaultValue: CGFloat = 640
-}
-
 private struct ContentHeightKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = max(value, nextValue())
-    }
-}
-
-extension EnvironmentValues {
-    var dialogClose: () -> Void {
-        get { self[DialogCloseKey.self] }
-        set { self[DialogCloseKey.self] = newValue }
-    }
-
-    var dialogMaxHeight: CGFloat {
-        get { self[DialogMaxHeightKey.self] }
-        set { self[DialogMaxHeightKey.self] = newValue }
     }
 }
 
@@ -398,115 +378,31 @@ struct SectionLabel: View {
     }
 }
 
-func dialogPresentation() -> some ViewModifier {
-    DialogPresentation()
-}
-
-struct DialogBackdrop<Content: View>: View {
-    var onClose: () -> Void
-    @ViewBuilder var content: () -> Content
-
-    @State private var shown = false
-    @State private var keyboardFrame: CGRect = .zero
-
-    var body: some View {
-        GeometryReader { geo in
-            let overlap = keyboardOverlap(in: geo)
-            ZStack(alignment: .bottom) {
-                ZStack {
-                    PeriColor.cream.opacity(shown ? 0.22 : 0)
-                    PeriColor.ink.opacity(shown ? 0.28 : 0)
-                }
-                .ignoresSafeArea()
-                .onTapGesture(perform: requestClose)
-                content()
-                    .environment(\.dialogClose, requestClose)
-                    .environment(\.dialogMaxHeight, max(180, geo.size.height - overlap) * 0.92)
-                    .padding(.bottom, overlap)
-                    .offset(y: shown ? 0 : geo.size.height)
-            }
-        }
-        .ignoresSafeArea()
-        .accessibilityAddTraits(.isModal)
-        .onAppear {
-            if UIView.areAnimationsEnabled {
-                withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) {
-                    shown = true
-                }
-            } else {
-                shown = true
-            }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)) { note in
-            syncKeyboard(note)
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { note in
-            setKeyboardFrame(.zero, from: note)
-        }
-    }
-
-    private func keyboardOverlap(in geo: GeometryProxy) -> CGFloat {
-        guard !keyboardFrame.isEmpty else { return 0 }
-        return max(0, geo.frame(in: .global).maxY - keyboardFrame.minY)
-    }
-
-    private func syncKeyboard(_ note: Notification) {
-        guard let frame = note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
-        setKeyboardFrame(frame, from: note)
-    }
-
-    private func setKeyboardFrame(_ frame: CGRect, from note: Notification) {
-        let duration = (note.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double) ?? 0.25
-        if UIView.areAnimationsEnabled {
-            withAnimation(.easeOut(duration: duration)) {
-                keyboardFrame = frame
-            }
-        } else {
-            keyboardFrame = frame
-        }
-    }
-
-    private func requestClose() {
-        if UIView.areAnimationsEnabled {
-            withAnimation(.spring(response: 0.36, dampingFraction: 0.92)) {
-                shown = false
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                onClose()
-            }
-        } else {
-            shown = false
-            onClose()
-        }
-    }
-}
-
 struct ConfirmCard: View {
     @EnvironmentObject private var app: AppModel
+    @Environment(\.dialogClose) private var dialogClose
     var prompt: ConfirmPrompt
 
     var body: some View {
-        DialogBackdrop(onClose: { app.dismissConfirm() }) {
-            VStack(alignment: .leading, spacing: 12) {
-                Text(app.t("confirm.title"))
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(PeriColor.ink)
-                Text(prompt.message)
-                    .font(.subheadline)
-                    .foregroundStyle(PeriColor.inkSoft)
-                confirmActions
-            }
-            .padding(20)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(PeriColor.cream)
-            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .stroke(PeriColor.blush100, lineWidth: 1)
-            )
-            .padding(.horizontal, 16)
-            .padding(.bottom, 16)
+        VStack(alignment: .leading, spacing: 12) {
+            Text(app.t("confirm.title"))
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(PeriColor.ink)
+            Text(prompt.message)
+                .font(.subheadline)
+                .foregroundStyle(PeriColor.inkSoft)
+            confirmActions
         }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(PeriColor.cream)
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(PeriColor.blush100, lineWidth: 1)
+        )
+        .padding(.horizontal, 16)
+        .padding(.bottom, 16)
     }
 
     @ViewBuilder
@@ -516,7 +412,7 @@ struct ConfirmCard: View {
             title: app.t("common.cancel"),
             accessibilityIdentifier: A11yID.confirmCancel
         ) {
-            app.dismissConfirm()
+            dialogClose()
         }
         let confirm = DialogAction(
             id: "confirm",
@@ -537,40 +433,40 @@ struct ConfirmCard: View {
 
 struct ReminderCard: View {
     @EnvironmentObject private var app: AppModel
+    @Environment(\.dialogClose) private var dialogClose
     var reminder: PendingReminder
 
     var body: some View {
-        DialogBackdrop(onClose: { app.pendingReminder = nil }) {
-            VStack(alignment: .leading, spacing: 12) {
-                Text(app.t("reminder.title"))
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(PeriColor.ink)
-                Text(reminder.medicationName)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(PeriColor.ink)
-                Text(app.t("reminder.body", ["dose": reminder.doseLabel, "time": reminder.timeOfDay]))
-                    .font(.subheadline)
-                    .foregroundStyle(PeriColor.inkSoft)
-                DialogActions(
-                    secondary: DialogAction(id: "close", title: app.t("common.close")) {
-                        app.pendingReminder = nil
-                    },
-                    middle: DialogAction(
-                        id: "snooze",
-                        title: app.t("reminder.snooze"),
-                        accessibilityIdentifier: A11yID.reminderSnooze
-                    ) {
-                        DoseReminderCenter.shared.snooze(reminder: reminder)
-                    },
-                    primary: DialogAction(
-                        id: "taken",
-                        title: app.t("reminder.taken"),
-                        accessibilityIdentifier: A11yID.reminderTaken
-                    ) {
-                        DoseReminderCenter.shared.take(reminder: reminder)
-                    }
-                )
-            }
+        VStack(alignment: .leading, spacing: 12) {
+            Text(app.t("reminder.title"))
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(PeriColor.ink)
+            Text(reminder.medicationName)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(PeriColor.ink)
+            Text(app.t("reminder.body", ["dose": reminder.doseLabel, "time": reminder.timeOfDay]))
+                .font(.subheadline)
+                .foregroundStyle(PeriColor.inkSoft)
+            DialogActions(
+                secondary: DialogAction(id: "close", title: app.t("common.close")) {
+                    dialogClose()
+                },
+                middle: DialogAction(
+                    id: "snooze",
+                    title: app.t("reminder.snooze"),
+                    accessibilityIdentifier: A11yID.reminderSnooze
+                ) {
+                    DoseReminderCenter.shared.snooze(reminder: reminder)
+                },
+                primary: DialogAction(
+                    id: "taken",
+                    title: app.t("reminder.taken"),
+                    accessibilityIdentifier: A11yID.reminderTaken
+                ) {
+                    DoseReminderCenter.shared.take(reminder: reminder)
+                }
+            )
+        }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(PeriColor.cream)
@@ -583,23 +479,10 @@ struct ReminderCard: View {
             .padding(.bottom, 16)
             .accessibilityElement(children: .contain)
             .accessibilityIdentifier(A11yID.reminderBanner)
-        }
-    }
-}
-
-private struct DialogPresentation: ViewModifier {
-    func body(content: Content) -> some View {
-        content
-            .presentationBackground(.ultraThinMaterial)
-            .presentationDragIndicator(.hidden)
     }
 }
 
 extension View {
-    func periDialog() -> some View {
-        modifier(DialogPresentation())
-    }
-
     func dialogFooterInset() -> some View {
         padding(.horizontal, PeriSpace.pad)
             .padding(.vertical, PeriSpace.row)

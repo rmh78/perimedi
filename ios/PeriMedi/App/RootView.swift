@@ -37,7 +37,7 @@ struct RootView: View {
         .overlay {
             if app.medSheet != nil || app.showPeriod || app.showSymptom || app.showTrendsPicker
                 || app.visit != nil {
-                DialogBackdrop(onClose: { app.closeDialog() }) {
+                Group {
                     if let state = app.medSheet {
                         MedicationSheet(isNew: state.isNew, medication: state.medication)
                     } else if app.showPeriod {
@@ -57,16 +57,19 @@ struct RootView: View {
                         }
                     }
                 }
+                .periDialog(onClose: { app.closeDialog() })
             }
         }
         .overlay {
             if let prompt = app.confirm {
                 ConfirmCard(prompt: prompt)
+                    .periDialog(onClose: { app.dismissConfirm() })
             }
         }
         .overlay {
             if let reminder = app.pendingReminder {
                 ReminderCard(reminder: reminder)
+                    .periDialog(onClose: { app.pendingReminder = nil })
             }
         }
         .environment(\.locale, locale.language.locale)

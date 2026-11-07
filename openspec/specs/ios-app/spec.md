@@ -156,7 +156,7 @@ The medication, period-settings, and symptom editors SHALL use an inset rounded 
 
 #### Scenario: Dialog backdrop
 - **WHEN** a medication, period, or symptom dialog is open
-- **THEN** the screen behind the panel is a light transparent blur of the app (the Cycle screen remains faintly recognizable), the panel is only as tall as its content (up to a maximum), and there is no solid gray rounded sheet behind it
+- **THEN** the screen behind the panel is dimmed by a light veil so the Cycle screen remains faintly recognizable, the panel is only as tall as its content (up to a maximum), and there is no solid gray rounded sheet behind it
 
 ### Requirement: Empty-to-tracking journey
 The iOS app SHALL support a first-use empty-to-tracking journey: start empty, log a recent period, add mixed medications, mark a dose taken, look back through the week and return to today, add a symptom, and confirm Month agrees. Instrumented UI-element verification from a cleared store SHALL be the proof that a user can perform those steps.

@@ -5,6 +5,7 @@ import PeriDesign
 
 struct DoctorVisitPreviewSheet: View {
     @EnvironmentObject private var app: AppModel
+    @Environment(\.dialogClose) private var dialogClose
     let url: URL
     @State private var showShare = false
 
@@ -12,7 +13,7 @@ struct DoctorVisitPreviewSheet: View {
         DialogChrome(
             title: app.t("more.visitTitle"),
             identifier: A11yID.visitPdfPreview,
-            onClose: { app.closeDialog() }
+            onClose: { dialogClose() }
         ) {
             PDFKitView(url: url)
                 .frame(minHeight: 420, maxHeight: 520)
