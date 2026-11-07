@@ -40,6 +40,9 @@ Cycle → + Med (`cycle.action.med`) for a new one, or a lane's edit control for
 ## Gotchas
 
 - Schedule modes are exclusive: every day, specific weekdays, or cyclic (apply N / pause M). Saved without menstrual-alignment UI (`cycleRule: none` in the editor).
+- A closed apply-days or pause-days menu shows ink, not system blue.
+- Each color swatch keeps its color. The chosen swatch has a dark ring. Every other swatch has a visible blush edge.
+- A chosen weekday chip is reported as selected. The label stays the weekday name.
 - Sheet body scrolls. Rows below the fold are not `isHittable`; `AppRobot` taps by coordinate after dismissing the keyboard.
 - Name slug for the lane is computed from the **name** (`Estrogen` → `cycle.lane.estrogen`).
 - Domain owns schedule expansion (`ios/Sources/PeriMediDomain`). Do not reimplement cycle math in the sheet.

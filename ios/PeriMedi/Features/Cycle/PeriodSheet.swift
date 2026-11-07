@@ -204,6 +204,7 @@ struct PeriodSheet: View {
                 }
                 .labelsHidden()
                 .pickerStyle(.menu)
+                .tint(PeriColor.ink)
                 .accessibilityIdentifier(id)
             }
         }
@@ -347,6 +348,7 @@ private struct PeriodEditorCard: View {
                 }
                 .labelsHidden()
                 .pickerStyle(.menu)
+                .tint(PeriColor.ink)
             }
             actions
         }

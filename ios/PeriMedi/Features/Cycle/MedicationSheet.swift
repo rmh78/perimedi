@@ -192,7 +192,7 @@ struct MedicationSheet: View {
                         .frame(width: size, height: size)
                         .overlay(
                             Circle().stroke(
-                                selected ? PeriColor.ink : Color.white.opacity(0.7),
+                                selected ? PeriColor.ink : PeriColor.blush200,
                                 lineWidth: selected ? 2 : 1
                             )
                         )
@@ -265,6 +265,7 @@ struct MedicationSheet: View {
                 .frame(maxWidth: .infinity, minHeight: 32)
                 .background(Capsule().fill(on ? PeriColor.blush600 : PeriColor.blush50))
                 .buttonStyle(.plain)
+                .accessibilityAddTraits(on ? .isSelected : [])
             }
         }
     }
@@ -287,6 +288,7 @@ struct MedicationSheet: View {
                 }
                 .labelsHidden()
                 .pickerStyle(.menu)
+                .tint(PeriColor.ink)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
