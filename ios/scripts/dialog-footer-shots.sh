@@ -13,52 +13,37 @@ else
   PASSES="${DIALOG_SHOTS_PASSES:-en-light,de-light,en-dark}"
   TEST="testWriteDialogFooters"
 fi
-UDID="$(xcrun simctl list devices | sed -n 's/.*iPhone 17e (\([^)]*\)).*/\1/p' | head -n 1)"
-if [[ -z "$UDID" ]]; then
-  echo "dialog-footer-shots: iPhone 17e not installed" >&2
-  exit 1
-fi
-defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool false
-PLIST="$HOME/Library/Preferences/com.apple.iphonesimulator.plist"
-if [[ -f "$PLIST" ]]; then
-  /usr/libexec/PlistBuddy -c "Set :DevicePreferences:${UDID}:ConnectHardwareKeyboard false" "$PLIST" 2>/dev/null \
-    || /usr/libexec/PlistBuddy -c "Add :DevicePreferences:${UDID}:ConnectHardwareKeyboard bool false" "$PLIST" 2>/dev/null \
-    || true
-fi
-xcrun simctl shutdown "$UDID" 2>/dev/null || true
-xcrun simctl boot "$UDID"
-mkdir -p "$DIR" ios/DerivedData
-# xcodebuild forwards TEST_RUNNER_* from its environment and strips the prefix.
-# A build setting with that name does not arrive. The unprefixed names are the
-# ones the test reads when the prefix is stripped.
+# control-perimedi drive runs xcodebuild. That process copies TEST_RUNNER_*
+# into the test and strips the prefix. The test reads the stripped names.
 export DIALOG_SHOTS=1
 export DIALOG_SHOTS_DIR="$DIR"
 export DIALOG_SHOTS_PASSES="$PASSES"
 export TEST_RUNNER_DIALOG_SHOTS=1
 export TEST_RUNNER_DIALOG_SHOTS_DIR="$DIR"
 export TEST_RUNNER_DIALOG_SHOTS_PASSES="$PASSES"
-LOG="ios/DerivedData/dialog-footer-shots-${PHASE}.log"
+mkdir -p "$DIR"
+DRIVER="$ROOT/.grok/skills/verify-perimedi/scripts/control-perimedi"
+RUN_ID="dialog-footer-shots-${PHASE}"
+SLOT="PeriMediUITests-DialogFooterShotTests-${TEST}"
+LOG="$ROOT/.grok/skills/verify-perimedi/evidence/${RUN_ID}/${SLOT}/xcodebuild.log"
+cleanup() {
+  "$DRIVER" --run-id "$RUN_ID" cleanup || true
+}
+trap cleanup EXIT
+"$DRIVER" --run-id "$RUN_ID" launch
 set +e
-xcodebuild test \
-  -project ios/PeriMedi.xcodeproj \
-  -scheme PeriMedi \
-  -destination "platform=iOS Simulator,id=${UDID}" \
-  -derivedDataPath ios/DerivedData \
-  -only-testing:PeriMediUITests/DialogFooterShotTests/${TEST} \
-  -collect-test-diagnostics never \
-  CODE_SIGNING_ALLOWED=NO \
-  TEST_RUNNER_DIALOG_SHOTS=1 \
-  TEST_RUNNER_DIALOG_SHOTS_DIR="$DIR" \
-  TEST_RUNNER_DIALOG_SHOTS_PASSES="$PASSES" \
-  2>&1 | tee "$LOG"
-status=${PIPESTATUS[0]}
+"$DRIVER" --run-id "$RUN_ID" drive --test "PeriMediUITests/DialogFooterShotTests/${TEST}"
+status=$?
 set -e
-if grep -F "$TEST" "$LOG" | grep -q "skipped"; then
+if [[ -f "$LOG" ]] && grep -F "$TEST" "$LOG" | grep -q "skipped"; then
   echo "dialog-footer-shots: skipped; DIALOG_SHOTS did not reach the test" >&2
   exit 1
 fi
-if ! grep -F "$TEST" "$LOG" | grep -q "passed"; then
+if [[ "$status" -ne 0 ]]; then
+  exit "$status"
+fi
+if [[ ! -f "$LOG" ]] || ! grep -F "$TEST" "$LOG" | grep -q "passed"; then
   echo "dialog-footer-shots: did not pass" >&2
   exit 1
 fi
-exit "$status"
+exit 0

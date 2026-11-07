@@ -263,13 +263,7 @@ final class DialogFooterShotTests: PeriMediUITestCase {
         robot.tap("cycle.action.med")
         robot.waitFor(id: "sheet.med")
         robot.scrollTo("med.start")
-        let time = robot.app.buttons["20:00"]
-        XCTAssertTrue(time.waitForExistence(timeout: 4))
-        time.tap()
-        robot.waitFor(id: "time.done")
-        robot.tap("time.done")
-        robot.waitGone(id: "time.done")
-        XCTAssertTrue(robot.app.buttons["20:00"].waitForExistence(timeout: 3))
+        changeDraftTakeTime(from: "20:00", to: "21:00")
         robot.setDateKey("med.start", "2026-03-01")
         XCTAssertTrue(robot.value(of: "med.start").contains("2026-03-01"))
         robot.closeSheet(id: "sheet.med")
@@ -367,6 +361,41 @@ final class DialogFooterShotTests: PeriMediUITestCase {
         robot.addMedication(name: "Estrogen", dose: "1 mg")
         robot.waitFor(id: "reminder.banner", timeout: 8)
         try writer.write("17-reminder")
+    }
+
+    private func changeDraftTakeTime(from current: String, to shown: String) {
+        let open = robot.app.buttons[current]
+        XCTAssertTrue(open.waitForExistence(timeout: 4), "default take time \(current)")
+        open.tap()
+        robot.waitFor(id: "time.done")
+        let hour = robot.app.pickerWheels.element(boundBy: 0)
+        XCTAssertTrue(hour.waitForExistence(timeout: 4), "hour wheel")
+        let before = String(describing: hour.value ?? "")
+        let target = nextHourWheelValue(before)
+        hour.adjust(toPickerWheelValue: target)
+        let moved = String(describing: hour.value ?? "")
+        XCTAssertNotEqual(moved, before, "hour wheel stayed \(before)")
+        robot.tap("time.done")
+        robot.waitGone(id: "time.done")
+        let kept = robot.app.buttons[shown]
+        XCTAssertTrue(kept.waitForExistence(timeout: 4), "unsaved sheet keeps \(shown), wheel \(moved)")
+        XCTAssertFalse(robot.app.buttons[current].exists, "unsaved sheet still shows \(current)")
+        kept.tap()
+        robot.waitFor(id: "time.done")
+        let again = String(describing: robot.app.pickerWheels.element(boundBy: 0).value ?? "")
+        XCTAssertEqual(again, moved, "reopened chooser shows \(again), wanted \(moved)")
+        robot.tap("time.done")
+        robot.waitGone(id: "time.done")
+        XCTAssertTrue(robot.app.buttons[shown].waitForExistence(timeout: 4), "unsaved sheet still shows \(shown)")
+    }
+
+    private func nextHourWheelValue(_ value: String) -> String {
+        guard let match = value.range(of: #"\d+"#, options: .regularExpression),
+              let number = Int(value[match]) else {
+            return "9"
+        }
+        let next = number == 12 ? 1 : number + 1
+        return String(next)
     }
 
     private func pickDayCount(_ id: String, from current: String, to next: String) {
