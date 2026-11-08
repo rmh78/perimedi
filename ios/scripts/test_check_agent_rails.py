@@ -10,7 +10,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from agent_rails import attachment_links, missing_script_names, read_agents, unnamed_ui_tests
+from agent_rails import (
+    committed_markdown_link_problems,
+    docs_folder_problems,
+    missing_script_names,
+    read_agents,
+    tracked_doc_problems,
+    unnamed_ui_tests,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 RUNNERS = (
@@ -134,33 +141,55 @@ class UiTestNameTests(unittest.TestCase):
 
 
 class AttachmentLinkTests(unittest.TestCase):
-    def test_user_attachment_host(self) -> None:
-        problems = attachment_links("https://github.com/user-attachments/assets/dead")
+    def test_docs_folder_outside_app_store(self) -> None:
         self.assertEqual(
-            problems,
-            [
-                "Link host github.com/user-attachments 404s for reviewers. "
-                "Commit the PNG under ios/docs/screens/ and link that path."
-            ],
+            docs_folder_problems(["ios/docs/screens/cycle-empty-en.png"]),
+            ["ios/docs/screens/cycle-empty-en.png sits in a docs folder outside docs/app-store."],
         )
+        self.assertEqual(docs_folder_problems(["docs/app-store/privacy.md"]), [])
 
-    def test_user_images_host(self) -> None:
-        problems = attachment_links("https://user-images.githubusercontent.com/1/2.png")
-        self.assertEqual(
-            problems,
-            [
-                "Link host user-images.githubusercontent.com 404s for reviewers. "
-                "Commit the PNG under ios/docs/screens/ and link that path."
-            ],
-        )
+    def test_committed_markdown_rejects_attachment_hosts(self) -> None:
+        for host in (
+            "github.com/user-attachments",
+            "user-images.githubusercontent.com",
+        ):
+            with self.subTest(host=host):
+                problems = committed_markdown_link_problems(f"see https://{host}/a.png")
+                self.assertEqual(len(problems), 1)
+                self.assertIn(host, problems[0])
+                self.assertNotIn("ios/docs", problems[0])
 
-    def test_screen_path_passes(self) -> None:
+    def test_catalog_path_has_no_markdown_link_problem(self) -> None:
         self.assertEqual(
-            attachment_links("see ios/docs/screens/cycle-empty-en.png"),
+            committed_markdown_link_problems("see ios/internal/screens/cycle-empty-en.png"),
             [],
         )
 
-    def test_body_file_fails(self) -> None:
+    def test_tracked_docs_report_folder_and_markdown_rules(self) -> None:
+        paths = [
+            "docs/app-store/privacy.md",
+            "ios/internal/note.md",
+            "ios/docs/screens/cycle-empty-en.png",
+        ]
+        markdown = {
+            "docs/app-store/privacy.md": "https://user-images.githubusercontent.com/a/b.png",
+            "ios/internal/note.md": "https://github.com/user-attachments/assets/dead",
+        }
+        problems = tracked_doc_problems(paths, markdown)
+        self.assertIn(
+            "ios/docs/screens/cycle-empty-en.png sits in a docs folder outside docs/app-store.",
+            problems,
+        )
+        self.assertIn(
+            "docs/app-store/privacy.md: Committed markdown links user-images.githubusercontent.com.",
+            problems,
+        )
+        self.assertIn(
+            "ios/internal/note.md: Committed markdown links github.com/user-attachments.",
+            problems,
+        )
+
+    def test_body_file_passes(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "body.txt"
             path.write_text("https://github.com/user-attachments/assets/dead\n", encoding="utf-8")
@@ -174,12 +203,10 @@ class AttachmentLinkTests(unittest.TestCase):
                 check=False,
                 env=env,
             )
-        self.assertEqual(proc.returncode, 1, proc.stdout)
-        self.assertIn("pull request body", proc.stderr)
-        self.assertIn("github.com/user-attachments", proc.stderr)
-        self.assertIn("ios/docs/screens/", proc.stderr)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertTrue(proc.stdout.startswith("ok:"), proc.stdout)
 
-    def test_event_body_fails(self) -> None:
+    def test_event_body_passes(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "event.json"
             path.write_text(
@@ -198,9 +225,8 @@ class AttachmentLinkTests(unittest.TestCase):
                 check=False,
                 env=env,
             )
-        self.assertEqual(proc.returncode, 1, proc.stdout)
-        self.assertIn("pull request body", proc.stderr)
-        self.assertIn("user-images.githubusercontent.com", proc.stderr)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertTrue(proc.stdout.startswith("ok:"), proc.stdout)
 
     def test_cli_real_tree(self) -> None:
         env = os.environ.copy()

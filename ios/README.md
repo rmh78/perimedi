@@ -74,9 +74,9 @@ xcodebuild test \
   -allowProvisioningUpdates
 ```
 
-`testUserFlow` launches with `-en -clear -uiTesting -today=<device date>`. `-uiTesting` turns off UIView animations so XCTest is not blocked on springs. Do not pass `-journeyStep`, `-loadSample`, `-fixture=trends`, or `-remindIn` on that test. The flow shows the word Taken and then Not taken on Cycle, turns the scored symptom off so Trends drops that point, goes Back from the visit preview to the cycle picker, and takes the dose on the Home Screen. The screen catalog may pass `-loadSample` and writes the English pictures named in `docs/screens/expected.txt`, including `cycle-taken-en.png`, `cycle-not-taken-en.png`, `trends-off-en.png`, and `more-sample-xxxl-en.png`. It switches to German to write `sheet-symptom-pill-de.png` and `more-sample-de.png`. Every other catalog picture stays English. The visit preview picture shows Back. `widget-medium-before-en.png` and `widget-medium-after-en.png` stay the committed files. CI skips rewriting the catalog pictures.
+`testUserFlow` launches with `-en -clear -uiTesting -today=<device date>`. `-uiTesting` turns off UIView animations so XCTest is not blocked on springs. Do not pass `-journeyStep`, `-loadSample`, `-fixture=trends`, or `-remindIn` on that test. The flow shows the word Taken and then Not taken on Cycle, turns the scored symptom off so Trends drops that point, goes Back from the visit preview to the cycle picker, and takes the dose on the Home Screen. The screen catalog may pass `-loadSample` and writes the English pictures named in `internal/screens/expected.txt`, including `cycle-taken-en.png`, `cycle-not-taken-en.png`, `trends-off-en.png`, and `more-sample-xxxl-en.png`. It switches to German to write `sheet-symptom-pill-de.png` and `more-sample-de.png`. Every other catalog picture stays English. The visit preview picture shows Back. `widget-medium-before-en.png` and `widget-medium-after-en.png` stay the committed files. CI skips rewriting the catalog pictures.
 
-Main-screen PNGs for UX review are `docs/screens/` (see [docs/screens.md](docs/screens.md)). `python3 ios/scripts/check-screen-catalog.py` fails only if an expected file is missing. Do not paste screenshot galleries on the PR. `JourneyScript` and `scripts/shot-journey.sh` remain optional extra capture, not the interaction proof.
+Main-screen PNGs for UX review are `internal/screens/` (see [internal/screens.md](internal/screens.md)). `python3 ios/scripts/check-screen-catalog.py` fails only if an expected file is missing. Do not paste screenshot galleries on the PR. `JourneyScript` and `scripts/shot-journey.sh` remain optional extra capture, not the interaction proof.
 
 ## Persistence
 
@@ -84,4 +84,4 @@ Main-screen PNGs for UX review are `docs/screens/` (see [docs/screens.md](docs/s
 - **CloudKit** (`iCloud.app.perimedi.ios`) is configured so the same Apple ID can restore data on another device. If iCloud is unavailable (typical on an unsigned Simulator), the store falls back to local-only and the app stays usable.
 - JSON export/import uses `ExportPayload` version 1.
 
-See [docs/icloud-device-switch.md](docs/icloud-device-switch.md) for the conditional two-destination check.
+See [internal/icloud-device-switch.md](internal/icloud-device-switch.md) for the conditional two-destination check.

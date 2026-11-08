@@ -65,7 +65,7 @@ _SIGNING = (
     "iCloud.app.perimedi.ios",
 )
 _RULE_QUOTE_PATHS = {
-    "ios/docs/one-way-doors.md",
+    "ios/internal/one-way-doors.md",
     "ios/scripts/check-one-way-door.py",
     "ios/scripts/test_check_one_way_door.py",
 }

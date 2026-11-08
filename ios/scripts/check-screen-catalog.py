@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-SCREENS = ROOT / "ios/docs/screens"
+SCREENS = ROOT / "ios/internal/screens"
 EXPECTED = SCREENS / "expected.txt"
 
 
@@ -32,7 +32,7 @@ def main() -> int:
         for name in missing:
             print(f"  {name}", file=sys.stderr)
         print(
-            "UI tests write these PNGs. Commit ios/docs/screens/. "
+            "UI tests write these PNGs. Commit ios/internal/screens/. "
             "Do not paste screenshot galleries on the PR.",
             file=sys.stderr,
         )

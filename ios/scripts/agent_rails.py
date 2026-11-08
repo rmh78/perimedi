@@ -66,18 +66,37 @@ def missing_script_names(runner_text: str, agents_text: str) -> list[str]:
     return problems
 
 
-_ATTACHMENT_HOSTS = (
+def docs_folder_problems(paths: list[str]) -> list[str]:
+    problems: list[str] = []
+    for raw in paths:
+        parts = tuple(part for part in raw.split("/") if part not in ("", "."))
+        if "docs" not in parts[:-1]:
+            continue
+        if len(parts) >= 2 and parts[0] == "docs" and parts[1] == "app-store":
+            continue
+        problems.append(f"{raw} sits in a docs folder outside docs/app-store.")
+    return problems
+
+
+_MARKDOWN_LINK_HOSTS = (
     "github.com/user-attachments",
     "user-images.githubusercontent.com",
 )
 
 
-def attachment_links(text: str) -> list[str]:
+def committed_markdown_link_problems(text: str) -> list[str]:
     problems: list[str] = []
-    for host in _ATTACHMENT_HOSTS:
+    for host in _MARKDOWN_LINK_HOSTS:
         if host in text:
-            problems.append(
-                f"Link host {host} 404s for reviewers. "
-                "Commit the PNG under ios/docs/screens/ and link that path."
-            )
+            problems.append(f"Committed markdown links {host}.")
+    return problems
+
+
+def tracked_doc_problems(paths: list[str], markdown: dict[str, str]) -> list[str]:
+    problems = docs_folder_problems(paths)
+    for path in paths:
+        if not path.endswith(".md"):
+            continue
+        for problem in committed_markdown_link_problems(markdown[path]):
+            problems.append(f"{path}: {problem}")
     return problems

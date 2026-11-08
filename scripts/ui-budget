@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_MD = ROOT / "ios/docs/ui-flow-budget.md"
+DEFAULT_MD = ROOT / "ios/internal/ui-flow-budget.md"
 DEFAULT_XCRESULT = ROOT / "ios/DerivedData/PeriMedi.xcresult"
 FLOW_HEADING = "## Flow"
 BUDGET_FENCE = re.compile(r"^```budget\n(.*?)^```", re.M | re.S)
