@@ -128,14 +128,6 @@ struct EqualWidthPillRow: View {
         var action: () -> Void
     }
 
-    struct Fit {
-        var scale: CGFloat
-        var lines: Int
-    }
-
-    static let spacing: CGFloat = DialogActionFit.spacing
-    static let minLabelScale: CGFloat = DialogActionFit.minLabelScale
-
     var items: [Item]
 
     @ScaledMetric(relativeTo: .subheadline) private var subheadlineSize: CGFloat = 15
@@ -148,28 +140,28 @@ struct EqualWidthPillRow: View {
         let open = rowHeight > 1
             ? rowHeight
             : max(
-                Self.rowHeight(scale: 1, lines: 1, base: subheadlineSize, bold: bold),
-                Self.rowHeight(scale: Self.minLabelScale, lines: 2, base: subheadlineSize, bold: bold)
+                DialogActionFit.rowHeight(scale: 1, lines: 1, base: subheadlineSize, bold: bold),
+                DialogActionFit.rowHeight(scale: DialogActionFit.minLabelScale, lines: 2, base: subheadlineSize, bold: bold)
             )
         GeometryReader { geo in
             let titles = items.map(\.title)
-            let fit = Self.fit(
+            let fit = DialogActionFit.fit(
                 titles: titles,
                 rowWidth: geo.size.width,
                 base: subheadlineSize,
                 bold: bold
             )
-            let height = Self.rowHeight(scale: fit.scale, lines: fit.lines, base: subheadlineSize, bold: bold)
+            let height = DialogActionFit.rowHeight(scale: fit.scale, lines: fit.lines, base: subheadlineSize, bold: bold)
             let font = UIFont.systemFont(ofSize: subheadlineSize * fit.scale, weight: bold ? .bold : .semibold)
             let inset = fit.lines > 1
-                ? Self.inset(titles: titles, rowWidth: geo.size.width, font: font, locale: locale)
-                : PillButton.horizontalPadding
-            let available = Self.textWidth(rowWidth: geo.size.width, count: titles.count, inset: inset)
-            HStack(spacing: Self.spacing) {
+                ? DialogActionFit.inset(titles: titles, rowWidth: geo.size.width, font: font, locale: locale)
+                : DialogActionFit.horizontalPadding
+            let available = DialogActionFit.textWidth(rowWidth: geo.size.width, count: titles.count, inset: inset)
+            HStack(spacing: DialogActionFit.spacing) {
                 ForEach(items) { item in
                     PillButton(
                         title: fit.lines > 1
-                            ? Self.wrapped(item.title, width: available, font: font, locale: locale)
+                            ? DialogActionFit.wrapped(item.title, width: available, font: font, locale: locale)
                             : item.title,
                         kind: item.kind,
                         identifier: item.identifier,
@@ -177,7 +169,7 @@ struct EqualWidthPillRow: View {
                         lines: fit.lines,
                         barHeight: height - PillButton.strokeWidth,
                         labelScale: fit.scale,
-                        spokenTitle: Self.spokenLabel(for: item.title),
+                        spokenTitle: DialogActionFit.spokenLabel(for: item.title),
                         inset: inset,
                         action: item.action
                     )
@@ -191,37 +183,6 @@ struct EqualWidthPillRow: View {
                 rowHeight = newValue
             }
         }
-    }
-
-    static func scale(titles: [String], rowWidth: CGFloat, base: CGFloat, bold: Bool = false) -> CGFloat {
-        DialogActionFit.scale(titles: titles, rowWidth: rowWidth, base: base, bold: bold)
-    }
-
-    static func fit(titles: [String], rowWidth: CGFloat, base: CGFloat, bold: Bool = false) -> Fit {
-        let fitted = DialogActionFit.fit(titles: titles, rowWidth: rowWidth, base: base, bold: bold)
-        return Fit(scale: fitted.scale, lines: fitted.lines)
-    }
-
-    static func rowHeight(scale: CGFloat, lines: Int, base: CGFloat, bold: Bool) -> CGFloat {
-        DialogActionFit.rowHeight(scale: scale, lines: lines, base: base, bold: bold)
-    }
-
-    static func spokenLabel(for title: String) -> String {
-        DialogActionFit.spokenLabel(for: title)
-    }
-
-    static let minimumInset: CGFloat = DialogActionFit.minimumInset
-
-    static func inset(titles: [String], rowWidth: CGFloat, font: UIFont, locale: Locale) -> CGFloat {
-        DialogActionFit.inset(titles: titles, rowWidth: rowWidth, font: font, locale: locale)
-    }
-
-    static func wrapped(_ title: String, width: CGFloat, font: UIFont, locale: Locale = .current) -> String {
-        DialogActionFit.wrapped(title, width: width, font: font, locale: locale)
-    }
-
-    static func textWidth(rowWidth: CGFloat, count: Int, inset: CGFloat = PillButton.horizontalPadding) -> CGFloat {
-        DialogActionFit.textWidth(rowWidth: rowWidth, count: count, inset: inset)
     }
 }
 
