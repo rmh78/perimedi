@@ -289,21 +289,18 @@ private struct SymptomNameCard: View {
             Text(nameDraft == .create ? app.t("symptom.addPlaceholder") : app.t("symptom.edit"))
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(PeriColor.ink)
-            VStack(alignment: .leading, spacing: 6) {
-                FieldLabel(text: app.t("med.name"))
-                SoftField {
-                    TextField(app.t("symptom.addPlaceholder"), text: $draft)
-                        .foregroundStyle(PeriColor.ink)
-                        .focused($nameFocused)
-                        .submitLabel(.done)
-                        .accessibilityIdentifier(A11yID.symptomCustomAdd)
-                        .background(alignment: .topLeading) {
-                            FocusFlag(id: A11yID.symptomCustomAdd, on: nameFocused)
-                        }
-                        .onSubmit {
-                            if onCommit() { dialogClose() }
-                        }
-                }
+            SoftField {
+                TextField(app.t("symptom.addPlaceholder"), text: $draft)
+                    .foregroundStyle(PeriColor.ink)
+                    .focused($nameFocused)
+                    .submitLabel(.done)
+                    .accessibilityIdentifier(A11yID.symptomCustomAdd)
+                    .background(alignment: .topLeading) {
+                        FocusFlag(id: A11yID.symptomCustomAdd, on: nameFocused)
+                    }
+                    .onSubmit {
+                        if onCommit() { dialogClose() }
+                    }
             }
             if let nameError, let message = nameMessage(nameError) {
                 Text(message)
