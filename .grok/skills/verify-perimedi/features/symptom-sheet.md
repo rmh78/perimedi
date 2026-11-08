@@ -22,7 +22,7 @@ Cycle → + Symptom (`cycle.action.symptom`).
 | Close | `sheet.close` | First-use path: tap scores, then close. Sheet gone. |
 | Score | `symptom.score.{id}.{1-4}` | `testUserFlow` taps `symptom.score.hot_flash.3` and waits for `cycle.chip.score.hot_flash`. Custom rows use the same id shape. |
 | Add | `symptom.custom.create` | Secondary pill below the custom names. Its label is New symptom (German: Neues Symptom). The test asserts that label, taps it, types Brain fog into `symptom.custom.add`, and taps Save on the same `symptom.custom.create` id. The dialog title is New symptom. The field stays above the keyboard. `symptom.score.vaginal_dryness.1` and the custom row’s `.1` share `minX`, and so do the `.4` buttons. Catalog `sheet-symptom-wrap-en` shows a 40-character custom name wrapping in the 108pt column. |
-| Custom name field | `symptom.custom.add` | In the dialog on top of the sheet, for a new name and for a rename. The label is Name (German: Name). The field uses the same white rounded field as medication and period. The empty placeholder stays New symptom (German: Neues Symptom). |
+| Custom name field | `symptom.custom.add` | In the dialog on top of the sheet, for a new name and for a rename. The label is Name (German: Name). The field uses the same white rounded field as medication and period. The empty placeholder stays New symptom (German: Neues Symptom). No committed test asserts that label. |
 | Custom name | `symptom.custom.name.{id}` | Underlined name on the row. The test taps it to open the same dialog, then types Fog. |
 | Rename save | `symptom.custom.save.{id}` | Primary pill in that dialog. The dialog title is Edit symptom. The chip then contains Fog. |
 | Delete | `symptom.custom.delete.{id}` | Delete sits on the edit card's button row, between Cancel and Save. That row matches the period card (equal-width pills). The labels share one type size. If one must shrink, they all shrink together. The row grows with the text size. A label never drops below half size. When one would, every label on the row wraps to two lines at that shared half size. The break is a space between words, or a hyphen at a real hyphenation point. VoiceOver reads the whole word. The add card is Cancel and Save only, with no Delete. German Abbrechen, Löschen, and Speichern use that same size. The delete question uses the same row, Cancel on the left and Delete on the right (`confirm.delete`). The user flow does not open a custom symptom and does not tap `symptom.custom.delete.{id}`. Catalog types a long name and does not delete. |
@@ -31,7 +31,7 @@ Cycle → + Symptom (`cycle.action.symptom`).
 
 After logging, Cycle shows `cycle.chip.score.{id}` via `A11yID.chipScore(_:)`. Hot flash 3 in en: value contains `strong`.
 
-`testUserFlow` taps one score and closes. It does not open a custom symptom. Catalog types a long name on `symptom.custom.add`.
+`testUserFlow` taps one score and closes. It does not open a custom symptom. That test is the pull request smoke run. The full suite opens the name card in `testImmediateActionsKeepWhatTheyShow` and `testNestedDimKeepsParent` and does not assert the Name label. `testWriteDialogFooters` opens the card only when `DIALOG_SHOTS=1` and does not assert the label. Catalog types a long name on `symptom.custom.add` and does not assert that label.
 
 ## Gotchas
 

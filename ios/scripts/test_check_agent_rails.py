@@ -11,9 +11,11 @@ import unittest
 from pathlib import Path
 
 from agent_rails import (
+    committed_markdown_link_problems,
     docs_folder_problems,
     missing_script_names,
     read_agents,
+    tracked_doc_problems,
     unnamed_ui_tests,
 )
 
@@ -145,6 +147,47 @@ class AttachmentLinkTests(unittest.TestCase):
             ["ios/docs/screens/cycle-empty-en.png sits in a docs folder outside docs/app-store."],
         )
         self.assertEqual(docs_folder_problems(["docs/app-store/privacy.md"]), [])
+
+    def test_committed_markdown_rejects_attachment_hosts(self) -> None:
+        for host in (
+            "github.com/user-attachments",
+            "user-images.githubusercontent.com",
+        ):
+            with self.subTest(host=host):
+                problems = committed_markdown_link_problems(f"see https://{host}/a.png")
+                self.assertEqual(len(problems), 1)
+                self.assertIn(host, problems[0])
+                self.assertNotIn("ios/docs", problems[0])
+
+    def test_catalog_path_has_no_markdown_link_problem(self) -> None:
+        self.assertEqual(
+            committed_markdown_link_problems("see ios/internal/screens/cycle-empty-en.png"),
+            [],
+        )
+
+    def test_tracked_docs_report_folder_and_markdown_rules(self) -> None:
+        paths = [
+            "docs/app-store/privacy.md",
+            "ios/internal/note.md",
+            "ios/docs/screens/cycle-empty-en.png",
+        ]
+        markdown = {
+            "docs/app-store/privacy.md": "https://user-images.githubusercontent.com/a/b.png",
+            "ios/internal/note.md": "https://github.com/user-attachments/assets/dead",
+        }
+        problems = tracked_doc_problems(paths, markdown)
+        self.assertIn(
+            "ios/docs/screens/cycle-empty-en.png sits in a docs folder outside docs/app-store.",
+            problems,
+        )
+        self.assertIn(
+            "docs/app-store/privacy.md: Committed markdown links user-images.githubusercontent.com.",
+            problems,
+        )
+        self.assertIn(
+            "ios/internal/note.md: Committed markdown links github.com/user-attachments.",
+            problems,
+        )
 
     def test_body_file_passes(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

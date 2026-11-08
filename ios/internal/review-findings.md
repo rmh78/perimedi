@@ -6,6 +6,7 @@ Repeated review findings from merged pull requests. `AGENTS.md` links here. A gu
 | --- | --- | --- |
 | A new UI test method is not named in Agents.md or a feature file. | #66, #105 | [`check-ui-test-names.py`](../scripts/check-ui-test-names.py) from #105. #106 still asks for an exact name match and the error text `AGENTS.md`. |
 | A tracked file sits in a docs folder outside `docs/app-store`. | #137 | [`check-pr-attachments.py`](../scripts/check-pr-attachments.py) rejects it. |
+| Committed markdown links a pull-request image host. | #167 | [`check-pr-attachments.py`](../scripts/check-pr-attachments.py) rejects that link in a tracked markdown file. A pull request body may keep the picture. |
 | A python3 script under ios/scripts or .github/scripts runs in CI and Agents.md omits the file name. | #105, #107 | [`check-agent-rails.py`](../scripts/check-agent-rails.py) from #105. It does not see docs/app-store. #107 added the listing command to Agents.md by hand. |
 | Pull request screenshots show an older commit, or a behavior change leaves the body stale. | #66, #105, #114 | Tracked in #106. Not rebuilt. |
 | An ios/docs folder is missing from Agents.md. | #105, #106 | Tracked in #106. Not rebuilt. |

@@ -76,3 +76,27 @@ def docs_folder_problems(paths: list[str]) -> list[str]:
             continue
         problems.append(f"{raw} sits in a docs folder outside docs/app-store.")
     return problems
+
+
+_MARKDOWN_LINK_HOSTS = (
+    "github.com/user-attachments",
+    "user-images.githubusercontent.com",
+)
+
+
+def committed_markdown_link_problems(text: str) -> list[str]:
+    problems: list[str] = []
+    for host in _MARKDOWN_LINK_HOSTS:
+        if host in text:
+            problems.append(f"Committed markdown links {host}.")
+    return problems
+
+
+def tracked_doc_problems(paths: list[str], markdown: dict[str, str]) -> list[str]:
+    problems = docs_folder_problems(paths)
+    for path in paths:
+        if not path.endswith(".md"):
+            continue
+        for problem in committed_markdown_link_problems(markdown[path]):
+            problems.append(f"{path}: {problem}")
+    return problems
