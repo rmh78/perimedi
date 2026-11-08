@@ -52,7 +52,7 @@ struct MoreView: View {
             VStack(alignment: .leading, spacing: 12) {
                 GlassCard {
                     VStack(alignment: .leading, spacing: 10) {
-                        sectionLabel(app.t("language.label"))
+                        SectionLabel(text: app.t("language.label"))
                         HStack(spacing: 8) {
                             ForEach(AppLanguage.allCases) { lang in
                                 PillButton(
@@ -71,7 +71,7 @@ struct MoreView: View {
 
                 GlassCard {
                     VStack(alignment: .leading, spacing: 10) {
-                        sectionLabel(app.t("more.reminders"))
+                        SectionLabel(text: app.t("more.reminders"))
                         HStack(alignment: .center, spacing: 10) {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(app.t("more.reminders"))
@@ -173,7 +173,7 @@ struct MoreView: View {
 
                 GlassCard {
                     VStack(alignment: .leading, spacing: 0) {
-                        sectionLabel(app.t("more.visit"))
+                        SectionLabel(text: app.t("more.visit"))
                             .padding(.horizontal, 14)
                             .padding(.top, 14)
                             .padding(.bottom, 8)
@@ -192,7 +192,7 @@ struct MoreView: View {
 
                 GlassCard {
                     VStack(alignment: .leading, spacing: 0) {
-                        sectionLabel(app.t("more.tabBackup"))
+                        SectionLabel(text: app.t("more.tabBackup"))
                             .padding(.horizontal, 14)
                             .padding(.top, 14)
                             .padding(.bottom, 8)
@@ -294,14 +294,6 @@ struct MoreView: View {
 
     private var divider: some View {
         Rectangle().fill(PeriColor.blush100).frame(height: 1).padding(.leading, 14)
-    }
-
-    private func sectionLabel(_ text: String) -> some View {
-        Text(text)
-            .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(PeriColor.inkMuted)
-            .textCase(.uppercase)
-            .tracking(0.8)
     }
 
     private func backupRow(title: String, body: String, label: String, identifier: String, destructive: Bool = false, action: @escaping () -> Void) -> some View {

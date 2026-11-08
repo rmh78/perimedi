@@ -211,18 +211,6 @@ struct MonthView: View {
         return parts.joined(separator: ",")
     }
 
-    private func pill(_ title: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(PeriColor.blush700)
-                .padding(.horizontal, 12)
-                .frame(minHeight: 34)
-                .overlay(Capsule().stroke(PeriColor.blush300, lineWidth: 1))
-        }
-        .buttonStyle(.plain)
-    }
-
     private var monthTitle: String {
         DateCopy.monthYear(monthAnchor, locale: app.locale.language.locale)
     }

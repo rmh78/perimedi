@@ -34,7 +34,6 @@ ios/PeriMedi/Features/Month/MonthView.swift	font-literal	.system(size: 8)	3
 ios/PeriMedi/Features/Month/MonthView.swift	font-literal	.system(size: 9)	2
 ios/PeriMedi/Features/Month/MonthView.swift	hex	#64748b	1
 ios/PeriMedi/Features/Month/MonthView.swift	hex	#7a4a00	1
-ios/PeriMedi/Features/More/MoreView.swift	font-literal	.system(size: 11)	1
 ios/PeriMedi/Features/More/MoreView.swift	font-literal	.system(size: 14)	1
 ios/PeriMedi/Features/Sheets/DialogChrome.swift	font-literal	.system(size: 11)	1
 ios/PeriMedi/Features/Sheets/DialogChrome.swift	font-literal	.system(size: 14)	1
