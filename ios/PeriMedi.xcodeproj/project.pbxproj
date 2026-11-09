@@ -62,6 +62,7 @@
 		556A9AD85C4E8C5D8733E802 /* ScreenCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D7ECE05280DF3A9B1D9FD1F /* ScreenCatalogTests.swift */; };
 		B7E4A91C0D2F4A6E8B1C3D51 /* StoreScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7E4A91C0D2F4A6E8B1C3D50 /* StoreScreenshotTests.swift */; };
 		D1A106F0D1A106F0D1A106F2 /* DialogFooterShotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A106F0D1A106F0D1A106F1 /* DialogFooterShotTests.swift */; };
+		B7C109A1E84F4D2C9A6E1106 /* MedicationReminderHonestyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7C109A1E84F4D2C9A6E1105 /* MedicationReminderHonestyTests.swift */; };
 		E1365E1E0000000000000002 /* SelectionShotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1365E1E0000000000000001 /* SelectionShotTests.swift */; };
 		22E653FA472344C15E92C92E /* PeriMediDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 14300107B9E3EB1D420E4B3B /* PeriMediDomain */; };
 		F0B3C5D82A1E49C7D6E4A8B2 /* PeriDesign in Frameworks */ = {isa = PBXBuildFile; productRef = D1F6B2C84E0A47B9A3D5E7C2 /* PeriDesign */; };
@@ -140,6 +141,7 @@
 		9D7ECE05280DF3A9B1D9FD1F /* ScreenCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenCatalogTests.swift; sourceTree = "<group>"; };
 		B7E4A91C0D2F4A6E8B1C3D50 /* StoreScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreScreenshotTests.swift; sourceTree = "<group>"; };
 		D1A106F0D1A106F0D1A106F1 /* DialogFooterShotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DialogFooterShotTests.swift; sourceTree = "<group>"; };
+		B7C109A1E84F4D2C9A6E1105 /* MedicationReminderHonestyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationReminderHonestyTests.swift; sourceTree = "<group>"; };
 		E1365E1E0000000000000001 /* SelectionShotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionShotTests.swift; sourceTree = "<group>"; };
 		2C5C3A69A20F9E8D61C43308 /* DoseWidgetSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseWidgetSnapshot.swift; sourceTree = "<group>"; };
 		AC4EBBA48FBA9CA676374398 /* MarkDoseTakenIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkDoseTakenIntent.swift; sourceTree = "<group>"; };
@@ -328,6 +330,7 @@
 				9D7ECE05280DF3A9B1D9FD1F /* ScreenCatalogTests.swift */,
 				B7E4A91C0D2F4A6E8B1C3D50 /* StoreScreenshotTests.swift */,
 				D1A106F0D1A106F0D1A106F1 /* DialogFooterShotTests.swift */,
+				B7C109A1E84F4D2C9A6E1105 /* MedicationReminderHonestyTests.swift */,
 				E1365E1E0000000000000001 /* SelectionShotTests.swift */,
 			);
 			path = PeriMediUITests;
@@ -590,6 +593,7 @@
 				556A9AD85C4E8C5D8733E802 /* ScreenCatalogTests.swift in Sources */,
 				B7E4A91C0D2F4A6E8B1C3D51 /* StoreScreenshotTests.swift in Sources */,
 				D1A106F0D1A106F0D1A106F2 /* DialogFooterShotTests.swift in Sources */,
+				B7C109A1E84F4D2C9A6E1106 /* MedicationReminderHonestyTests.swift in Sources */,
 				E1365E1E0000000000000002 /* SelectionShotTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

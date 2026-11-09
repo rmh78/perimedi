@@ -142,6 +142,8 @@ final class AppRobot {
             return [.textField, .button]
         case "more.reminders", "visit.range.previous":
             return [.switch]
+        case "med.remind.appOff", "med.remind.iosDenied":
+            return [.staticText]
         case "more.reminderFollowUps":
             return [.other, .button]
         case "trends.detail", "trends.screen":

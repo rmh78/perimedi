@@ -36,3 +36,4 @@ Turn reminders on in More. Enable remind on a medication. When a slot is due, a 
 - German Taken is “Genommen” so it matches the body (“Tippe auf Genommen”).
 - Master switch off on More means no banner, even if `med.remind` is on.
 - Fresh install with master on asks for notification permission. `-uiTesting` skips that prompt so CI is not blocked. After the user allows, dose notifications are rebuilt with an explicit time zone (calendar components without a zone can be dropped on device).
+- The medication sheet explains the two outside gates and does not schedule or flip the master.

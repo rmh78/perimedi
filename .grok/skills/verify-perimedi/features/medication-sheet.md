@@ -6,7 +6,7 @@ Create or edit a medication and its schedule. Presented over Cycle.
 
 - Name, form, default dose, color
 - Start (required) and optional end
-- Remind toggle
+- Remind toggle. The lines under it explain the two outside gates. They are below the fold.
 - Optional Dose-from date next to the dose field when default dose or primary schedule actually changed
 - Schedule mode: every day / specific days / cyclic
 - Save / delete (delete confirms). A new medication is titled New medication (German: Neues Medikament). Edit keeps Edit medication (German: Medikament bearbeiten). Both actions say Save (German: Speichern). Cancel sits on the left of the pinned footer and Save on the right. Edit places Delete between them. The footer stays put while the fields scroll.
@@ -31,7 +31,11 @@ Cycle → + Med (`cycle.action.med`) for a new one, or a lane's edit control for
 | Start | `med.start` | `AppRobot.setDateKey`. Confirm with `date.done`. |
 | Dose from (effective date) | `med.since` | Sits next to the dose field, not after the schedule. Present when dose or schedule differs from the stored med (including a new med with a dose). `AppRobot.addMedication` saves by `med.save` and does not wait for this field. Catalog still waits for it. |
 | Time chooser done | `time.done` | Done dismisses the chooser. `testImmediateActionsKeepWhatTheyShow` moves the default 20:00 to 21:00, taps Done, and reads 21:00 on the still-open new-medication sheet. It reopens the chooser and reads the same hour. The sheet is then closed without Save. The test does not open it again after that close. |
-| Remind | `med.remind` | Toggle on the sheet. |
+| Remind | `med.remind` | Toggle after take times and before Type. Label is Remind me (German: Erinnere mich). A new medication starts on. |
+| App reminders off | `med.remind.appOff` | Muted line directly under `med.remind`, not in the toggle label and not in the footer. Below the fold, so `scrollTo` this id. |
+| Turn on | `med.remind.turnOn` | Action under that line. Shows More and leaves `more.reminders` off. |
+| iOS notifications denied | `med.remind.iosDenied` | Muted line under `med.remind`, after the app line when both show. Below the fold. No XCUITest drives denial. |
+| Open Settings | `med.remind.iosSettings` | Action under the iOS line. Leaves the app. No XCUITest taps it. |
 | Save | `med.save` | Pinned footer, right side. Sheet dismisses. A `cycle.lane.{slug}` appears. |
 | Delete | `med.delete` | Pinned footer, between Cancel and Save, on edit only. Then `confirm.delete` / `confirm.cancel`. |
 
@@ -47,3 +51,4 @@ Cycle → + Med (`cycle.action.med`) for a new one, or a lane's edit control for
 - Name slug for the lane is computed from the **name** (`Estrogen` → `cycle.lane.estrogen`).
 - Domain owns schedule expansion (`ios/Sources/PeriMediDomain`). Do not reimplement cycle math in the sheet.
 - `med.preset` is defined on the enum only; the sheet does not attach it.
+- `testAppRemindersOffShowsTheLineAndOpensMore` in `MedicationReminderHonestyTests` turns `more.reminders` off, opens add medication, scrolls to `med.remind.appOff`, reads that line and `med.remind.turnOn`, and checks that `med.remind.iosDenied` is absent. Turn on shows More and leaves `more.reminders` off. Do not tap `med.remind.iosSettings`.

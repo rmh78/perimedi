@@ -75,7 +75,7 @@ The system SHALL let the user choose the reminder sound in More from a small lis
 - **THEN** that tone plays immediately without logging a dose
 
 ### Requirement: Permission
-The system SHALL ask for notification permission on first launch when the master reminders switch is on (the default) and permission has not yet been decided, and again when the user turns reminders on (master switch or saving a medication with reminders enabled) if permission is still undecided. The system SHALL NOT repeatedly prompt after the user denies. When permission is denied and the master switch is on, More SHALL explain that reminders need notification access in iOS Settings. Instrumented UI tests SHALL NOT present the system permission dialog. They MAY fire the next pending reminder through a test launch flag and mark it Taken on a reminder card without asserting the system banner.
+The system SHALL ask for notification permission on first launch when the master reminders switch is on (the default) and permission has not yet been decided, and again when the user turns reminders on (master switch or saving a medication with reminders enabled) if permission is still undecided. The system SHALL NOT repeatedly prompt after the user denies. When permission is denied and the master switch is on, More SHALL explain that reminders need notification access in iOS Settings. The medication dialog SHALL show its notification line only when iOS has denied notifications. It SHALL NOT show that line when permission is undecided, allowed, provisional, ephemeral, or unrecognized. That line SHALL NOT request permission. When the dialog is open and the app returns to the foreground after notifications are allowed, that line SHALL be gone. Scheduling SHALL stay as already specified. The dialog SHALL NOT turn the app Reminders switch on or off. Instrumented UI tests SHALL NOT present the system permission dialog. They MAY fire the next pending reminder through a test launch flag and mark it Taken on a reminder card without asserting the system banner.
 
 #### Scenario: Fresh install
 - **WHEN** the user launches the app for the first time with reminders on and the system has not yet asked
@@ -88,6 +88,18 @@ The system SHALL ask for notification permission on first launch when the master
 #### Scenario: Denied
 - **WHEN** notification permission is denied and reminders are on
 - **THEN** More shows a short explanation pointing to iOS Settings and does not prompt again on launch
+
+#### Scenario: No notification line unless iOS denied
+- **WHEN** the user opens the medication dialog and iOS has not denied notifications
+- **THEN** the dialog does not show its notification line and does not request permission
+
+#### Scenario: Foreground clears the notification line
+- **WHEN** the medication dialog is open and the app returns to the foreground after notifications are allowed
+- **THEN** the notification line is gone
+
+#### Scenario: Dialog leaves the app switch alone
+- **WHEN** the user opens the medication dialog
+- **THEN** the dialog does not turn the app Reminders switch on or off, and scheduling stays as already specified
 
 ### Requirement: Opt-in extra reminders
 The system SHALL let the user choose Off, 2, or 3 extra reminders for a missed planned dose. The default SHALL be Off. The choice SHALL stay on this device and SHALL NOT be part of the backup. The control SHALL stay visible when the master reminders switch is off. While that switch is off, the control SHALL be dimmed and SHALL NOT accept a change. It SHALL have no effect until that switch is on and notification permission allows scheduling. Each extra reminder SHALL use the same title, medication name, body, Taken action, and Snooze action as the planned reminder. The body SHALL still name the planned take time. Extra reminder k SHALL fire at the planned time plus k times 10 minutes. The system SHALL omit a step whose time is already past and SHALL NOT move later steps earlier. The system SHALL NOT schedule more than the chosen count, and SHALL NOT schedule another extra after that count. At most the four soonest pending slots that are not stopped and still have a future extra reminder SHALL receive every remaining step. Other pending slots SHALL receive only the planned reminder. When 2 or 3 is selected and more planned reminders are pending than fit alongside those extras, the later planned reminders are not scheduled. Off SHALL schedule the same planned reminders as before this choice existed, one per pending slot.

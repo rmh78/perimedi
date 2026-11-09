@@ -25,6 +25,29 @@ The system SHALL allow the user to add and edit a medication including form, def
 - **WHEN** the user saves a medication with reminders off
 - **THEN** that medication does not produce dose reminders until reminders are turned on again
 
+### Requirement: Reminder switch and outside blocks
+The per-medication reminder switch SHALL be labeled "Remind me" (German: "Erinnere mich"). It SHALL sit after take times and before the Type picker. A new medication SHALL start with that switch on. Under the switch, not in the footer, the dialog SHALL show one muted line and one action for each outside block that is stopping reminders, whether that switch is on or off. It SHALL show nothing new when app reminders are on and iOS has not denied notifications. When app reminders are off, the muted line SHALL read "Reminders are off for the app." (German: "Erinnerungen sind für die App aus.") and the action SHALL read "Turn on" (German: "Einschalten"). Turn on SHALL show More and SHALL leave the Reminders switch off. When iOS has denied notifications, the muted line SHALL read "Notifications are off in iOS." (German: "Mitteilungen sind in iOS aus.") and the action SHALL read "Open Settings" (German: "Einstellungen öffnen"). Open Settings SHALL open the page for this app in iOS Settings and SHALL NOT ask for permission again. When both blocks apply, the dialog SHALL show the app line first and the iOS line second.
+
+#### Scenario: App reminders off
+- **WHEN** the user opens Add or Edit medication while app reminders are off
+- **THEN** the dialog shows "Reminders are off for the app." (German: "Erinnerungen sind für die App aus.") and "Turn on" (German: "Einschalten") under the reminder switch
+
+#### Scenario: Turn on leaves the switch off
+- **WHEN** the user chooses Turn on on that line
+- **THEN** More is shown, the Reminders switch is still visible, and that switch stays off
+
+#### Scenario: iOS denied
+- **WHEN** iOS has denied notifications and the user opens Add or Edit medication
+- **THEN** the dialog shows "Notifications are off in iOS." (German: "Mitteilungen sind in iOS aus.") and "Open Settings" (German: "Einstellungen öffnen"), and choosing Open Settings opens the page for this app in iOS Settings without asking for permission again
+
+#### Scenario: Both gates
+- **WHEN** app reminders are off and iOS has denied notifications
+- **THEN** the dialog shows the app line first, then the iOS line
+
+#### Scenario: Nothing to explain
+- **WHEN** app reminders are on and iOS has not denied notifications
+- **THEN** the dialog shows the reminder switch and no extra line under it
+
 ### Requirement: Medication forms and icons
 The system SHALL support medication forms pill, cream, drops, injection, and other, each with an icon that fills the medication avatar circle.
 
