@@ -32,7 +32,12 @@ enum MedicationReminderNotice: Equatable, Hashable, Sendable {
 }
 
 enum MedicationReminderNotices {
-    static func notices(appRemindersOn: Bool, iosDenied: Bool) -> [MedicationReminderNotice] {
+    static func notices(
+        medicationRemindersOn: Bool,
+        appRemindersOn: Bool,
+        iosDenied: Bool
+    ) -> [MedicationReminderNotice] {
+        guard medicationRemindersOn else { return [] }
         var notices: [MedicationReminderNotice] = []
         if !appRemindersOn {
             notices.append(.appRemindersOff)

@@ -24,6 +24,7 @@ struct MedicationSheet: View {
     @State private var startDate = DateKeys.todayKey()
     @State private var endDate = ""
     @State private var remindersEnabled = true
+    @AppStorage(DoseReminderCenter.masterKey) private var appRemindersOn = true
     @State private var iosDenied = false
     @State private var gateEpoch = 0
     @State private var effectiveDate = DateKeys.todayKey()
@@ -313,7 +314,8 @@ struct MedicationSheet: View {
 
     private var reminderNotices: [MedicationReminderNotice] {
         MedicationReminderNotices.notices(
-            appRemindersOn: DoseReminderCenter.shared.masterEnabled,
+            medicationRemindersOn: remindersEnabled,
+            appRemindersOn: appRemindersOn,
             iosDenied: iosDenied
         )
     }
@@ -334,9 +336,13 @@ struct MedicationSheet: View {
     private func perform(_ notice: MedicationReminderNotice) {
         switch notice {
         case .appRemindersOff:
-            app.selectedTab = .more
-            dialogClose()
-            dismiss()
+            appRemindersOn = true
+            Task {
+                await DoseReminderCenter.shared.applyMasterEnabled(true)
+                let denied = await DoseReminderCenter.shared.authorizationDenied()
+                guard !Task.isCancelled else { return }
+                iosDenied = denied
+            }
         case .notificationsDenied:
             guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
             UIApplication.shared.open(url)

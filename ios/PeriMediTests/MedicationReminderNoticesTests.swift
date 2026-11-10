@@ -4,28 +4,44 @@ import XCTest
 final class MedicationReminderNoticesTests: XCTestCase {
     func testAppOffAloneShowsTheAppNotice() {
         XCTAssertEqual(
-            MedicationReminderNotices.notices(appRemindersOn: false, iosDenied: false),
+            MedicationReminderNotices.notices(
+                medicationRemindersOn: true,
+                appRemindersOn: false,
+                iosDenied: false
+            ),
             [.appRemindersOff]
         )
     }
 
     func testDeniedShowsTheIOSNoticeOnly() {
         XCTAssertEqual(
-            MedicationReminderNotices.notices(appRemindersOn: true, iosDenied: true),
+            MedicationReminderNotices.notices(
+                medicationRemindersOn: true,
+                appRemindersOn: true,
+                iosDenied: true
+            ),
             [.notificationsDenied]
         )
     }
 
     func testNotDeterminedShowsNothing() {
         XCTAssertEqual(
-            MedicationReminderNotices.notices(appRemindersOn: true, iosDenied: false),
+            MedicationReminderNotices.notices(
+                medicationRemindersOn: true,
+                appRemindersOn: true,
+                iosDenied: false
+            ),
             []
         )
     }
 
     func testBothBlockedPutsTheAppLineFirst() {
         XCTAssertEqual(
-            MedicationReminderNotices.notices(appRemindersOn: false, iosDenied: true),
+            MedicationReminderNotices.notices(
+                medicationRemindersOn: true,
+                appRemindersOn: false,
+                iosDenied: true
+            ),
             [.appRemindersOff, .notificationsDenied]
         )
         XCTAssertEqual(
@@ -45,6 +61,17 @@ final class MedicationReminderNoticesTests: XCTestCase {
                 messageID: "med.remind.iosDenied",
                 actionID: "med.remind.iosSettings"
             )
+        )
+    }
+
+    func testMedicationSwitchOffShowsNothing() {
+        XCTAssertEqual(
+            MedicationReminderNotices.notices(
+                medicationRemindersOn: false,
+                appRemindersOn: false,
+                iosDenied: true
+            ),
+            []
         )
     }
 }

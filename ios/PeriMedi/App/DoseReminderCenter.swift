@@ -108,6 +108,13 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         refresh()
     }
 
+    func applyMasterEnabled(_ on: Bool) async {
+        if on {
+            await requestAuthorizationIfNeeded()
+        }
+        refresh()
+    }
+
     /// UI tests pass `-remindIn=N` so the next pending slot fires in N seconds.
     var remindInSeconds: Int? {
         for arg in ProcessInfo.processInfo.arguments where arg.hasPrefix("-remindIn=") {
