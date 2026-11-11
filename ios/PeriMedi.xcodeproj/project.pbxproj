@@ -76,6 +76,7 @@
 		B2F75D8E01C0DE0000000002 /* DoseWidgetBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2F75D8E01C0DE0000000001 /* DoseWidgetBridgeTests.swift */; };
 		D127A7E00000000000000002 /* DoseReminderCenterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D127A7E00000000000000001 /* DoseReminderCenterTests.swift */; };
 		B7C109A1E84F4D2C9A6E1104 /* MedicationReminderNoticesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7C109A1E84F4D2C9A6E1103 /* MedicationReminderNoticesTests.swift */; };
+		A1B2C3D4E5F60718293A4B02 /* SymptomScaleWordTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B01 /* SymptomScaleWordTests.swift */; };
 		F150A11C0DE15000000002 /* ScreenProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = F150A11C0DE15000000001 /* ScreenProbe.swift */; };
 		F150A11C0DE15000000004 /* ScreenProbeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F150A11C0DE15000000003 /* ScreenProbeTests.swift */; };
 		F150A11C0DE15000000005 /* ScreenProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = F150A11C0DE15000000001 /* ScreenProbe.swift */; };
@@ -154,6 +155,7 @@
 		B2F75D8E01C0DE0000000001 /* DoseWidgetBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseWidgetBridgeTests.swift; sourceTree = "<group>"; };
 		D127A7E00000000000000001 /* DoseReminderCenterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseReminderCenterTests.swift; sourceTree = "<group>"; };
 		B7C109A1E84F4D2C9A6E1103 /* MedicationReminderNoticesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationReminderNoticesTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B01 /* SymptomScaleWordTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SymptomScaleWordTests.swift; sourceTree = "<group>"; };
 		F150A11C0DE15000000001 /* ScreenProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenProbe.swift; sourceTree = "<group>"; };
 		F150A11C0DE15000000003 /* ScreenProbeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenProbeTests.swift; sourceTree = "<group>"; };
 		C4A1E0010000000000000001 /* EqualWidthPillRowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EqualWidthPillRowTests.swift; sourceTree = "<group>"; };
@@ -343,6 +345,7 @@
 				B2F75D8E01C0DE0000000001 /* DoseWidgetBridgeTests.swift */,
 				D127A7E00000000000000001 /* DoseReminderCenterTests.swift */,
 				B7C109A1E84F4D2C9A6E1103 /* MedicationReminderNoticesTests.swift */,
+				A1B2C3D4E5F60718293A4B01 /* SymptomScaleWordTests.swift */,
 				F150A11C0DE15000000001 /* ScreenProbe.swift */,
 				F150A11C0DE15000000003 /* ScreenProbeTests.swift */,
 				C4A1E0010000000000000001 /* EqualWidthPillRowTests.swift */,
@@ -606,6 +609,7 @@
 				B2F75D8E01C0DE0000000002 /* DoseWidgetBridgeTests.swift in Sources */,
 				D127A7E00000000000000002 /* DoseReminderCenterTests.swift in Sources */,
 				B7C109A1E84F4D2C9A6E1104 /* MedicationReminderNoticesTests.swift in Sources */,
+				A1B2C3D4E5F60718293A4B02 /* SymptomScaleWordTests.swift in Sources */,
 				F150A11C0DE15000000002 /* ScreenProbe.swift in Sources */,
 				F150A11C0DE15000000004 /* ScreenProbeTests.swift in Sources */,
 				C4A1E0010000000000000002 /* EqualWidthPillRowTests.swift in Sources */,
