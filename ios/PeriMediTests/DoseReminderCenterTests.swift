@@ -11,6 +11,7 @@ final class DoseReminderCenterTests: XCTestCase {
     private let held = HeldAdds()
 
     override func tearDown() async throws {
+        held.cancelWait()
         let center = DoseReminderCenter.shared
         if let savedStore {
             center.store = savedStore
@@ -295,15 +296,8 @@ final class DoseReminderCenterTests: XCTestCase {
             auth: { .authorized }
         )
         center.store = store
-        center.refresh()
-        var request: UNNotificationRequest?
-        for _ in 0..<20 {
-            await Task.yield()
-            center.finishNotificationWork()
-            request = held.doseRequests().first { request in
-                ReminderDelivery.identity(of: request)?.scheduleId == scheduleId
-            }
-            if request != nil { break }
+        let request = await held.waitForDose(scheduleId: scheduleId) {
+            center.refresh()
         }
         let post = try XCTUnwrap(request, "reschedule did not submit a dose add")
         let identity = try XCTUnwrap(ReminderDelivery.identity(of: post))
@@ -329,11 +323,56 @@ private final class HeldAdds {
     private let lock = NSLock()
     private var pending: Set<String> = []
     private var held: [(UNNotificationRequest, () -> Void)] = []
+    private var onAdd: ((UNNotificationRequest) -> Void)?
 
     func add(_ request: UNNotificationRequest, done: @escaping () -> Void) {
         lock.lock()
         held.append((request, done))
+        let notify = onAdd
         lock.unlock()
+        notify?(request)
+    }
+
+    func cancelWait() {
+        lock.lock()
+        onAdd = nil
+        lock.unlock()
+    }
+
+    @MainActor
+    func waitForDose(
+        scheduleId: String,
+        start: () -> Void
+    ) async -> UNNotificationRequest? {
+        let once = ResumeOnce()
+        return await withCheckedContinuation { continuation in
+            func finish(_ request: UNNotificationRequest?) {
+                guard once.claim() else { return }
+                lock.lock()
+                onAdd = nil
+                lock.unlock()
+                continuation.resume(returning: request)
+            }
+            lock.lock()
+            onAdd = { request in
+                guard request.identifier.hasPrefix("dose.") else { return }
+                guard ReminderDelivery.identity(of: request)?.scheduleId == scheduleId else { return }
+                finish(request)
+            }
+            lock.unlock()
+            if let existing = doseRequests().first(where: { request in
+                ReminderDelivery.identity(of: request)?.scheduleId == scheduleId
+            }) {
+                start()
+                finish(existing)
+                return
+            }
+            start()
+            Task {
+                try? await Task.sleep(for: .seconds(5))
+                finish(nil)
+            }
+        }
     }
 
     func remove(_ ids: [String]) {
@@ -382,6 +421,19 @@ private final class HeldAdds {
         for (_, done) in batch {
             done()
         }
+    }
+}
+
+private final class ResumeOnce {
+    private let lock = NSLock()
+    private var done = false
+
+    func claim() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        if done { return false }
+        done = true
+        return true
     }
 }
 
