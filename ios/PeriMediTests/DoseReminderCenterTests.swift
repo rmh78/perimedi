@@ -296,14 +296,9 @@ final class DoseReminderCenterTests: XCTestCase {
         )
         center.store = store
         center.refresh()
-        var request: UNNotificationRequest?
-        for _ in 0..<20 {
-            await Task.yield()
-            center.finishNotificationWork()
-            request = held.doseRequests().first { request in
-                ReminderDelivery.identity(of: request)?.scheduleId == scheduleId
-            }
-            if request != nil { break }
+        center.finishNotificationWork()
+        let request = held.doseRequests().first { request in
+            ReminderDelivery.identity(of: request)?.scheduleId == scheduleId
         }
         let post = try XCTUnwrap(request, "reschedule did not submit a dose add")
         let identity = try XCTUnwrap(ReminderDelivery.identity(of: post))
