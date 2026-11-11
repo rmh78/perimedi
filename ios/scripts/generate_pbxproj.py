@@ -727,7 +727,7 @@ def main() -> None:
 				INFOPLIST_FILE = PeriMedi/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = app.perimedi.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -754,7 +754,7 @@ def main() -> None:
 				INFOPLIST_FILE = PeriMedi/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = app.perimedi.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -821,7 +821,7 @@ def main() -> None:
 				INFOPLIST_FILE = PeriMediDoseWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = app.perimedi.ios.dose;
 				PRODUCT_NAME = PeriMediDoseWidget;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -848,7 +848,7 @@ def main() -> None:
 				INFOPLIST_FILE = PeriMediDoseWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = app.perimedi.ios.dose;
 				PRODUCT_NAME = PeriMediDoseWidget;
 				PROVISIONING_PROFILE_SPECIFIER = "";
