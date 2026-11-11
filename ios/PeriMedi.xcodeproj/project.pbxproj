@@ -25,6 +25,7 @@
 		5B1E10ED1C9F72165761D2FB /* Features/Cycle/EffectLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05D5962B762E6A4AC2B0B56F /* Features/Cycle/EffectLine.swift */; };
 		25BA13B021161251A8ACBEFB /* Features/Cycle/MedLaneBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7B9D060F9B8EE53D5D97E4B /* Features/Cycle/MedLaneBuilder.swift */; };
 		8B56DDB29A84E1A0A6FC24AA /* Features/Cycle/MedicationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DC74F0FEF1AA56975142C29 /* Features/Cycle/MedicationSheet.swift */; };
+		B7C109A1E84F4D2C9A6E1102 /* Features/Cycle/MedicationReminderNotices.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7C109A1E84F4D2C9A6E1101 /* Features/Cycle/MedicationReminderNotices.swift */; };
 		82B0E06EB7459090AFC32F62 /* Features/Cycle/PeriodSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A857E14F53952D2127E73D /* Features/Cycle/PeriodSheet.swift */; };
 		7BF7FC6BE88015C1B1D0DB03 /* Features/Cycle/SymptomSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54F79B6AF760BC2A2F448BFD /* Features/Cycle/SymptomSheet.swift */; };
 		B7A83DBE76859D6EDE7B3D64 /* Features/Month/MonthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E74D1E1A69E41303158AB133 /* Features/Month/MonthView.swift */; };
@@ -61,6 +62,7 @@
 		556A9AD85C4E8C5D8733E802 /* ScreenCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D7ECE05280DF3A9B1D9FD1F /* ScreenCatalogTests.swift */; };
 		B7E4A91C0D2F4A6E8B1C3D51 /* StoreScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7E4A91C0D2F4A6E8B1C3D50 /* StoreScreenshotTests.swift */; };
 		D1A106F0D1A106F0D1A106F2 /* DialogFooterShotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A106F0D1A106F0D1A106F1 /* DialogFooterShotTests.swift */; };
+		B7C109A1E84F4D2C9A6E1106 /* MedicationReminderHonestyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7C109A1E84F4D2C9A6E1105 /* MedicationReminderHonestyTests.swift */; };
 		E1365E1E0000000000000002 /* SelectionShotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1365E1E0000000000000001 /* SelectionShotTests.swift */; };
 		22E653FA472344C15E92C92E /* PeriMediDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 14300107B9E3EB1D420E4B3B /* PeriMediDomain */; };
 		F0B3C5D82A1E49C7D6E4A8B2 /* PeriDesign in Frameworks */ = {isa = PBXBuildFile; productRef = D1F6B2C84E0A47B9A3D5E7C2 /* PeriDesign */; };
@@ -73,6 +75,7 @@
 		A11C0DE00000000000000002 /* CustomSymptomSyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11C0DE00000000000000001 /* CustomSymptomSyncTests.swift */; };
 		B2F75D8E01C0DE0000000002 /* DoseWidgetBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2F75D8E01C0DE0000000001 /* DoseWidgetBridgeTests.swift */; };
 		D127A7E00000000000000002 /* DoseReminderCenterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D127A7E00000000000000001 /* DoseReminderCenterTests.swift */; };
+		B7C109A1E84F4D2C9A6E1104 /* MedicationReminderNoticesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7C109A1E84F4D2C9A6E1103 /* MedicationReminderNoticesTests.swift */; };
 		F150A11C0DE15000000002 /* ScreenProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = F150A11C0DE15000000001 /* ScreenProbe.swift */; };
 		F150A11C0DE15000000004 /* ScreenProbeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F150A11C0DE15000000003 /* ScreenProbeTests.swift */; };
 		F150A11C0DE15000000005 /* ScreenProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = F150A11C0DE15000000001 /* ScreenProbe.swift */; };
@@ -108,6 +111,7 @@
 		05D5962B762E6A4AC2B0B56F /* Features/Cycle/EffectLine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/EffectLine.swift; sourceTree = "<group>"; };
 		F7B9D060F9B8EE53D5D97E4B /* Features/Cycle/MedLaneBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/MedLaneBuilder.swift; sourceTree = "<group>"; };
 		9DC74F0FEF1AA56975142C29 /* Features/Cycle/MedicationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/MedicationSheet.swift; sourceTree = "<group>"; };
+		B7C109A1E84F4D2C9A6E1101 /* Features/Cycle/MedicationReminderNotices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/MedicationReminderNotices.swift; sourceTree = "<group>"; };
 		74A857E14F53952D2127E73D /* Features/Cycle/PeriodSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/PeriodSheet.swift; sourceTree = "<group>"; };
 		54F79B6AF760BC2A2F448BFD /* Features/Cycle/SymptomSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Cycle/SymptomSheet.swift; sourceTree = "<group>"; };
 		E74D1E1A69E41303158AB133 /* Features/Month/MonthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Features/Month/MonthView.swift; sourceTree = "<group>"; };
@@ -137,6 +141,7 @@
 		9D7ECE05280DF3A9B1D9FD1F /* ScreenCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenCatalogTests.swift; sourceTree = "<group>"; };
 		B7E4A91C0D2F4A6E8B1C3D50 /* StoreScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreScreenshotTests.swift; sourceTree = "<group>"; };
 		D1A106F0D1A106F0D1A106F1 /* DialogFooterShotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DialogFooterShotTests.swift; sourceTree = "<group>"; };
+		B7C109A1E84F4D2C9A6E1105 /* MedicationReminderHonestyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationReminderHonestyTests.swift; sourceTree = "<group>"; };
 		E1365E1E0000000000000001 /* SelectionShotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionShotTests.swift; sourceTree = "<group>"; };
 		2C5C3A69A20F9E8D61C43308 /* DoseWidgetSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseWidgetSnapshot.swift; sourceTree = "<group>"; };
 		AC4EBBA48FBA9CA676374398 /* MarkDoseTakenIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkDoseTakenIntent.swift; sourceTree = "<group>"; };
@@ -148,6 +153,7 @@
 		A11C0DE00000000000000001 /* CustomSymptomSyncTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomSymptomSyncTests.swift; sourceTree = "<group>"; };
 		B2F75D8E01C0DE0000000001 /* DoseWidgetBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseWidgetBridgeTests.swift; sourceTree = "<group>"; };
 		D127A7E00000000000000001 /* DoseReminderCenterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoseReminderCenterTests.swift; sourceTree = "<group>"; };
+		B7C109A1E84F4D2C9A6E1103 /* MedicationReminderNoticesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MedicationReminderNoticesTests.swift; sourceTree = "<group>"; };
 		F150A11C0DE15000000001 /* ScreenProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenProbe.swift; sourceTree = "<group>"; };
 		F150A11C0DE15000000003 /* ScreenProbeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenProbeTests.swift; sourceTree = "<group>"; };
 		C4A1E0010000000000000001 /* EqualWidthPillRowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EqualWidthPillRowTests.swift; sourceTree = "<group>"; };
@@ -270,6 +276,7 @@
 				05D5962B762E6A4AC2B0B56F /* Features/Cycle/EffectLine.swift */,
 				F7B9D060F9B8EE53D5D97E4B /* Features/Cycle/MedLaneBuilder.swift */,
 				9DC74F0FEF1AA56975142C29 /* Features/Cycle/MedicationSheet.swift */,
+				B7C109A1E84F4D2C9A6E1101 /* Features/Cycle/MedicationReminderNotices.swift */,
 				74A857E14F53952D2127E73D /* Features/Cycle/PeriodSheet.swift */,
 				54F79B6AF760BC2A2F448BFD /* Features/Cycle/SymptomSheet.swift */,
 				E74D1E1A69E41303158AB133 /* Features/Month/MonthView.swift */,
@@ -323,6 +330,7 @@
 				9D7ECE05280DF3A9B1D9FD1F /* ScreenCatalogTests.swift */,
 				B7E4A91C0D2F4A6E8B1C3D50 /* StoreScreenshotTests.swift */,
 				D1A106F0D1A106F0D1A106F1 /* DialogFooterShotTests.swift */,
+				B7C109A1E84F4D2C9A6E1105 /* MedicationReminderHonestyTests.swift */,
 				E1365E1E0000000000000001 /* SelectionShotTests.swift */,
 			);
 			path = PeriMediUITests;
@@ -334,6 +342,7 @@
 				A11C0DE00000000000000001 /* CustomSymptomSyncTests.swift */,
 				B2F75D8E01C0DE0000000001 /* DoseWidgetBridgeTests.swift */,
 				D127A7E00000000000000001 /* DoseReminderCenterTests.swift */,
+				B7C109A1E84F4D2C9A6E1103 /* MedicationReminderNoticesTests.swift */,
 				F150A11C0DE15000000001 /* ScreenProbe.swift */,
 				F150A11C0DE15000000003 /* ScreenProbeTests.swift */,
 				C4A1E0010000000000000001 /* EqualWidthPillRowTests.swift */,
@@ -549,6 +558,7 @@
 				5B1E10ED1C9F72165761D2FB /* Features/Cycle/EffectLine.swift in Sources */,
 				25BA13B021161251A8ACBEFB /* Features/Cycle/MedLaneBuilder.swift in Sources */,
 				8B56DDB29A84E1A0A6FC24AA /* Features/Cycle/MedicationSheet.swift in Sources */,
+				B7C109A1E84F4D2C9A6E1102 /* Features/Cycle/MedicationReminderNotices.swift in Sources */,
 				82B0E06EB7459090AFC32F62 /* Features/Cycle/PeriodSheet.swift in Sources */,
 				7BF7FC6BE88015C1B1D0DB03 /* Features/Cycle/SymptomSheet.swift in Sources */,
 				B7A83DBE76859D6EDE7B3D64 /* Features/Month/MonthView.swift in Sources */,
@@ -583,6 +593,7 @@
 				556A9AD85C4E8C5D8733E802 /* ScreenCatalogTests.swift in Sources */,
 				B7E4A91C0D2F4A6E8B1C3D51 /* StoreScreenshotTests.swift in Sources */,
 				D1A106F0D1A106F0D1A106F2 /* DialogFooterShotTests.swift in Sources */,
+				B7C109A1E84F4D2C9A6E1106 /* MedicationReminderHonestyTests.swift in Sources */,
 				E1365E1E0000000000000002 /* SelectionShotTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -594,6 +605,7 @@
 				A11C0DE00000000000000002 /* CustomSymptomSyncTests.swift in Sources */,
 				B2F75D8E01C0DE0000000002 /* DoseWidgetBridgeTests.swift in Sources */,
 				D127A7E00000000000000002 /* DoseReminderCenterTests.swift in Sources */,
+				B7C109A1E84F4D2C9A6E1104 /* MedicationReminderNoticesTests.swift in Sources */,
 				F150A11C0DE15000000002 /* ScreenProbe.swift in Sources */,
 				F150A11C0DE15000000004 /* ScreenProbeTests.swift in Sources */,
 				C4A1E0010000000000000002 /* EqualWidthPillRowTests.swift in Sources */,

@@ -46,3 +46,4 @@ If notification permission is denied and the master switch is on, More shows `mo
 - Backup row IDs and journey rules live in [backup.md](backup.md).
 - Language control lives here, not in Cycle. User-entered text is never translated.
 - Reminder delivery proof is the in-app banner on Cycle (`reminders.md`), not this toggle alone.
+- `med.remind.turnOn` stays on the medication sheet and turns `more.reminders` on. Do not tap `med.remind.iosSettings`.

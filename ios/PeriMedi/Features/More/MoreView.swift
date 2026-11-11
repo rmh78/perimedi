@@ -147,14 +147,11 @@ struct MoreView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .onChange(of: remindersOn) { _, on in
-                    if on {
-                        Task {
-                            await DoseReminderCenter.shared.requestAuthorizationIfNeeded()
+                    Task {
+                        await DoseReminderCenter.shared.applyMasterEnabled(on)
+                        if on {
                             notifyDenied = await DoseReminderCenter.shared.authorizationDenied()
-                            DoseReminderCenter.shared.refresh()
                         }
-                    } else {
-                        DoseReminderCenter.shared.refresh()
                     }
                 }
                 .onChange(of: reminderSoundRaw) { _, _ in

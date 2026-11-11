@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import PeriMediDomain
 import PeriDesign
 
@@ -23,6 +24,9 @@ struct MedicationSheet: View {
     @State private var startDate = DateKeys.todayKey()
     @State private var endDate = ""
     @State private var remindersEnabled = true
+    @AppStorage(DoseReminderCenter.masterKey) private var appRemindersOn = true
+    @State private var iosDenied = false
+    @State private var gateEpoch = 0
     @State private var effectiveDate = DateKeys.todayKey()
     @State private var error: String?
     @FocusState private var focusedEntry: Entry?
@@ -114,13 +118,19 @@ struct MedicationSheet: View {
 
                 takeAtRow
 
-                Toggle(isOn: $remindersEnabled) {
-                    Text(app.t("med.remind"))
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(PeriColor.ink)
+                VStack(alignment: .leading, spacing: PeriSpace.row) {
+                    Toggle(isOn: $remindersEnabled) {
+                        Text(app.t("med.remind"))
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(PeriColor.ink)
+                    }
+                    .tint(PeriColor.blush600)
+                    .accessibilityIdentifier(A11yID.medRemind)
+
+                    ForEach(reminderNotices, id: \.self) { notice in
+                        reminderNotice(notice)
+                    }
                 }
-                .tint(PeriColor.blush600)
-                .accessibilityIdentifier(A11yID.medRemind)
 
                 VStack(alignment: .leading, spacing: 6) {
                     FieldLabel(text: app.t("med.scheduleType"))
@@ -159,6 +169,14 @@ struct MedicationSheet: View {
                 .dialogFooterInset()
         }
         .onAppear(perform: hydrate)
+        .task(id: gateEpoch) {
+            let denied = await DoseReminderCenter.shared.authorizationDenied()
+            guard !Task.isCancelled else { return }
+            iosDenied = denied
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            gateEpoch += 1
+        }
         .onChange(of: mode) { _, new in
             if new == .specificDays, daysOfWeek.isEmpty {
                 daysOfWeek = [1, 3, 5]
@@ -292,6 +310,43 @@ struct MedicationSheet: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var reminderNotices: [MedicationReminderNotice] {
+        MedicationReminderNotices.notices(
+            medicationRemindersOn: remindersEnabled,
+            appRemindersOn: appRemindersOn,
+            iosDenied: iosDenied
+        )
+    }
+
+    private func reminderNotice(_ notice: MedicationReminderNotice) -> some View {
+        let row = notice.row
+        return VStack(alignment: .leading, spacing: PeriSpace.row) {
+            Text(app.t(row.messageKey))
+                .font(.caption)
+                .foregroundStyle(PeriColor.inkMuted)
+                .accessibilityIdentifier(row.messageID)
+            PillButton(title: app.t(row.actionKey), kind: .secondary, identifier: row.actionID) {
+                perform(notice)
+            }
+        }
+    }
+
+    private func perform(_ notice: MedicationReminderNotice) {
+        switch notice {
+        case .appRemindersOff:
+            appRemindersOn = true
+            Task {
+                await DoseReminderCenter.shared.applyMasterEnabled(true)
+                let denied = await DoseReminderCenter.shared.authorizationDenied()
+                guard !Task.isCancelled else { return }
+                iosDenied = denied
+            }
+        case .notificationsDenied:
+            guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+            UIApplication.shared.open(url)
+        }
     }
 
     private func hydrate() {

@@ -25,6 +25,41 @@ The system SHALL allow the user to add and edit a medication including form, def
 - **WHEN** the user saves a medication with reminders off
 - **THEN** that medication does not produce dose reminders until reminders are turned on again
 
+### Requirement: Reminder switch and outside blocks
+The per-medication reminder switch SHALL be labeled "Remind me" (German: "Erinnere mich"). It SHALL sit after take times and before the Type picker. A new medication SHALL start with that switch on. Under the switch, not in the footer, and only while that switch is on, the dialog SHALL show one muted line and one action for each outside block that is stopping reminders. It SHALL show nothing under the switch when that switch is off. It SHALL show nothing new when that switch is on, app reminders are on, and iOS has not denied notifications. When that switch is on and app reminders are off, the muted line SHALL read "App reminders are off." (German: "Erinnerungen in der App sind aus.") and the action SHALL read "Turn on" (German: "Einschalten"). Turn on SHALL turn app reminders on through the same path as the More Reminders switch, including the permission request, and SHALL leave the dialog open with the typed fields unchanged. If app reminders end up on and iOS has not denied notifications, the app line SHALL be gone. If iOS denies notifications, or had already denied them, the dialog SHALL show the iOS line instead. Cancel SHALL NOT turn app reminders back off. When that switch is on and iOS has denied notifications, the muted line SHALL read "Notifications are off in iOS." (German: "Mitteilungen sind in iOS aus.") and the action SHALL read "Open Settings" (German: "Einstellungen öffnen"). Open Settings SHALL open the page for this app in iOS Settings and SHALL NOT ask for permission again. When both blocks apply and the switch is on, the dialog SHALL show the app line first and the iOS line second.
+
+#### Scenario: App reminders off
+- **WHEN** the user opens Add or Edit medication with the reminder switch on while app reminders are off
+- **THEN** the dialog shows "App reminders are off." (German: "Erinnerungen in der App sind aus.") and "Turn on" (German: "Einschalten") under the reminder switch
+
+#### Scenario: Medication switch off
+- **WHEN** the reminder switch is off
+- **THEN** the dialog shows no line under it, even if app reminders are off or iOS has denied notifications
+
+#### Scenario: Turn on keeps the dialog
+- **WHEN** the user chooses Turn on on that line
+- **THEN** the dialog stays open, the typed fields are unchanged, app reminders are on, and the app line is gone
+
+#### Scenario: Turn on when iOS has denied notifications
+- **WHEN** the user chooses Turn on and iOS has denied notifications
+- **THEN** the dialog stays open and shows "Notifications are off in iOS." with "Open Settings"
+
+#### Scenario: Cancel leaves app reminders on
+- **WHEN** the user chooses Cancel after Turn on
+- **THEN** app reminders stay on
+
+#### Scenario: iOS denied
+- **WHEN** the reminder switch is on, iOS has denied notifications, and the user opens Add or Edit medication
+- **THEN** the dialog shows "Notifications are off in iOS." (German: "Mitteilungen sind in iOS aus.") and "Open Settings" (German: "Einstellungen öffnen"), and choosing Open Settings opens the page for this app in iOS Settings without asking for permission again
+
+#### Scenario: Both gates
+- **WHEN** the reminder switch is on, app reminders are off, and iOS has denied notifications
+- **THEN** the dialog shows the app line first, then the iOS line
+
+#### Scenario: Nothing to explain
+- **WHEN** the reminder switch is on, app reminders are on, and iOS has not denied notifications
+- **THEN** the dialog shows the reminder switch and no extra line under it
+
 ### Requirement: Medication forms and icons
 The system SHALL support medication forms pill, cream, drops, injection, and other, each with an icon that fills the medication avatar circle.
 
