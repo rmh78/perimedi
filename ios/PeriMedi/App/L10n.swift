@@ -578,7 +578,7 @@ enum L10n {
         "more.privacyPolicy": "Datenschutzerklärung",
         "more.disclaimer": "Persönliche Begleitung — kein medizinischer Rat.",
         "more.sampleTitle": "Beispieldaten",
-        "more.sampleBody": "Erfundene Daten zum Ausprobieren. Ersetzt deine Einträge.",
+        "more.sampleBody": "Erfundene Daten zum A\u{2060}u\u{2060}s\u{2060}p\u{2060}r\u{2060}o\u{2060}b\u{2060}i\u{2060}e\u{2060}r\u{2060}e\u{2060}n. Ersetzt deine Einträge.",
         "more.sampleLabel": "Beispiel laden",
         "more.sampleConfirm": "Alle lokalen Daten durch das Beispiel ersetzen?",
         "more.sampleLoaded": "Beispieldaten geladen.",
