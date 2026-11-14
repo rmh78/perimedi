@@ -150,6 +150,13 @@ Simulator signing does not require a paid team. Add an Apple ID in Xcode → Acc
 - JSON backup is `ExportPayload` version 1.
 - Do not commit `ios/DerivedData`, `ios/.build`, or secrets. No `.env` required.
 
+## Pull requests
+
+Do not merge; open the PR and stop. Product Owner merges after the four bot reviews.
+Merge also requires independent critical product acceptance and green required CI.
+
+When you create or edit a PR body (gh pr create, gh pr edit, or a correction push), keep these two sentences verbatim at the end; append them if missing.
+
 ## One-way doors
 
 Content rules live in `ios/internal/one-way-doors.md`. The checker is `ios/scripts/check-one-way-door.py`. `ids` runs it from `python3 ios/scripts/check-agent.py`. A match prints a GitHub notice. A git or Python failure prints a warning and the checker exits 0. The notice leaves `ids` green. Local verify and doctor run `check-agent.py` with `--base origin/main`.
