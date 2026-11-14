@@ -7,7 +7,7 @@ enum VisitStrings {
     static let en: [String: String] = [
         "more.visit": "Doctor visit",
         "more.visitTitle": "Visit summary",
-        "more.visitBody": "PDF of recent cycles for an appointment. Stays on this device until you share it.",
+        "more.visitBody": "Your recent cycles as a PDF for your doctor. Stays on this device until you share it.",
         "more.visitLabel": "View PDF",
         "more.visitFailed": "Couldn’t create the PDF.",
         "visit.title": "PeriMedi visit summary",
