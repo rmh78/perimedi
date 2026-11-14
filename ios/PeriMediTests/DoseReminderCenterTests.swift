@@ -11,8 +11,10 @@ final class DoseReminderCenterTests: XCTestCase {
     private let held = HeldAdds()
 
     override func tearDown() async throws {
-        held.cancelWait()
         let center = DoseReminderCenter.shared
+        await center.awaitPendingRefreshes()
+        center.finishNotificationWork()
+        ReminderDelivery.resetForTest()
         if let savedStore {
             center.store = savedStore
         }
@@ -21,7 +23,6 @@ final class DoseReminderCenterTests: XCTestCase {
         } else {
             UserDefaults.standard.removeObject(forKey: DoseReminderCenter.masterKey)
         }
-        ReminderDelivery.resetForTest()
         savedStore = nil
         container = nil
         try await super.tearDown()
@@ -42,10 +43,8 @@ final class DoseReminderCenterTests: XCTestCase {
             status: .taken
         )
         center.refresh()
-        for _ in 0..<8 {
-            await Task.yield()
-            center.finishNotificationWork()
-        }
+        await center.awaitPendingRefreshes()
+        center.finishNotificationWork()
 
         held.release()
         center.finishNotificationWork()
@@ -87,13 +86,16 @@ final class DoseReminderCenterTests: XCTestCase {
     func testTakeReturnsWhileNotificationRemovalIsStillRunning() async throws {
         let (center, _, identity, _) = try await heldDose()
         let release = DispatchSemaphore(value: 0)
+        let finished = Finished()
         ReminderDelivery.installForTest(
             add: { _, done in done() },
-            remove: { _ in _ = release.wait(timeout: .now() + 2) },
+            remove: { _ in
+                _ = release.wait(timeout: .now() + 2)
+                finished.mark()
+            },
             pending: { [] },
             auth: { .authorized }
         )
-        let started = Date()
         center.setSlotStatuses(
             medicationId: identity.medicationId,
             slots: [
@@ -106,18 +108,22 @@ final class DoseReminderCenterTests: XCTestCase {
             ],
             status: .taken
         )
-        let elapsed = Date().timeIntervalSince(started)
+        XCTAssertFalse(finished.isMarked())
         release.signal()
         center.finishNotificationWork()
-        XCTAssertLessThan(elapsed, 0.4)
+        XCTAssertTrue(finished.isMarked())
     }
 
     func testPutBackReturnsWhileNotificationRemovalIsStillRunning() async throws {
         let (center, _, identity, _) = try await heldDose()
         let release = DispatchSemaphore(value: 0)
+        let finished = Finished()
         ReminderDelivery.installForTest(
             add: { _, done in done() },
-            remove: { _ in _ = release.wait(timeout: .now() + 2) },
+            remove: { _ in
+                _ = release.wait(timeout: .now() + 2)
+                finished.mark()
+            },
             pending: { [] },
             auth: { .authorized }
         )
@@ -132,16 +138,15 @@ final class DoseReminderCenterTests: XCTestCase {
             slots: [write],
             status: .taken
         )
-        let started = Date()
         center.setSlotStatuses(
             medicationId: identity.medicationId,
             slots: [write],
             status: .pending
         )
-        let elapsed = Date().timeIntervalSince(started)
+        XCTAssertFalse(finished.isMarked())
         release.signal()
         center.finishNotificationWork()
-        XCTAssertLessThan(elapsed, 0.4)
+        XCTAssertTrue(finished.isMarked())
     }
 
     func testPutBackThenTakeAgainKeepsTheSlotRetired() async throws {
@@ -264,8 +269,8 @@ final class DoseReminderCenterTests: XCTestCase {
         )
         self.container = container
         let store = Store(container: container)
-        let medicationId = "taken-pending-med"
-        let scheduleId = "taken-pending-schedule"
+        let medicationId = UUID().uuidString
+        let scheduleId = UUID().uuidString
         try store.upsertMedication(
             Medication(
                 id: medicationId,
@@ -296,8 +301,11 @@ final class DoseReminderCenterTests: XCTestCase {
             auth: { .authorized }
         )
         center.store = store
-        let request = await held.waitForDose(scheduleId: scheduleId) {
-            center.refresh()
+        center.refresh()
+        await center.awaitPendingRefreshes()
+        center.finishNotificationWork()
+        let request = held.doseRequests().first { request in
+            ReminderDelivery.identity(of: request)?.scheduleId == scheduleId
         }
         let post = try XCTUnwrap(request, "reschedule did not submit a dose add")
         let identity = try XCTUnwrap(ReminderDelivery.identity(of: post))
@@ -323,56 +331,11 @@ private final class HeldAdds {
     private let lock = NSLock()
     private var pending: Set<String> = []
     private var held: [(UNNotificationRequest, () -> Void)] = []
-    private var onAdd: ((UNNotificationRequest) -> Void)?
 
     func add(_ request: UNNotificationRequest, done: @escaping () -> Void) {
         lock.lock()
         held.append((request, done))
-        let notify = onAdd
         lock.unlock()
-        notify?(request)
-    }
-
-    func cancelWait() {
-        lock.lock()
-        onAdd = nil
-        lock.unlock()
-    }
-
-    @MainActor
-    func waitForDose(
-        scheduleId: String,
-        start: () -> Void
-    ) async -> UNNotificationRequest? {
-        let once = ResumeOnce()
-        return await withCheckedContinuation { continuation in
-            func finish(_ request: UNNotificationRequest?) {
-                guard once.claim() else { return }
-                lock.lock()
-                onAdd = nil
-                lock.unlock()
-                continuation.resume(returning: request)
-            }
-            lock.lock()
-            onAdd = { request in
-                guard request.identifier.hasPrefix("dose.") else { return }
-                guard ReminderDelivery.identity(of: request)?.scheduleId == scheduleId else { return }
-                finish(request)
-            }
-            lock.unlock()
-            if let existing = doseRequests().first(where: { request in
-                ReminderDelivery.identity(of: request)?.scheduleId == scheduleId
-            }) {
-                start()
-                finish(existing)
-                return
-            }
-            start()
-            Task {
-                try? await Task.sleep(for: .seconds(5))
-                finish(nil)
-            }
-        }
     }
 
     func remove(_ ids: [String]) {
@@ -424,16 +387,20 @@ private final class HeldAdds {
     }
 }
 
-private final class ResumeOnce {
+private final class Finished {
     private let lock = NSLock()
-    private var done = false
+    private var marked = false
 
-    func claim() -> Bool {
+    func mark() {
+        lock.lock()
+        marked = true
+        lock.unlock()
+    }
+
+    func isMarked() -> Bool {
         lock.lock()
         defer { lock.unlock() }
-        if done { return false }
-        done = true
-        return true
+        return marked
     }
 }
 
