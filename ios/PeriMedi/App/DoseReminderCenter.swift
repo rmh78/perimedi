@@ -123,30 +123,14 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         return nil
     }
 
-    private var refreshTasks: [Task<Void, Never>] = []
-
-    func refresh() {
+    @discardableResult
+    func refresh() -> Task<Void, Never>? {
         if uiTesting, remindInSeconds == nil {
             clearAll()
-            return
+            return nil
         }
-        guard let store else { return }
-        let task = Task { await reschedule(using: store) }
-        refreshTasks.append(task)
-        Task { @MainActor in
-            await task.value
-            refreshTasks.removeAll { $0 == task }
-        }
-    }
-
-    func awaitPendingRefreshes() async {
-        while !refreshTasks.isEmpty {
-            let batch = refreshTasks
-            for task in batch {
-                await task.value
-            }
-            refreshTasks.removeAll { batch.contains($0) }
-        }
+        guard let store else { return nil }
+        return Task { await reschedule(using: store) }
     }
 
     func clearAll() {
@@ -385,7 +369,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
-    func finishNotificationWork() {
+    nonisolated func finishNotificationWork() {
         Self.notificationQueue.sync {}
     }
 

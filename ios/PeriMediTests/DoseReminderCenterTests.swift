@@ -3,17 +3,22 @@ import XCTest
 import PeriMediDomain
 @testable import PeriMedi
 
+private let reminderWaitSeconds: TimeInterval = 30
+
 @MainActor
 final class DoseReminderCenterTests: XCTestCase {
     private var savedStore: Store?
     private var savedMaster: Any?
     private var container: ModelContainer?
+    private var refreshTask: Task<Void, Never>?
     private let held = HeldAdds()
 
     override func tearDown() async throws {
         let center = DoseReminderCenter.shared
-        await center.awaitPendingRefreshes()
-        center.finishNotificationWork()
+        let task = refreshTask
+        refreshTask = nil
+        await wait(for: task, what: "the test refresh", required: false)
+        await finishNotificationWork(what: "notification work")
         ReminderDelivery.resetForTest()
         if let savedStore {
             center.store = savedStore
@@ -42,12 +47,12 @@ final class DoseReminderCenterTests: XCTestCase {
             ],
             status: .taken
         )
-        center.refresh()
-        await center.awaitPendingRefreshes()
-        center.finishNotificationWork()
+        refreshTask = center.refresh()
+        await wait(for: refreshTask, what: "the refresh after the dose was taken")
+        await finishNotificationWork(what: "notification work after the taken refresh")
 
         held.release()
-        center.finishNotificationWork()
+        await finishNotificationWork(what: "notification work after the held adds were released")
 
         let status = logStatus(store, identity: identity)
         let pending = await held.pendingIds()
@@ -75,7 +80,7 @@ final class DoseReminderCenterTests: XCTestCase {
         XCTAssertEqual(logStatus(store, identity: identity), .taken)
 
         held.release()
-        center.finishNotificationWork()
+        await finishNotificationWork(what: "notification work after the held adds were released")
         let pending = await held.pendingIds()
         XCTAssertTrue(
             pending.isDisjoint(with: family),
@@ -87,10 +92,13 @@ final class DoseReminderCenterTests: XCTestCase {
         let (center, _, identity, _) = try await heldDose()
         let release = DispatchSemaphore(value: 0)
         let finished = Finished()
+        let test = name
         ReminderDelivery.installForTest(
             add: { _, done in done() },
             remove: { _ in
-                _ = release.wait(timeout: .now() + 2)
+                if release.wait(timeout: .now() + reminderWaitSeconds) == .timedOut {
+                    XCTFail("\(test) timed out after \(Int(reminderWaitSeconds)) seconds waiting for notification removal to be released")
+                }
                 finished.mark()
             },
             pending: { [] },
@@ -110,7 +118,7 @@ final class DoseReminderCenterTests: XCTestCase {
         )
         XCTAssertFalse(finished.isMarked())
         release.signal()
-        center.finishNotificationWork()
+        await finishNotificationWork(what: "notification removal")
         XCTAssertTrue(finished.isMarked())
     }
 
@@ -118,10 +126,13 @@ final class DoseReminderCenterTests: XCTestCase {
         let (center, _, identity, _) = try await heldDose()
         let release = DispatchSemaphore(value: 0)
         let finished = Finished()
+        let test = name
         ReminderDelivery.installForTest(
             add: { _, done in done() },
             remove: { _ in
-                _ = release.wait(timeout: .now() + 2)
+                if release.wait(timeout: .now() + reminderWaitSeconds) == .timedOut {
+                    XCTFail("\(test) timed out after \(Int(reminderWaitSeconds)) seconds waiting for notification removal to be released")
+                }
                 finished.mark()
             },
             pending: { [] },
@@ -145,17 +156,18 @@ final class DoseReminderCenterTests: XCTestCase {
         )
         XCTAssertFalse(finished.isMarked())
         release.signal()
-        center.finishNotificationWork()
+        await finishNotificationWork(what: "notification removal")
         XCTAssertTrue(finished.isMarked())
     }
 
     func testPutBackThenTakeAgainKeepsTheSlotRetired() async throws {
         let (center, store, identity, family) = try await heldDose()
         let gate = OpenGate()
+        let test = name
         ReminderDelivery.installForTest(
             add: { [held] request, done in held.add(request, done: done) },
             remove: { [held] ids in
-                gate.wait()
+                gate.wait(test: test, what: "the removal gate")
                 held.remove(ids)
             },
             pending: { [held] in await held.pendingIds() },
@@ -187,7 +199,7 @@ final class DoseReminderCenterTests: XCTestCase {
         )
         let before = held.recordedIdentifiers()
         gate.open()
-        center.finishNotificationWork()
+        await finishNotificationWork(what: "notification work after the removal gate opened")
         let posted = held.recordedIdentifiers().dropFirst(before.count)
         XCTAssertEqual(logStatus(store, identity: identity), .taken)
         XCTAssertTrue(
@@ -203,7 +215,7 @@ final class DoseReminderCenterTests: XCTestCase {
     func testSnoozeCancelsThePendingDoseAndSchedulesSnooze() async throws {
         let (center, _, identity, _) = try await heldDose()
         held.release()
-        center.finishNotificationWork()
+        await finishNotificationWork(what: "notification work after the held adds were released")
         let doseId = ReminderSlot.doseId(
             scheduleId: identity.scheduleId,
             date: identity.date,
@@ -222,7 +234,7 @@ final class DoseReminderCenterTests: XCTestCase {
                 doseLabel: "1 mg"
             )
         )
-        center.finishNotificationWork()
+        await finishNotificationWork(what: "notification work after snooze")
 
         let pending = await held.pendingIds()
         XCTAssertFalse(pending.contains(doseId), "pending \(pending) still has \(doseId)")
@@ -242,7 +254,7 @@ final class DoseReminderCenterTests: XCTestCase {
         XCTAssertEqual(saved, .taken, "the log was still \(String(describing: saved)) when Take returned")
 
         held.release()
-        center.finishNotificationWork()
+        await finishNotificationWork(what: "notification work after the held adds were released")
         let pending = await held.pendingIds()
         XCTAssertTrue(
             pending.isDisjoint(with: family),
@@ -291,8 +303,8 @@ final class DoseReminderCenterTests: XCTestCase {
                 cycleRule: .none
             )
         )
-        store.addAfterChange { [weak center] in
-            center?.refresh()
+        store.addAfterChange { [weak self, weak center] in
+            self?.refreshTask = center?.refresh()
         }
         ReminderDelivery.installForTest(
             add: { [held] request, done in held.add(request, done: done) },
@@ -301,9 +313,10 @@ final class DoseReminderCenterTests: XCTestCase {
             auth: { .authorized }
         )
         center.store = store
-        center.refresh()
-        await center.awaitPendingRefreshes()
-        center.finishNotificationWork()
+        let task = center.refresh()
+        refreshTask = task
+        await wait(for: task, what: "the dose reschedule")
+        await finishNotificationWork(what: "notification work after the dose reschedule")
         let request = held.doseRequests().first { request in
             ReminderDelivery.identity(of: request)?.scheduleId == scheduleId
         }
@@ -319,11 +332,78 @@ final class DoseReminderCenterTests: XCTestCase {
         return (center, store, identity, family)
     }
 
+    private func wait(
+        for task: Task<Void, Never>?,
+        what: String,
+        required: Bool = true
+    ) async {
+        guard let task else {
+            if required {
+                XCTFail("\(name) was waiting for \(what), and refresh did not start")
+            }
+            return
+        }
+        let finished = await finishFirst(within: reminderWaitSeconds) { finish in
+            Task {
+                await task.value
+                finish()
+            }
+        }
+        if finished { return }
+        XCTFail("\(name) timed out after \(Int(reminderWaitSeconds)) seconds waiting for \(what)")
+    }
+
+    private func finishNotificationWork(what: String) async {
+        let center = DoseReminderCenter.shared
+        let finished = await finishFirst(within: reminderWaitSeconds) { finish in
+            DispatchQueue.global(qos: .userInitiated).async {
+                center.finishNotificationWork()
+                finish()
+            }
+        }
+        if finished { return }
+        XCTFail("\(name) timed out after \(Int(reminderWaitSeconds)) seconds waiting for \(what)")
+    }
+
+    private func finishFirst(
+        within seconds: TimeInterval,
+        start: @escaping (@escaping () -> Void) -> Void
+    ) async -> Bool {
+        await withCheckedContinuation { continuation in
+            let once = Once()
+            let sleeper = DispatchWorkItem {
+                if once.take() {
+                    continuation.resume(returning: false)
+                }
+            }
+            DispatchQueue.global().asyncAfter(deadline: .now() + seconds, execute: sleeper)
+            start {
+                sleeper.cancel()
+                if once.take() {
+                    continuation.resume(returning: true)
+                }
+            }
+        }
+    }
+
     private func logStatus(_ store: Store, identity: PlannedSlotIdentity) -> DoseStatus? {
         let planned = ScheduleLogic.plannedForIso(dateKey: identity.date, timeOfDay: identity.timeOfDay)
         return store.doseLogs.first {
             $0.scheduleId == identity.scheduleId && $0.plannedFor == planned
         }?.status
+    }
+}
+
+private final class Once {
+    private let lock = NSLock()
+    private var taken = false
+
+    func take() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        if taken { return false }
+        taken = true
+        return true
     }
 }
 
@@ -409,7 +489,7 @@ private final class OpenGate {
     private var opened = false
     private var parked: [DispatchSemaphore] = []
 
-    func wait() {
+    func wait(test: String, what: String) {
         lock.lock()
         if opened {
             lock.unlock()
@@ -418,7 +498,9 @@ private final class OpenGate {
         let sem = DispatchSemaphore(value: 0)
         parked.append(sem)
         lock.unlock()
-        sem.wait()
+        if sem.wait(timeout: .now() + reminderWaitSeconds) == .timedOut {
+            XCTFail("\(test) timed out after \(Int(reminderWaitSeconds)) seconds waiting for \(what)")
+        }
     }
 
     func open() {
