@@ -123,13 +123,14 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         return nil
     }
 
-    func refresh() {
+    @discardableResult
+    func refresh() -> Task<Void, Never>? {
         if uiTesting, remindInSeconds == nil {
             clearAll()
-            return
+            return nil
         }
-        guard let store else { return }
-        Task { await reschedule(using: store) }
+        guard let store else { return nil }
+        return Task { await reschedule(using: store) }
     }
 
     func clearAll() {
@@ -368,7 +369,7 @@ final class DoseReminderCenter: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
-    func finishNotificationWork() {
+    nonisolated func finishNotificationWork() {
         Self.notificationQueue.sync {}
     }
 
